@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>De Bewegingsatlas</title>
+<meta name="description" content="Anatomie in 3D voor de propedeuse ALO: bewegende diorama's van het menselijk lichaam, met uitleg, speurtochten en een presentatiestand.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f3ecdf; --paper2:#ebe2d1; --card:#fbf7ef; --ink:#2a231e; --muted:#6f655b; --line:#d8cdb9;
+  --red:#b0392b; --red2:#d65a42; --teal:#2f6f73; --gold:#c08a2d;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#1a1715;--paper2:#221e1b;--card:#26211d;--ink:#efe6d6;--muted:#a99d8e;--line:#3d352e;--red:#e0604a;--teal:#6fb2b4;--gold:#e0b25a}}
+:root[data-theme="dark"]{--paper:#1a1715;--paper2:#221e1b;--card:#26211d;--ink:#efe6d6;--muted:#a99d8e;--line:#3d352e;--red:#e0604a;--teal:#6fb2b4;--gold:#e0b25a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(80% 60% at 70% 20%,#000 0%,transparent 80%);-webkit-mask-image:radial-gradient(80% 60% at 70% 20%,#000 0%,transparent 80%)}
+a{color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px;position:relative}
+nav.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0}
+.brand{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:700;font-size:20px;text-decoration:none}
+.brand svg{width:30px;height:30px}
+nav.top .links{display:flex;gap:20px;font-size:14.5px;font-weight:600}
+nav.top .links a{text-decoration:none;color:var(--muted)}nav.top .links a:hover{color:var(--ink)}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:40px;align-items:center;padding:30px 0 10px}
+.eyebrow{font:600 12px "JetBrains Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+h1{font-family:Fraunces,serif;font-weight:700;font-size:clamp(40px,6vw,68px);line-height:1.02;margin:12px 0 18px;letter-spacing:-.01em}
+h1 em{font-style:italic;font-weight:500;color:var(--red)}
+.lead{font-size:18px;max-width:540px;color:var(--ink)}
+.lead+.lead{color:var(--muted);font-size:16px}
+.modes{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:26px;max-width:560px}
+.mode{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px}
+.mode b{display:block;font-size:14.5px}.mode span{font-size:13px;color:var(--muted)}
+.cta{display:inline-flex;align-items:center;gap:10px;margin-top:26px;background:var(--red);color:#fff;text-decoration:none;font-weight:700;padding:13px 20px;border-radius:12px;box-shadow:0 8px 24px rgba(176,57,43,.25)}
+.cta:hover{filter:brightness(1.06)}
+
+/* plate */
+.plate{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 18px 12px;box-shadow:0 30px 60px -30px rgba(60,40,20,.35)}
+.plate header{display:flex;justify-content:space-between;font:600 11px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;padding:0 4px 8px;border-bottom:1px solid var(--line)}
+.plate svg{width:100%;height:auto;display:block}
+.body-fill{fill:var(--paper2);stroke:var(--ink);stroke-width:1.6}
+.joint{fill:var(--card);stroke:var(--ink);stroke-width:1.4}
+.hatch{stroke:var(--line);stroke-width:1}
+.st{cursor:pointer}
+.st circle.seal{fill:var(--red);stroke:var(--card);stroke-width:3}
+.st.off circle.seal{fill:var(--card);stroke:var(--muted);stroke-width:1.6;stroke-dasharray:3 3}
+.st text{font:700 13px "Instrument Sans";fill:#fff;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.st.off text{fill:var(--muted)}
+.st .ring{fill:none;stroke:var(--red);stroke-width:2;opacity:0}
+.st:not(.off) .ring{animation:ring 2.4s infinite}
+@keyframes ring{0%{opacity:.7;r:14}100%{opacity:0;r:28}}
+.st:hover circle.seal,.st.hl circle.seal{stroke:var(--gold);stroke-width:4}
+.lbl{font:500 11px "JetBrains Mono",monospace;fill:var(--muted)}
+.legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);padding:8px 4px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-2px;margin-right:6px}
+
+/* list */
+section{padding:56px 0 10px}
+h2{font-family:Fraunces,serif;font-size:clamp(28px,3.4vw,38px);margin:6px 0 8px;line-height:1.1}
+.sub{color:var(--muted);max-width:640px;margin:0 0 22px}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:22px}
+.filters select,.filters input{font:inherit;font-size:14px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.filters input{min-width:200px}
+.count{margin-left:auto;font-size:13.5px;color:var(--muted)}
+.stations{display:flex;flex-direction:column;gap:12px}
+.row{display:grid;grid-template-columns:56px 1fr;gap:16px;align-items:start;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:16px 18px;transition:border-color .2s,box-shadow .2s}
+.row.off{background:transparent;border-style:dashed}
+.row.hl{border-color:var(--red);box-shadow:0 0 0 3px rgba(176,57,43,.12)}
+.num{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--red);color:#fff;font-size:17px}
+.row.off .num{background:none;border:1.5px dashed var(--muted);color:var(--muted)}
+.meta{font:600 11.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.row h3{margin:2px 0 4px;font-size:19px}
+.row.off h3{font-weight:600;color:var(--muted);font-size:17px}
+.row p{margin:0;color:var(--muted);font-size:14.5px}
+.card{display:grid;grid-template-columns:200px 1fr auto;gap:18px;margin-top:12px;align-items:center;border-top:1px solid var(--line);padding-top:14px}
+.thumb{aspect-ratio:4/3;border-radius:10px;background:radial-gradient(120% 90% at 55% 38%,#2c3a42 0%,#18232a 60%,#0d1316 100%);position:relative;overflow:hidden}
+.thumb svg{position:absolute;inset:0;width:100%;height:100%}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--paper2);border:1px solid var(--line)}
+.tag.kind{background:var(--teal);color:#fff;border-color:var(--teal)}
+details{margin-top:6px}
+summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--teal)}
+details ul{margin:8px 0 4px;padding-left:20px;font-size:14px;color:var(--ink)}
+details li{margin:3px 0}
+.open{display:inline-flex;gap:8px;align-items:center;background:var(--ink);color:var(--paper);text-decoration:none;font-weight:700;padding:11px 18px;border-radius:10px;white-space:nowrap}
+.open:hover{background:var(--red);color:#fff}
+
+/* teachers */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.box{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:18px}
+.box .meta{color:var(--red)}
+.box h3{margin:4px 0 6px;font-size:19px}
+.box p,.box li{font-size:14.5px;color:var(--muted)}
+.box ul{padding-left:18px;margin:8px 0 0}
+table{width:100%;border-collapse:collapse;font-size:14px;margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line)}
+th{font:600 12px "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--paper2)}
+kbd{font:600 12px "JetBrains Mono",monospace;background:var(--paper2);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+footer{padding:50px 0 40px;color:var(--muted);font-size:13.5px}
+.priv{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:10px}
+.priv div{border-top:2px solid var(--teal);padding-top:8px}
+.priv b{display:block;color:var(--ink);font-size:14.5px}
+
+@media (max-width:900px){
+  .hero{grid-template-columns:1fr}
+  .grid3,.priv{grid-template-columns:1fr 1fr}
+  .card{grid-template-columns:1fr}
+  .thumb{max-width:320px}
+  nav.top .links{display:none}
+}
+@media (max-width:560px){
+  .wrap{padding:0 16px}
+  .modes,.grid3,.priv{grid-template-columns:1fr}
+  .row{grid-template-columns:1fr}
+  .filters input{min-width:0;flex:1 1 100%}
+  .count{margin-left:0}
+  table{font-size:13px}th,td{padding:7px 8px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top">
+    <a class="brand" href="#"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#b0392b"/><path d="M16 6v6m0 0c-3 0-5 2-5 5v9m5-14c3 0 5 2 5 5v9M11 21h10" stroke="#fbf7ef" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>De Bewegingsatlas</a>
+    <div class="links"><a href="#haltes">Haltes</a><a href="#docenten">Voor docenten</a><a href="#privacy">Privacy</a></div>
+  </nav>
+
+  <header class="hero">
+    <div>
+      <div class="eyebrow">Anatomie &amp; fysiologie · propedeuse ALO</div>
+      <h1>Kijk <em>in</em> het lichaam dat beweegt</h1>
+      <p class="lead">Elke halte op de kaart is een deel van het lichaam. Bij een rood zegel staat een diorama klaar: een klein 3D-landschap waar je omheen draait, dat je openklapt en dat beweegt zoals een sporter beweegt.</p>
+      <p class="lead">Geen losse plaatjes uit een boek, maar zien wat een kruisband doet als iemand landt.</p>
+      <div class="modes">
+        <div class="mode"><b>Verkennen</b><span>Klik op genummerde punten voor uitleg.</span></div>
+        <div class="mode"><b>Speurtocht</b><span>Acht opdrachten volgens RTTI.</span></div>
+        <div class="mode"><b>Presenteren</b><span>Groot op het scherm, met geluid.</span></div>
+      </div>
+      <a class="cta" href="knie.html">Open halte 9: de knie <span aria-hidden="true">→</span></a>
+    </div>
+
+    <figure class="plate" style="margin:0">
+      <header><span>Tabula corporis</span><span>Fig. I · vooraanzicht</span></header>
+      <svg viewBox="0 0 420 700" role="img" aria-label="Lichaamskaart met tien haltes">
+        <defs><pattern id="hp" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><line x1="0" y1="0" x2="0" y2="6" class="hatch"/></pattern></defs>
+        <!-- mannequin -->
+        <g>
+          <ellipse class="body-fill" cx="210" cy="62" rx="34" ry="42"/>
+          <rect class="body-fill" x="198" y="100" width="24" height="22" rx="6"/>
+          <path class="body-fill" d="M150 132 Q210 116 270 132 L262 262 Q250 300 246 318 L174 318 Q170 300 158 262 Z"/>
+          <path d="M150 132 Q210 116 270 132 L262 262 Q250 300 246 318 L174 318 Q170 300 158 262 Z" fill="url(#hp)" opacity=".5"/>
+          <path class="body-fill" d="M172 318 L248 318 Q262 350 252 372 L168 372 Q158 350 172 318 Z"/>
+          <!-- arms -->
+          <path class="body-fill" d="M150 136 Q128 140 124 170 L112 286 Q110 296 120 298 L132 298 Q140 296 140 286 L156 180 Z"/>
+          <path class="body-fill" d="M270 136 Q292 140 296 170 L308 286 Q310 296 300 298 L288 298 Q280 296 280 286 L264 180 Z"/>
+          <path class="body-fill" d="M112 300 L104 404 Q104 414 114 414 L124 414 Q132 414 132 404 L134 300 Z"/>
+          <path class="body-fill" d="M308 300 L316 404 Q316 414 306 414 L296 414 Q288 414 288 404 L286 300 Z"/>
+          <ellipse class="body-fill" cx="118" cy="436" rx="13" ry="20"/>
+          <ellipse class="body-fill" cx="302" cy="436" rx="13" ry="20"/>
+          <!-- legs -->
+          <path class="body-fill" d="M168 372 L206 372 L202 520 Q200 530 190 530 L178 530 Q168 530 168 520 Z"/>
+          <path class="body-fill" d="M214 372 L252 372 L252 520 Q252 530 242 530 L230 530 Q220 530 218 520 Z"/>
+          <path class="body-fill" d="M170 552 L200 552 L196 650 Q194 658 186 658 L180 658 Q174 658 174 650 Z"/>
+          <path class="body-fill" d="M220 552 L250 552 L246 650 Q246 658 240 658 L234 658 Q226 658 224 650 Z"/>
+          <path class="body-fill" d="M172 664 L198 664 Q206 684 196 690 L160 690 Q154 684 172 664 Z"/>
+          <path class="body-fill" d="M222 664 L248 664 Q266 684 260 690 L224 690 Q214 684 222 664 Z"/>
+          <!-- joints -->
+          <circle class="joint" cx="150" cy="140" r="13"/><circle class="joint" cx="270" cy="140" r="13"/>
+          <circle class="joint" cx="124" cy="298" r="11"/><circle class="joint" cx="296" cy="298" r="11"/>
+          <circle class="joint" cx="186" cy="380" r="12"/><circle class="joint" cx="234" cy="380" r="12"/>
+          <circle class="joint" cx="186" cy="541" r="13"/><circle class="joint" cx="236" cy="541" r="13"/>
+          <circle class="joint" cx="186" cy="660" r="9"/><circle class="joint" cx="236" cy="660" r="9"/>
+          <path d="M210 132 L210 312" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 4"/>
+        </g>
+        <!-- leader labels -->
+        <g class="lbl">
+          <text x="252" y="40">cerebrum</text><text x="306" y="138">art. humeri</text><text x="26" y="200">pulmo</text>
+          <text x="300" y="218">cor</text><text x="20" y="306">art. cubiti</text><text x="324" y="262">columna</text>
+          <text x="40" y="386">art. coxae</text><text x="326" y="470">musculus</text><text x="60" y="545">art. genus</text><text x="288" y="660">art. talocruralis</text>
+        </g>
+        <g id="stations"></g>
+      </svg>
+      <div class="legend"><span><i style="background:var(--red)"></i>Diorama beschikbaar</span><span><i style="border:1.5px dashed var(--muted)"></i>Nog in ontwikkeling</span></div>
+    </figure>
+  </header>
+
+  <section id="haltes">
+    <div class="eyebrow">De route door het lichaam</div>
+    <h2>Tien haltes, van hoofd tot enkel</h2>
+    <p class="sub">Elke halte koppelt anatomie aan bewegen en sport. Halte 9, de knie, is als eerste uitgewerkt. De andere haltes volgen.</p>
+    <div class="filters">
+      <select id="fTheme" aria-label="Thema"><option value="">Alle thema’s</option><option>Bewegingsapparaat</option><option>Fysiologie</option><option>Biomechanica</option></select>
+      <select id="fBlok" aria-label="Blok"><option value="">Alle blokken</option><option value="1">Blok 1</option><option value="2">Blok 2</option><option value="3">Blok 3</option><option value="4">Blok 4</option></select>
+      <label style="font-size:14px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="fAvail"> Alleen beschikbaar</label>
+      <input id="fQ" type="search" placeholder="Zoeken, bijv. kruisband" aria-label="Zoeken">
+      <span class="count" id="count"></span>
+    </div>
+    <div class="stations" id="list"></div>
+  </section>
+
+  <section id="docenten">
+    <div class="eyebrow">Voor docenten</div>
+    <h2>Reisgids</h2>
+    <p class="sub">Elke diorama werkt op dezelfde manier: genummerde punten met uitleg, een speurtocht en een presentatiestand. Studenten hebben geen account nodig; de link is genoeg.</p>
+    <div class="grid3">
+      <div class="box"><div class="meta">Zelfstandig · ca. 10 min</div><h3>Verkennen</h3><p>Studenten draaien, zoomen en klikken op de punten. Elk punt heeft vier tabjes: uitleg, in de sport, weetje en denkvraag. Nederlandse én Latijnse namen staan erbij.</p>
+        <ul><li>Laat ze wisselen tussen rust, squat en landing.</li><li>Zet lagen uit (bijv. spieren) om de banden te zien.</li></ul></div>
+      <div class="box"><div class="meta">Tweetallen · 15–20 min</div><h3>Speurtocht</h3><p>Acht opdrachten die oplopen volgens RTTI: aanwijzen in het model, meerkeuzevragen met uitleg en een open slotvraag die de brug slaat naar de les LO.</p>
+        <ul><li>De speurtocht controleert zichzelf; er wordt niets opgeslagen.</li><li>Bespreek de slotvraag in de praktijkles.</li></ul></div>
+      <div class="box"><div class="meta">Hoorcollege · digibord</div><h3>Presentatiestand</h3><p>Volledig scherm, grote tekst en geluid. Loop met een clicker door de tabjes en van punt naar punt.</p>
+        <ul><li>Open met de camerarit (<kbd>C</kbd>).</li><li>Speel de landing in slow motion af en pauzeer met <kbd>Spatie</kbd>.</li></ul></div>
+    </div>
+    <table>
+      <thead><tr><th>Toets</th><th>Diorama</th></tr></thead>
+      <tbody>
+        <tr><td><kbd>→</kbd> <kbd>PageDown</kbd></td><td>Volgend tabje, daarna volgend punt (werkt met een presenter-clicker)</td></tr>
+        <tr><td><kbd>←</kbd> <kbd>PageUp</kbd></td><td>Vorig tabje of punt</td></tr>
+        <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Rust · Squat · Landing</td></tr>
+        <tr><td><kbd>Spatie</kbd></td><td>Beweging pauzeren of hervatten</td></tr>
+        <tr><td><kbd>Home</kbd></td><td>Terug naar het overzicht</td></tr>
+        <tr><td><kbd>C</kbd> · <kbd>R</kbd></td><td>Camerarit · röntgenbeeld</td></tr>
+        <tr><td><kbd>G</kbd> · <kbd>L</kbd></td><td>Geluid · labels (Stippen / Namen / Uit)</td></tr>
+        <tr><td><kbd>Esc</kbd></td><td>Paneel sluiten of presentatie stoppen</td></tr>
+      </tbody>
+    </table>
+    <p class="sub" style="margin-top:16px">Direct naar één punt linken kan ook, bijvoorbeeld <a href="knie.html#5">knie.html#5</a> opent meteen de voorste kruisband.</p>
+  </section>
+
+  <section id="privacy">
+    <div class="eyebrow">Privacy</div>
+    <h2>Veilig op reis</h2>
+    <div class="priv">
+      <div><b>Geen account</b>Studenten hoeven niet in te loggen.</div>
+      <div><b>Geen cookies</b>De atlas plaatst geen cookies.</div>
+      <div><b>Geen tracking</b>Geen analyse- of advertentiesoftware.</div>
+      <div><b>Niets bewaard</b>Antwoorden verdwijnen bij sluiten.</div>
+    </div>
+  </section>
+
+  <footer>Proof of concept · De Bewegingsatlas · Lettertypen via Google Fonts, 3D-techniek (three.js) via jsDelivr. Het kniemodel is een vereenvoudigde, didactische weergave.</footer>
+</div>
+
+<script>
+const STATIONS=[
+ {n:1,x:210,y:58,title:'Zenuwstelsel',sub:'Van prikkel tot beweging: de reflexboog',theme:'Fysiologie',blok:3},
+ {n:2,x:150,y:140,title:'Schouder',sub:'Het schoudergewricht en de rotator cuff',theme:'Bewegingsapparaat',blok:2},
+ {n:3,x:180,y:205,title:'Longen',sub:'Ademhaling bij inspanning',theme:'Fysiologie',blok:3},
+ {n:4,x:232,y:222,title:'Hart',sub:'Hart en bloedsomloop tijdens de bleeptest',theme:'Fysiologie',blok:3},
+ {n:5,x:124,y:298,title:'Elleboog',sub:'Hefbomen: biceps en triceps',theme:'Biomechanica',blok:2},
+ {n:6,x:210,y:280,title:'Wervelkolom',sub:'Wervels, tussenwervelschijven en tillen',theme:'Bewegingsapparaat',blok:2},
+ {n:7,x:186,y:380,title:'Heup en bekken',sub:'Kogelgewricht en bilspieren bij de sprint',theme:'Bewegingsapparaat',blok:1},
+ {n:8,x:236,y:450,title:'Spierweefsel',sub:'Van spiervezel tot sarcomeer',theme:'Fysiologie',blok:1},
+ {n:9,x:186,y:541,title:'De knie',sub:'Kruisbanden, menisci en de landing',theme:'Bewegingsapparaat',blok:1,url:'knie.html',
+  kind:'Diorama · 3D',what:'Rechterknie op een standaard in een gymzaal, met een sporter die meebeweegt in drie standen: rust, squat en een landing waarbij de voorste kruisband scheurt.',
+  goals:['Je benoemt de botten, banden, menisci en spieren van het kniegewricht, met Nederlandse en Latijnse naam.','Je legt uit welke structuur de knie stabiliseert in welke richting.','Je beschrijft het verschil tussen concentrisch en excentrisch spierwerk tijdens een squat.','Je verklaart het blessuremechanisme van een VKB-ruptuur en vertaalt dat naar een landingsinstructie voor de les LO.'],
+  tips:'Laat studenten eerst vrij verkennen in stand 1, analyseer daarna samen de squat en eindig met de landing in slow motion. Neem de slotvraag van de speurtocht mee naar de gymzaal: laat studenten elkaars landing filmen.'},
+ {n:10,x:186,y:660,title:'Enkel',sub:'Enkelverstuiking en de laterale banden',theme:'Bewegingsapparaat',blok:4},
+];
+const thumb=`<svg viewBox="0 0 200 150" aria-hidden="true"><ellipse cx="100" cy="132" rx="86" ry="12" fill="#000" opacity=".35"/><rect x="18" y="118" width="164" height="12" rx="2" fill="#c9965c"/><rect x="18" y="130" width="164" height="8" fill="#2a1d15"/>
+<rect x="88" y="10" width="20" height="58" rx="8" fill="#eadcbf"/><ellipse cx="90" cy="70" rx="12" ry="14" fill="#eadcbf"/><ellipse cx="106" cy="70" rx="12" ry="14" fill="#eadcbf"/>
+<path d="M80 16 Q72 40 86 62" stroke="#b3392c" stroke-width="12" fill="none" stroke-linecap="round"/><ellipse cx="114" cy="56" rx="7" ry="9" fill="#eadcbf"/>
+<path d="M96 70 L104 86" stroke="#ff5a3c" stroke-width="3"/><path d="M104 70 L95 86" stroke="#f2ecdf" stroke-width="3"/>
+<rect x="84" y="84" width="30" height="8" rx="3" fill="#eadcbf"/><rect x="90" y="92" width="18" height="24" rx="6" fill="#eadcbf"/><rect x="78" y="88" width="6" height="26" rx="3" fill="#eadcbf"/>
+<g transform="translate(150 84)"><circle cx="0" cy="0" r="5" fill="#cf9a74"/><rect x="-5" y="5" width="10" height="13" rx="4" fill="#2f7377"/><path d="M-3 18 L-5 26 L-3 34 M3 18 L5 26 L3 34" stroke="#cf9a74" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="-5" cy="26" r="4" fill="none" stroke="#ff6a4a" stroke-width="1.2"/></g></svg>`;
+const list=document.getElementById('list'),stG=document.getElementById('stations');
+function rowHTML(s){
+  if(!s.url)return `<div class="row off" data-n="${s.n}"><div class="num">${s.n}</div><div><div class="meta">Halte ${s.n} · ${s.theme} · Blok ${s.blok}</div><h3>${s.title}: ${s.sub}</h3><p>Terra incognita · nog in ontwikkeling</p></div></div>`;
+  return `<div class="row" data-n="${s.n}"><div class="num">${s.n}</div><div><div class="meta">Halte ${s.n} · ${s.theme} · Blok ${s.blok}</div><h3>${s.title}: ${s.sub}</h3><p>${s.what}</p>
+  <div class="card"><a class="thumb" href="${s.url}" aria-label="Open ${s.title}">${thumb}</a><div><div class="tags"><span class="tag kind">${s.kind}</span><span class="tag">Propedeuse</span><span class="tag">9 punten</span><span class="tag">Speurtocht · 8 opdrachten</span></div>
+  <details><summary>Leerdoelen en lestips</summary><ul>${s.goals.map(g=>`<li>${g}</li>`).join('')}</ul><p style="font-size:14px;margin-top:6px"><b>Lestip:</b> ${s.tips}</p></details></div>
+  <a class="open" href="${s.url}">Openen →</a></div></div></div>`;}
+function render(){const th=fTheme.value,bl=fBlok.value,av=fAvail.checked,q=fQ.value.trim().toLowerCase();
+  const vis=STATIONS.filter(s=>(!th||s.theme===th)&&(!bl||String(s.blok)===bl)&&(!av||s.url)&&(!q||(s.title+' '+s.sub+' '+(s.what||'')+' '+(s.goals||[]).join(' ')+(s.url?' kruisband meniscus vkb squat landing':'')).toLowerCase().includes(q)));
+  list.innerHTML=vis.map(rowHTML).join('')||'<p class="sub">Geen haltes gevonden.</p>';
+  const nd=vis.filter(s=>s.url).length;document.getElementById('count').textContent=`${vis.length} haltes · ${nd} diorama${nd===1?'':"'s"}`;
+  stG.querySelectorAll('.st').forEach(g=>g.style.opacity=vis.some(s=>s.n==g.dataset.n)?1:.25);}
+STATIONS.forEach(s=>{const g=document.createElementNS('http://www.w3.org/2000/svg','g');g.setAttribute('class','st'+(s.url?'':' off'));g.dataset.n=s.n;
+  g.innerHTML=`<circle class="ring" cx="${s.x}" cy="${s.y}" r="14"/><circle class="seal" cx="${s.x}" cy="${s.y}" r="14"/><text x="${s.x}" y="${s.y}">${s.n}</text><title>Halte ${s.n} · ${s.title}${s.url?'':' (nog niet beschikbaar)'}</title>`;
+  g.addEventListener('click',()=>{if(s.url){location.href=s.url;return;}const r=list.querySelector(`[data-n="${s.n}"]`);if(r){r.scrollIntoView({behavior:'smooth',block:'center'});r.classList.add('hl');setTimeout(()=>r.classList.remove('hl'),1600);}});
+  g.addEventListener('mouseenter',()=>{const r=list.querySelector(`[data-n="${s.n}"]`);if(r)r.classList.add('hl');});
+  g.addEventListener('mouseleave',()=>{const r=list.querySelector(`[data-n="${s.n}"]`);if(r)r.classList.remove('hl');});
+  stG.appendChild(g);});
+const fTheme=document.getElementById('fTheme'),fBlok=document.getElementById('fBlok'),fAvail=document.getElementById('fAvail'),fQ=document.getElementById('fQ');
+[fTheme,fBlok,fAvail,fQ].forEach(el=>el.addEventListener('input',render));
+render();
+</script>
+</body>
+</html>

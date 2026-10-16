@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>De knie · Bewegingsatlas</title>
+<meta name="description" content="3D-diorama van het kniegewricht voor de propedeuse ALO: botten, kruisbanden, menisci en spieren in rust, tijdens een squat en bij een landing met VKB-scheur.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg0:#2c3a42; --bg1:#0d1316;
+  --ink:#f1e9da; --muted:#aab3b4; --panel:rgba(15,20,23,.86); --panel2:rgba(24,31,35,.92);
+  --line:rgba(241,233,218,.14); --line2:rgba(241,233,218,.28);
+  --accent:#d65a42; --accent2:#f08a5d; --bone:#efe3c8; --ok:#7fc8a0; --bad:#e86a5a; --gold:#e6b65e;
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+#app{position:fixed;inset:0;background:radial-gradient(120% 90% at 55% 38%,var(--bg0) 0%,#18232a 55%,var(--bg1) 100%);transition:background .6s}
+body.xray #app{background:radial-gradient(120% 90% at 55% 40%,#0f2a3d 0%,#07131d 60%,#02070b 100%)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#c:active{cursor:grabbing}
+#vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(130% 100% at 50% 45%,transparent 55%,rgba(0,0,0,.55) 100%)}
+#flash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(80% 70% at 50% 50%,rgba(214,60,40,0) 30%,rgba(214,60,40,.45) 100%);opacity:0;transition:opacity .9s}
+
+/* ---------- header ---------- */
+#top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;z-index:5}
+#top>*{pointer-events:auto}
+.title a{color:var(--muted);text-decoration:none;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-family:"JetBrains Mono",monospace}
+.title a:hover{color:var(--ink)}
+.title h1{margin:2px 0 0;font-family:Fraunces,serif;font-weight:700;font-size:32px;letter-spacing:.02em;line-height:1.05;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.title p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.title p i{font-family:"JetBrains Mono",monospace;font-style:normal;font-size:12px;color:#c9c0ae}
+.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.seg{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:3px;gap:2px;backdrop-filter:blur(8px)}
+.seg button{border:0;background:none;padding:8px 12px;border-radius:7px;cursor:pointer;font-weight:600;font-size:13.5px;color:#d6cfc2;white-space:nowrap}
+.seg button kbd{font-family:"JetBrains Mono",monospace;font-size:10.5px;opacity:.6;margin-right:5px}
+.seg button.on{background:var(--bone);color:#1c1a17}
+.seg button:not(.on):hover{background:rgba(255,255,255,.07)}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);padding:9px 13px;border-radius:var(--r);cursor:pointer;font-weight:600;font-size:13.5px;backdrop-filter:blur(8px);white-space:nowrap}
+.btn:hover{border-color:var(--line2)}
+.btn.on{background:var(--bone);color:#1c1a17;border-color:var(--bone)}
+.btn svg{width:16px;height:16px;flex:none}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ---------- left menu ---------- */
+#left{position:absolute;left:16px;top:120px;display:flex;flex-direction:column;gap:6px;z-index:4;max-height:calc(100% - 300px);overflow:auto;padding-right:4px;scrollbar-width:none}
+#left::-webkit-scrollbar{display:none}
+#left h4{margin:8px 0 2px;font:600 11px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+#left .btn{padding:7px 11px;font-size:13px;justify-content:flex-start}
+.layer{display:flex;align-items:center;gap:8px;font-size:13px;padding:5px 10px;border-radius:8px;background:var(--panel);border:1px solid var(--line);cursor:pointer;user-select:none}
+.layer input{accent-color:var(--accent);margin:0}
+.layer i{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+/* ---------- markers ---------- */
+#markers{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
+.mk{position:absolute;left:0;top:0;pointer-events:auto;display:flex;align-items:center;gap:6px;border:0;background:none;padding:0;cursor:pointer;will-change:transform}
+.mk b{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:#fff;font:700 13px "Instrument Sans";box-shadow:0 0 0 3px rgba(214,90,66,.28),0 4px 12px rgba(0,0,0,.45);transition:transform .2s}
+.mk:hover b,.mk.on b{transform:scale(1.18);background:var(--bone);color:#1c1a17;box-shadow:0 0 0 4px rgba(239,227,200,.3),0 4px 14px rgba(0,0,0,.5)}
+.mk span{display:none;background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:6px;font-size:12.5px;font-weight:600;white-space:nowrap}
+body.lbl-names .mk span{display:block}
+body.lbl-off .mk:not(.q){display:none}
+.mk.q b{background:var(--gold);color:#1c1a17;box-shadow:0 0 0 4px rgba(230,182,94,.3),0 4px 12px rgba(0,0,0,.45);animation:pulse 1.6s infinite}
+.mk.q.right b{background:var(--ok);animation:none}
+.mk.q.wrong b{background:#6b6b6b;color:#ccc;animation:none}
+@keyframes pulse{50%{box-shadow:0 0 0 9px rgba(230,182,94,.0),0 4px 12px rgba(0,0,0,.45)}}
+body.quiz-on .mk:not(.q){opacity:.25;pointer-events:none}
+
+/* ---------- side panels ---------- */
+.panel{position:absolute;right:16px;top:120px;width:380px;max-height:calc(100% - 300px);display:none;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:14px;z-index:6;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.45);overflow:hidden}
+.panel.open{display:flex;animation:slidein .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes slidein{from{opacity:0;transform:translateX(16px)}}
+.ph{display:flex;gap:12px;align-items:flex-start;padding:16px 16px 10px}
+.ph .num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-weight:700}
+.ph h2{margin:0;font-family:Fraunces,serif;font-size:22px;line-height:1.15}
+.ph .lat{margin:3px 0 0;font:12px "JetBrains Mono",monospace;color:#c9b99a}
+.x{margin-left:auto;border:0;background:rgba(255,255,255,.06);width:30px;height:30px;border-radius:8px;cursor:pointer;flex:none;font-size:18px;line-height:1}
+.x:hover{background:rgba(255,255,255,.14)}
+.tabs{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:9px 8px 10px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-color:var(--accent)}
+.pb{padding:14px 16px 6px;overflow:auto;font-size:14.5px;line-height:1.58}
+.pb p{margin:0 0 10px}
+.pb .think{border-left:3px solid var(--gold);padding:8px 12px;background:rgba(230,182,94,.08);border-radius:0 8px 8px 0}
+.pb .tip{font-size:12.5px;color:var(--muted);margin-top:10px}
+.pf{display:flex;justify-content:space-between;align-items:center;padding:10px 16px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.pf button{border:1px solid var(--line);background:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:600;font-size:12.5px}
+.pf button:hover{border-color:var(--line2)}
+
+/* quiz */
+.qtag{display:inline-block;font:600 11px "JetBrains Mono",monospace;padding:3px 7px;border-radius:5px;background:rgba(230,182,94,.16);color:var(--gold);letter-spacing:.06em;margin-right:6px}
+.dots{display:flex;gap:5px;margin:2px 0 12px}
+.dots i{width:22px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
+.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--gold)}
+.qprompt{font-size:15.5px;font-weight:600;margin:0 0 12px;line-height:1.45}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opts button{text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.03);padding:10px 12px;border-radius:9px;cursor:pointer;font-size:14px;line-height:1.35}
+.opts button:hover:not(:disabled){border-color:var(--line2);background:rgba(255,255,255,.06)}
+.opts button b{font-family:"JetBrains Mono",monospace;margin-right:8px;color:var(--gold)}
+.opts button.right{border-color:var(--ok);background:rgba(127,200,160,.14)}
+.opts button.wrong{border-color:var(--bad);background:rgba(232,106,90,.12)}
+.fb{margin-top:12px;padding:10px 12px;border-radius:9px;background:rgba(255,255,255,.05);font-size:14px}
+.fb.ok{border-left:3px solid var(--ok)}.fb.no{border-left:3px solid var(--bad)}
+textarea{width:100%;min-height:110px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:9px;color:var(--ink);padding:10px;font:14px "Instrument Sans";resize:vertical}
+.hint{font-size:13px;color:var(--muted);margin:8px 0 0}
+
+/* ---------- HUD ---------- */
+#hud{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:16px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 16px;z-index:4;backdrop-filter:blur(10px);max-width:calc(100% - 32px)}
+#gauge{flex:none;display:flex;align-items:center;gap:8px}
+#gauge svg{width:58px;height:58px}
+#gauge .deg{font:700 26px Fraunces,serif;line-height:1}
+#gauge small{display:block;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em}
+#bars{display:grid;grid-template-columns:auto 110px auto;gap:3px 9px;align-items:center;font-size:12px}
+#bars .n{color:#d7cfc1;font-weight:600}
+#bars .bar{height:7px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+#bars .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:4px;transition:width .12s}
+#bars .m{font:11px "JetBrains Mono",monospace;color:var(--muted);min-width:92px}
+#bars .m.ecc{color:#f0a35d}#bars .m.con{color:#ff7a5f}#bars .m.iso{color:#e6d27a}
+#bars .acl i{background:var(--ok)}
+#cap{width:270px;font-size:13px;line-height:1.4}
+#cap b{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);font-family:"JetBrains Mono",monospace;margin-bottom:3px}
+#ctl{display:flex;gap:8px;align-items:center;margin-top:7px}
+#ctl input[type=range]{width:130px;accent-color:var(--accent)}
+#ctl button{border:1px solid var(--line);background:rgba(255,255,255,.05);padding:5px 9px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600}
+#hint{position:absolute;left:16px;bottom:16px;font-size:11.5px;color:rgba(241,233,218,.6);max-width:220px;line-height:1.5;z-index:2}
+
+/* ---------- overlays ---------- */
+#loader{position:absolute;inset:0;display:grid;place-items:center;z-index:20;background:var(--bg1);transition:opacity .7s}
+#loader.gone{opacity:0;pointer-events:none}
+#loader div{text-align:center}
+#loader h3{font-family:Fraunces,serif;font-size:26px;margin:14px 0 4px}
+#loader p{color:var(--muted);margin:0;font-size:14px}
+.spin{width:46px;height:46px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);margin:auto;animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(1turn)}}
+.modal{position:absolute;inset:0;background:rgba(5,8,10,.6);display:none;place-items:center;z-index:15;padding:16px}
+.modal.open{display:grid}
+.modal .card{background:var(--panel2);border:1px solid var(--line);border-radius:16px;max-width:620px;width:100%;max-height:90%;overflow:auto;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.modal h2{font-family:Fraunces,serif;margin:0 0 10px;font-size:26px}
+.modal h3{margin:18px 0 6px;font-size:15px}
+.modal p,.modal li{font-size:14.5px;line-height:1.55;color:#ddd5c6}
+.keys{width:100%;border-collapse:collapse;font-size:13.5px}
+.keys td{padding:5px 6px;border-bottom:1px solid var(--line)}
+.keys kbd,.modal kbd{font:600 12px "JetBrains Mono",monospace;background:rgba(255,255,255,.1);border-radius:5px;padding:2px 6px}
+#err{position:absolute;inset:0;display:none;place-items:center;z-index:30;background:var(--bg1);padding:24px;text-align:center}
+#err.open{display:grid}
+
+/* ---------- present mode ---------- */
+body.present #left,body.present #hint{display:none}
+body.present .title h1{font-size:42px}
+body.present .panel{width:520px;top:110px}
+body.present .pb{font-size:19px}
+body.present .ph h2{font-size:30px}
+body.present .tabs button{font-size:16px}
+body.present .mk b{width:34px;height:34px;font-size:16px}
+body.present .mk span{font-size:15px}
+body.present #cap{font-size:15px;max-width:320px}
+
+/* ---------- small screens ---------- */
+@media (max-width:820px){
+  .title h1{font-size:24px}
+  .title p{display:none}
+  #top{flex-direction:column}
+  .tools{justify-content:flex-start}
+  .btn .t{display:none}
+  .seg button{padding:7px 9px;font-size:12.5px}
+  #left{top:auto;bottom:150px;left:16px;right:16px;flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:2px}
+  #left h4{display:none}
+  #left .btn,.layer{flex:none}
+  .panel{left:16px;right:16px;width:auto;top:auto;bottom:16px;max-height:58%}
+  #hud{left:16px;right:16px;transform:none;flex-wrap:wrap;gap:8px 12px;padding:8px 12px;bottom:16px}
+  #bars{grid-template-columns:auto 70px auto}
+  #bars .m{min-width:0}
+  #cap{max-width:none;flex:1 1 100%}
+  #gauge svg{width:44px;height:44px}
+  #hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){.panel.open{animation:none}}
+</style>
+</head>
+<body class="lbl-dots">
+<div id="app">
+  <canvas id="c" aria-label="3D-diorama van het kniegewricht"></canvas>
+  <div id="vignette"></div>
+  <div id="flash"></div>
+  <div id="markers"></div>
+
+  <header id="top">
+    <div class="title">
+      <a href="index.html">← Bewegingsatlas · halte 9</a>
+      <h1>De knie</h1>
+      <p>Rechterknie · <i>articulatio genus</i> · een scharnier onder hoge belasting</p>
+    </div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Stand">
+        <button data-state="1" class="on"><kbd>1</kbd>Rust</button>
+        <button data-state="2"><kbd>2</kbd>Squat</button>
+        <button data-state="3"><kbd>3</kbd>Landing</button>
+      </div>
+      <button class="btn" id="bXray" title="Röntgen (R)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M12 6v12M9 9h6M9 13h6M10 17h4"/></svg><span class="t">Röntgen</span></button>
+      <button class="btn" id="bSound" title="Geluid (G)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
+      <button class="btn" id="bPresent" title="Presenteren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
+    </div>
+  </header>
+
+  <nav id="left" aria-label="Bediening">
+    <h4>Bekijk</h4>
+    <button class="btn" data-view="overzicht">Overzicht</button>
+    <button class="btn" data-view="voor">Voorkant</button>
+    <button class="btn" data-view="zij">Binnenkant</button>
+    <button class="btn" data-view="achter">Achterkant</button>
+    <button class="btn" data-view="gewricht">In het gewricht</button>
+    <button class="btn" data-view="sporter">De sporter</button>
+    <h4>Lagen</h4>
+    <label class="layer"><input type="checkbox" data-layer="bone" checked><i style="background:#e9dcc0"></i>Botten</label>
+    <label class="layer"><input type="checkbox" data-layer="cart" checked><i style="background:#9fc3d3"></i>Kraakbeen &amp; menisci</label>
+    <label class="layer"><input type="checkbox" data-layer="lig" checked><i style="background:#f4efe2"></i>Banden</label>
+    <label class="layer"><input type="checkbox" data-layer="mus" checked><i style="background:#b8402f"></i>Spieren &amp; pezen</label>
+    <h4>Doen</h4>
+    <button class="btn accent" id="bQuiz">Speurtocht</button>
+    <button class="btn" id="bHelp">Uitleg</button>
+    <button class="btn" id="bLabels">Labels: Stippen</button>
+    <button class="btn" id="bQual">Beeld: Mooi</button>
+  </nav>
+
+  <aside class="panel" id="info" aria-live="polite">
+    <div class="ph"><div class="num" id="iNum">1</div><div><h2 id="iTitle"></h2><p class="lat" id="iLat"></p></div><button class="x" id="iClose" aria-label="Sluiten">×</button></div>
+    <div class="tabs" id="iTabs"><button data-tab="0" class="on">Uitleg</button><button data-tab="1">In de sport</button><button data-tab="2">Weetje</button><button data-tab="3">Denkvraag</button></div>
+    <div class="pb" id="iBody"></div>
+    <div class="pf"><button id="iPrev">← Vorige</button><span id="iPos">1 / 9</span><button id="iNext">Volgende →</button></div>
+  </aside>
+
+  <aside class="panel" id="quiz">
+    <div class="ph"><div class="num" style="background:var(--gold);color:#1c1a17">?</div><div><h2>Speurtocht</h2><p class="lat">8 opdrachten · van zoeken tot nadenken</p></div><button class="x" id="qClose" aria-label="Sluiten">×</button></div>
+    <div class="pb" id="qBody"></div>
+    <div class="pf"><span id="qPos"></span><button id="qNext" disabled>Volgende →</button></div>
+  </aside>
+
+  <div id="hud">
+    <div id="gauge">
+      <svg viewBox="0 0 60 60" aria-hidden="true"><circle cx="30" cy="30" r="27" fill="rgba(255,255,255,.04)" stroke="rgba(255,255,255,.12)"/><path id="gArc" fill="rgba(214,90,66,.35)"/><line x1="30" y1="30" x2="30" y2="6" stroke="#efe3c8" stroke-width="5" stroke-linecap="round"/><line id="gTib" x1="30" y1="30" x2="30" y2="54" stroke="#efe3c8" stroke-width="5" stroke-linecap="round"/><circle cx="30" cy="30" r="4.5" fill="#d65a42"/></svg>
+      <div><small>KNIEHOEK</small><span class="deg" id="gDeg">0°</span></div>
+    </div>
+    <div id="bars">
+      <span class="n">Quadriceps</span><span class="bar"><i id="bQ"></i></span><span class="m" id="mQ">rust</span>
+      <span class="n">Hamstrings</span><span class="bar"><i id="bH"></i></span><span class="m" id="mH">rust</span>
+      <span class="n">Kuitspier</span><span class="bar"><i id="bG"></i></span><span class="m" id="mG">rust</span>
+      <span class="n">Spanning VKB</span><span class="bar acl"><i id="bA"></i></span><span class="m" id="mA">–</span>
+    </div>
+    <div id="cap"><b id="capT">Stand 1 · Rust</b><span id="capX">Draai om het model en klik op een genummerd punt.</span>
+      <div id="ctl"></div>
+    </div>
+  </div>
+  <div id="hint">Sleep om te draaien · scroll of knijp om te zoomen · rechtermuisknop of twee vingers om te schuiven · klik op een genummerd punt</div>
+
+  <div class="modal" id="help"><div class="card">
+    <h2>Zo werkt de diorama</h2>
+    <p>Je kijkt naar een vergrote <b>rechterknie</b> op een standaard, midden in een gymzaal. Rechts op de vloer staat een sporter: zijn rechterknie beweegt precies zoals het grote model. Zo zie je wat er <i>binnen</i> in de knie gebeurt terwijl iemand beweegt.</p>
+    <h3>Drie standen</h3>
+    <ul>
+      <li><b>1 · Rust</b>: rustig staan. Verken de onderdelen.</li>
+      <li><b>2 · Squat</b>: de knie buigt tot ongeveer 100°. Let op de balkjes: welke spier werkt excentrisch, welke concentrisch? Met de schuif stuur je de kniehoek zelf.</li>
+      <li><b>3 · Landing</b>: een sprong met een slechte landing. De knie klapt naar binnen en de voorste kruisband scheurt.</li>
+    </ul>
+    <h3>Kleuren</h3>
+    <p>Banden kleuren mee met hun spanning: <span style="color:#bdb6a6">grijs = slap</span>, wit = op spanning, <span style="color:#ff6a50">rood = overrekt</span>. Spieren gloeien op als ze aanspannen; de streepjes schuiven mee als de spier langer of korter wordt.</p>
+    <h3>Sneltoetsen</h3>
+    <table class="keys">
+      <tr><td><kbd>→</kbd> <kbd>PageDown</kbd></td><td>Volgend tabje, daarna volgend punt (werkt met een clicker)</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>PageUp</kbd></td><td>Vorig tabje of punt</td></tr>
+      <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Rust · Squat · Landing</td></tr>
+      <tr><td><kbd>Spatie</kbd></td><td>Beweging pauzeren of hervatten</td></tr>
+      <tr><td><kbd>Home</kbd></td><td>Terug naar het overzicht</td></tr>
+      <tr><td><kbd>C</kbd></td><td>Camerarit aan of uit</td></tr>
+      <tr><td><kbd>R</kbd></td><td>Röntgenbeeld</td></tr>
+      <tr><td><kbd>G</kbd> · <kbd>L</kbd></td><td>Geluid · labels (Stippen / Namen / Uit)</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Paneel sluiten of presentatie stoppen</td></tr>
+    </table>
+    <p style="margin-top:16px"><button class="btn accent" id="helpClose">Aan de slag</button></p>
+    <p class="hint">Let op: dit is een vereenvoudigd didactisch model. Vormen en verhoudingen zijn benaderd.</p>
+  </div></div>
+
+  <div id="loader"><div><div class="spin"></div><h3>De knie wordt opgebouwd…</h3><p>Botten, banden en spieren op hun plek zetten</p></div></div>
+  <div id="err"><div><h2 style="font-family:Fraunces,serif">Het 3D-beeld werkt niet</h2><p id="errMsg" style="color:var(--muted);max-width:460px;margin:8px auto 16px">Je browser kon de 3D-weergave niet starten.</p><button class="btn accent" onclick="location.reload()">Opnieuw laden</button></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+window.__err=function(msg){const e=document.getElementById('err');document.getElementById('errMsg').textContent=msg;e.classList.add('open');document.getElementById('loader').classList.add('gone');};
+window.addEventListener('error',function(ev){if(!window.THREE)window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding en laad opnieuw.');});
+</script>
+<script>
+(function(){
+"use strict";
+if(!window.THREE||!THREE.OrbitControls){window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding en laad opnieuw.');return;}
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t);};
+const ease=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const D2R=Math.PI/180;
+const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}}
+const R=mulberry32(9);
+const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const AX=V(1,0,0),AY=V(0,1,0),AZ=V(0,0,1);
+
+/* =========================================================
+   Renderer, scene, camera
+   ========================================================= */
+const canvas=$('#c');
+let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}
+catch(e){window.__err('Je browser of grafische kaart ondersteunt geen WebGL. Probeer Chrome of Edge.');return;}
+canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();window.__err('De grafische kaart heeft de 3D-weergave gestopt. Sluit andere tabbladen en laad opnieuw.');});
+renderer.setClearColor(0x000000,0);
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.08;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x17222a,38,95);
+const camera=new THREE.PerspectiveCamera(36,1,0.1,300);
+camera.position.set(14,11,18);
+const controls=new THREE.OrbitControls(camera,canvas);
+controls.enableDamping=true;controls.dampingFactor=.08;
+controls.minDistance=2.5;controls.maxDistance=60;controls.maxPolarAngle=1.62;
+controls.target.set(1.2,3.8,0);
+
+const hemi=new THREE.HemisphereLight(0xdfe9f0,0x2a2018,.55);scene.add(hemi);
+const key=new THREE.DirectionalLight(0xfff1dc,1.25);
+key.position.set(9,17,11);key.castShadow=true;key.shadow.mapSize.set(2048,2048);
+Object.assign(key.shadow.camera,{left:-13,right:13,top:13,bottom:-6,near:2,far:50});
+key.shadow.bias=-.0006;key.shadow.normalBias=.03;
+scene.add(key);
+const rim=new THREE.DirectionalLight(0x9cc4ff,.55);rim.position.set(-10,8,-12);scene.add(rim);
+const fill=new THREE.DirectionalLight(0xffd7b0,.25);fill.position.set(-8,3,10);scene.add(fill);
+const popLight=new THREE.PointLight(0xff4a30,0,7,2);scene.add(popLight);
+
+/* =========================================================
+   Procedural textures
+   ========================================================= */
+function canvasTex(w,h,draw,rep,srgb=true){const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');draw(x,w,h);const t=new THREE.CanvasTexture(c);if(srgb)t.encoding=THREE.sRGBEncoding;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=4;if(rep)t.repeat.set(rep[0],rep[1]);return t;}
+const boneTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);
+  for(let i=0;i<2400;i++){const v=170+R()*60|0;x.fillStyle=`rgba(${v},${v-12},${v-34},${.06+R()*.14})`;x.beginPath();x.arc(R()*w,R()*h,R()*2.6+.4,0,7);x.fill();}
+  for(let i=0;i<40;i++){x.strokeStyle=`rgba(150,120,80,${.05+R()*.06})`;x.lineWidth=1;x.beginPath();let px=R()*w,py=R()*h;x.moveTo(px,py);for(let k=0;k<6;k++){px+=R()*14-7;py+=R()*22;x.lineTo(px,py);}x.stroke();}
+},[2,2]);
+function fiberDraw(base,dark,lite){return (x,w,h)=>{x.fillStyle=base;x.fillRect(0,0,w,h);
+  for(let i=0;i<w;i+=2){x.fillStyle=R()<.5?dark:lite;x.globalAlpha=.15+R()*.35;x.fillRect(i,0,1+(R()*1.6|0),h);}
+  x.globalAlpha=.16;x.fillStyle='#000';for(let y=0;y<h;y+=16)x.fillRect(0,y,w,3);x.globalAlpha=1;};}
+const muscleTexBase=canvasTex(256,128,fiberDraw('#ffffff','#7a1a12','#ffd0c4'),[6,3]);
+const ligTex=canvasTex(128,128,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=2){x.fillStyle=R()<.5?'#b9b2a2':'#ffffff';x.globalAlpha=.25+R()*.4;x.fillRect(i,0,1,h);}x.globalAlpha=1;},[3,1]);
+const floorTex=canvasTex(1024,672,(x,w,h)=>{
+  const pw=42;for(let y=0;y<h;y+=pw){let xx=-R()*200;while(xx<w){const L=180+R()*260;const v=R();x.fillStyle=`hsl(${30+v*8},${48+v*10}%,${54+v*9}%)`;x.fillRect(xx,y,L,pw);
+    x.globalAlpha=.12;for(let g=0;g<5;g++){x.fillStyle=R()<.5?'#6b3f1b':'#fff2d6';x.fillRect(xx,y+R()*pw,L,1+R()*1.5);}x.globalAlpha=1;
+    x.fillStyle='rgba(60,32,12,.55)';x.fillRect(xx,y,1.5,pw);xx+=L;}
+    x.fillStyle='rgba(60,32,12,.5)';x.fillRect(0,y,w,1.5);}
+  // court lines
+  x.lineWidth=7;x.strokeStyle='#e7e2d6';x.globalAlpha=.9;
+  x.strokeRect(30,30,w-60,h-60);
+  x.beginPath();x.moveTo(w*.62,30);x.lineTo(w*.62,h-30);x.stroke();
+  x.strokeStyle='#d06b2c';x.beginPath();x.arc(w*.62,h/2,95,0,Math.PI*2);x.stroke();
+  x.strokeStyle='#2f6f9a';x.beginPath();x.arc(30,h/2,250,-Math.PI/2,Math.PI/2);x.stroke();
+  x.strokeStyle='#d06b2c';x.strokeRect(30,h/2-75,170,150);
+  x.globalAlpha=1;
+  // varnish sheen
+  const g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,'rgba(255,255,255,.06)');g.addColorStop(1,'rgba(0,0,0,.08)');x.fillStyle=g;x.fillRect(0,0,w,h);
+});
+floorTex.wrapS=floorTex.wrapT=THREE.ClampToEdgeWrapping;
+const plaqueTex=canvasTex(1024,180,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#d8b46a');g.addColorStop(.5,'#b48b42');g.addColorStop(1,'#8f6a2e');x.fillStyle=g;x.fillRect(0,0,w,h);
+  x.strokeStyle='rgba(60,40,10,.6)';x.lineWidth=4;x.strokeRect(10,10,w-20,h-20);
+  x.fillStyle='#3b2a10';x.textAlign='center';x.font='700 64px Georgia,serif';x.fillText('ARTICULATIO GENUS',w/2,92);
+  x.font='italic 34px Georgia,serif';x.fillText('het kniegewricht · rechterbeen · vergroot ca. 4×',w/2,146);});
+plaqueTex.wrapS=plaqueTex.wrapT=THREE.ClampToEdgeWrapping;
+
+/* =========================================================
+   Materials (per structure, so we can dim / highlight)
+   ========================================================= */
+const REG={};          // key -> materials
+const ALL=[];          // meshes with userData {key, layer}
+function smat(key,o){const m=new THREE.MeshStandardMaterial(Object.assign({roughness:.7,metalness:0},o));m.userData.key=key;(REG[key]=REG[key]||[]).push(m);m.userData.baseEm=new THREE.Color(0,0,0);return m;}
+function mesh(geo,mat,pos,rot,scl,parent){const m=new THREE.Mesh(geo,mat);if(pos)m.position.set(pos[0],pos[1],pos[2]);if(rot)m.rotation.set(rot[0],rot[1],rot[2]);if(scl)m.scale.set(scl[0],scl[1],scl[2]);m.castShadow=true;m.receiveShadow=true;if(parent)parent.add(m);return m;}
+function tag(m,key,layer){m.userData.key=key;m.userData.layer=layer;m.userData.mat=m.material;ALL.push(m);return m;}
+
+const BONE={color:0xeadcbf,roughness:.72,map:boneTex};
+const M={
+  femur:smat('femur',BONE), patella:smat('patella',BONE), tibia:smat('tibia',BONE),
+  cartF:smat('cartF',{color:0xbdd5dd,roughness:.3}), cartT:smat('cart',{color:0xbdd5dd,roughness:.3}), cartP:smat('patella',{color:0xbdd5dd,roughness:.3}),
+  meni:smat('menisci',{color:0xd5dde0,roughness:.4}),
+  marrow:smat('femur',{color:0xa8553f,roughness:.8}), marrowT:smat('tibia',{color:0xa8553f,roughness:.8}),
+  acl:smat('acl',{color:0xf2ecdf,roughness:.38,map:ligTex}), pcl:smat('pcl',{color:0xf2ecdf,roughness:.38,map:ligTex}),
+  mcl:smat('coll',{color:0xf2ecdf,roughness:.38,map:ligTex}), lcl:smat('coll',{color:0xf2ecdf,roughness:.38,map:ligTex}),
+  tendQ:smat('quad',{color:0xf0ebdf,roughness:.35,map:ligTex}), tendH:smat('ham',{color:0xf0ebdf,roughness:.35,map:ligTex}),
+  swell:new THREE.MeshStandardMaterial({color:0xb02c26,roughness:.3,transparent:true,opacity:0,depthWrite:false}),
+};
+function muscleMat(key,col){const t=muscleTexBase.clone();t.needsUpdate=true;return smat(key,{color:col,roughness:.55,map:t});}
+const ENV={
+  base:new THREE.MeshStandardMaterial({color:0x2a1d15,roughness:.65}),
+  baseEdge:new THREE.MeshStandardMaterial({color:0x1a120d,roughness:.5}),
+  floor:new THREE.MeshStandardMaterial({map:floorTex,roughness:.42}),
+  metal:new THREE.MeshStandardMaterial({color:0x50565c,metalness:.85,roughness:.32}),
+  brass:new THREE.MeshStandardMaterial({map:plaqueTex,metalness:.6,roughness:.35}),
+  mat:new THREE.MeshStandardMaterial({color:0x2c5d9a,roughness:.85}),
+  matEdge:new THREE.MeshStandardMaterial({color:0x234a7a,roughness:.85}),
+  wood:new THREE.MeshStandardMaterial({color:0xb98a55,roughness:.6}),
+  woodD:new THREE.MeshStandardMaterial({color:0x7d5632,roughness:.6}),
+  cone:new THREE.MeshStandardMaterial({color:0xf07a2a,roughness:.5}),
+  ball:new THREE.MeshStandardMaterial({color:0xd9692a,roughness:.7}),
+  ballLine:new THREE.MeshStandardMaterial({color:0x2a1a12,roughness:.7}),
+};
+
+/* =========================================================
+   Diorama base: museum plinth with a sports-hall floor
+   ========================================================= */
+const world=new THREE.Group();scene.add(world);
+mesh(new THREE.BoxGeometry(18.6,1.1,12.6),ENV.base,[0,-.55,0],0,0,world);
+mesh(new THREE.BoxGeometry(19.2,.22,13.2),ENV.baseEdge,[0,-1.0,0],0,0,world);
+const floor=mesh(new THREE.BoxGeometry(17.6,.08,11.6),[ENV.base,ENV.base,ENV.floor,ENV.base,ENV.base,ENV.base],[0,.04,0],0,0,world);
+floor.castShadow=false;
+const plaque=mesh(new THREE.BoxGeometry(5.2,.9,.06),[ENV.metal,ENV.metal,ENV.metal,ENV.metal,ENV.brass,ENV.metal],[0,-.55,6.33],0,0,world);
+// gym mat where the athlete lands
+mesh(new THREE.BoxGeometry(3.4,.16,2.4),ENV.mat,[5.4,.16,1.5],0,0,world);
+mesh(new THREE.BoxGeometry(3.44,.04,2.44),ENV.matEdge,[5.4,.1,1.5],0,0,world);
+// swedish bench
+(function(){const g=new THREE.Group();g.position.set(5.6,0,-3.4);world.add(g);
+  mesh(new THREE.BoxGeometry(4.2,.09,.42),ENV.wood,[0,.62,0],0,0,g);
+  mesh(new THREE.BoxGeometry(3.9,.06,.12),ENV.woodD,[0,.26,0],0,0,g);
+  [-1.7,1.7].forEach(x=>{mesh(new THREE.BoxGeometry(.12,.58,.5),ENV.woodD,[x,.3,0],0,0,g);});})();
+// cones and a ball
+[[-6.8,3.6],[-5.6,4.4],[-7.6,2.2]].forEach(p=>{mesh(new THREE.ConeGeometry(.22,.55,18),ENV.cone,[p[0],.36,p[1]],0,0,world);mesh(new THREE.CylinderGeometry(.3,.3,.05,4),ENV.cone,[p[0],.1,p[1]],[0,Math.PI/4,0],0,world);});
+(function(){const b=mesh(new THREE.SphereGeometry(.38,28,18),ENV.ball,[-6.3,.46,-3.2],0,0,world);
+  const l1=new THREE.TorusGeometry(.381,.012,6,40);b.add(new THREE.Mesh(l1,ENV.ballLine));const m2=new THREE.Mesh(l1,ENV.ballLine);m2.rotation.y=Math.PI/2;b.add(m2);const m3=new THREE.Mesh(l1,ENV.ballLine);m3.rotation.x=Math.PI/2;b.add(m3);})();
+
+/* =========================================================
+   The knee model
+   ========================================================= */
+const Cc=V(0,5.05,-.12);            // femoral condyle centre = pivot
+const knee=new THREE.Group();world.add(knee);
+const femur=new THREE.Group();knee.add(femur);
+const tib=new THREE.Group();knee.add(tib);tib.position.copy(Cc);
+const T=(x,y,z)=>[x-Cc.x,y-Cc.y,z-Cc.z];       // world-at-0° -> tibia local
+
+// --- stand
+mesh(new THREE.CylinderGeometry(.75,.85,.14,32),ENV.metal,[-2.6,.15,-1.7],0,0,world);
+mesh(new THREE.CylinderGeometry(.07,.07,9.2,14),ENV.metal,[-2.6,4.75,-1.7],0,0,world);
+(function(){const a=V(-2.6,9.35,-1.7),b=V(-.42,9.35,-.24);const d=b.clone().sub(a);const m=mesh(new THREE.CylinderGeometry(.06,.06,d.length(),12),ENV.metal,0,0,0,world);m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(AY,d.normalize());})();
+mesh(new THREE.TorusGeometry(.47,.07,10,36),ENV.metal,[0,9.35,0],[Math.PI/2,0,0],0,world);
+mesh(new THREE.SphereGeometry(.12,12,10),ENV.metal,[-2.6,9.38,-1.7],0,0,world);
+
+// --- femur (fixed)
+tag(mesh(new THREE.CylinderGeometry(.4,.44,3.7,32),M.femur,[0,7.75,0],0,[1,1,.94],femur),'femur','bone');
+tag(mesh(new THREE.CylinderGeometry(.44,.76,.95,32),M.femur,[0,5.43,-.02],0,[1,1,.72],femur),'femur','bone');
+tag(mesh(new THREE.SphereGeometry(.52,32,22),M.femur,[-.5,5.05,-.12],0,[.62,1,1.05],femur),'femur','bone');
+tag(mesh(new THREE.SphereGeometry(.52,32,22),M.femur,[.5,5.03,-.12],0,[.65,1.02,1.07],femur),'femur','bone');
+tag(mesh(new THREE.SphereGeometry(.14,16,12),M.femur,[-.82,5.27,-.1],0,0,femur),'femur','bone');
+tag(mesh(new THREE.SphereGeometry(.15,16,12),M.femur,[.83,5.27,-.1],0,0,femur),'femur','bone');
+// trochlea (front groove surface)
+tag(mesh(new THREE.CylinderGeometry(.42,.42,1.05,28,1,false,-.9,1.8),M.cartF,[0,5.3,.0],[0,0,Math.PI/2],[1,1,1.02],femur),'cartF','cart');
+// articular cartilage on condyles
+const capGeo=new THREE.SphereGeometry(.53,30,16,0,Math.PI*2,Math.PI*.4,Math.PI*.6);
+tag(mesh(capGeo,M.cartF,[-.5,5.04,-.12],[.25,0,0],[.64,1,1.07],femur),'cartF','cart');
+tag(mesh(capGeo,M.cartF,[.5,5.02,-.12],[.25,0,0],[.67,1.02,1.09],femur),'cartF','cart');
+// cut surface (marrow) on top
+tag(mesh(new THREE.CylinderGeometry(.27,.27,.02,28),M.marrow,[0,9.61,0],0,0,femur),'femur','bone');
+
+// --- tibia + fibula (moving)
+tag(mesh(new THREE.CylinderGeometry(.86,.8,.3,36),M.tibia,T(0,4.33,0),0,[1,1,.74],tib),'tibia','bone');
+tag(mesh(new THREE.CylinderGeometry(.8,.42,1.0,32),M.tibia,T(0,3.68,0),0,[1,1,.74],tib),'tibia','bone');
+tag(mesh(new THREE.CylinderGeometry(.42,.34,2.6,28),M.tibia,T(0,1.88,.03),0,[1,1,.9],tib),'tibia','bone');
+tag(mesh(new THREE.SphereGeometry(.2,16,12),M.tibia,T(0,3.86,.44),0,[1,1.3,.7],tib),'tibia','bone');
+[-.09,.09].forEach(x=>tag(mesh(new THREE.ConeGeometry(.07,.15,10),M.tibia,T(x,4.55,0),0,0,tib),'tibia','bone'));
+tag(mesh(new THREE.CylinderGeometry(.8,.8,.04,36),M.cartT,T(0,4.495,0),0,[1,1,.7],tib),'cart','cart');
+tag(mesh(new THREE.CylinderGeometry(.3,.3,.02,24),M.marrowT,T(0,.575,.03),0,[1,1,.9],tib),'tibia','bone');
+tag(mesh(new THREE.SphereGeometry(.19,16,12),M.tibia,T(-.73,3.98,-.3),0,[1,1.1,1],tib),'tibia','bone');
+tag(mesh(new THREE.CylinderGeometry(.11,.09,3.3,14),M.tibia,T(-.7,2.31,-.27),0,0,tib),'tibia','bone');
+tag(mesh(new THREE.CylinderGeometry(.08,.08,.02,14),M.marrowT,T(-.7,.655,-.27),0,0,tib),'tibia','bone');
+
+// --- menisci (C-shaped medial, O-shaped lateral)
+function meniscus(x,R0,tube,gapCentre,gap){const arc=Math.PI*2-gap;const g=new THREE.TorusGeometry(R0,tube,10,48,arc);
+  const m=mesh(g,M.meni,T(x,4.545,0),[-Math.PI/2,0,gapCentre+gap/2],[1,.78,.62],tib);return tag(m,'menisci','cart');}
+const meniMed=meniscus(.42,.31,.095,Math.PI,110*D2R);
+const meniLat=meniscus(-.42,.28,.09,0,62*D2R);
+
+// --- patella
+const pat=new THREE.Group();knee.add(pat);
+tag(mesh(new THREE.SphereGeometry(.4,32,22),M.patella,[0,0,0],0,[1,1.12,.44],pat),'patella','bone');
+tag(mesh(new THREE.SphereGeometry(.37,28,18,0,Math.PI*2,0,Math.PI*.5),M.cartP,[0,0,-.03],[-Math.PI/2,0,0],[.95,.4,1.05],pat),'patella','cart');
+
+// --- swelling (haemarthros)
+const swell=new THREE.Mesh(new THREE.SphereGeometry(1,32,22),M.swell);swell.position.set(0,4.95,.15);swell.scale.set(.01,.01,.01);knee.add(swell);
+
+/* ---------- bands, tendons and muscles ---------- */
+const BAND=new THREE.CylinderGeometry(1,1,1,14,1);BAND.translate(0,.5,0);
+const _x=V(0,0,0),_y=V(0,0,0),_z=V(0,0,0),_m=new THREE.Matrix4();
+function orient(m,a,b,w,d,ref){_y.subVectors(b,a);const L=_y.length()||1e-4;_y.divideScalar(L);
+  const r=ref||AX;_z.copy(r).addScaledVector(_y,-r.dot(_y));if(_z.lengthSq()<1e-6){_z.set(0,0,1).addScaledVector(_y,-_y.z);}
+  _z.normalize();_x.crossVectors(_y,_z);_m.makeBasis(_x,_y,_z);m.quaternion.setFromRotationMatrix(_m);m.position.copy(a);m.scale.set(w,L,d);return L;}
+function band(mat,key,layer){const m=mesh(BAND,mat,0,0,0,knee);return tag(m,key,layer);}
+
+// muscle belly: spindle, length 1 along +y, max radius 1
+const SPINDLE=(function(){const p=[new THREE.Vector2(0,0)];const N=28;for(let i=0;i<=N;i++){const t=i/N;let r=Math.pow(Math.sin(Math.PI*Math.pow(t,.9)),.75);r=Math.max(r,.16);p.push(new THREE.Vector2(r,t));}p.push(new THREE.Vector2(0,1));return new THREE.LatheGeometry(p,22);})();
+const MUS=[];
+function muscle(key,col,radius,flat){const mat=muscleMat(key,col);const m=tag(mesh(SPINDLE,mat,0,0,0,knee),key,'mus');const o={m,mat,radius,flat:flat||1,rest:0,len:0,act:0,mode:'rust',grp:''};MUS.push(o);return o;}
+
+// attachment points (world, knee straight)
+const P={
+  aclF:V(-.2,4.86,-.33), aclT:V(.06,4.51,.24),
+  pclF:V(.18,4.86,.06), pclT:V(-.02,4.2,-.55),
+  mclF:V(.86,5.22,-.1), mclT:V(.58,3.42,.05),
+  lclF:V(-.86,5.22,-.12), lclT:V(-.75,4.12,-.3),
+  tub:V(0,3.84,.56),
+  bfIns:V(-.82,3.98,-.38), smIns:V(.56,3.72,-.36),
+  gasIns:V(0,.85,-.98),
+};
+const TL={};['aclT','pclT','mclT','lclT','tub','bfIns','smIns','gasIns'].forEach(k=>TL[k]=P[k].clone().sub(Cc));
+const W={};Object.keys(P).forEach(k=>W[k]=P[k].clone());
+
+// cruciate ligaments as twisted strands
+function strands(n,mat,key,r){const s=[];for(let i=0;i<n;i++){s.push({m:band(mat,key,'lig'),r,ang:i/n*Math.PI*2,f:.35+R()*.3,a:V(0,0,0),b:V(0,0,0),s2:band(mat,key,'lig')});}s.forEach(o=>o.s2.visible=false);return s;}
+const ACL=strands(6,M.acl,'acl',.034), PCL=strands(5,M.pcl,'pcl',.045);
+const MCL=band(M.mcl,'coll','lig'), LCL=band(M.lcl,'coll','lig');
+const QT=band(M.tendQ,'quad','mus'), PT=band(M.tendQ,'quad','mus');
+const BFT=band(M.tendH,'ham','mus'), SMT=band(M.tendH,'ham','mus'), GT=band(M.tendH,'ham','mus');
+const RF=muscle('quad',0xb3392c,.36), VL=muscle('quad',0xa8352a,.4,.82), VM=muscle('quad',0xb53d2f,.36);
+const BF=muscle('ham',0xa23328,.3), SM=muscle('ham',0x9e3127,.32);
+const GL=muscle('ham',0xae382b,.27), GM=muscle('ham',0xb13a2d,.29);
+RF.grp=VL.grp=VM.grp='Q';BF.grp=SM.grp='H';GL.grp=GM.grp='G';
+const ORI={RF:V(0,9.75,.72),VL:V(-.66,9.2,.22),VM:V(.52,7.5,.42),BF:V(-.38,9.8,-1.1),SM:V(.3,9.8,-1.1),GL:V(-.5,5.42,-.78),GM:V(.5,5.47,-.8)};
+const VIA={BF:V(-.76,5.75,-.86),SM:V(.68,5.7,-.86)};
+
+/* =========================================================
+   Athlete figure (synchronised with the big knee)
+   ========================================================= */
+const FIG={a:.6,b:.58,ankH:.09};
+const fig=(function(){
+  const sk=new THREE.MeshStandardMaterial({color:0xcf9a74,roughness:.6}),
+        shirt=new THREE.MeshStandardMaterial({color:0x2f7377,roughness:.75}),
+        shorts=new THREE.MeshStandardMaterial({color:0x1f2a44,roughness:.8}),
+        shoe=new THREE.MeshStandardMaterial({color:0xf3f1ec,roughness:.5}),
+        sole=new THREE.MeshStandardMaterial({color:0xd0442e,roughness:.6}),
+        hair=new THREE.MeshStandardMaterial({color:0x2b1d14,roughness:.9}),
+        ringM=new THREE.MeshBasicMaterial({color:0xff6a4a,transparent:true,opacity:.9});
+  const C=(r,l)=>new THREE.CapsuleGeometry(r,l,4,12);
+  const root=new THREE.Group();root.position.set(5.4,.24,1.5);world.add(root);
+  const pelvis=new THREE.Group();root.add(pelvis);
+  mesh(C(.13,.16),shorts,[0,0,0],[0,0,Math.PI/2],[1,1,.85],pelvis);
+  const torso=new THREE.Group();torso.position.y=.04;pelvis.add(torso);
+  mesh(C(.12,.22),shirt,[0,.2,0],0,[1.05,1,.8],torso);
+  mesh(C(.15,.2),shirt,[0,.47,0],[0,0,Math.PI/2],[1,1.05,.72],torso);
+  mesh(new THREE.CylinderGeometry(.05,.055,.1,10),sk,[0,.64,0],0,0,torso);
+  const head=new THREE.Group();head.position.y=.78;torso.add(head);
+  mesh(new THREE.SphereGeometry(.125,18,14),sk,[0,0,0],0,[1,1.1,1],head);
+  mesh(new THREE.SphereGeometry(.13,18,12,0,Math.PI*2,0,Math.PI*.55),hair,[0,.015,-.01],[-.25,0,0],[1.02,1.1,1.05],head);
+  function arm(s){const sh=new THREE.Group();sh.position.set(s*.25,.55,0);torso.add(sh);
+    mesh(new THREE.CylinderGeometry(.068,.06,.13,10),shirt,[0,-.04,0],0,0,sh);
+    mesh(C(.048,.22),sk,[0,-.17,0],0,0,sh);
+    const el=new THREE.Group();el.position.y=-.32;sh.add(el);
+    mesh(C(.043,.21),sk,[0,-.14,0],0,0,el);mesh(new THREE.SphereGeometry(.05,10,8),sk,[0,-.29,.01],0,[1,1.2,.8],el);
+    return {sh,el};}
+  function leg(s){const hip=new THREE.Group();hip.position.set(s*.11,-.02,0);pelvis.add(hip);
+    mesh(new THREE.CylinderGeometry(.095,.088,.22,12),shorts,[0,-.1,0],0,0,hip);
+    mesh(C(.072,.42),sk,[0,-.3,0],0,0,hip);
+    const kn=new THREE.Group();kn.position.y=-FIG.a;hip.add(kn);
+    mesh(C(.06,.42),sk,[0,-.27,0],0,[1,1,1.05],kn);
+    mesh(new THREE.CylinderGeometry(.064,.06,.14,10),shoe,[0,-.47,0],0,0,kn);
+    const an=new THREE.Group();an.position.y=-FIG.b;kn.add(an);
+    mesh(new THREE.BoxGeometry(.11,.08,.27),shoe,[0,-.045,.07],0,0,an);
+    mesh(new THREE.BoxGeometry(.115,.025,.28),sole,[0,-.09,.07],0,0,an);
+    return {hip,kn,an};}
+  const aR=arm(-1),aL=arm(1),lR=leg(-1),lL=leg(1);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(.11,.012,6,30),ringM);ring.rotation.x=Math.PI/2;lR.kn.add(ring);
+  root.traverse(o=>{if(o.isMesh&&o!==ring){o.castShadow=true;o.receiveShadow=true;o.userData.key='fig';o.userData.layer='fig';o.userData.mat=o.material;ALL.push(o);}});
+  return {root,pelvis,torso,head,aR,aL,lR,lL,ring};
+})();
+const POSEKEYS=['px','py','pz','lean','side','hipR','hipRz','kneeR','kneeRz','ankR','hipL','hipLz','kneeL','ankL','armR','armRz','elbR','armL','armLz','elbL','head'];
+function grounded(th,alphaF,leanF,armF){const a=FIG.a,b=FIG.b;const t=th*D2R,al=t*alphaF,be=t-al;
+  return {px:0,py:FIG.ankH+b*Math.cos(al)+a*Math.cos(be)+.02,pz:b*Math.sin(al)-a*Math.sin(be),lean:be*leanF,side:0,
+    hipR:-be,hipRz:0,kneeR:t,kneeRz:0,ankR:-al,hipL:-be,hipLz:0,kneeL:t,ankL:-al,
+    armR:armF,armRz:-.12,elbR:-.25,armL:armF,armLz:.12,elbL:-.25,head:-be*leanF*.6};}
+const SIT={px:0,py:.33,pz:-.35,lean:-.32,side:.12,hipR:-1.38,hipRz:.05,kneeR:.24,kneeRz:0,ankR:-.35,hipL:-1.5,hipLz:-.12,kneeL:.32,ankL:-.3,
+  armR:-1.05,armRz:-.05,elbR:-.55,armL:-1.15,armLz:-.25,elbL:-.6,head:.25};
+function mixPose(A,B,t){const o={};POSEKEYS.forEach(k=>o[k]=lerp(A[k],B[k],t));return o;}
+function applyPose(p){const f=fig;f.pelvis.position.set(p.px,p.py,p.pz);f.torso.rotation.set(p.lean,0,p.side);f.head.rotation.x=p.head;
+  f.lR.hip.rotation.set(p.hipR,0,p.hipRz);f.lR.kn.rotation.set(p.kneeR,0,p.kneeRz);f.lR.an.rotation.x=p.ankR;
+  f.lL.hip.rotation.set(p.hipL,0,p.hipLz);f.lL.kn.rotation.set(p.kneeL,0,0);f.lL.an.rotation.x=p.ankL;
+  f.aR.sh.rotation.set(p.armR,0,p.armRz);f.aR.el.rotation.x=p.elbR;f.aL.sh.rotation.set(p.armL,0,p.armLz);f.aL.el.rotation.x=p.elbL;}
+
+/* =========================================================
+   Effects: sparks
+   ========================================================= */
+const SPN=70;const spGeo=new THREE.BufferGeometry();const spPos=new Float32Array(SPN*3),spVel=[];for(let i=0;i<SPN;i++)spVel.push(V(0,0,0));
+spGeo.setAttribute('position',new THREE.BufferAttribute(spPos,3));
+const spMat=new THREE.PointsMaterial({color:0xffc39a,size:.07,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false});
+const sparks=new THREE.Points(spGeo,spMat);sparks.frustumCulled=false;knee.add(sparks);
+let spT=9;
+function burst(at){for(let i=0;i<SPN;i++){spPos[i*3]=at.x;spPos[i*3+1]=at.y;spPos[i*3+2]=at.z;spVel[i].set(R()-.5,R()-.3,R()-.5).normalize().multiplyScalar(.8+R()*2.2);}spT=0;}
+
+/* =========================================================
+   X-ray look
+   ========================================================= */
+function xmat(col,pow,str){return new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Color(col)},p:{value:pow},s:{value:str}},
+  vertexShader:'varying vec3 vN;varying vec3 vV;void main(){vN=normalize(normalMatrix*normal);vec4 mv=modelViewMatrix*vec4(position,1.);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}',
+  fragmentShader:'uniform vec3 c;uniform float p;uniform float s;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.-abs(dot(normalize(vN),normalize(vV))),p);gl_FragColor=vec4(c*(f*s+.07),1.);}',
+  transparent:true,blending:THREE.AdditiveBlending,depthWrite:false});}
+const XM={bone:xmat(0xbfe3ff,1.6,1.25),cart:xmat(0x4a7da0,2.2,.5),lig:xmat(0x5c88a8,2,.45),mus:xmat(0x24435c,2.5,.35),fig:xmat(0x3c6f96,1.8,.7)};
+let xray=false;
+function setXray(on){xray=on;document.body.classList.toggle('xray',on);$('#bXray').classList.toggle('on',on);
+  ALL.forEach(m=>{m.material=on?XM[m.userData.layer]:m.userData.mat;m.castShadow=!on;});
+  world.children.forEach(o=>{if(o.isMesh&&!o.userData.key)o.visible=!on;});
+  hemi.intensity=on?.15:.55;scene.fog.color.set(on?0x06131d:0x17222a);applyFocus();}
+
+/* =========================================================
+   Layers & focus (dimming)
+   ========================================================= */
+const layerOn={bone:true,cart:true,lig:true,mus:true,fig:true};
+function applyLayers(){ALL.forEach(m=>{m.visible=layerOn[m.userData.layer];});ACL.concat(PCL).forEach(s=>{if(!layerOn.lig)s.s2.visible=false;});}
+let focusKeys=null;
+function applyFocus(){Object.keys(REG).forEach(k=>{const dim=focusKeys&&!focusKeys.includes(k);REG[k].forEach(m=>{m.transparent=dim;m.opacity=dim?.13:1;m.depthWrite=!dim;m.needsUpdate=true;});});}
+
+/* =========================================================
+   Content: points
+   ========================================================= */
+const POINTS=[
+ {key:'femur',name:'Dijbeen',lat:'Os femur · condylus medialis et lateralis',focus:['femur','cartF'],view:[[4.6,6.8,6.4],[0,5.4,0]],
+  at:()=>V(.82,5.75,.25),
+  tabs:[`<p>Het dijbeen is het langste en sterkste bot van je lichaam. Onderaan verbreedt het tot twee knobbels: de <b>mediale en laterale condyl</b>. Ze zijn bekleed met glad, glanzend kraakbeen (blauwig in het model) en rollen en glijden over het scheenbeen als je de knie buigt.</p><p>Tussen de condylen zit een diepe groeve, de <b>fossa intercondylaris</b>. Daar lopen de kruisbanden. Aan de voorkant ligt de <b>trochlea</b>: de goot waar de knieschijf doorheen glijdt.</p>`,
+        `<p>Bij een squat rollen de condylen naar achteren over het scheenbeenplateau (<i>rollback</i>) en glijden ze tegelijk naar voren. Zo kan de knie ver buigen zonder dat het dijbeen van het plateau af rolt.</p><p>Bij springen en landen vangt het kraakbeen krachten op van wel <b>5 tot 8 keer</b> je lichaamsgewicht.</p>`,
+        `<p>Kraakbeen heeft geen bloedvaten. Het krijgt zijn voeding uit het gewrichtsvocht, en dat werkt het best als je beweegt: belasten en ontlasten werkt als een spons die vocht opzuigt en weer uitknijpt.</p>`,
+        `<p class="think">Een botbreuk geneest meestal binnen een paar maanden. Een beschadiging van het kraakbeen herstelt bijna niet. Hoe verklaar je dat verschil?</p>`]},
+ {key:'patella',name:'Knieschijf',lat:'Patella · os sesamoideum',focus:['patella','quad'],view:[[2.6,6,5.8],[0,5.2,.4]],
+  at:()=>W.patC.clone().add(V(.15,.1,.32)),
+  tabs:[`<p>De knieschijf is een <b>sesambeentje</b>: een bot dat ín een pees ligt. Boven zit de quadricepspees, onder loopt de <b>patellapees</b> (lig. patellae) naar het scheenbeen.</p><p>De achterkant is bedekt met het dikste kraakbeen van het hele lichaam en glijdt door de trochlea van het dijbeen.</p>`,
+        `<p>De knieschijf werkt als een <b>katrol</b>: hij houdt de pees verder van het draaipunt af. Daardoor heeft de quadriceps een grotere momentarm en levert dezelfde spierkracht meer draaimoment om de knie. Handig bij afzetten, sprinten en remmen.</p>`,
+        `<p>Een pasgeboren baby heeft nog geen benige knieschijf. Die bestaat dan uit kraakbeen en verbeent pas tussen ongeveer 3 en 6 jaar.</p>`,
+        `<p class="think">Zet de <b>squat</b> aan en volg de knieschijf. Hoe verandert zijn positie? En waarom wordt de druk áchter de knieschijf groter naarmate je dieper zakt?</p>`]},
+ {key:'tibia',name:'Scheenbeen & kuitbeen',lat:'Tibia · fibula · tuberositas tibiae',focus:['tibia','cart'],view:[[4.8,4.4,6.8],[0,3.3,0]],
+  at:()=>tib.localToWorld(V(.48,-1.85,.42)),
+  tabs:[`<p>Het <b>scheenbeen</b> (tibia) draagt bijna al het gewicht. Bovenaan is het vlak: het <b>tibiaplateau</b>. Vooraan zit een knobbel, de <b>tuberositas tibiae</b>, waar de patellapees aanhecht.</p><p>Het dunne <b>kuitbeen</b> (fibula) ligt aan de buitenkant. Het hoort niet bij het kniegewricht zelf, maar de laterale band en de biceps femoris hechten aan op het fibulakopje.</p>`,
+        `<p>Bij sporters in de groei (ongeveer 10 tot 15 jaar) trekt de patellapees hard aan de groeischijf bij de tuberositas. Dat kan de <b>ziekte van Osgood-Schlatter</b> geven: een pijnlijke, soms dikke knobbel onder de knie bij springen en sprinten. Herken je dat bij leerlingen in de onderbouw?</p>`,
+        `<p>De voorkant van je scheenbeen ligt vrijwel direct onder de huid, zonder spier ertussen. Daarom doet een trap tegen je scheen zo veel pijn en dragen voetballers scheenbeschermers.</p>`,
+        `<p class="think">Het tibiaplateau is vrij plat, de condylen van het dijbeen zijn rond. Wat betekent dat voor de stabiliteit van de knie, en welke structuren moeten dat compenseren?</p>`]},
+ {key:'menisci',name:'Menisci',lat:'Meniscus medialis et lateralis',focus:['menisci','cart','tibia'],view:[[2.4,7.6,3.4],[0,4.6,0]],
+  at:()=>tib.localToWorld(V(.86,-.5,.25)),
+  tabs:[`<p>Op het tibiaplateau liggen twee halvemaanvormige schijven van vezelig kraakbeen: de <b>mediale meniscus</b> (binnenkant, C-vormig) en de <b>laterale meniscus</b> (buitenkant, bijna O-vormig).</p><p>Ze zijn aan de buitenrand dik en lopen naar binnen dun uit. Zo maken ze van het platte plateau een kommetje voor de ronde condylen.</p>`,
+        `<p>De menisci verdelen de druk en vangen schokken op: ze dragen ongeveer de helft van de belasting op de knie. Een <b>meniscusscheur</b> ontstaat vaak bij draaien op een gebogen, belaste knie, zoals bij een snelle richtingsverandering bij voetbal of hockey.</p>`,
+        `<p>Alleen de buitenste rand van een meniscus (de ‘rode zone’) heeft bloedvaten. Een scheur daar kan genezen; een scheur in de binnenste ‘witte zone’ geneest nauwelijks.</p>`,
+        `<p class="think">De mediale meniscus is vastgegroeid aan de mediale collaterale band, de laterale meniscus niet. Waarom raakt de mediale meniscus daardoor vaker beschadigd?</p>`]},
+ {key:'acl',name:'Voorste kruisband (VKB)',lat:'Lig. cruciatum anterius · ACL',focus:['acl','menisci','cart','tibia'],view:[[-3.3,5.4,3.4],[0,4.7,0]],
+  at:()=>W.aclMid.clone().add(V(-.1,.05,.12)),
+  tabs:[`<p>De voorste kruisband loopt door de groeve tussen de condylen: van de binnenkant van de <b>laterale condyl</b> (achter-boven) naar het <b>voorste deel van het tibiaplateau</b> (voor-onder).</p><p>Hij voorkomt dat het scheenbeen naar <b>voren</b> schuift ten opzichte van het dijbeen en remt de binnenwaartse draaiing van het scheenbeen.</p>`,
+        `<p>Ongeveer <b>70%</b> van de VKB-scheuren ontstaat zónder contact met een tegenstander: bij landen, afremmen of draaien met een licht gebogen knie die naar binnen knikt (<b>valgus</b>) terwijl het scheenbeen naar binnen draait.</p><p>Bekijk het in stand <b>3 · Landing</b>.</p>`,
+        `<p>Vrouwelijke sporters hebben in sporten als handbal, basketbal en voetbal een 2 tot 8 keer grotere kans op een VKB-scheur dan mannen. Landingstechniek, spierbalans en anatomie spelen allemaal een rol.</p>`,
+        `<p class="think">Na een VKB-scheur kunnen veel mensen gewoon rechtuit lopen, maar zwikt de knie door bij een draai of een sprongetje. Welke taak van de VKB valt dan weg?</p>`]},
+ {key:'pcl',name:'Achterste kruisband (AKB)',lat:'Lig. cruciatum posterius · PCL',focus:['pcl','acl','menisci','cart','tibia'],view:[[1.6,5.6,-4.8],[0,4.7,-.2]],
+  at:()=>W.pclMid.clone().add(V(.12,0,-.15)),
+  tabs:[`<p>De achterste kruisband is dikker en sterker dan de voorste. Hij loopt van de binnenkant van de <b>mediale condyl</b> naar de <b>achterkant van het scheenbeen</b>.</p><p>Hij voorkomt dat het scheenbeen naar <b>achteren</b> wegschuift.</p>`,
+        `<p>Een AKB-letsel ontstaat vaak door een klap op de voorkant van het scheenbeen bij een gebogen knie: een val op de knie op een harde vloer, of het bekende ‘dashboardletsel’ bij een auto-ongeluk.</p>`,
+        `<p>Draai het model naar de achterkant: de twee kruisbanden kruisen elkaar als een <b>X</b>. Daar komt de naam vandaan.</p>`,
+        `<p class="think">De AKB scheurt veel minder vaak dan de VKB. Bedenk twee redenen waarom.</p>`]},
+ {key:'coll',name:'Collaterale banden',lat:'Lig. collaterale mediale et laterale',focus:['coll','menisci','cart','femur','tibia','cartF'],view:[[6,5.2,2.4],[0,4.5,0]],
+  at:()=>W.mclMid.clone().add(V(.12,0,.06)),
+  tabs:[`<p>Aan beide kanten zit een stevige band. De <b>mediale collaterale band</b> (MCL, binnenkant) is breed en plat en loopt van dijbeen naar scheenbeen. De <b>laterale collaterale band</b> (LCL, buitenkant) is een ronde koord van dijbeen naar het fibulakopje.</p><p>Samen voorkomen ze dat de knie zijwaarts openklapt.</p>`,
+        `<p>De MCL beschermt tegen <b>valgus</b>: de knie die naar binnen klapt. Een sliding tegen de buitenkant van de knie rekt de MCL op. Bij een zware valgus-landing gaat MCL-letsel vaak samen met VKB- en meniscusletsel: de <b>‘unhappy triad’</b>.</p>`,
+        `<p>De MCL geneest meestal zonder operatie, omdat hij buiten het gewricht ligt en goed doorbloed is. Bij de VKB, die ín het gewricht ligt, lukt dat bijna nooit.</p>`,
+        `<p class="think">Kijk naar de kleur van de MCL in stand 3. Op welk moment staat hij het meest onder spanning, en waarom juist dan?</p>`]},
+ {key:'quad',name:'Quadriceps & patellapees',lat:'M. quadriceps femoris · lig. patellae',focus:['quad','patella'],view:[[6,7.6,8],[0,6.4,.3]],
+  at:()=>W.rfMid.clone().add(V(.15,0,.32)),
+  tabs:[`<p>De <b>quadriceps femoris</b> heeft vier koppen: rectus femoris, vastus lateralis, vastus medialis en vastus intermedius (onder de rectus, hier niet zichtbaar). Via de quadricepspees, de knieschijf en de patellapees trekken ze aan de tuberositas tibiae: ze <b>strekken de knie</b>.</p><p>De rectus femoris loopt ook over de heup en helpt de heup te buigen.</p>`,
+        `<p>Kijk in stand <b>2 · Squat</b>: bij het zakken werkt de quadriceps <b>excentrisch</b> (hij wordt langer onder spanning en remt je af), bij het omhoogkomen <b>concentrisch</b> (hij wordt korter).</p><p>Bij een landing vangt de quadriceps de klap excentrisch op.</p>`,
+        `<p>De vastus medialis heeft onderaan een druppelvormige uitstulping vlak boven de binnenkant van de knieschijf. Bij knieklachten verliest juist dit deel snel kracht.</p>`,
+        `<p class="think">Waarom heb je na een lange afdaling in de bergen meer spierpijn in je bovenbenen dan na de klim omhoog?</p>`]},
+ {key:'ham',name:'Hamstrings & kuitspier',lat:'Mm. ischiocrurales · m. gastrocnemius',focus:['ham'],view:[[-4.8,6.8,-7],[0,5.6,-.6]],
+  at:()=>W.bfMid.clone().add(V(-.3,0,-.2)),
+  tabs:[`<p>Aan de achterkant liggen de <b>hamstrings</b>: de biceps femoris (buitenkant) en de semitendinosus en semimembranosus (binnenkant). Ze <b>buigen de knie</b> en strekken de heup.</p><p>De <b>kuitspier</b> (gastrocnemius) ontspringt met twee koppen boven de knie aan het dijbeen en helpt ook bij het buigen van de knie.</p>`,
+        `<p>De hamstrings trekken het scheenbeen naar achteren. Daarmee zijn ze een <b>bondgenoot van de VKB</b>. Sterke hamstrings en landen met gebogen heupen én knieën verkleinen de kans op een VKB-scheur. Daarom zit de Nordic hamstring curl in preventieprogramma’s als <b>FIFA 11+</b>.</p>`,
+        `<p>Hamstrings en rectus femoris zijn <b>tweegewrichtsspieren</b>. In dit model staat het dijbeen stil, dus je ziet alleen het effect van de knie: buigen maakt de hamstrings korter. In een echte squat buigt ook de heup, waardoor ze daar langer worden. Netto verandert hun lengte maar weinig.</p>`,
+        `<p class="think">Bij de landing in stand 3 zijn de hamstrings nauwelijks actief. Wat zou er met de belasting op de VKB gebeuren als ze wél krachtig aanspanden?</p>`]},
+];
+
+/* =========================================================
+   Quiz (RTTI)
+   ========================================================= */
+const QUIZ=[
+ {t:'R',type:'find',q:'Klik op de <b>voorste kruisband</b>.',view:'gewricht',
+  opts:[()=>W.aclMid,()=>W.pclMid,()=>W.mclMid,()=>W.ptMid],ok:0,
+  fb:['Goed! De VKB loopt van achter-boven op het dijbeen naar voor-onder op het scheenbeen.','Dat is de achterste kruisband: die loopt juist van voor-boven naar achter-onder.','Dat is de mediale collaterale band, aan de binnenkant van de knie.','Dat is de patellapees, aan de voorkant van de knie.']},
+ {t:'R',type:'find',q:'Klik op de <b>mediale meniscus</b>. (Tip: mediaal = aan de kant van de andere knie.)',view:'boven',focus:['tibia','menisci','cart','acl','pcl','coll'],
+  opts:[()=>tib.localToWorld(V(-.42,-.47,.3)),()=>tib.localToWorld(V(.42,-.47,.33)),()=>tib.localToWorld(V(-.73,-1.07,-.18)),()=>W.tub],ok:1,
+  fb:['Dat is de laterale meniscus: bijna rond en aan de buitenkant.','Goed! De mediale meniscus is C-vormig en ligt aan de binnenkant.','Dat is het kopje van het kuitbeen (fibula).','Dat is de tuberositas tibiae.']},
+ {t:'T1',type:'mc',state:2,q:'Zet stand <b>2 · Squat</b> aan en kijk naar de balkjes onderin. Hoe werkt de quadriceps tijdens het <b>zakken</b>?',
+  opts:['Concentrisch: de spier wordt korter','Excentrisch: de spier wordt langer onder spanning','Isometrisch: de lengte blijft gelijk','Hij is niet actief'],ok:1,
+  ex:'Tijdens het zakken buigt de knie en wordt de quadriceps langer, terwijl hij toch aanspant om je af te remmen: excentrisch spierwerk. Omhoog is concentrisch.'},
+ {t:'T1',type:'find',q:'Waar draagt de quadriceps zijn kracht over op het scheenbeen? Klik op die plek.',view:'voor',
+  opts:[()=>W.tub,()=>tib.localToWorld(V(-.73,-1.07,-.18)),()=>V(.83,5.27,-.1),()=>W.patTop],ok:0,
+  fb:['Goed! De patellapees hecht aan op de tuberositas tibiae.','Dat is het fibulakopje: daar hecht de biceps femoris aan, een hamstring.','Dat is de mediale epicondyl van het dijbeen: daar begint de MCL.','Dat is de bovenrand van de knieschijf. De kracht loopt daar nog door naar beneden.']},
+ {t:'T2',type:'mc',state:2,q:'Laat de squat lopen of gebruik de schuif. Bij welke kniehoek staat de VKB in dit model het <b>strakst</b>?',
+  opts:['Bij een (bijna) gestrekte knie','Rond 90°','Bij maximaal gebogen knie','Dat maakt niets uit'],ok:0,
+  ex:'De VKB staat het strakst bij een gestrekte of licht gebogen knie. Landen met stijve, bijna gestrekte knieën is daarom riskant: de quadriceps trekt dan het scheenbeen naar voren, precies de richting die de VKB moet tegenhouden.'},
+ {t:'T2',type:'mc',state:3,q:'Bekijk stand <b>3 · Landing</b> (eventueel een paar keer). Welke combinatie zie je vlak vóór de VKB scheurt?',
+  opts:['De knie knikt naar binnen (valgus) en het scheenbeen draait naar binnen','De knie strekt te ver door (hyperextensie)','De knie knikt naar buiten (varus) en het scheenbeen draait naar buiten','De knie buigt heel diep'],ok:0,
+  ex:'Dit is het klassieke non-contact mechanisme: landen op een licht gebogen knie die naar binnen klapt, met binnenwaartse draaiing van het scheenbeen en een quadriceps die het scheenbeen naar voren trekt.'},
+ {t:'T2',type:'mc',q:'Een handbalster voelt een ‘knap’ in haar knie. Binnen een paar uur is haar knie flink dik. Wat is de meest waarschijnlijke verklaring?',
+  opts:['Er is bloed in het gewricht gelopen, omdat de gescheurde kruisband bloedvaten bevat','De meniscus zuigt zich vol met vocht','De knieschijf is ontwricht','De spieren zijn opgezwollen door verzuring'],ok:0,
+  ex:'Snelle zwelling na een ‘knap’ wijst op een bloeding in het gewricht (haemarthros). Dat zie je aan het einde van stand 3. Bij een VKB-scheur is dat heel kenmerkend.'},
+ {t:'I',type:'open',q:'Je geeft een les LO met veel spring- en landingsmomenten. Ontwerp één warming-up oefening die de kans op een VKB-scheur verkleint. Leg uit welke structuur uit de diorama je ermee beschermt, en hoe.',
+  model:'<p>Bijvoorbeeld: <b>landen als een veer</b>. Leerlingen springen van een bankje en landen zacht op twee benen, met heupen en knieën gebogen en de knieën recht boven de tenen (niet naar binnen). Uitbreiding: landen op één been, of landen en meteen wegdraaien.</p><p>Je beschermt de <b>voorste kruisband</b>: door de knie niet naar binnen te laten knikken (geen valgus) en meer te buigen, wordt het scheenbeen minder naar voren getrokken. Door de heup mee te buigen werken de <b>hamstrings</b> mee: die trekken het scheenbeen naar achteren en ontlasten de VKB.</p><p>Andere goede antwoorden: Nordic hamstring curl, oefeningen uit FIFA 11+, spiegelen in tweetallen op kniepositie.</p>'},
+];
+
+/* =========================================================
+   State machine & animation
+   ========================================================= */
+const kneeS={th:4,val:0,rot:0,ant:0};
+let state=1,stT=0,paused=false,manual=null,torn=false,swellAmt=0,lastPhase='';
+let act={Q:0,H:0,G:0},mode={Q:'rust',H:'rust',G:'rust'};
+let prevTh=4;
+const CAPS={1:['Stand 1 · Rust','De sporter staat rustig. Draai om het model en klik op een genummerd punt.'],
+  2:['Stand 2 · Squat','Kijk naar de balkjes: wanneer werkt de quadriceps excentrisch, wanneer concentrisch?'],
+  3:['Stand 3 · Landing','']};
+const PHASES=[[0,'Aanloop','De sporter zakt door de knieën om af te zetten.'],[.55,'Afzet','Quadriceps en kuitspier strekken explosief: concentrisch.'],[.8,'Vlucht','In de lucht: de spieren ontspannen even.'],
+  [1.4,'Landing','De knie is nauwelijks gebogen en klapt naar binnen (valgus). Het scheenbeen draait naar binnen.'],[1.56,'Knap!','De voorste kruisband scheurt. Het scheenbeen schiet naar voren.'],
+  [1.75,'Na de scheur','De sporter valt. De knie voelt instabiel.'],[3.2,'Zwelling','Binnen enkele uren zwelt de knie op: bloed in het gewricht (haemarthros).']];
+
+function setState(n){state=n;stT=0;manual=null;paused=false;
+  if(n!==3){torn=false;swellAmt=0;}else{torn=false;swellAmt=0;}
+  $$('.seg button').forEach(b=>b.classList.toggle('on',+b.dataset.state===n));
+  const [t,x]=CAPS[n];$('#capT').textContent=t;$('#capX').textContent=x;
+  const ctl=$('#ctl');ctl.innerHTML='';
+  if(n===2){ctl.innerHTML='<input type="range" id="slTh" min="0" max="115" value="0" aria-label="Kniehoek"><button id="bAuto">▶ Automatisch</button>';
+    $('#slTh').addEventListener('input',e=>{manual=+e.target.value;});$('#bAuto').addEventListener('click',()=>{manual=null;paused=false;});}
+  if(n===3){ctl.innerHTML='<button id="bReplay">↻ Opnieuw</button><button id="bSlow">Slow motion</button>';
+    $('#bReplay').addEventListener('click',()=>setState(3));$('#bSlow').addEventListener('click',e=>{slow=!slow;e.target.classList.toggle('on',slow);e.target.style.background=slow?'var(--bone)':'';e.target.style.color=slow?'#1c1a17':'';});}
+  lastPhase='';SND.click();quizHook();}
+let slow=false;
+
+function stepState(dt){
+  const pose=(()=>{
+  if(state===1){
+    const th=4+1.6*Math.sin(clock*.9);kneeS.th=th;kneeS.val=0;kneeS.rot=0;kneeS.ant=0;
+    act={Q:.12,H:.08,G:.1};mode={Q:'rust',H:'rust',G:'rust'};
+    const p=grounded(th,.35,.6,0);p.armR=.05+.03*Math.sin(clock*.9);p.armL=p.armR;return p;}
+  if(state===2){
+    let th;if(manual!==null){th=lerp(prevTh,manual,clamp(dt*10,0,1));}else{th=57.5-57.5*Math.cos(stT*2*Math.PI/4.6);}
+    kneeS.th=th;kneeS.val=0;kneeS.rot=0;kneeS.ant=0;
+    const dth=(th-prevTh)/Math.max(dt,1e-4);const lvl=.25+.75*th/115;
+    if(Math.abs(dth)<3){act={Q:lvl*.8,H:.25,G:.22};mode={Q:th>8?'isometrisch':'rust',H:'isometrisch',G:'isometrisch'};}
+    else if(dth>0){act={Q:lvl,H:.3,G:.25};mode={Q:'excentrisch',H:'excentrisch',G:'isometrisch'};}
+    else{act={Q:lvl,H:.32,G:.3};mode={Q:'concentrisch',H:'concentrisch',G:'isometrisch'};}
+    return grounded(th,.38,.78,-(th/115)*1.35);}
+  // state 3: jump landing
+  const t=stT;let p,th,val=0,rot=0,ant=0,y=0;
+  if(t<.55){th=55*smooth(t/.55);p=grounded(th,.4,.75,.7*smooth(t/.55));act={Q:.6,H:.3,G:.3};mode={Q:'excentrisch',H:'isometrisch',G:'excentrisch'};}
+  else if(t<.8){const u=smooth((t-.55)/.25);th=lerp(55,2,u);p=grounded(th,.4,.75,lerp(.7,-2.6,u));act={Q:1,H:.45,G:1};mode={Q:'concentrisch',H:'concentrisch',G:'concentrisch'};}
+  else if(t<1.4){const u=(t-.8)/.6;th=lerp(2,10,u);y=4*.85*u*(1-u);p=grounded(th,.15,.4,lerp(-2.6,-1.3,smooth(u)));p.ankR=p.ankL=lerp(.5,.1,u);act={Q:.25,H:.15,G:.2};mode={Q:'rust',H:'rust',G:'rust'};}
+  else if(t<1.75){const u=smooth((t-1.4)/.2);th=lerp(10,38,u);p=grounded(th,.22,.3,-1.2);
+    const v=smooth((t-1.4)/.16);val=11*v;rot=15*v;ant=.06*v;
+    if(t>1.5){const w=smooth((t-1.5)/.06);ant=lerp(.06,.42,w);}
+    if(t>1.62){const w=smooth((t-1.62)/.13);val=lerp(11,6,w);rot=lerp(15,8,w);ant=lerp(.42,.26,w);}
+    p.hipRz=.2*v;p.kneeRz=-.32*v;p.side=-.12*v;p.hipLz=.05*v;
+    act={Q:1,H:.12,G:.55};mode={Q:'excentrisch',H:'rust',G:'excentrisch'};}
+  else{const u=smooth((t-1.75)/.9);const L=grounded(38,.22,.3,-1.2);L.hipRz=.2;L.kneeRz=-.32;L.side=-.12;
+    p=mixPose(L,SIT,u);th=lerp(38,p.kneeR/D2R,u);val=lerp(6,3,u);rot=lerp(8,5,u);ant=lerp(.26,.2,u);
+    if(t>2.6){th=p.kneeR/D2R+1.5*Math.sin(t*2.2);p.lean=SIT.lean+.04*Math.sin(t*2.2);}
+    act={Q:.15,H:.1,G:.1};mode={Q:'rust',H:'rust',G:'rust'};}
+  if(t<1.4)p.py+=y;
+  if(t>1.4)p.kneeR=th*D2R;
+  kneeS.th=th;kneeS.val=val;kneeS.rot=rot;kneeS.ant=ant;
+  // events
+  if(!torn&&t>=1.56){torn=true;onPop();}
+  if(t>=1.4&&!landed){landed=true;SND.land();}
+  if(t<1.4)landed=false;
+  swellAmt=torn?smooth((t-3.2)/4):0;
+  // phase caption
+  let ph=PHASES[0];PHASES.forEach(q=>{if(t>=q[0])ph=q;});
+  if(ph[1]!==lastPhase){lastPhase=ph[1];$('#capT').textContent='Stand 3 · '+ph[1];$('#capX').textContent=ph[2];}
+  return p;})();
+  prevTh=kneeS.th;
+  applyPose(pose);
+}
+let landed=false;
+function onPop(){const at=W.aclMid.clone();burst(at);popLight.position.copy(at);popLight.intensity=9;
+  const f=$('#flash');f.style.transition='none';f.style.opacity=1;requestAnimationFrame(()=>{f.style.transition='opacity 1.1s';f.style.opacity=0;});
+  shake=.5;SND.pop();}
+let shake=0;
+
+/* ---------- apply knee kinematics & soft tissue ---------- */
+const qa=new THREE.Quaternion(),qb=new THREE.Quaternion(),qc=new THREE.Quaternion();
+const _a=V(0,0,0),_b=V(0,0,0),_u=V(0,0,0),_v=V(0,0,0),_d=V(0,0,0),_t1=V(0,0,0),_t2=V(0,0,0);
+const restLen={};
+const colSlack=new THREE.Color(0x8f8a7e),colBase=new THREE.Color(0xf2ecdf),colHot=new THREE.Color(0xff3b24),colTorn=new THREE.Color(0x9b2f25);
+function strainColor(mat,e,isTorn){if(isTorn){mat.color.copy(colTorn);mat.emissive.setRGB(.15,0,0);return;}
+  if(e<-.05)mat.color.copy(colSlack).lerp(colBase,clamp(1+(e+.05)/.2,0,1));
+  else if(e<.02)mat.color.copy(colBase);else mat.color.copy(colBase).lerp(colHot,clamp((e-.02)/.1,0,1));
+  mat.emissive.setRGB(clamp((e-.03)*3,0,.5),0,0);}
+let aclStrain=0;
+function drawStrands(S,a,b,ra,rb,twist,isTorn){
+  _d.subVectors(b,a).normalize();_u.copy(AX).addScaledVector(_d,-AX.dot(_d)).normalize();_v.crossVectors(_d,_u);
+  S.forEach((s,i)=>{const ca=Math.cos(s.ang),sa=Math.sin(s.ang),cb=Math.cos(s.ang+twist),sb=Math.sin(s.ang+twist);
+    s.a.copy(a).addScaledVector(_u,ca*ra).addScaledVector(_v,sa*ra);s.b.copy(b).addScaledVector(_u,cb*rb).addScaledVector(_v,sb*rb);
+    if(!isTorn){orient(s.m,s.a,s.b,s.r,s.r);s.s2.visible=false;}
+    else{_t1.subVectors(s.b,s.a);_t2.copy(s.a).addScaledVector(_t1,s.f*.82).add(V(0,-.1-.05*i%3*.03,.06));orient(s.m,s.a,_t2,s.r,s.r);
+      _t2.copy(s.b).addScaledVector(_t1,-(1-s.f)*.75).add(V(.02*(i-2),.03,.1));orient(s.s2,s.b,_t2,s.r*.9,s.r*.9);s.s2.visible=layerOn.lig;}});}
+function updateKnee(){
+  qa.setFromAxisAngle(AY,kneeS.rot*D2R);qb.setFromAxisAngle(AZ,-kneeS.val*D2R);qc.setFromAxisAngle(AX,kneeS.th*D2R);
+  tib.quaternion.copy(qa).multiply(qb).multiply(qc);tib.position.copy(Cc);tib.position.z+=kneeS.ant;tib.updateMatrixWorld(true);
+  const phi=(28-.72*kneeS.th)*D2R,Rp=.86;
+  pat.position.set(kneeS.ant*.35,Cc.y+Rp*Math.sin(phi),Cc.z+Rp*Math.cos(phi)+kneeS.ant*.3);pat.rotation.set(-phi,0,0);pat.updateMatrixWorld(true);
+  ['aclT','pclT','mclT','lclT','tub','bfIns','smIns','gasIns'].forEach(k=>{W[k].copy(TL[k]).applyMatrix4(tib.matrixWorld).sub(knee.position);});
+  W.patC=pat.position.clone();W.patTop=pat.localToWorld(V(0,.42,.05));W.patBot=pat.localToWorld(V(0,-.4,.06));
+  // cruciates
+  drawStrands(ACL,P.aclF,W.aclT,.07,.1,1.2,torn);
+  drawStrands(PCL,P.pclF,W.pclT,.08,.1,-1,false);
+  const lA=P.aclF.distanceTo(W.aclT),lP=P.pclF.distanceTo(W.pclT);
+  if(!restLen.acl){restLen.acl=lA;restLen.pcl=lP;}
+  aclStrain=lA/restLen.acl-1;strainColor(M.acl,aclStrain,torn);strainColor(M.pcl,lP/restLen.pcl-1.06,false);
+  W.aclMid=P.aclF.clone().lerp(W.aclT,.5);W.pclMid=P.pclF.clone().lerp(W.pclT,.5);
+  // collaterals
+  const lM=orient(MCL,P.mclF,W.mclT,.17,.035,AX),lL=orient(LCL,P.lclF,W.lclT,.055,.055);
+  if(!restLen.mcl){restLen.mcl=lM;restLen.lcl=lL;}
+  strainColor(M.mcl,lM/restLen.mcl-1,false);strainColor(M.lcl,lL/restLen.lcl-1,false);
+  W.mclMid=P.mclF.clone().lerp(W.mclT,.5);
+  // extensor mechanism
+  _d.subVectors(ORI.RF,W.patTop).normalize();const qj=W.patTop.clone().addScaledVector(_d,.75);
+  orient(QT,W.patTop,qj,.19,.06,AZ);orient(PT,W.patBot,W.tub,.13,.05,AZ);W.ptMid=W.patBot.clone().lerp(W.tub,.5);
+  placeMuscle(RF,ORI.RF,qj.clone().add(V(0,.05,.02)));placeMuscle(VL,ORI.VL,qj.clone().add(V(-.2,.12,-.08)));placeMuscle(VM,ORI.VM,qj.clone().add(V(.2,0,-.04)));
+  W.rfMid=ORI.RF.clone().lerp(qj,.5);
+  // hamstrings (via a fixed point behind the condyles)
+  placeMuscle(BF,ORI.BF,VIA.BF);orient(BFT,VIA.BF,W.bfIns,.07,.07);
+  placeMuscle(SM,ORI.SM,VIA.SM);orient(SMT,VIA.SM,W.smIns,.07,.07);
+  W.bfMid=ORI.BF.clone().lerp(VIA.BF,.55);
+  // gastrocnemius
+  const gj=ORI.GL.clone().lerp(ORI.GM,.5).lerp(W.gasIns,.6);
+  placeMuscle(GL,ORI.GL,gj.clone().add(V(-.08,0,0)));placeMuscle(GM,ORI.GM,gj.clone().add(V(.08,0,0)));orient(GT,gj,W.gasIns,.1,.06,AX);
+  // swelling
+  const s=.02+swellAmt;swell.scale.set(1.4*s,1.15*s,1.25*s);M.swell.opacity=.3*swellAmt;swell.visible=swellAmt>.01;
+}
+function placeMuscle(o,a,b){_d.subVectors(b,a);const L=_d.length();if(!o.rest)o.rest=L;
+  const ratio=clamp(Math.sqrt(o.rest/L),.8,1.4);const a2=act[o.grp]||0;const w=o.radius*ratio*(1+.12*a2);
+  orient(o.m,a,b,w,w*o.flat,AX);
+  const dl=L-(o.len||L);o.len=L;
+  if(o.mat.map&&!reduced)o.mat.map.offset.y+=dl*1.5;
+  return L;}
+function updateMuscleLook(){const pulse=.5+.5*Math.sin(clock*7);
+  MUS.forEach(o=>{const a=act[o.grp]||0;const f=focusPulse(o.m.userData.key);o.mat.emissive.setRGB(a*.32+f,a*.04+f*.5,a*.02+f*.3);});
+  ['femur','patella','tibia','menisci','cart','cartF'].forEach(k=>{const f=focusPulse(k);REG[k].forEach(m=>m.emissive.setRGB(f*.6,f*.45,f*.3));});
+  ['quad','ham'].forEach(k=>{REG[k].forEach(m=>{if(!m.map||m===M.tendQ||m===M.tendH){const f=focusPulse(k);m.emissive.setRGB(f,f*.8,f*.6);}});});}
+let curPoint=null;
+function focusPulse(k){if(!curPoint||!curPoint.focus.includes(k)||k==='cart')return 0;if(curPoint.key!==k&&!(curPoint.key==='coll'&&k==='coll'))return 0;return (.06+.06*Math.sin(clock*4))*(reduced?0:1);}
+
+/* =========================================================
+   Markers (DOM)
+   ========================================================= */
+const mkWrap=$('#markers');
+const MK=POINTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.name}</span>`;b.setAttribute('aria-label',`${i+1}. ${p.name}`);
+  b.addEventListener('click',e=>{e.stopPropagation();openPoint(i);});mkWrap.appendChild(b);return b;});
+let QMK=[];
+const _p=V(0,0,0);
+function project(v,el){_p.copy(v).add(knee.position).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';
+  const x=(_p.x*.5+.5)*innerWidth,y=(-_p.y*.5+.5)*innerHeight;el.style.transform=`translate(${x-13}px,${y-13}px)`;}
+function updateMarkers(){POINTS.forEach((p,i)=>project(p.at(),MK[i]));QMK.forEach(q=>project(q.fn(),q.el));}
+
+/* =========================================================
+   Info panel
+   ========================================================= */
+let tab=0;
+function openPoint(i){closeQuiz();const p=POINTS[i];curPoint=p;curPoint.i=i;tab=0;
+  $('#iNum').textContent=i+1;$('#iTitle').textContent=p.name;$('#iLat').textContent=p.lat;$('#iPos').textContent=`${i+1} / ${POINTS.length}`;
+  MK.forEach((m,j)=>m.classList.toggle('on',j===i));setTab(0);$('#info').classList.add('open');
+  focusKeys=p.focus.concat(['fig']);applyFocus();flyTo(p.view[0],p.view[1]);SND.click();}
+function setTab(n){tab=n;$$('#iTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.tab===n));$('#iBody').innerHTML=curPoint.tabs[n];}
+function closeInfo(){$('#info').classList.remove('open');curPoint=null;MK.forEach(m=>m.classList.remove('on'));focusKeys=null;applyFocus();}
+$$('#iTabs button').forEach(b=>b.addEventListener('click',()=>setTab(+b.dataset.tab)));
+$('#iClose').addEventListener('click',closeInfo);
+$('#iPrev').addEventListener('click',()=>{if(curPoint&&curPoint.i>0)openPoint(curPoint.i-1);});
+$('#iNext').addEventListener('click',()=>{if(curPoint&&curPoint.i<POINTS.length-1)openPoint(curPoint.i+1);});
+function next(){if(quizOpen)return;if(!curPoint){openPoint(0);return;}if(tab<3)setTab(tab+1);else if(curPoint.i<POINTS.length-1)openPoint(curPoint.i+1);}
+function prev(){if(quizOpen||!curPoint)return;if(tab>0)setTab(tab-1);else if(curPoint.i>0){openPoint(curPoint.i-1);setTab(3);}}
+
+/* =========================================================
+   Quiz panel
+   ========================================================= */
+let quizOpen=false,qi=0,qres=[],qDone=false;
+function openQuiz(){closeInfo();quizOpen=true;document.body.classList.add('quiz-on');$('#quiz').classList.add('open');qi=0;qres=QUIZ.map(()=>null);renderQ();}
+function closeQuiz(){if(!quizOpen)return;quizOpen=false;document.body.classList.remove('quiz-on');$('#quiz').classList.remove('open');clearQMK();focusKeys=null;applyFocus();}
+function clearQMK(){QMK.forEach(q=>q.el.remove());QMK=[];}
+function renderQ(){clearQMK();focusKeys=null;applyFocus();qDone=false;$('#qNext').disabled=true;
+  if(qi>=QUIZ.length){const ok=qres.filter(x=>x===true).length;
+    $('#qBody').innerHTML=`<div class="dots">${dots()}</div><p class="qprompt">Klaar!</p><p>Je had <b>${ok} van de ${QUIZ.length-1}</b> gesloten vragen in één keer goed.</p><p>Bespreek de laatste vraag in je groep of met je docent: daar zit het echte inzicht. Probeer het daarna in de gymzaal: film elkaars landing en let op de knie.</p><p><button class="btn" id="qAgain">Opnieuw beginnen</button></p>`;
+    $('#qAgain').addEventListener('click',()=>{qi=0;qres=QUIZ.map(()=>null);renderQ();});$('#qPos').textContent='';$('#qNext').style.display='none';return;}
+  $('#qNext').style.display='';
+  const q=QUIZ[qi];$('#qPos').textContent=`Opdracht ${qi+1} van ${QUIZ.length}`;
+  let h=`<div class="dots">${dots()}</div><p class="qprompt"><span class="qtag">${q.t}</span>${q.q}</p>`;
+  if(q.type==='find'){h+='<p class="hint">Klik op een van de gele letters A–D in het beeld.</p><div id="qfb"></div>';
+    $('#qBody').innerHTML=h;
+    if(q.view)setView(q.view);if(q.focus){focusKeys=q.focus;applyFocus();}
+    q.opts.forEach((fn,j)=>{const el=document.createElement('button');el.className='mk q';el.innerHTML=`<b>${'ABCD'[j]}</b>`;mkWrap.appendChild(el);
+      el.addEventListener('click',e=>{e.stopPropagation();if(qDone)return;answer(j===q.ok,j);el.classList.add(j===q.ok?'right':'wrong');
+        $('#qfb').innerHTML=`<div class="fb ${j===q.ok?'ok':'no'}">${q.fb[j]}</div>`;if(j===q.ok){qDone=true;$('#qNext').disabled=false;QMK.forEach(o=>{if(o.el!==el)o.el.style.opacity=.3;});}});
+      QMK.push({el,fn});});}
+  else if(q.type==='mc'){h+='<div class="opts">'+q.opts.map((o,j)=>`<button data-j="${j}"><b>${'ABCD'[j]}</b>${o}</button>`).join('')+'</div><div id="qfb"></div>';
+    $('#qBody').innerHTML=h;if(q.state&&state!==q.state)setState(q.state);
+    $$('#qBody .opts button').forEach(b=>b.addEventListener('click',()=>{if(qDone)return;const j=+b.dataset.j;answer(j===q.ok,j);b.classList.add(j===q.ok?'right':'wrong');
+      if(j===q.ok){qDone=true;$('#qNext').disabled=false;$$('#qBody .opts button').forEach(x=>x.disabled=true);}
+      $('#qfb').innerHTML=`<div class="fb ${j===q.ok?'ok':'no'}">${j===q.ok?'<b>Goed.</b> ':'<b>Nog niet.</b> Probeer opnieuw. '}${j===q.ok?q.ex:''}</div>`;}));}
+  else{h+='<textarea id="qTxt" placeholder="Schrijf je antwoord hier. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p><div id="qfb"></div>';
+    $('#qBody').innerHTML=h;$('#qShow').addEventListener('click',()=>{$('#qfb').innerHTML=`<div class="fb ok">${q.model}</div>`;$('#qNext').disabled=false;qres[qi]='open';});
+    $('#qNext').disabled=false;}
+}
+function dots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
+function answer(ok){if(qres[qi]===null)qres[qi]=ok;SND.click(ok?1.5:.7);}
+function quizHook(){}
+$('#qNext').addEventListener('click',()=>{qi++;renderQ();});
+$('#qClose').addEventListener('click',closeQuiz);
+$('#bQuiz').addEventListener('click',()=>quizOpen?closeQuiz():openQuiz());
+
+/* =========================================================
+   Camera
+   ========================================================= */
+const VIEWS={overzicht:[[14,10.5,17.5],[1.4,3.9,0]],voor:[[0,5.8,13],[0,5.2,0]],zij:[[12.5,5.8,.8],[0,5.0,0]],achter:[[-2,6,-12.5],[0,5.2,0]],
+  gewricht:[[-4.4,5.9,5.3],[0,4.7,-.1]],sporter:[[10.5,3.2,8.5],[5.4,1.1,1.4]],boven:[[1.6,8.6,3.6],[0,4.5,0]]};
+let fly=null,ride=false,rideA=0;
+function flyTo(pos,tgt,dur){const p=V(...pos),t=V(...tgt);const asp=innerWidth/innerHeight;if(asp<1){p.sub(t).multiplyScalar(Math.min(1.9,1/Math.pow(asp,.85))).add(t);}
+  fly={p0:camera.position.clone(),t0:controls.target.clone(),p1:p,t1:t,k:0,dur:reduced?.01:(dur||1.5)};ride=false;}
+function setView(name){const v=VIEWS[name];if(!v)return;flyTo(v[0],v[1]);if(name==='gewricht'&&!quizOpen&&!curPoint){focusKeys=['acl','pcl','menisci','cart','coll','tibia','fig'];applyFocus();}
+  else if(!quizOpen&&!curPoint&&focusKeys){focusKeys=null;applyFocus();}}
+controls.addEventListener('start',()=>{fly=null;ride=false;});
+$$('[data-view]').forEach(b=>b.addEventListener('click',()=>{setView(b.dataset.view);SND.click();}));
+
+/* =========================================================
+   Sound (Web Audio, generated)
+   ========================================================= */
+const SND=(function(){let C=null,master,rev,noiseBuf,on=false,nextAmb=0;
+  function init(){if(C)return;C=new (window.AudioContext||window.webkitAudioContext)();master=C.createGain();master.gain.value=0;master.connect(C.destination);
+    rev=C.createConvolver();const len=C.sampleRate*2.4|0;const ir=C.createBuffer(2,len,C.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2);}
+    rev.buffer=ir;const rg=C.createGain();rg.gain.value=.5;rev.connect(rg);rg.connect(master);
+    noiseBuf=C.createBuffer(1,C.sampleRate*2,C.sampleRate);const nd=noiseBuf.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
+    // hall ambience: brown noise
+    const bb=C.createBuffer(1,C.sampleRate*4,C.sampleRate);const bd=bb.getChannelData(0);let l=0;for(let i=0;i<bd.length;i++){l=(l+.02*(Math.random()*2-1))/1.02;bd[i]=l*3.2;}
+    const src=C.createBufferSource();src.buffer=bb;src.loop=true;const lp=C.createBiquadFilter();lp.type='lowpass';lp.frequency.value=420;const g=C.createGain();g.gain.value=.11;src.connect(lp);lp.connect(g);g.connect(master);src.start();}
+  function out(n,wet){n.connect(master);if(wet){const w=C.createGain();w.gain.value=wet;n.connect(w);w.connect(rev);}}
+  function env(g,t0,a,peak,d){g.gain.setValueAtTime(0.0001,t0);g.gain.exponentialRampToValueAtTime(peak,t0+a);g.gain.exponentialRampToValueAtTime(0.0001,t0+a+d);}
+  function thump(f,dur,vol,t0){t0=t0||C.currentTime;const o=C.createOscillator();o.type='sine';o.frequency.setValueAtTime(f,t0);o.frequency.exponentialRampToValueAtTime(f*.45,t0+dur);const g=C.createGain();env(g,t0,.005,vol,dur);o.connect(g);out(g,.35);o.start(t0);o.stop(t0+dur+.05);}
+  function noise(dur,type,freq,q,vol,att,t0){t0=t0||C.currentTime;const s=C.createBufferSource();s.buffer=noiseBuf;const f=C.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;const g=C.createGain();env(g,t0,att,vol,dur);s.connect(f);f.connect(g);out(g,.4);s.start(t0,Math.random());s.stop(t0+att+dur+.05);}
+  function squeak(t0){t0=t0||C.currentTime;const o=C.createOscillator();o.type='triangle';o.frequency.setValueAtTime(1800+Math.random()*500,t0);o.frequency.linearRampToValueAtTime(2500+Math.random()*600,t0+.09);const g=C.createGain();env(g,t0,.01,.035,.1);o.connect(g);out(g,.6);o.start(t0);o.stop(t0+.15);}
+  function ambient(){if(!on||!C)return;const now=C.currentTime;if(now<nextAmb)return;
+    if(Math.random()<.55){for(let k=0;k<3+(Math.random()*3|0);k++)thump(150+Math.random()*20,.16,.05,now+k*.42);}else{squeak(now);if(Math.random()<.5)squeak(now+.18);}
+    nextAmb=now+3+Math.random()*5;}
+  return {
+    set(v){init();on=v;C.resume();master.gain.cancelScheduledValues(C.currentTime);master.gain.setTargetAtTime(v?.9:0,C.currentTime,.15);nextAmb=C.currentTime+1;},
+    get on(){return on;},
+    tick(){ambient();},
+    click(p){if(!on||!C)return;const t=C.currentTime;const o=C.createOscillator();o.frequency.value=900*(p||1);const g=C.createGain();env(g,t,.003,.04,.06);o.connect(g);out(g,0);o.start(t);o.stop(t+.1);},
+    land(){if(!on||!C)return;thump(85,.35,.5);noise(.12,'lowpass',600,.7,.2,.004);squeak(C.currentTime+.05);},
+    pop(){if(!on||!C)return;const t=C.currentTime;noise(.05,'highpass',2200,.8,.7,.001,t);thump(65,.5,.9,t);noise(.06,'bandpass',900,3,.4,.001,t+.01);
+      noise(1.6,'bandpass',520,.9,.22,.35,t+.25);noise(1.3,'bandpass',900,1.2,.12,.4,t+.3);}
+  };})();
+function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
+$('#bSound').addEventListener('click',()=>setSound(!SND.on));
+
+/* =========================================================
+   UI wiring
+   ========================================================= */
+$$('.seg button').forEach(b=>b.addEventListener('click',()=>setState(+b.dataset.state)));
+$('#bXray').addEventListener('click',()=>setXray(!xray));
+$$('[data-layer]').forEach(c=>c.addEventListener('change',()=>{layerOn[c.dataset.layer]=c.checked;applyLayers();}));
+const LBL=['Stippen','Namen','Uit'];let lbl=0;
+function cycleLabels(){lbl=(lbl+1)%3;document.body.classList.remove('lbl-dots','lbl-names','lbl-off');document.body.classList.add(['lbl-dots','lbl-names','lbl-off'][lbl]);$('#bLabels').textContent='Labels: '+LBL[lbl];}
+$('#bLabels').addEventListener('click',cycleLabels);
+let quality='hi';
+function setQuality(q){quality=q;renderer.setPixelRatio(q==='hi'?Math.min(devicePixelRatio,2):1);renderer.shadowMap.enabled=q==='hi';key.castShadow=q==='hi';
+  scene.traverse(o=>{if(o.material){[].concat(o.material).forEach(m=>m.needsUpdate=true);}});$('#bQual').textContent='Beeld: '+(q==='hi'?'Mooi':'Snel');resize();}
+$('#bQual').addEventListener('click',()=>setQuality(quality==='hi'?'lo':'hi'));
+$('#bHelp').addEventListener('click',()=>$('#help').classList.add('open'));
+$('#helpClose').addEventListener('click',()=>$('#help').classList.remove('open'));
+$('#help').addEventListener('click',e=>{if(e.target.id==='help')$('#help').classList.remove('open');});
+function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);
+  if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);if(!curPoint)openPoint(0);}
+  else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+$('#bPresent').addEventListener('click',()=>setPresent(!document.body.classList.contains('present')));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('present')){document.body.classList.remove('present');$('#bPresent').classList.remove('on');}});
+addEventListener('keydown',e=>{if(e.target.tagName==='TEXTAREA'||e.target.tagName==='INPUT'&&e.target.type!=='range'&&e.target.type!=='checkbox')return;
+  const k=e.key;
+  if(k==='ArrowRight'||k==='PageDown'){next();e.preventDefault();}
+  else if(k==='ArrowLeft'||k==='PageUp'){prev();e.preventDefault();}
+  else if(k==='1'||k==='2'||k==='3')setState(+k);
+  else if(k===' '){paused=!paused;e.preventDefault();}
+  else if(k==='Home'){closeInfo();setView('overzicht');}
+  else if(k==='c'||k==='C'){ride=!ride;fly=null;}
+  else if(k==='r'||k==='R')setXray(!xray);
+  else if(k==='g'||k==='G')setSound(!SND.on);
+  else if(k==='l'||k==='L')cycleLabels();
+  else if(k==='Escape'){if($('#help').classList.contains('open'))$('#help').classList.remove('open');else if(document.body.classList.contains('present'))setPresent(false);else if(quizOpen)closeQuiz();else closeInfo();}
+});
+// click on empty canvas closes nothing; double click on model part opens point
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let downAt=null;
+canvas.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY];});
+canvas.addEventListener('pointerup',e=>{if(!downAt||Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1])>5||quizOpen)return;
+  mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects(ALL.filter(m=>m.visible&&m.userData.key!=='fig'),false).find(h=>h.object.material.opacity>.5);
+  if(hit){let k=hit.object.userData.key;if(k==='cart')k='menisci';if(k==='cartF')k='femur';const i=POINTS.findIndex(p=>p.key===k);if(i>=0)openPoint(i);}});
+
+/* =========================================================
+   HUD
+   ========================================================= */
+const gDeg=$('#gDeg'),gTib=$('#gTib'),gArc=$('#gArc');
+const MODEC={excentrisch:'ecc',concentrisch:'con',isometrisch:'iso',rust:''};
+function updateHUD(){const th=kneeS.th;gDeg.textContent=Math.round(th)+'°';const a=th*D2R;
+  gTib.setAttribute('x2',30-24*Math.sin(a));gTib.setAttribute('y2',30+24*Math.cos(a));
+  const r=14;gArc.setAttribute('d',`M30 30 L30 ${30+r} A${r} ${r} 0 0 0 ${30-r*Math.sin(a)} ${30+r*Math.cos(a)} Z`);
+  [['Q','bQ','mQ'],['H','bH','mH'],['G','bG','mG']].forEach(([g,b,m])=>{$('#'+b).style.width=Math.round(act[g]*100)+'%';const el=$('#'+m);el.textContent=mode[g];el.className='m '+(MODEC[mode[g]]||'');});
+  const bA=$('#bA'),mA=$('#mA');
+  if(torn){bA.style.width='100%';bA.style.background='#8a2b22';mA.textContent='gescheurd';mA.className='m con';}
+  else{const pct=clamp((aclStrain+.35)/.47,0,1);bA.style.width=Math.round(pct*100)+'%';bA.style.background=aclStrain>.03?'var(--bad)':aclStrain>-.08?'var(--ok)':'#7c8a83';
+    mA.textContent=aclStrain>.03?'overrekt!':aclStrain>-.08?'gespannen':'slap';mA.className='m '+(aclStrain>.03?'con':'');}}
+
+/* =========================================================
+   Loop
+   ========================================================= */
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1?48:36;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+let clock=0,last=performance.now(),frames=0,fpsT=0,autoChecked=false,first=true;
+function loop(now){requestAnimationFrame(loop);let dt=Math.min(.05,(now-last)/1000);last=now;frame(dt);}
+function frame(dt){
+  if(!paused){const sp=(state===3&&slow)?.25:1;stT+=dt*sp;clock+=dt*sp;}
+  stepState(paused?0:dt);
+  updateKnee();updateMuscleLook();
+  // sparks & light
+  if(spT<1.2){spT+=dt;for(let i=0;i<SPN;i++){spVel[i].y-=dt*3;spPos[i*3]+=spVel[i].x*dt;spPos[i*3+1]+=spVel[i].y*dt;spPos[i*3+2]+=spVel[i].z*dt;}spGeo.attributes.position.needsUpdate=true;spMat.opacity=clamp(1-spT/1.1,0,1);}
+  popLight.intensity*=Math.pow(.02,dt);
+  fig.ring.material.opacity=.5+.4*Math.sin(clock*4);
+  // camera
+  if(fly){fly.k+=dt/fly.dur;const e=ease(fly.k);camera.position.lerpVectors(fly.p0,fly.p1,e);controls.target.lerpVectors(fly.t0,fly.t1,e);if(fly.k>=1)fly=null;}
+  else if(ride){rideA+=dt*.18;const r=13+3*Math.sin(rideA*.7);camera.position.set(Math.sin(rideA)*r,6.5+2.5*Math.sin(rideA*.5),Math.cos(rideA)*r);controls.target.lerp(V(1,4.4,0),.05);}
+  controls.update();
+  if(shake>0){shake=Math.max(0,shake-dt);const s=shake*.12;camera.position.x+=(R()-.5)*s;camera.position.y+=(R()-.5)*s;}
+  renderer.render(scene,camera);
+  updateMarkers();updateHUD();SND.tick();
+  if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}
+  frames++;fpsT+=dt;if(!autoChecked&&fpsT>4){autoChecked=true;if(frames/fpsT<28&&quality==='hi')setQuality('lo');}
+}
+applyLayers();setState(1);
+const v0=VIEWS.overzicht;camera.position.set(...v0[0]).sub(V(...v0[1])).multiplyScalar(1.35).add(V(...v0[1]));controls.target.set(...v0[1]);flyTo(v0[0],v0[1],2.6);
+requestAnimationFrame(loop);
+// deep link to a point: knie.html#5
+const h=parseInt(location.hash.slice(1));if(h>=1&&h<=POINTS.length)setTimeout(()=>openPoint(h-1),900);
+window.__knee={W,kneeS,setState,openPoint,camera,controls,scene,step:(n,dt)=>{for(let i=0;i<n;i++)frame(dt||1/60);}};
+})();
+</script>
+</body>
+</html>
