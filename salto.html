@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>De salto · Bewegingsatlas</title>
+<meta name="description" content="Biomechanica-lab Rotaties: een salto van de minitrampoline in 3D. Zie traagheidsmoment en behoud van impulsmoment live, met stroboscoop, zwaartepuntsbaan en opdrachten.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg0:#2c3a42;--bg1:#0d1316;--ink:#f1e9da;--muted:#aab3b4;--panel:rgba(15,20,23,.86);--panel2:rgba(22,29,33,.95);--line:rgba(241,233,218,.13);--line2:rgba(241,233,218,.3);
+  --accent:#d65a42;--accent2:#f08a5d;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#e6b65e;--teal:#6fb2b4;--I:#f08a5d;--W:#6fb2b4;--L:#e6b65e}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+#app{position:fixed;inset:0;background:radial-gradient(120% 90% at 55% 35%,var(--bg0) 0%,#18232a 55%,var(--bg1) 100%)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+#top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;z-index:6;pointer-events:none}
+#top>*{pointer-events:auto}
+.title a{color:var(--muted);text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+.title a:hover{color:var(--ink)}
+.title h1{margin:2px 0 0;font:700 32px/1.05 Fraunces,serif;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+.title p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;backdrop-filter:blur(8px);white-space:nowrap}
+.btn:hover{border-color:var(--line2)}.btn.on{background:var(--ink);color:#111}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn svg{width:16px;height:16px}
+.seg{display:inline-flex;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:none;border-radius:7px;padding:6px 10px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--ink);color:#111}
+.seg button kbd{font:10.5px "JetBrains Mono",monospace;opacity:.6;margin-right:4px}
+
+/* lab panel */
+#lab{position:absolute;left:16px;top:104px;width:292px;max-height:calc(100% - 270px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:5;backdrop-filter:blur(10px);scrollbar-width:thin}
+#lab h4{margin:10px 0 6px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+#lab h4:first-child{margin-top:0}
+.sl{margin:6px 0 10px}
+.sl label{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:600}
+.sl label b{font:600 13px "JetBrains Mono",monospace;color:var(--gold)}
+.sl small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.jump{width:100%;justify-content:center;font-size:16px;padding:12px;margin:4px 0 2px;background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(214,90,66,.3)}
+.jump:hover{filter:brightness(1.08)}
+.row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tog{display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0;cursor:pointer}
+.tog input{accent-color:var(--accent)}
+.tog kbd{margin-left:auto}
+kbd{font:600 11px "JetBrains Mono",monospace;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
+
+/* markers */
+.mk{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;will-change:transform;display:flex;gap:6px;align-items:center}
+.mk b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#2a1d00;font:800 12px "Instrument Sans";box-shadow:0 0 0 3px rgba(230,182,94,.3),0 4px 12px rgba(0,0,0,.5)}
+.mk span{display:none;background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
+body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
+.mk.sel b{background:var(--accent);color:#fff}
+.tag3d{position:absolute;left:0;top:0;pointer-events:none;font:600 11px "JetBrains Mono",monospace;color:var(--teal);white-space:nowrap;will-change:transform;text-shadow:0 1px 4px #000}
+
+/* dossier */
+.panel{position:absolute;right:16px;top:104px;bottom:16px;width:390px;display:none;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:14px;z-index:7;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
+.panel.open{display:flex;animation:slidein .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes slidein{from{opacity:0;transform:translateX(16px)}}
+.ph{display:flex;gap:12px;align-items:flex-start;padding:14px 16px 0}
+.ph .n{flex:none;width:36px;height:36px;border-radius:50%;background:var(--gold);color:#2a1d00;display:grid;place-items:center;font-weight:800}
+.ph h2{margin:0;font:700 21px/1.15 Fraunces,serif}.ph p{margin:3px 0 0;font:12px "JetBrains Mono",monospace;color:var(--muted)}
+.x{margin-left:auto;border:0;background:rgba(255,255,255,.06);width:30px;height:30px;border-radius:8px;cursor:pointer;flex:none;font-size:18px;line-height:1}
+.tabs{display:flex;gap:2px;padding:10px 16px 0;border-bottom:1px solid var(--line)}
+.tabs button{border:0;background:none;padding:8px 8px 9px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button.on{color:var(--ink);border-color:var(--accent)}
+.pb{flex:1;overflow:auto;padding:12px 16px 16px;font-size:14.5px;line-height:1.55;scrollbar-width:thin}
+.pb p{margin:0 0 10px}
+.pb ul{margin:0 0 10px;padding-left:18px}.pb li{margin:3px 0}
+.calc{font:13px/1.6 "JetBrains Mono",monospace;background:rgba(255,255,255,.05);border-radius:9px;padding:10px 12px;margin:0 0 10px}
+.think{border-left:3px solid var(--gold);padding:8px 12px;background:rgba(230,182,94,.08);border-radius:0 9px 9px 0}
+.ctx{display:inline-block;font:600 10.5px "JetBrains Mono",monospace;padding:2px 6px;border-radius:4px;background:rgba(111,178,180,.2);color:var(--teal);margin-right:6px}
+.pnav{display:flex;justify-content:space-between;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
+
+/* HUD */
+#hud{position:absolute;left:324px;right:16px;bottom:16px;display:flex;gap:12px;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;z-index:4;backdrop-filter:blur(10px)}
+body.dossier #hud{right:422px}
+.eq{display:flex;align-items:center;gap:6px;flex:none}
+.term{width:118px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
+.term small{display:block;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.term b{display:block;font:700 24px/1.05 Fraunces,serif;margin-top:2px}
+.term em{display:block;font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
+.term i{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}
+.term i span{display:block;height:100%;width:0;border-radius:3px}
+.term.I b{color:var(--I)}.term.I i span{background:var(--I)}
+.term.W b{color:var(--W)}.term.W i span{background:var(--W)}
+.term.L b{color:var(--L)}.term.L i span{background:var(--L)}
+.op{font:700 22px Fraunces,serif;color:var(--muted)}
+#chartWrap{flex:1;min-width:140px;position:relative}
+#chart{width:100%;height:100%;display:block}
+.dial{flex:none;width:96px;text-align:center}
+.dial svg{width:84px;height:84px;display:block;margin:0 auto}
+.dial small{font:600 10px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+#res{flex:none;width:250px;font-size:12.5px;line-height:1.4;border-left:1px solid var(--line);padding-left:12px}
+#res b.t{display:block;font:700 15px/1.2 Fraunces,serif;margin-bottom:3px}
+#res .k{display:block;font:600 10px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+#res.good b.t{color:var(--ok)}#res.mid b.t{color:var(--mid)}#res.bad b.t{color:var(--bad)}
+
+/* modals */
+.modal{position:absolute;inset:0;background:rgba(5,8,10,.66);display:none;place-items:center;z-index:20;padding:16px}
+.modal.open{display:grid}
+.mcard{background:var(--panel2);border:1px solid var(--line);border-radius:16px;max-width:620px;width:100%;max-height:92%;overflow:auto;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.55)}
+.mcard h2{font:700 25px Fraunces,serif;margin:0 0 8px}
+.mcard p,.mcard li{font-size:14.5px;line-height:1.55;color:#ddd5c7}
+.opts{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.opt{text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.03);padding:9px 11px;border-radius:9px;cursor:pointer;font-size:14px;line-height:1.4}
+.opt:hover:not(:disabled){border-color:var(--line2)}
+.opt.right{border-color:var(--ok);background:rgba(127,200,160,.12)}.opt.wrong{border-color:var(--bad);background:rgba(232,106,90,.1)}
+.fb{margin-top:10px;padding:9px 12px;border-radius:9px;background:rgba(255,255,255,.05);font-size:14px;line-height:1.5}
+.fb.ok{border-left:3px solid var(--ok)}.fb.no{border-left:3px solid var(--bad)}
+.qtag{display:inline-block;font:600 11px "JetBrains Mono",monospace;padding:3px 7px;border-radius:5px;background:rgba(230,182,94,.16);color:var(--gold);margin-right:6px}
+.dots{display:flex;gap:5px;margin:2px 0 12px}.dots i{width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--gold)}
+.num-in{display:flex;gap:8px;align-items:center}.num-in input{width:110px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:9px;padding:9px;font:14px "Instrument Sans";resize:vertical}
+.keys{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}.keys td{padding:5px 6px;border-bottom:1px solid var(--line)}
+#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:520px;text-align:center}
+#toast.on{opacity:1}
+#loader{position:absolute;inset:0;display:grid;place-items:center;z-index:30;background:var(--bg1);transition:opacity .6s}
+#loader.gone{opacity:0;pointer-events:none}#loader div{text-align:center}#loader h3{font:700 26px Fraunces,serif;margin:14px 0 4px}#loader p{color:var(--muted);margin:0}
+.spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);margin:auto;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(1turn)}}
+#err{position:absolute;inset:0;display:none;place-items:center;z-index:40;background:var(--bg1);padding:24px;text-align:center}#err.open{display:grid}
+body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font-size:16.5px}body.present .title h1{font-size:40px}
+@media (max-width:1180px){#res{display:none}}
+@media (max-width:960px){#chartWrap,.dial{display:none}.term{width:100px}}
+@media (max-width:820px){
+  .title h1{font-size:24px}.title p{display:none}#top{flex-direction:column}.tools{justify-content:flex-start}.btn .t{display:none}
+  #lab{top:auto;bottom:118px;left:16px;right:16px;width:auto;max-height:34%}
+  #hud{left:16px;right:16px!important}.panel{left:16px;right:16px;width:auto;top:auto;height:62%}
+}
+</style>
+</head>
+<body class="lbl-dots">
+<div id="app">
+  <canvas id="c" aria-label="3D-gymzaal met een salto van de minitrampoline"></canvas>
+  <div id="labels"></div>
+  <div id="toast"></div>
+  <header id="top">
+    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>De salto</h1><p>Week 4 · Rotaties: traagheidsmoment en behoud van impulsmoment <i style="font:12px 'JetBrains Mono',monospace;font-style:normal;color:#c9c0ae">· L = I · ω</i></p></div>
+    <div class="tools">
+      <button class="btn" id="bQuiz">Opdrachten</button>
+      <button class="btn" id="bHelp">Uitleg</button>
+      <button class="btn" id="bCam" title="Camera (V)">Camera: overzicht</button><button class="btn" id="bLbl">Labels: stippen</button>
+      <button class="btn" id="bSound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
+      <button class="btn" id="bPresent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
+    </div>
+  </header>
+
+  <aside id="lab">
+    <h4>Houding in de lucht</h4>
+    <div class="seg" id="sPose"><button data-v="tuck"><kbd>1</kbd>Hurk</button><button data-v="pike"><kbd>2</kbd>Snoek</button><button data-v="layout"><kbd>3</kbd>Gestrekt</button></div>
+    <h4>Afzet</h4>
+    <div class="sl"><label>Afzetsnelheid omhoog <b id="oVz"></b></label><input type="range" id="iVz" min="3" max="5.6" step=".1"><small id="oVz2"></small></div>
+    <div class="sl"><label>Draai-impuls bij afzet (L) <b id="oL"></b></label><input type="range" id="iL" min="10" max="90" step="1"><small>ontstaat door armzwaai en vooroverleunen bij de afzet</small></div>
+    <h4>In de lucht</h4>
+    <div class="sl"><label>Openen na <b id="oOpen"></b></label><input type="range" id="iOpen" min="40" max="100" step="1"><small>uitstrekken voor de landing</small></div>
+    <button class="btn jump" id="bJump">Spring! <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd></button>
+    <h4>Terugkijken</h4>
+    <div class="sl" style="margin-top:0"><label>Tijd <b id="oScrub">–</b></label><input type="range" id="iScrub" min="0" max="1000" value="0" disabled></div>
+    <div class="row2"><div class="seg" id="sSpeed"><button data-v=".25">×¼</button><button data-v=".5">×½</button><button data-v="1">×1</button></div><button class="btn" id="bReplay" style="padding:6px 10px">↻ Herhaal</button></div>
+    <h4>Lagen</h4>
+    <label class="tog"><input type="checkbox" id="tCom" checked> Zwaartepunt, baan en draaias <kbd>Z</kbd></label>
+    <label class="tog"><input type="checkbox" id="tStrobe" checked> Stroboscoop <kbd>S</kbd></label>
+    <label class="tog"><input type="checkbox" id="tR"> Afstanden tot de draaias (r) <kbd>R</kbd></label>
+    <label class="tog"><input type="checkbox" id="tHelp" checked> Hulpverlener <kbd>H</kbd></label>
+    <button class="btn" id="bDefaults" style="margin-top:6px;width:100%;justify-content:center">Beginwaarden herstellen</button>
+  </aside>
+
+  <aside class="panel" id="dossier">
+    <div class="ph"><div class="n" id="dN">1</div><div><h2 id="dT"></h2><p id="dS"></p></div><button class="x" id="dClose" aria-label="Sluiten">×</button></div>
+    <div class="tabs" id="dTabs"><button data-t="0">Uitleg</button><button data-t="1">In de gymles</button><button data-t="2">Rekenen</button><button data-t="3">Denkvraag</button></div>
+    <div class="pb" id="dBody"></div>
+    <div class="pnav"><button class="btn" id="dPrev">← Vorige</button><button class="btn" id="dNext">Volgende →</button></div>
+  </aside>
+
+  <div id="hud">
+    <div class="eq">
+      <div class="term I"><small>Traagheidsmoment I</small><b id="vI">–</b><em>kg·m²</em><i><span id="bI"></span></i></div>
+      <div class="op">×</div>
+      <div class="term W"><small>Hoeksnelheid ω</small><b id="vW">0</b><em id="vW2">rad/s</em><i><span id="bW"></span></i></div>
+      <div class="op">=</div>
+      <div class="term L"><small>Impulsmoment L</small><b id="vL">0</b><em>kg·m²/s</em><i><span id="bL"></span></i></div>
+    </div>
+    <div id="chartWrap"><canvas id="chart"></canvas></div>
+    <div class="dial"><svg viewBox="0 0 100 100" id="dialSvg"></svg><small>rotatie</small></div>
+    <div id="res"><span class="k">Klaar voor de sprong</span><b class="t">Kies een houding en spring</b>Dezelfde afzet, een andere houding: wat gebeurt er met de rotatie?</div>
+  </div>
+
+  <div class="modal" id="mQuiz"><div class="mcard" id="quizBody"></div></div>
+  <div class="modal" id="mHelp"><div class="mcard" id="helpBody"></div></div>
+  <div id="loader"><div><div class="spin"></div><h3>De gymzaal wordt klaargezet…</h3><p>Minitrampoline, dikke mat, ledenpop</p></div></div>
+  <div id="err"><div><h2 style="font-family:Fraunces,serif">Het 3D-beeld werkt niet</h2><p id="errMsg" style="color:var(--muted);max-width:460px;margin:8px auto 16px">Je browser kon de 3D-weergave niet starten.</p><button class="btn accent" onclick="location.reload()">Opnieuw laden</button></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+window.__err=function(m){document.getElementById('errMsg').textContent=m;document.getElementById('err').classList.add('open');document.getElementById('loader').classList.add('gone');};
+window.addEventListener('error',function(){if(!window.THREE)window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding.');});
+</script>
+<script>
+(function(){
+"use strict";
+if(!window.THREE||!THREE.OrbitControls){window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding.');return;}
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const D2R=Math.PI/180,TAU=Math.PI*2;
+const f1=n=>n.toFixed(1).replace('.',','),f2=n=>n.toFixed(2).replace('.',','),f0=n=>Math.round(n).toLocaleString('nl-NL');
+const store={get(k,d){try{const v=localStorage.getItem('salto.'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('salto.'+k,JSON.stringify(v));}catch(e){}}};
+function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),3400);}
+
+/* ================= biomechanisch model ================= */
+const g=9.81,M=60,BED=.55,MAT=.30,VX=1.6,START_X=-1.35;
+// hoeken in graden t.o.v. 'recht naar beneden' (romp: t.o.v. recht omhoog), positief = naar voren
+const POSES={
+  stand:{t:0,th:0,sh:0,ua:6,fa:10},
+  back:{t:12,th:28,sh:-22,ua:-40,fa:-30},
+  crouch:{t:30,th:52,sh:-32,ua:-55,fa:-45},
+  up:{t:4,th:0,sh:0,ua:168,fa:174},
+  tuck:{t:35,th:125,sh:-15,ua:40,fa:-50},
+  pike:{t:45,th:115,sh:115,ua:70,fa:127},
+  layout:{t:-4,th:-4,sh:-4,ua:10,fa:12},
+  land:{t:24,th:58,sh:-18,ua:82,fa:88},
+  stick:{t:34,th:82,sh:-32,ua:88,fa:92},
+  help:{t:18,th:30,sh:-12,ua:72,fa:96}};
+const lerpPose=(A,B,t)=>{const o={};for(const k in A)o[k]=A[k]+(B[k]-A[k])*t;return o;};
+function bodyPts(P){const t=P.t*D2R,th=P.th*D2R,sh=P.sh*D2R,ua=P.ua*D2R,fa=P.fa*D2R;
+  const hip=[0,0],sho=[.52*Math.sin(t),.52*Math.cos(t)],head=[sho[0]+.17*Math.sin(t),sho[1]+.17*Math.cos(t)];
+  const knee=[.44*Math.sin(th),-.44*Math.cos(th)],ank=[knee[0]+.43*Math.sin(sh),knee[1]-.43*Math.cos(sh)],toe=[ank[0]+.17*Math.cos(sh),ank[1]+.17*Math.sin(sh)];
+  const elb=[sho[0]+.30*Math.sin(ua),sho[1]-.30*Math.cos(ua)],hand=[elb[0]+.36*Math.sin(fa),elb[1]-.36*Math.cos(fa)];
+  return {hip,sho,head,knee,ank,toe,elb,hand};}
+// segment, van, naar, massafractie, aantal (links+rechts)
+const SEGS=[['romp','hip','sho',.497,1],['bovenarm','sho','elb',.028,2],['onderarm','elb','hand',.022,2],['bovenbeen','hip','knee',.10,2],['onderbeen','knee','ank',.0465,2],['voet','ank','toe',.0145,2]];
+function massProps(P){const p=bodyPts(P);let mx=0,my=0;const parts=[];
+  for(const [n,a,b,f,c] of SEGS){const A=p[a],B=p[b],m=f*M*c,cx=(A[0]+B[0])/2,cy=(A[1]+B[1])/2,L=Math.hypot(B[0]-A[0],B[1]-A[1]);parts.push({n,m,cx,cy,L});mx+=m*cx;my+=m*cy;}
+  const mh=.081*M;parts.push({n:'hoofd',m:mh,cx:p.head[0],cy:p.head[1],L:0,sph:.11});mx+=mh*p.head[0];my+=mh*p.head[1];
+  const com=[mx/M,my/M];let I=0;for(const q of parts)I+=q.m*((q.cx-com[0])**2+(q.cy-com[1])**2)+(q.sph?.4*q.m*q.sph*q.sph:q.m*q.L*q.L/12);
+  return {p,com,I,parts};}
+function solePt(mp){const a=mp.p.ank,t=mp.p.toe;return [(a[0]+t[0])/2,Math.min(a[1],t[1])-.05];}
+// massamiddelpunt in de wereld als de voetzool op contactpunt c staat (rechtop)
+function comFromContact(mp,c){const s=solePt(mp);return [c[0]+mp.com[0]-s[0],c[1]+mp.com[1]-s[1]];}
+const MP={};for(const k in POSES)MP[k]=massProps(POSES[k]);
+
+function simulate(cfg){const P0=POSES.up,PT=POSES[cfg.pose],PL=POSES.land,mpL=MP.land;
+  const c0=comFromContact(MP.up,[0,BED]),cL=comFromContact(mpL,[0,MAT]);const y0=c0[1],yL=cL[1],x0=c0[0];
+  const disc=cfg.vz*cfg.vz-2*g*(yL-y0);const T=(cfg.vz+Math.sqrt(Math.max(0,disc)))/g;
+  const dt=1/400,n=Math.ceil(T/dt)+1,tO=cfg.open*T,F=[];let th=0,Isum=0,wmax=0;
+  for(let i=0;i<n;i++){const t=Math.min(T,i*dt);let pose;
+    if(cfg.open<1&&t>tO){pose=lerpPose(PT,PL,ease((t-tO)/.16));}
+    else pose=lerpPose(P0,PT,t<.04?0:ease((t-.04)/.2));
+    const mp=massProps(pose),w=cfg.L/mp.I;
+    F.push({t,th,I:mp.I,w,pose,x:x0+VX*t,y:y0+cfg.vz*t-g*t*t/2});
+    if(i<n-1){th+=w*Math.min(dt,T-t);}Isum+=mp.I;wmax=Math.max(wmax,w);}
+  const deg=th/D2R,err=deg-360;const last=F[F.length-1];
+  const sL=solePt(mpL);const cx=last.x-(mpL.com[0]-sL[0]);
+  return {cfg:{...cfg},T,F,dt,th,deg,err,Iavg:Isum/F.length,wmax,x0,y0,yL,cx,good:Math.abs(err)<=25,apex:{x:x0+VX*cfg.vz/g,y:y0+cfg.vz*cfg.vz/(2*g)}};}
+function landDeg(cfg){return simulate(cfg).deg;}
+// draai-impuls waarbij de hurksalto precies 360° draait (beginwaarde)
+function solveL(pose,vz,open){let lo=5,hi=200;for(let k=0;k<40;k++){const mid=(lo+hi)/2;if(landDeg({pose,vz,L:mid,open})<360)lo=mid;else hi=mid;}return (lo+hi)/2;}
+const DEF={pose:'tuck',vz:4.2,open:.78};DEF.L=Math.round(solveL('tuck',4.2,.78));
+
+/* ================= renderer & gymzaal ================= */
+const canvas=$('#c');let renderer;
+try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}catch(e){window.__err('Je browser ondersteunt geen WebGL. Probeer Chrome of Edge.');return;}
+renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,16,40);
+const camera=new THREE.PerspectiveCamera(36,1,.05,100);
+const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2.5;controls.maxDistance=16;controls.maxPolarAngle=1.5;
+const HOME=innerWidth<820?{p:[.75,2.3,10.8],t:[.75,1.5,0]}:{p:[-.3,2.2,8.3],t:[-.42,1.5,0]};camera.position.set(...HOME.p);controls.target.set(...HOME.t);
+scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.55));
+const key=new THREE.DirectionalLight(0xfff1dc,1.15);key.position.set(3,7,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-5,right:5,top:5,bottom:-3,near:1,far:20});key.shadow.bias=-.0004;scene.add(key);
+const rim=new THREE.DirectionalLight(0x9fc7d8,.45);rim.position.set(-5,3,-4);scene.add(rim);
+const std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7},o||{}));
+function mesh(geo,mat,pos,parent){const m=new THREE.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=true;m.receiveShadow=true;(parent||scene).add(m);return m;}
+function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
+// vloer
+const floorTex=canvasTex(1024,512,(x,w,h)=>{for(let i=0;i<32;i++){const y=i*h/32;x.fillStyle=`hsl(${30+Math.random()*6},${42+Math.random()*10}%,${46+Math.random()*9}%)`;x.fillRect(0,y,w,h/32);x.fillStyle='rgba(60,35,15,.35)';x.fillRect(0,y,w,1.5);for(let k=0;k<3;k++){const xx=Math.random()*w;x.fillRect(xx,y,1.5,h/32);}}
+  x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=5;x.beginPath();x.moveTo(0,h*.82);x.lineTo(w,h*.82);x.stroke();x.strokeStyle='rgba(214,90,66,.85)';x.beginPath();x.arc(w*.78,h*.82,h*.42,Math.PI,TAU);x.stroke();});
+const FW=10,FD=6;
+mesh(new THREE.BoxGeometry(FW,.25,FD),std(0x2a1d15),[.8,-.125,0]);
+const floor=mesh(new THREE.PlaneGeometry(FW,FD),std(0xffffff,{map:floorTex,roughness:.55}),[.8,.002,0]);floor.rotation.x=-Math.PI/2;floor.castShadow=false;
+// achterwand met wandrek
+const wallM=std(0xcfd6d8),woodM=std(0xc89a5e,{roughness:.6});
+mesh(new THREE.BoxGeometry(FW,3.2,.12),wallM,[.8,1.6,-FD/2]);
+for(let s=0;s<4;s++){const x0=-3.4+s*1.0;[x0,x0+.9].forEach(x=>mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[x,1.3,-FD/2+.16]));for(let r=0;r<14;r++)mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[x0+.45,.18+r*.17,-FD/2+.16]).rotation.z=Math.PI/2;}
+mesh(new THREE.BoxGeometry(2.2,.9,.05),std(0x2f6f73),[2.6,2.0,-FD/2+.07]);
+// minitrampoline
+const tramp=new THREE.Group();scene.add(tramp);
+const frameM=std(0x8d969b,{metalness:.6,roughness:.35}),padM=std(0xd65a42);
+[[0,.5],[0,-.5]].forEach(([x,z])=>mesh(new THREE.BoxGeometry(1.06,.07,.08),padM,[x,BED-.03,z],tramp));
+[[.5,0],[-.5,0]].forEach(([x,z])=>mesh(new THREE.BoxGeometry(.08,.07,1.06),padM,[x,BED-.03,z],tramp));
+[[.46,.46],[.46,-.46],[-.46,.46],[-.46,-.46]].forEach(([x,z])=>mesh(new THREE.CylinderGeometry(.025,.025,BED,8),frameM,[x,BED/2-.03,z],tramp));
+const bedG=new THREE.Group();tramp.add(bedG);
+const bed=mesh(new THREE.BoxGeometry(.78,.02,.78),std(0x1d2226,{roughness:.9}),[0,BED-.035,0],bedG);
+for(let i=0;i<20;i++){const a=i/20*TAU,r=.42;const sp=mesh(new THREE.CylinderGeometry(.008,.008,.08,6),frameM,[Math.cos(a)*r,BED-.04,Math.sin(a)*r],tramp);sp.rotation.z=Math.PI/2;sp.rotation.y=-a;}
+// aanloopmat en dikke mat
+mesh(new THREE.BoxGeometry(2.2,.04,1.0),std(0x3a6ea5),[-1.6,.02,0]);
+const MATX0=.6,MATX1=3.1;
+const thick=mesh(new THREE.BoxGeometry(MATX1-MATX0,MAT,1.9),std(0x2e5fa3,{roughness:.85}),[(MATX0+MATX1)/2,MAT/2,0]);
+mesh(new THREE.BoxGeometry(MATX1-MATX0-.06,.012,1.84),std(0x3a73c0,{roughness:.9}),[(MATX0+MATX1)/2,MAT+.006,0]);
+const landLine=mesh(new THREE.BoxGeometry(.04,.004,1.0),new THREE.MeshBasicMaterial({color:0xe6b65e,transparent:true,opacity:.7}),[1.6,MAT+.014,0]);landLine.castShadow=false;
+
+/* ================= ledenpop ================= */
+const UP=new THREE.Vector3(0,1,0),_a=new THREE.Vector3(),_b=new THREE.Vector3(),_d=new THREE.Vector3();
+const CYL=new THREE.CylinderGeometry(1,1,1,18),SPH=new THREE.SphereGeometry(1,20,14);
+const RIGDEF=[['romp','hip','sho',.125,'jersey',[0]],['bovenarm','sho','elb',.045,'skin',[-.2,.2]],['onderarm','elb','hand',.038,'skin',[-.2,.2]],['bovenbeen','hip','knee',.07,'short',[-.095,.095]],['onderbeen','knee','ank',.052,'skin',[-.095,.095]],['voet','ank','toe',.042,'shoe',[-.095,.095]]];
+function makeRig(colors,opts){opts=opts||{};const grp=new THREE.Group();scene.add(grp);const mk=c=>opts.ghost?new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:opts.op||.35,depthWrite:false}):std(c,{roughness:.55});
+  const mats={jersey:mk(colors.jersey),skin:mk(colors.skin),short:mk(colors.short),shoe:mk(colors.shoe),joint:mk(colors.joint)};
+  const segs=[],joints=[];
+  for(const [n,a,b,r,mat,zs] of RIGDEF){for(const z of zs){const m=new THREE.Mesh(CYL,mats[mat]);m.castShadow=!opts.ghost;grp.add(m);segs.push({m,a,b,z,r:opts.ghost?r*.6:r});
+    if(n!=='romp'){const j=new THREE.Mesh(SPH,mats.joint);j.castShadow=!opts.ghost;grp.add(j);joints.push({m:j,k:b,z,r:(opts.ghost?r*.6:r)*1.12});}}}
+  [['sho',-.2],['sho',.2],['hip',-.095],['hip',.095]].forEach(([k,z])=>{const j=new THREE.Mesh(SPH,mats.joint);j.castShadow=!opts.ghost;grp.add(j);joints.push({m:j,k,z,r:opts.ghost?.04:.075});});
+  const sh=new THREE.Mesh(SPH,mats.jersey);grp.add(sh);sh.castShadow=!opts.ghost; // schouderbreedte
+  const head=new THREE.Mesh(SPH,mats.skin);head.scale.setScalar(opts.ghost?.07:.11);head.castShadow=!opts.ghost;grp.add(head);
+  let nose=null;if(!opts.ghost){nose=new THREE.Mesh(SPH,std(0x2b3a52));nose.scale.set(.03,.03,.03);grp.add(nose);}
+  return {grp,segs,joints,sh,head,nose,mats};}
+function placeSeg(m,ax,ay,az,bx,by,bz,r){_a.set(ax,ay,az);_b.set(bx,by,bz);_d.subVectors(_b,_a);const L=_d.length();m.position.addVectors(_a,_b).multiplyScalar(.5);m.scale.set(r,Math.max(L,1e-4),r);if(L>1e-6)m.quaternion.setFromUnitVectors(UP,_d.normalize());}
+function poseRig(rig,pose,com,theta,zOff){const mp=massProps(pose),c=Math.cos(-theta),s=Math.sin(-theta),z0=zOff||0;
+  const W={};for(const k in mp.p){const dx=mp.p[k][0]-mp.com[0],dy=mp.p[k][1]-mp.com[1];W[k]=[com[0]+dx*c-dy*s,com[1]+dx*s+dy*c];}
+  for(const q of rig.segs){const A=W[q.a],B=W[q.b];placeSeg(q.m,A[0],A[1],q.z+z0,B[0],B[1],q.z+z0,q.r);}
+  for(const j of rig.joints){const P=W[j.k];j.m.position.set(P[0],P[1],j.z+z0);j.m.scale.setScalar(j.r);}
+  placeSeg(rig.sh,W.sho[0],W.sho[1],-.2+z0,W.sho[0],W.sho[1],.2+z0,0);rig.sh.visible=false;
+  rig.head.position.set(W.head[0],W.head[1],z0);
+  if(rig.nose){const hx=mp.p.head[0]-mp.com[0]+.105*Math.cos(pose.t*D2R),hy=mp.p.head[1]-mp.com[1]-.105*Math.sin(pose.t*D2R);rig.nose.position.set(com[0]+hx*c-hy*s,com[1]+hx*s+hy*c,z0);}
+  return {mp,W};}
+// schouderjuk als extra box zodat de romp breder oogt
+const COL={jersey:0xd65a42,skin:0xe8d6b6,short:0x2b3a52,shoe:0xf3efe6,joint:0x8a7a66};
+const rig=makeRig(COL);
+const yoke=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),rig.mats.jersey);yoke.castShadow=true;scene.add(yoke);
+const hips=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),rig.mats.short);hips.castShadow=true;scene.add(hips);
+function placeYoke(W,theta){const ang=Math.atan2(W.sho[0]-W.hip[0],W.sho[1]-W.hip[1]);yoke.position.set(W.sho[0]-.06*Math.sin(ang),W.sho[1]-.06*Math.cos(ang),0);yoke.rotation.set(0,0,-ang);yoke.scale.set(.2,.14,.5);
+  hips.position.set(W.hip[0]+.04*Math.sin(ang),W.hip[1]+.04*Math.cos(ang),0);hips.rotation.set(0,0,-ang);hips.scale.set(.24,.16,.34);}
+// hulpverlener
+const helper=makeRig({jersey:0x2f6f73,skin:0xd9c3a0,short:0x1f2a33,shoe:0xf3efe6,joint:0x6b5d4c});
+helper.grp.rotation.y=-Math.PI/2;
+(function(){const pose=POSES.help,mp=MP.help,c=comFromContact(mp,[0,0]);poseRig(helper,pose,c,0,0);helper.grp.position.set(2.45,0,-.85);})();
+
+/* ================= lagen: zwaartepunt, baan, as, stroboscoop, r ================= */
+const comTex=canvasTex(128,128,(x)=>{x.fillStyle='#fff';x.beginPath();x.arc(64,64,58,0,TAU);x.fill();x.fillStyle='#111';x.beginPath();x.moveTo(64,64);x.arc(64,64,58,-Math.PI/2,0);x.fill();x.beginPath();x.moveTo(64,64);x.arc(64,64,58,Math.PI/2,Math.PI);x.fill();x.lineWidth=6;x.strokeStyle='#111';x.beginPath();x.arc(64,64,58,0,TAU);x.stroke();});
+const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true}));comSpr.scale.set(.15,.15,1);comSpr.renderOrder=10;scene.add(comSpr);
+const axisG=new THREE.Group();scene.add(axisG);
+const axisM=new THREE.MeshBasicMaterial({color:0x6fb2b4,transparent:true,opacity:.9,depthTest:false});
+const axRod=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1.1,10),axisM);axRod.rotation.x=Math.PI/2;axRod.renderOrder=9;axisG.add(axRod);
+const axCone=new THREE.Mesh(new THREE.ConeGeometry(.04,.1,14),axisM);axCone.rotation.x=Math.PI/2;axCone.position.z=.6;axCone.renderOrder=9;axisG.add(axCone);
+// draaipijl rond de as
+const arcPts=[];for(let i=0;i<=40;i++){const a=i/40*Math.PI*1.4+.3;arcPts.push(new THREE.Vector3(Math.cos(a)*.28,Math.sin(a)*.28,0));}
+const arcLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(arcPts),new THREE.LineBasicMaterial({color:0x6fb2b4,transparent:true,opacity:.8,depthTest:false}));arcLine.renderOrder=9;axisG.add(arcLine);
+const arcHead=new THREE.Mesh(new THREE.ConeGeometry(.03,.08,10),axisM);arcHead.renderOrder=9;axisG.add(arcHead);
+{const a=.3;arcHead.position.set(Math.cos(a)*.28,Math.sin(a)*.28,0);arcHead.rotation.z=a+Math.PI;} // wijst met de klok mee (salto voorover)
+const pathFull=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0xe6b65e,dashSize:.05,gapSize:.05,transparent:true,opacity:.5}));scene.add(pathFull);
+const pathDone=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:0xe6b65e}));scene.add(pathDone);
+const pathPrev=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0x9aa3a6,dashSize:.04,gapSize:.06,transparent:true,opacity:.45}));scene.add(pathPrev);
+// afstanden r
+const rGeo=new THREE.BufferGeometry();rGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(11*6),3));
+const rLines=new THREE.LineSegments(rGeo,new THREE.LineBasicMaterial({color:0xf08a5d,transparent:true,opacity:.9,depthTest:false}));rLines.renderOrder=8;scene.add(rLines);
+const rDots=[];for(let i=0;i<11;i++){const d=new THREE.Mesh(SPH,new THREE.MeshBasicMaterial({color:0xf08a5d,depthTest:false,transparent:true,opacity:.95}));d.renderOrder=9;scene.add(d);rDots.push(d);}
+// afzetkracht
+const forceArrow=new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(),1,0xe6b65e,.16,.09);forceArrow.visible=false;scene.add(forceArrow);
+forceArrow.line.material.depthTest=false;forceArrow.cone.material.depthTest=false;forceArrow.renderOrder=11;
+// stroboscoop
+let ghosts=[],prevGhosts=[];
+function clearGhostSet(set){for(const gh of set){scene.remove(gh.rig.grp);gh.rig.grp.traverse(o=>{if(o.material&&o.material.dispose)o.material.dispose();});}}
+function buildGhosts(J){clearGhostSet(prevGhosts);prevGhosts=ghosts;
+  prevGhosts.forEach(gh=>{for(const k in gh.rig.mats){gh.rig.mats[k].color.set(0x8a9497);gh.rig.mats[k].opacity=.16;}gh.rig.grp.visible=$('#tStrobe').checked;});
+  ghosts=[];const step=.085;for(let t=step*.6;t<J.T-.02;t+=step){const fr=frameAt(J,t),u=t/J.T;
+    const col=new THREE.Color().setHSL(lerp(.52,.04,u),.75,.55);const r=makeRig({jersey:col,skin:col,short:col,shoe:col,joint:col},{ghost:true,op:.5});
+    poseRig(r,fr.pose,[fr.x,fr.y],fr.th,0);r.grp.visible=false;ghosts.push({t,rig:r});}}
+
+/* ================= toestand & animatie ================= */
+const PRE=.9,OUT=1.25;
+const S={cfg:{pose:store.get('pose',DEF.pose),vz:store.get('vz',DEF.vz),L:store.get('L',DEF.L),open:store.get('open',DEF.open)},
+  phase:'ready',tau:-PRE,speed:.5,J:null,prevJ:null,last:null,lastLand:false,clock:0};
+function frameAt(J,t){const i=clamp(t/J.dt,0,J.F.length-1),i0=Math.floor(i),i1=Math.min(J.F.length-1,i0+1),u=i-i0,A=J.F[i0],B=J.F[i1];
+  return {t,th:lerp(A.th,B.th,u),I:lerp(A.I,B.I,u),w:lerp(A.w,B.w,u),x:lerp(A.x,B.x,u),y:lerp(A.y,B.y,u),pose:lerpPose(A.pose,B.pose,u)};}
+function preFrame(J,tau){// tau in [-PRE,0]
+  const hop=PRE/2;let pose,cx,cy,dip=0;
+  if(tau<-hop){const s=(tau+PRE)/hop;pose=lerpPose(POSES.stand,POSES.back,ease(s));const fx=lerp(START_X,-.02,ease(s)),fy=lerp(0,BED,s)+Math.sin(Math.PI*s)*.4;const c=comFromContact(massProps(pose),[fx,fy]);cx=c[0];cy=c[1];}
+  else{const s=(tau+hop)/hop;dip=Math.sin(Math.PI*clamp(s,0,1))*.2;pose=s<.5?lerpPose(POSES.back,POSES.crouch,ease(s/.5)):lerpPose(POSES.crouch,POSES.up,ease((s-.5)/.5));const c=comFromContact(massProps(pose),[lerp(-.02,0,s),BED-dip]);cx=c[0];cy=c[1];}
+  const mp=massProps(pose);const build=J?ease(clamp((tau+.22)/.22,0,1)):0;
+  return {pose,x:cx,y:cy,th:0,I:mp.I,w:0,dip,Lnow:J?J.cfg.L*build:0};}
+function outFrame(J,u){const mpL=MP.land;
+  if(J.good){const e=ease(clamp(u/.35,0,1));const th=lerp(J.th,TAU,ease(clamp(u/.25,0,1)));let pose;
+    if(u<.4)pose=lerpPose(POSES.land,POSES.stick,e);else pose=lerpPose(POSES.stick,POSES.stand,ease(clamp((u-.55)/.6,0,1)));
+    const c=comFromContact(massProps(pose),[J.cx,MAT]);const k=ease(clamp(u/.15,0,1));const last=J.F[J.F.length-1];
+    return {pose,x:lerp(last.x,c[0],k),y:lerp(last.y,c[1],k),th,I:massProps(pose).I,w:0,Lnow:0};}
+  const dir=J.err>0?1:-1;const fin=dir>0?(J.th<2.5*Math.PI+.6?2.5*Math.PI:J.th+.5):1.5*Math.PI;const e=ease(clamp(u/.75,0,1));const last=J.F[J.F.length-1];
+  const pose=lerpPose(POSES.land,POSES.layout,ease(clamp(u/.6,0,1))*.8);
+  return {pose,x:lerp(last.x,J.cx+dir*.42,e),y:lerp(last.y,MAT+.14,e),th:lerp(J.th,fin,e),I:massProps(pose).I,w:0,Lnow:0};}
+function readyFrame(){const pose=POSES.stand,c=comFromContact(MP.stand,[START_X,0]);return {pose,x:c[0],y:c[1],th:0,I:MP.stand.I,w:0,dip:0,Lnow:0};}
+function stateAt(tau){const J=S.J;if(!J||S.phase==='ready')return readyFrame();
+  if(tau<0)return preFrame(J,tau);if(tau<=J.T){const f=frameAt(J,tau);f.Lnow=J.cfg.L;return f;}return outFrame(J,tau-J.T);}
+
+function jump(){SND.init();S.prevJ=S.J;S.J=simulate(S.cfg);S.phase='run';S.tau=-PRE;S.lastLand=false;S.boing=false;
+  buildGhosts(S.J);setPath(S.J);$('#iScrub').disabled=false;$('#res').className='';$('#res').innerHTML=`<span class="k">In de lucht</span><b class="t">${POSE_NAME[S.cfg.pose]} · L = ${S.cfg.L}</b>Kijk naar I en ω: als de één omlaag gaat, gaat de ander omhoog.`;drawChart();}
+function replay(){if(!S.J){jump();return;}S.phase='run';S.tau=-PRE;S.lastLand=false;S.boing=false;ghosts.forEach(gh=>gh.rig.grp.visible=false);}
+function setPath(J){const pts=J.F.filter((f,i)=>i%4===0).map(f=>new THREE.Vector3(f.x,f.y,0));const l=J.F[J.F.length-1];pts.push(new THREE.Vector3(l.x,l.y,0));
+  if(pathFull.geometry.attributes.position){pathPrev.geometry.dispose();pathPrev.geometry=pathFull.geometry;pathPrev.computeLineDistances();}
+  pathFull.geometry=new THREE.BufferGeometry().setFromPoints(pts);pathFull.computeLineDistances();pathDone.geometry.dispose();pathDone.geometry=new THREE.BufferGeometry().setFromPoints(pts);pathDone.geometry.setDrawRange(0,0);
+  landLine.position.x=J.cx+.06;}
+const POSE_NAME={tuck:'Hurksalto',pike:'Snoeksalto',layout:'Gestrekte salto'};
+function outcome(J){const e=J.err,d=Math.round(J.deg);let c,t,x;
+  if(Math.abs(e)<=12){c='good';t='Gestoken landing!';x=`Precies rond: ${d}°.`;}
+  else if(Math.abs(e)<=25){c='good';t='Geland';x=`${d}°: net ${e>0?'iets te veel':'iets te weinig'} rotatie, maar opvangbaar.`;}
+  else if(e>0&&e<=60){c='mid';t='Te veel rotatie: valt voorover';x=`${d}°: de leerling draait door en valt op de knieën.`;}
+  else if(e>60&&e<=120){c='bad';t='Draait door: landt op handen en buik';x=`${d}°: veel te veel rotatie.`;}
+  else if(e>120){c='bad';t='Gevaarlijk: landt op hoofd en nek';x=`${d}°: dit is precies waarom er een hulpverlener staat.`;}
+  else if(e>=-60){c='mid';t='Te weinig rotatie: valt achterover';x=`${d}°: landt op de hielen en valt op de billen.`;}
+  else if(e>=-120){c='bad';t='Veel te weinig: landt op billen en rug';x=`${d}°: de rotatie is lang niet rond.`;}
+  else{c='bad';t='Landt op de rug';x=`Pas ${d}°: de salto komt niet eens halverwege de tweede helft.`;}
+  const tip=Math.abs(e)<=25?`Gemiddeld traagheidsmoment in de lucht: ${f1(J.Iavg)} kg·m². Hoogste hoeksnelheid: ${f0(J.wmax/D2R)}°/s.`:e>0?`Eerder openen (grotere I, kleinere ω) of minder draai-impuls bij de afzet.`:`Kleiner maken (kleinere I), later openen, meer draai-impuls of hoger springen (meer tijd).`;
+  return {c,t,x,tip};}
+function landed(){const J=S.J,o=outcome(J);S.last={pose:J.cfg.pose,vz:J.cfg.vz,L:J.cfg.L,open:J.cfg.open,err:J.err,deg:J.deg,good:J.good};
+  $('#res').className=o.c;$('#res').innerHTML=`<span class="k">${POSE_NAME[J.cfg.pose]} · ${Math.round(J.deg)}°</span><b class="t">${o.t}</b>${o.x} ${o.tip}`;
+  SND.thud(J.good?.5:1);if(J.good)SND.good();else SND.bad();}
+
+/* ================= labels & uitlegpunten ================= */
+const labWrap=$('#labels');
+const tagAxis=document.createElement('div');tagAxis.className='tag3d';tagAxis.textContent='breedteas';labWrap.appendChild(tagAxis);
+const tagCom=document.createElement('div');tagCom.className='tag3d';tagCom.style.color='#f1e9da';tagCom.textContent='massamiddelpunt';labWrap.appendChild(tagCom);
+const _p=new THREE.Vector3();
+function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';el.style.transform=`translate(${((_p.x*.5+.5)*innerWidth-(ox||0)).toFixed(1)}px,${((-_p.y*.5+.5)*innerHeight-(oy||0)).toFixed(1)}px)`;}
+let cur={pose:POSES.stand,x:0,y:1,th:0,I:10,w:0,Lnow:0},curW=null;
+const PTS=[
+ {t:'Massamiddelpunt en baan',s:'zwaartepunt · parabool',at:()=>new THREE.Vector3(cur.x+.18,cur.y+.12,0),tabs:[
+  `<p>Het <b>massamiddelpunt</b> (zwaartepunt) is het punt waar je de massa van het hele lichaam geconcentreerd kunt denken. Het is het zwart-witte symbool.</p><p>Na de afzet werkt alleen de zwaartekracht nog (luchtweerstand verwaarlozen we). Daardoor volgt het massamiddelpunt een vaste <b>parabool</b>: de gele stippellijn. Wat de turner in de lucht ook doet met armen en benen, aan die baan verandert niets meer. De rotatie gebeurt <i>om</i> het massamiddelpunt.</p>`,
+  `<p><span class="ctx">PO</span>Bij springen van de bank of over de bok geldt: hoe hoog en ver je komt, beslis je bij de afzet. "Duw je goed af" is dus de belangrijkste aanwijzing.</p><p><span class="ctx">VO</span>Bij verspringen kom je in de lucht niet verder meer. Je kunt wel je landing verbeteren door je benen naar voren te brengen.</p><p><b>Probeer:</b> spring een hurksalto en daarna een gestrekte salto. De grijze stippellijn van de vorige sprong valt precies samen met de nieuwe.</p>`,
+  `<div class="calc">Stijghoogte: h = v² / (2·g)<br>= 4,2² / (2 · 9,81) = 0,90 m<br><br>Tijd tot het hoogste punt: t = v / g<br>= 4,2 / 9,81 = 0,43 s</div><p>De totale vluchttijd is langer, omdat de turner hoger afzet (minitrampoline) dan landt (dikke mat).</p>`,
+  `<p class="think">Een leerling zegt: "Als ik mijn knieën optrek, spring ik hoger." Klopt dat? Wat verandert er wél als je je knieën optrekt?</p>`]},
+ {t:'Traagheidsmoment I',s:'I = Σ m · r²',at:()=>curW?new THREE.Vector3(curW.knee[0],curW.knee[1]+.1,.25):new THREE.Vector3(),tabs:[
+  `<p>Het <b>traagheidsmoment</b> zegt hoe moeilijk een lichaam aan het draaien te krijgen (of af te remmen) is. Het hangt af van de massa én van de afstand <b>r</b> van die massa tot de draaias: I = Σ m · r².</p><p>r telt in het <b>kwadraat</b>: twee keer zo ver van de as is vier keer zoveel traagheid. Gehurkt is I ongeveer 3 kg·m², gestrekt ongeveer 10 kg·m² en met de armen omhoog bijna 13 kg·m² (voor 60 kg). Zet de laag <b>Afstanden r</b> aan: je ziet de oranje lijnen korter worden als de turner zich klein maakt.</p>`,
+  `<p><span class="ctx">PO</span>Koprol: "Maak je zo klein als een balletje: kin op je borst, knieën tegen je buik." Een kleine I rolt makkelijk rond.</p><p><span class="ctx">VO</span>De opbouw van de salto volgt het traagheidsmoment: eerst gehurkt (kleine I), dan gesnoekt, dan gestrekt (grote I, dus het moeilijkst).</p><p>Ook bij de reuzenzwaai en bij hurk- of spreidsprongen over de kast speelt I mee.</p>`,
+  `<div class="calc">Arm van 3 kg op 0,2 m van de as:<br>I = 3 · 0,2² = 0,12 kg·m²<br><br>Dezelfde arm op 0,8 m:<br>I = 3 · 0,8² = 1,92 kg·m²<br>→ 4× zo ver = 16× zo groot</div>`,
+  `<p class="think">Waarom spreidt een koorddanser de armen of draagt een koorddanser een lange stok? Wat doet dat met het traagheidsmoment, en waarom helpt dat?</p>`]},
+ {t:'Behoud van impulsmoment',s:'L = I · ω blijft gelijk',at:()=>S.J?new THREE.Vector3(S.J.apex.x,S.J.apex.y+.55,0):new THREE.Vector3(.7,2.6,0),tabs:[
+  `<p>Het <b>impulsmoment</b> L = I · ω is de "hoeveelheid draaiing". In de lucht werkt geen uitwendig krachtmoment: de zwaartekracht grijpt aan in het massamiddelpunt zelf. Daarom blijft <b>L constant</b>.</p><p>Gevolg: maakt de turner zich klein (I omlaag), dan wordt de draai sneller (ω omhoog). Bij uitstrekken wordt de draai langzamer. Kijk onderin: het oranje en het blauwe getal bewegen tegengesteld, het gele getal blijft staan. Je kunt in de lucht een draai dus niet beginnen of stoppen, alleen versnellen of vertragen.</p>`,
+  `<p><span class="ctx">PO</span>Draaisprong op de trampoline: "armen tegen je lichaam" en je draait sneller rond.</p><p><span class="ctx">VO</span>Pirouette bij dans en de schroef bij turnen werken op dezelfde manier. Laat leerlingen het voelen op een draaikruk met twee halters: armen uit, armen in.</p><p>Bij de salto is <b>openen</b> dus afremmen: de turner kiest zelf wanneer de rotatie langzamer wordt.</p>`,
+  `<div class="calc">Gehurkt: L = I · ω = 2,8 · 8,6 ≈ 24 kg·m²/s<br><br>Strek uit naar I = 10:<br>ω = L / I = 24 / 10 = 2,4 rad/s<br>→ ruim 3× zo langzaam</div>`,
+  `<p class="think">Een kat die op zijn rug valt, landt toch op zijn poten, terwijl L nul blijft. Hoe kan dat? (Tip: draai de voor- en achterkant van het lichaam tegen elkaar in.)</p>`]},
+ {t:'De afzet: waar komt de draai vandaan?',s:'krachtmoment · M = F · d',at:()=>new THREE.Vector3(0,BED+.12,.5),tabs:[
+  `<p>Draai-impuls kan alleen <b>bij de afzet</b> ontstaan, zolang er contact is met de minitrampoline. De reactiekracht van het doek (gele pijl bij de afzet) gaat dan niet precies door het massamiddelpunt, maar er een stukje <b>achterlangs</b>.</p><p>Die afstand d geeft een krachtmoment M = F · d (week 3: momenten). Krachtmoment maal tijd levert het impulsmoment op: <b>L = M · Δt</b>. De turner maakt dat door voorover te leunen en de armen krachtig omhoog-voor te zwaaien.</p>`,
+  `<p><span class="ctx">PO</span>Koprol: "Zet af met je voeten en duw je billen omhoog." Zo maak je het draaimoment.</p><p><span class="ctx">VO</span>Salto: "Armen hoog, heupen omhoog-achter." Een veelgemaakte fout is <b>induiken</b>: te vroeg voorover leunen. Dat geeft veel rotatie maar weinig hoogte, en dus weinig tijd.</p><p>Probeer in het lab een lage afzet met veel L, of een hoge afzet met weinig L.</p>`,
+  `<div class="calc">F = 1800 N, d = 0,08 m<br>M = F · d = 144 N·m<br>Contacttijd Δt = 0,17 s<br>L = M · Δt = 144 · 0,17 ≈ 24 kg·m²/s</div>`,
+  `<p class="think">Waarom gaat extra draai-impuls vaak ten koste van hoogte? Wat betekent dat voor de aanwijzing die je geeft?</p>`]},
+ {t:'Draaiassen',s:'breedte-, lengte- en diepteas',at:()=>new THREE.Vector3(cur.x,cur.y+.12,.66),tabs:[
+  `<p>Het lichaam draait altijd om een as door het massamiddelpunt:</p><ul><li><b>Breedteas</b> (links-rechts, de blauwe staaf): koprol, salto, reuzenzwaai.</li><li><b>Lengteas</b> (hoofd-voeten): pirouette, schroef, draaisprong.</li><li><b>Diepteas</b> (voor-achter): radslag, zijwaartse rol.</li></ul><p>Om de lengteas is I het kleinst (ongeveer 1 kg·m² met de armen in). Daarom draai je bij een pirouette zo snel.</p>`,
+  `<p><span class="ctx">PO/VO</span>Bewegingsthema <i>over de kop gaan</i> draait om de breedteas. Draaien om de lengteas zit in springen, turnen en dans. De radslag (diepteas) zit in turnen en acrogym.</p><p>Laat leerlingen bij elke beweging eerst de as benoemen: dat maakt je aanwijzingen begrijpelijk ("draai om je navel").</p>`,
+  `<div class="calc">Pirouette, armen uit: I = 2,5 kg·m²<br>Armen in: I = 1,0 kg·m²<br>ω wordt 2,5 / 1,0 = 2,5× zo groot</div>`,
+  `<p class="think">Om welke as draai je bij a) de radslag, b) de koprol, c) een halve draai bij een strekssprong op de trampoline?</p>`]},
+ {t:'Openen voor de landing',s:'I omhoog, ω omlaag',at:()=>{if(!S.J)return new THREE.Vector3(1.2,2.0,0);const f=frameAt(S.J,S.J.T*.78);return new THREE.Vector3(f.x+.15,f.y+.5,0);},tabs:[
+  `<p>Openen betekent: armen en benen weer van de as af. Het traagheidsmoment wordt groter, dus de hoeksnelheid daalt. De turner <b>remt</b> de rotatie af en kan de landing timen.</p><p>Te laat openen geeft doordraaien, te vroeg openen geeft te weinig rotatie. Gevorderde turners <b>spotten</b>: ze zoeken met hun ogen de mat en strekken zich uit zodra ze die zien.</p>`,
+  `<p><span class="ctx">VO</span>Aanwijzing: "Zie de mat, strek je uit." Een leerling die doordraait en op de knieën landt, moet eerder openen. Wie achterover valt, moet langer klein blijven of meer draai maken bij de afzet.</p><p><b>Probeer:</b> zet de schuif "Openen na" op 100% (niet openen) en kijk wat er gebeurt.</p>`,
+  `<div class="calc">Gehurkt: I = 2,8 kg·m², ω = 8,6 rad/s<br>Landingshouding: I ≈ 8 kg·m²<br>ω = 24 / 8 = 3,0 rad/s</div>`,
+  `<p class="think">Waarom is een hurksalto veiliger om te leren dan een gestrekte salto? Denk aan de tijd die je hebt om te corrigeren.</p>`]},
+ {t:'Landen',s:'impuls · zwaartepunt boven steunvlak',at:()=>new THREE.Vector3(S.J?S.J.cx:1.6,MAT+.08,.62),tabs:[
+  `<p>Bij de landing moet de neerwaartse snelheid worden afgeremd. Dat gaat via <b>impuls</b>: F · Δt = m · Δv (week 6). Door de knieën zakken en een dikke mat maken de remtijd Δt langer, dus de kracht F kleiner.</p><p>Voor <b>stabiliteit</b> moet het massamiddelpunt boven het steunvlak (de voeten) komen (week 3). Restrotatie die er nog is, moet je opvangen. Bij te weinig rotatie ligt het zwaartepunt achter de voeten: de turner valt achterover.</p>`,
+  `<p><span class="ctx">PO</span>Landen van de bank of de kast: "Land als een veer, zacht op je voorvoeten, door je knieën."</p><p><span class="ctx">VO</span>"Land op twee voeten, knieën boven je tenen, armen naar voren en blijf staan." Gebruik bij nieuwe rotaties altijd een dikke mat.</p>`,
+  `<div class="calc">m = 60 kg, landingssnelheid 4,7 m/s<br>Δp = 60 · 4,7 ≈ 280 kg·m/s<br>Remtijd 0,1 s → F ≈ 2800 N extra<br>Remtijd 0,3 s → F ≈ 930 N extra</div>`,
+  `<p class="think">Waarom valt een leerling met te weinig rotatie achterover, ook al komen de voeten netjes op de mat?</p>`]},
+ {t:'Hulpverlenen bij rotaties',s:'meedraaien en beveiligen',at:()=>new THREE.Vector3(2.45,1.95,-.85),tabs:[
+  `<p>Een hulpverlener kan rotatie <b>toevoegen</b> en <b>afremmen</b>. Een duw in de draairichting geeft een extra krachtmoment en dus extra L. Vasthouden en tegenhouden remt de rotatie.</p><p>Grijp je dicht bij het massamiddelpunt, dan stuur je vooral de baan (hoogte en landing). Grijp je verder ervandaan, dan beïnvloed je vooral de draai: daar heb je een langere arm (M = F · d).</p>`,
+  `<p><span class="ctx">VO</span>Salto voorover van de minitrampoline: de hulpverlener staat naast de landingsplek (de groene figuur). De ene hand pakt de bovenarm, de andere geeft onder in de rug draaihulp. Draait een leerling door, dan remt de hand op rug of schouder de rotatie.</p><p><span class="ctx">PO</span>Koprol: een hand in de nek (kin op de borst) en een hand onder de knieën of billen die meedraait.</p><p>Volg altijd de methodiek en de bevoegdheden van je opleiding en school.</p>`,
+  `<div class="calc">Hulpverlener duwt 200 N op 0,4 m van het massamiddelpunt, 0,2 s lang:<br>ΔL = F · d · Δt = 200 · 0,4 · 0,2 = 16 kg·m²/s<br>→ ongeveer twee derde van wat de turner zelf maakt</div>`,
+  `<p class="think">Waar pak je een leerling vast als je de draai wilt vertragen? En waar als je vooral de landing veilig wilt stellen?</p>`]}];
+const MKS=PTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.t}</span>`;b.onclick=()=>openPt(i);labWrap.appendChild(b);return b;});
+let ptI=0,ptTab=0;
+function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((m,k)=>m.classList.toggle('sel',k===i));}
+function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(m=>m.classList.remove('sel'));}
+function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));$('#dBody').innerHTML=p.tabs[ptTab];}
+$$('#dTabs button').forEach(b=>b.onclick=()=>{ptTab=+b.dataset.t;renderPt();});
+$('#dClose').onclick=closePt;
+function ptStep(d){if(!$('#dossier').classList.contains('open')){openPt(0);return;}ptTab+=d;if(ptTab>3){if(ptI<PTS.length-1){ptI++;ptTab=0;}else ptTab=3;}if(ptTab<0){if(ptI>0){ptI--;ptTab=3;}else ptTab=0;}openPt(ptI,ptTab);}
+$('#dNext').onclick=()=>ptStep(1);$('#dPrev').onclick=()=>ptStep(-1);
+
+/* ================= HUD ================= */
+const chart=$('#chart'),cx2=chart.getContext('2d');
+function drawChart(){const r=chart.getBoundingClientRect();if(!r.width)return;const dpr=Math.min(devicePixelRatio,2);if(chart.width!==Math.round(r.width*dpr)){chart.width=Math.round(r.width*dpr);chart.height=Math.round(r.height*dpr);}
+  const W=chart.width,H=chart.height,x=cx2;x.clearRect(0,0,W,H);x.save();x.scale(dpr,dpr);const w=r.width,h=r.height,pl=4,pt=14,pb=14;
+  x.font='600 10px JetBrains Mono, monospace';x.fillStyle='#aab3b4';x.fillText('I en ω tijdens de vlucht',pl,10);
+  x.strokeStyle='rgba(241,233,218,.12)';x.beginPath();x.moveTo(pl,h-pb);x.lineTo(w-2,h-pb);x.stroke();
+  const draw=(J,alpha)=>{if(!J)return;const n=J.F.length;const X=i=>pl+(w-pl-4)*i/(n-1);const Imax=12,Wmax=14;
+    x.globalAlpha=alpha;x.lineWidth=2;x.strokeStyle='#f08a5d';x.beginPath();J.F.forEach((f,i)=>{const y=h-pb-(h-pb-pt)*clamp(f.I/Imax,0,1);i?x.lineTo(X(i),y):x.moveTo(X(i),y);});x.stroke();
+    x.strokeStyle='#6fb2b4';x.beginPath();J.F.forEach((f,i)=>{const y=h-pb-(h-pb-pt)*clamp(f.w/Wmax,0,1);i?x.lineTo(X(i),y):x.moveTo(X(i),y);});x.stroke();x.globalAlpha=1;};
+  draw(S.prevJ&&S.prevJ!==S.J?S.prevJ:null,.25);draw(S.J,1);
+  if(S.J&&S.tau>=0&&S.tau<=S.J.T){const px=pl+(w-pl-4)*S.tau/S.J.T;x.strokeStyle='#e6b65e';x.lineWidth=1.5;x.beginPath();x.moveTo(px,pt-2);x.lineTo(px,h-pb);x.stroke();}
+  x.fillStyle='#f08a5d';x.fillText('I',w-26,h-2);x.fillStyle='#6fb2b4';x.fillText('ω',w-14,h-2);x.restore();}
+const dial=$('#dialSvg');
+function drawDial(th){const deg=th/D2R,C=2*Math.PI*38;const a1=clamp(deg,0,360)/360,a2=clamp(deg-360,0,360)/360;const ok=Math.abs(deg-360)<=25;
+  const ang=(deg-90)*D2R;const nx=50+34*Math.cos(ang),ny=50+34*Math.sin(ang);
+  dial.innerHTML=`<circle cx="50" cy="50" r="38" fill="none" stroke="rgba(241,233,218,.12)" stroke-width="8"/>
+   <path d="M${50+38*Math.cos(-115*D2R)} ${50+38*Math.sin(-115*D2R)} A38 38 0 0 1 ${50+38*Math.cos(-65*D2R)} ${50+38*Math.sin(-65*D2R)}" stroke="rgba(127,200,160,.55)" stroke-width="10" fill="none"/>
+   <circle cx="50" cy="50" r="38" fill="none" stroke="#e6b65e" stroke-width="8" stroke-dasharray="${(a1*C).toFixed(1)} ${C}" transform="rotate(-90 50 50)" stroke-linecap="round"/>
+   ${a2>0?`<circle cx="50" cy="50" r="30" fill="none" stroke="#e86a5a" stroke-width="5" stroke-dasharray="${(a2*2*Math.PI*30).toFixed(1)} ${2*Math.PI*30}" transform="rotate(-90 50 50)"/>`:''}
+   <line x1="50" y1="50" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#f1e9da" stroke-width="2.5" stroke-linecap="round"/><circle cx="50" cy="50" r="3.5" fill="#f1e9da"/>
+   <text x="50" y="72" text-anchor="middle" font-family="Fraunces" font-weight="700" font-size="15" fill="${ok?'#7fc8a0':'#f1e9da'}">${Math.round(deg)}°</text>`;}
+let hudT=0;
+function updateHud(f){const L=f.Lnow||0;$('#vI').textContent=f1(f.I);$('#bI').style.width=clamp(f.I/12*100,0,100)+'%';
+  const w=S.phase!=='ready'&&S.tau>=0&&S.tau<=(S.J?S.J.T:0)?f.w:0;$('#vW').textContent=f1(w);$('#vW2').textContent=`rad/s · ${f0(w/D2R)}°/s`;$('#bW').style.width=clamp(w/14*100,0,100)+'%';
+  $('#vL').textContent=f0(L);$('#bL').style.width=clamp(L/90*100,0,100)+'%';drawDial(f.th);
+  $('#oScrub').textContent=S.J?(S.tau<0?'afzet':S.tau<=S.J.T?f2(S.tau)+' s':'landing'):'–';
+  if(S.J&&document.activeElement!==$('#iScrub'))$('#iScrub').value=Math.round(clamp((S.tau+PRE)/(S.J.T+PRE+OUT),0,1)*1000);}
+
+/* ================= bediening ================= */
+function syncUI(){const c=S.cfg;$$('#sPose button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.pose));
+  $('#iVz').value=c.vz;$('#oVz').textContent=f1(c.vz)+' m/s';$('#oVz2').textContent=`stijghoogte ${f2(c.vz*c.vz/(2*g))} m · vluchttijd ${f2(simulateT(c))} s`;
+  $('#iL').value=c.L;$('#oL').textContent=c.L+' kg·m²/s';$('#iOpen').value=Math.round(c.open*100);$('#oOpen').textContent=c.open>=.995?'niet openen':Math.round(c.open*100)+'% van de vlucht';
+  $$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));
+  store.set('pose',c.pose);store.set('vz',c.vz);store.set('L',c.L);store.set('open',c.open);}
+function simulateT(c){const c0=comFromContact(MP.up,[0,BED]),cL=comFromContact(MP.land,[0,MAT]);return (c.vz+Math.sqrt(Math.max(0,c.vz*c.vz-2*g*(cL[1]-c0[1]))))/g;}
+function setPose(p){S.cfg.pose=p;syncUI();if(S.phase!=='run')toast(`${POSE_NAME[p]}: zelfde afzet, andere houding. Druk op <b>spatie</b>.`);}
+$$('#sPose button').forEach(b=>b.onclick=()=>setPose(b.dataset.v));
+$('#iVz').oninput=e=>{S.cfg.vz=+e.target.value;syncUI();};
+$('#iL').oninput=e=>{S.cfg.L=+e.target.value;syncUI();};
+$('#iOpen').oninput=e=>{S.cfg.open=+e.target.value/100;syncUI();};
+$$('#sSpeed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;syncUI();});
+$('#bJump').onclick=()=>jump();$('#bReplay').onclick=()=>replay();
+$('#iScrub').oninput=e=>{if(!S.J)return;S.phase='scrub';S.tau=-PRE+(+e.target.value/1000)*(S.J.T+PRE+OUT);};
+$('#bDefaults').onclick=()=>{S.cfg={...DEF};syncUI();toast('Beginwaarden hersteld');};
+const LAYERS={tCom:'Z',tStrobe:'S',tR:'R',tHelp:'H'};
+$$('#lab .tog input').forEach(i=>i.onchange=applyLayers);
+function applyLayers(){const com=$('#tCom').checked,st=$('#tStrobe').checked,r=$('#tR').checked,h=$('#tHelp').checked;
+  comSpr.visible=com;axisG.visible=com;pathFull.visible=com;pathDone.visible=com;pathPrev.visible=com&&!!S.prevJ;tagAxis.style.visibility=com?'':'hidden';tagCom.style.visibility=com?'':'hidden';
+  rLines.visible=r;rDots.forEach(d=>d.visible=r);helper.grp.visible=h;prevGhosts.forEach(gh=>gh.rig.grp.visible=st);if(!st)ghosts.forEach(gh=>gh.rig.grp.visible=false);}
+function toggleLayer(id){const i=$('#'+id);i.checked=!i.checked;applyLayers();}
+const LBL=['dots','names','off'],LBLN={dots:'stippen',names:'namen',off:'uit'};let lblI=0;
+$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.className=document.body.className.replace(/lbl-\w+/,'lbl-'+LBL[lblI]);$('#bLbl').textContent='Labels: '+LBLN[LBL[lblI]];};
+function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+$('#bPresent').onclick=()=>setPresent(!document.body.classList.contains('present'));
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;const k=e.key;
+  if(k===' '){e.preventDefault();if(S.phase==='run')S.phase='pause';else if(S.phase==='pause')S.phase='run';else jump();return;}
+  if(k==='1')setPose('tuck');if(k==='2')setPose('pike');if(k==='3')setPose('layout');
+  const K=k.toUpperCase();for(const id in LAYERS)if(LAYERS[id]===K)toggleLayer(id);
+  if(K==='V')setFollow(!follow);if(K==='G')setSound(!SND.on);if(K==='L')$('#bLbl').click();if(K==='P')setPresent(!document.body.classList.contains('present'));
+  if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();ptStep(1);}if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();ptStep(-1);}
+  if(k==='Escape'){if($$('.modal.open').length)$$('.modal.open').forEach(m=>m.classList.remove('open'));else if($('#dossier').classList.contains('open'))closePt();else if(document.body.classList.contains('present'))setPresent(false);}});
+
+/* ================= uitleg & opdrachten ================= */
+$('#bHelp').onclick=()=>{$('#mHelp').classList.add('open');$('#helpBody').innerHTML=`<h2>Zo werkt het saltolab</h2>
+  <p>Een turner springt een salto voorover van de minitrampoline op de dikke mat. Jij bepaalt de <b>afzet</b> (hoe hard omhoog, hoeveel draai-impuls) en wat de turner <b>in de lucht</b> doet (houding, wanneer openen). Daarna zie je of de landing lukt.</p>
+  <ul><li>Begin met de <b>hurksalto</b> en druk op <b>spatie</b>. Kies daarna snoek of gestrekt en spring opnieuw: zelfde afzet, andere houding.</li><li>Onderin zie je <b>L = I · ω</b> live: het traagheidsmoment (oranje), de hoeksnelheid (blauw) en het impulsmoment (geel), dat in de lucht gelijk blijft.</li><li>Met de <b>tijdschuif</b> spoel je door de sprong. De <b>stroboscoop</b> toont de sprong als reeks, de vorige sprong in grijs.</li><li>De gele cijfers in beeld zijn <b>uitlegpunten</b> met vier tabjes: uitleg, in de gymles, rekenen en een denkvraag.</li></ul>
+  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Springen · pauzeren</td></tr><tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Hurk · snoek · gestrekt</td></tr><tr><td><kbd>Z</kbd> <kbd>S</kbd> <kbd>R</kbd> <kbd>H</kbd></td><td>Zwaartepunt · stroboscoop · afstanden r · hulpverlener</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten (werkt met een clicker)</td></tr><tr><td><kbd>V</kbd></td><td>Camera: overzicht of de turner volgen</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
+  <p style="font-size:13px;color:var(--muted)">Het model is vereenvoudigd: een ledenpop van 60 kg met segmentmassa's naar Dempster, rotatie in één vlak, zonder luchtweerstand. De getallen zijn realistisch van orde, niet exact.</p>
+  <p><button class="btn accent" id="hClose">Aan de slag</button></p>`;$('#hClose').onclick=()=>$('#mHelp').classList.remove('open');};
+const QUIZ=[
+ {t:'R',type:'mc',q:'Wat blijft tijdens de vlucht precies gelijk?',opts:['De hoeksnelheid ω','Het traagheidsmoment I','Het impulsmoment L','De rotatiehoek'],ok:2,ex:'In de lucht werkt geen uitwendig krachtmoment, dus L = I · ω blijft constant. I en ω veranderen wel, tegengesteld aan elkaar.'},
+ {t:'R',type:'mc',q:'Waarom draait een hurksalto sneller dan een gestrekte salto bij dezelfde afzet?',opts:['Omdat de turner gehurkt meer kracht zet','Omdat het traagheidsmoment kleiner is, dus ω groter bij gelijke L','Omdat de turner gehurkt hoger komt','Omdat de zwaartekracht gehurkt meer werkt'],ok:1,ex:'Gehurkt zit de massa dicht bij de draaias: kleine I. Met dezelfde L = I · ω wordt ω dan groter.'},
+ {t:'T1',type:'num',q:'Een turner draait gehurkt met I = 4,0 kg·m² en ω = 9 rad/s. Hoe groot is het impulsmoment L (kg·m²/s)?',answer:36,tol:.5,ex:'L = I · ω = 4,0 · 9 = 36 kg·m²/s.'},
+ {t:'T1',type:'num',q:'Dezelfde turner strekt zich uit tot I = 12 kg·m². Hoe groot wordt ω (rad/s)?',answer:3,tol:.05,ex:'L blijft 36. ω = L / I = 36 / 12 = 3 rad/s: drie keer zo langzaam.'},
+ {t:'T2',type:'sim',q:'Spring een <b>hurksalto</b> die binnen 10° van perfect landt.',check:l=>l&&l.pose==='tuck'&&Math.abs(l.err)<=10,fail:l=>!l?'Spring eerst.':l.pose!=='tuck'?'Kies de hurkhouding (toets 1).':`Je landde op ${Math.round(l.deg)}°. Pas "Openen na" of L een beetje aan.`,ok:'Mooi gestoken.'},
+ {t:'T2',type:'sim',q:'Laat de <b>gestrekte salto</b> lukken (binnen 25°).',check:l=>l&&l.pose==='layout'&&Math.abs(l.err)<=25,fail:l=>!l?'Spring eerst.':l.pose!=='layout'?'Kies gestrekt (toets 3).':`Je landde op ${Math.round(l.deg)}°. Gestrekt is I groot: je hebt veel meer L en/of meer vluchttijd nodig.`,ok:'Zie je hoeveel meer draai-impuls en hoogte daarvoor nodig was? Daarom komt de gestrekte salto als laatste in de opbouw.'},
+ {t:'T2',type:'sim',setup:{pose:'tuck',vz:4.2,L:32,open:1},q:'Een leerling draait door bij de hurksalto (L = 32, opent niet). Laat de salto lukken <b>zonder de afzet te veranderen</b>: afzetsnelheid 4,2 m/s en L = 32 blijven gelijk.',check:l=>l&&l.pose==='tuck'&&Math.abs(l.L-32)<.5&&Math.abs(l.vz-4.2)<.05&&Math.abs(l.err)<=25,fail:l=>!l?'Spring eerst.':(Math.abs(l.L-32)>=.5||Math.abs(l.vz-4.2)>=.05)?'Je hebt de afzet veranderd. Zet L terug op 32 en de afzetsnelheid op 4,2.':`Je landde op ${Math.round(l.deg)}°. Wat kan de turner in de lucht nog doen?`,ok:'Eerder openen maakt I groter en ω kleiner: precies de aanwijzing "zie de mat, strek je uit".'},
+ {t:'I',type:'open',q:'In groep 6 blijven leerlingen bij de koprol halverwege steken en vallen ze opzij. Geef twee aanwijzingen en de hulpverlening, en leg biomechanisch uit waarom ze werken.',model:'<p><b>"Kin op je borst, knieën tegen je buik":</b> klein maken verkleint het traagheidsmoment, zodat de beschikbare draai-impuls voor een snellere en volledige rotatie zorgt. Een ronde rug laat het lichaam ook rollen in plaats van bonken.</p><p><b>"Zet af met je voeten en breng je billen hoog":</b> de afzet geeft een krachtmoment rond de breedteas en dus draai-impuls. Een schuine mat helpt mee: de zwaartekracht geeft extra krachtmoment.</p><p><b>Hulpverlenen:</b> een hand in de nek of op het achterhoofd houdt de kin op de borst, de andere hand onder de knieën of billen draait mee in de draairichting. Opzij vallen voorkom je door recht af te zetten met beide voeten tegelijk (symmetrie rond de lengteas).</p>'}];
+let qi=0,qres=[];
+function dots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
+function renderQ(){if(!qres.length)qres=QUIZ.map(()=>null);const box=$('#quizBody');
+  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${dots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');return;}
+  const q=QUIZ[qi];let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${dots()}</div><p><span class="qtag">${q.t}</span>${q.q}</p>`;
+  if(q.type==='mc')h+=`<div class="opts">${q.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>`;
+  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal"><button class="btn accent" id="qGo">Controleer</button></div>`;
+  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en spring. Open daarna de opdrachten weer en klik op Controleer.</p><p style="display:flex;gap:8px;flex-wrap:wrap">${q.setup?'<button class="btn" id="qSetup">Zet de beginsituatie klaar</button>':''}<button class="btn accent" id="qGo">Controleer mijn laatste sprong</button></p>`;
+  if(q.type==='open')h+=`<textarea id="qTxt" placeholder="Schrijf je antwoord. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p>`;
+  h+=`<div id="qfb"></div><p style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="qClose">Sluiten</button><button class="btn accent" id="qNext" ${q.type==='open'?'':'disabled'}>Volgende →</button></p>`;
+  box.innerHTML=h;let done=false;
+  const fb=(ok,txt)=>{if(qres[qi]===null)qres[qi]=ok;$('#qfb').innerHTML=`<div class="fb ${ok?'ok':'no'}">${txt}</div>`;if(ok){done=true;$('#qNext').disabled=false;SND.good();}};
+  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Kijk nog eens naar L = I · ω.');});
+  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));const ok=Math.abs(v-q.answer)<=q.tol;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Gebruik L = I · ω.');};
+  if(q.type==='sim'){$('#qGo').onclick=()=>{const ok=q.check(S.last);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(S.last));};if(q.setup)$('#qSetup').onclick=()=>{S.cfg={...q.setup};syncUI();$('#mQuiz').classList.remove('open');toast('Beginsituatie staat klaar. Spring eerst eens zo, en los het dan op.');};}
+  if(q.type==='open')$('#qShow').onclick=()=>{$('#qfb').innerHTML=`<div class="fb ok">${q.model}</div>`;};
+  $('#qNext').onclick=()=>{qi++;renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');}
+$('#bQuiz').onclick=()=>{$('#mQuiz').classList.add('open');renderQ();};
+
+/* ================= geluid ================= */
+const SND=(function(){let C=null,master,on=false,wh=null,whG,whF;
+  function init(){if(C)return;try{C=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}master=C.createGain();master.gain.value=0;master.connect(C.destination);
+    const b=C.createBuffer(1,C.sampleRate*2,C.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;wh=C.createBufferSource();wh.buffer=b;wh.loop=true;whF=C.createBiquadFilter();whF.type='bandpass';whF.Q.value=1.2;whF.frequency.value=400;whG=C.createGain();whG.gain.value=0;wh.connect(whF);whF.connect(whG);whG.connect(master);wh.start();}
+  function tone(f0,f1,dur,vol,type,delay){if(!C||!on)return;const t=C.currentTime+(delay||0),o=C.createOscillator(),gg=C.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);gg.gain.setValueAtTime(.0001,t);gg.gain.exponentialRampToValueAtTime(vol,t+.01);gg.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(gg);gg.connect(master);o.start(t);o.stop(t+dur+.05);}
+  return {init,get on(){return on;},set(v){init();if(!C)return;on=v;C.resume();master.gain.setTargetAtTime(v?.8:0,C.currentTime,.1);},
+    boing(){tone(180,520,.35,.25,'sine');},thud(v){tone(110,45,.35,.5*v,'sine');},good(){[660,880,1320].forEach((f,i)=>tone(f,f,.25,.1,'triangle',i*.08));},bad(){tone(220,140,.4,.12,'sawtooth');},
+    whoosh(w){if(!C||!on||!whG)return;whG.gain.setTargetAtTime(clamp(w/14,0,1)*.22,C.currentTime,.05);whF.frequency.setTargetAtTime(250+w*120,C.currentTime,.05);}};})();
+function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
+$('#bSound').onclick=()=>setSound(!SND.on);
+
+/* ================= render ================= */
+function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?54:36;camera.updateProjectionMatrix();drawChart();}
+addEventListener('resize',resize);
+let first=true,uiT=0,follow=false;const _fT=new THREE.Vector3(),_fP=new THREE.Vector3();
+function setFollow(v){follow=v;$('#bCam').textContent='Camera: '+(v?'volgen':'overzicht');$('#bCam').classList.toggle('on',v);if(!v){camera.position.set(...HOME.p);controls.target.set(...HOME.t);}}
+$('#bCam').onclick=()=>setFollow(!follow);
+function render(dt){S.clock+=dt;
+  if(S.phase==='run'){const prev=S.tau;S.tau+=dt*S.speed;const J=S.J;
+    if(prev<-.22&&S.tau>=-.22&&!S.boing){S.boing=true;SND.boing();}
+    if(prev<=J.T&&S.tau>J.T&&!S.lastLand){S.lastLand=true;landed();}
+    if(S.tau>=J.T+OUT){S.tau=J.T+OUT;S.phase='done';}}
+  const f=stateAt(S.tau);cur=f;
+  const P=poseRig(rig,f.pose,[f.x,f.y],f.th,0);curW=P.W;placeYoke(P.W,f.th);
+  bedG.position.y=-(f.dip||0);
+  comSpr.position.set(f.x,f.y,.3);axisG.position.set(f.x,f.y,0);
+  // r-lijnen
+  if(rLines.visible){const pos=rGeo.attributes.position.array,c=Math.cos(-f.th),s=Math.sin(-f.th);P.mp.parts.forEach((q,i)=>{const dx=q.cx-P.mp.com[0],dy=q.cy-P.mp.com[1],wx=f.x+dx*c-dy*s,wy=f.y+dx*s+dy*c;pos.set([f.x,f.y,0,wx,wy,0],i*6);rDots[i].position.set(wx,wy,0);rDots[i].scale.setScalar(.018+Math.cbrt(q.m)*.012);});rGeo.attributes.position.needsUpdate=true;}
+  // afzetkracht
+  const showF=S.J&&S.phase!=='ready'&&S.tau>-.22&&S.tau<0;forceArrow.visible=!!showF;
+  if(showF){const cx=0,cy=BED-(f.dip||0);const tx=f.x-.13,ty=f.y;const d=new THREE.Vector3(tx-cx,ty-cy,0);const len=d.length()*1.25;forceArrow.position.set(cx,cy,.02);forceArrow.setDirection(d.normalize());forceArrow.setLength(len,.16,.09);}
+  // baan en stroboscoop
+  if(S.J){const n=pathDone.geometry.attributes.position?pathDone.geometry.attributes.position.count:0;const frac=clamp(S.tau/S.J.T,0,1);pathDone.geometry.setDrawRange(0,Math.ceil(frac*n));
+    const st=$('#tStrobe').checked;ghosts.forEach(gh=>gh.rig.grp.visible=st&&S.tau>=gh.t);}
+  SND.whoosh(S.J&&S.tau>0&&S.tau<S.J.T&&S.phase==='run'?f.w*S.speed*2:0);
+  if(follow){const tx=lerp(f.x,(S.J?S.J.apex.x:f.x),.25),ty=Math.max(1.4,f.y*.85+.3);_fT.set(tx,ty,0);const k=1-Math.exp(-dt*3);controls.target.lerp(_fT,k);_fP.set(tx-.7,ty+.6,5.6);camera.position.lerp(_fP,k*.6);}
+  controls.update();renderer.render(scene,camera);
+  // labels
+  MKS.forEach((m,i)=>project(PTS[i].at(),m,12,12));project(new THREE.Vector3(f.x,f.y,.62),tagAxis,-8,6);project(new THREE.Vector3(f.x,f.y-.12,0),tagCom,-12,-2);
+  uiT+=dt;if(uiT>.05){uiT=0;updateHud(f);if(S.J&&S.phase!=='ready')drawChart();}
+  if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}}
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;render(dt);}
+resize();syncUI();applyLayers();drawDial(0);
+const ia=camera.position.clone();camera.position.set(4.5,3.2,8.5);let intro=0;
+(function introAnim(){intro+=.016;camera.position.lerp(ia,.05);if(intro<2.2)requestAnimationFrame(introAnim);})();
+requestAnimationFrame(loop);
+setTimeout(()=>toast('Druk op <b>spatie</b> of <b>Spring!</b> en kijk onderin naar L = I · ω'),1400);
+window.__sl={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,jump,simulate,DEF,MP,setPose,openPt,syncUI};
+})();
+</script>
+</body>
+</html>
