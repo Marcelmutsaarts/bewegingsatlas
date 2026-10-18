@@ -227,7 +227,7 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,16,40);
 const camera=new THREE.PerspectiveCamera(34,1,.05,100);
 const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2;controls.maxDistance=14;controls.maxPolarAngle=1.5;
-const HOME=innerWidth<820?{p:[.1,1.4,7.4],t:[.1,.55,0]}:{p:[-.62,1.55,5.1],t:[-.72,1.0,0]};camera.position.set(...HOME.p);controls.target.set(...HOME.t);
+const HOME=innerWidth<820?{p:[.1,1.4,7.4],t:[.1,.55,0]}:{p:[-.62,1.55,5.1],t:[-.72,1.0,0]};function frameCam(){const H=S?S.cfg.H:1,nar=innerWidth<820,ty=(nar?.35:.72)+H*.52,d=(nar?6.2:5.2)+H*1.5,x=nar?.1:-.75;camera.position.set(x+.1,ty+.5,d);controls.target.set(x,ty,0);}
 scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.55));
 const key=new THREE.DirectionalLight(0xfff1dc,1.15);key.position.set(3,7,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-4,right:4,top:4,bottom:-2,near:1,far:20});key.shadow.bias=-.0004;scene.add(key);
 const rim=new THREE.DirectionalLight(0x9fc7d8,.45);rim.position.set(-5,3,-4);scene.add(rim);
@@ -398,7 +398,7 @@ function updateHud(f){const J=S.J;const m=J?J.m:WHO[S.cfg.who].m;let v=f.v||0;
 /* ================= bediening ================= */
 function syncUI(){const c=S.cfg;$$('#sWho button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.who));$$('#sTech button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.tech));$$('#sSurf button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.surf));
   $('#iH').value=c.H;$('#oH').textContent=f2(c.H)+' m';const J=simulate(c);$('#oH2').textContent=`landingssnelheid ≈ ${f1(J.v)} m/s · impuls ${f0(J.p)} kg·m/s`;
-  $$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));buildKast(c.H);showSurf(c.surf);
+  $$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));buildKast(c.H);showSurf(c.surf);if(Math.abs((S.camH??-1)-c.H)>.001){S.camH=c.H;frameCam();}
   for(const k of ['who','H','tech','surf'])store.set(k,c[k]);}
 function seg(id,key){$$(id+' button').forEach(b=>b.onclick=()=>{S.cfg[key]=b.dataset.v;syncUI();if(S.phase!=='run'){S.phase='ready';}});}
 seg('#sWho','who');seg('#sTech','tech');seg('#sSurf','surf');
@@ -497,7 +497,7 @@ function render(dt){clock+=dt;
   if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}}
 let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;render(dt);}
-resize();syncUI();drawChart();
+resize();syncUI();frameCam();drawChart();
 requestAnimationFrame(loop);
 setTimeout(()=>toast('Druk op <b>spatie</b>. Vergelijk daarna een stijve landing met een landing door de knieën.'),1400);
 window.__ld={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,jump,simulate,syncUI,openPt};
