@@ -122,7 +122,7 @@ footer{padding:50px 0 40px;color:var(--muted);font-size:13.5px}
         <div class="goal"><i>Leerdoel 1</i><b>Begrijpen</b><span>De belangrijkste wetten en principes van de biomechanica uitleggen, met beeld en berekening.</span></div>
         <div class="goal"><i>Leerdoel 2</i><b>Toepassen</b><span>Die principes vertalen naar organisatie, aanwijzingen en hulpverlenen in de gymles.</span></div>
       </div>
-      <a class="cta" href="salto.html">Open het saltolab: week 4, rotaties <span aria-hidden="true">→</span></a>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:24px"><a class="cta" style="margin-top:0" href="salto.html">Saltolab · rotaties <span aria-hidden="true">→</span></a><a class="cta" style="margin-top:0;background:var(--ink);color:var(--paper);box-shadow:none" href="landing.html">Landingslab · impuls</a><a class="cta" style="margin-top:0;background:var(--ink);color:var(--paper);box-shadow:none" href="ringen.html">Ringenlab · energie</a></div>
     </div>
     <figure class="plate" style="margin:0">
       <header><span>Tabula motus</span><span>Fig. II · salto voorover, zijaanzicht</span></header>
@@ -134,7 +134,7 @@ footer{padding:50px 0 40px;color:var(--muted);font-size:13.5px}
   <section id="themas">
     <div class="eyebrow">De cursus in zeven thema's</div>
     <h2>Van beschrijven naar verklaren</h2>
-    <p class="sub">De volgorde volgt de cursus Biomechanica in de praktijk. Bij elk thema staan de kernbegrippen, voorbeelden uit de gymles in het PO en het VO, een aanwijzing die je leerlingen geeft en, waar het speelt, het hulpverlenen. Week 4 is uitgewerkt als interactief 3D-lab.</p>
+    <p class="sub">De volgorde volgt de cursus Biomechanica in de praktijk. Bij elk thema staan de kernbegrippen, voorbeelden uit de gymles in het PO en het VO, een aanwijzing die je leerlingen geeft en, waar het speelt, het hulpverlenen. De weken 4, 6 en 7 zijn uitgewerkt als interactieve 3D-labs.</p>
     <div class="stations" id="list"></div>
   </section>
 
@@ -226,11 +226,11 @@ const W=[
   chips:['Fz = m · g','wrijving Fw = μ · Fn','veerkracht F = C · u','centripetaal F = m · v² / r','ontbinden'],
   po:['Trampoline en minitrampoline: het doek slaat energie op als een veer.','Klimmen in touw en wandrek: wrijving en grip.','Glijden op een mat met de gladde kant onder.'],vo:['Bochtlopen op de atletiekbaan: naar binnen hellen.','Duikelen aan de rekstok: de grip moet de middelpuntzoekende kracht leveren.'],
   cue:'"Hel naar binnen in de bocht."',hv:'Controleer of matten niet kunnen schuiven (wrijving!). Laat leerlingen bij klimtoestellen sokken uit doen.'},
- {n:6,x:X(1.62)-8,y:Y(.3)+38,t:'Momentum en impuls',s:'p = m · v · F · Δt = Δp',sum:'Om een snelheid te veranderen heb je een krachtstoot nodig: kracht maal tijd. Langer remmen betekent minder kracht. Langer duwen bij de afzet betekent meer snelheid.',
+ {n:6,x:0,y:0,t:'Momentum en impuls',s:'p = m · v · F · Δt = Δp',live:true,url:'landing.html',kind:'3D-lab · sprong van de kast',what:'Een leerling springt van de kast. Jij kiest wie er springt, de hoogte, de landingstechniek en de ondergrond. Bij het contact gaat het beeld in slow motion en zie je de kracht-tijdgrafiek: de oppervlakte (impuls) blijft gelijk, de piek niet.',goals:['Je legt uit waarom door de knieën landen de piekkracht verlaagt, met F · Δt = m · Δv.','Je berekent impuls, remtijd en gemiddelde remkracht bij een landing.','Je vergelijkt het effect van landingstechniek en ondergrond op de belasting.','Je ontwerpt een veilige opbouw voor afsprongen in de gymles en onderbouwt die met impuls.'],thumb:'land',sum:'Om een snelheid te veranderen heb je een krachtstoot nodig: kracht maal tijd. Langer remmen betekent minder kracht. Langer duwen bij de afzet betekent meer snelheid.',
   chips:['impuls p = m · v','krachtstoot F · Δt','F · Δt = m · Δv','botsingen'],
   po:['Landen van de kast: "land als een veer".','Bal vangen: meegeven met je handen naar je lichaam.','Trefbal met zachte ballen: langere botstijd.'],vo:['Verspringen en hoogspringen: de afzet verlengen met de armzwaai.','Kogelstoten: een lange stootweg geeft meer snelheid.'],
   cue:'"Vang de bal en geef mee."',hv:'Gebruik een dikke mat bij nieuwe landingen. Door de knieën zakken verlengt de remtijd en verlaagt de piekkracht.'},
- {n:7,x:X(.42)+34,y:Y(2.05)+14,t:'Energie',s:'Ek = ½ m v² · Ez = m g h',sum:'Bewegingsenergie, zwaarte-energie en veerenergie zetten in elkaar om. Bij zwaaien en springen kun je met energie voorspellen hoe hoog iemand komt.',
+ {n:7,x:0,y:0,t:'Energie',s:'Ek = ½ m v² · Ez = m g h',live:true,url:'ringen.html',kind:'3D-lab · zwaaien aan de ringen',what:'Een leerling zwaait aan de ringen vanaf de kast. Zwaarte-energie en bewegingsenergie wisselen elkaar live af. Pomp de zwaai groter, zet de wrijving aan of uit en spring af op het dode punt of juist onderin.',goals:['Je legt de omzetting tussen zwaarte-energie en bewegingsenergie uit en past behoud van energie toe.','Je berekent Ez, Ek en de snelheid onderin uit de hoogte.','Je verklaart hoe pompen (arbeid) de zwaai groter maakt en wrijving hem kleiner.','Je kiest het veilige moment van afspringen en organiseert zwaaien aan de ringen veilig.'],thumb:'ring',sum:'Bewegingsenergie, zwaarte-energie en veerenergie zetten in elkaar om. Bij zwaaien en springen kun je met energie voorspellen hoe hoog iemand komt.',
   chips:['Ek = ½ · m · v²','Ez = m · g · h','veerenergie','arbeid W = F · s','energieomzetting'],
   po:['Schommelen aan touw of ringen: op het hoogste punt sta je even stil.','Van de glijbaan: hoe hoger je begint, hoe sneller je beneden bent.'],vo:['Hoogspringen: aanloopsnelheid wordt hoogte.','Zwaaien aan de ringen: uitzwaai op het hoogste punt.'],
   cue:'"Zwaai vanuit je heupen en laat los op het hoogste punt."'}];
@@ -249,12 +249,19 @@ const thumb=`<svg viewBox="0 0 200 150" aria-hidden="true"><ellipse cx="100" cy=
 <path d="M120 22a26 26 0 0 1 4 40" fill="none" stroke="#6fb2b4" stroke-width="2"/><path d="M124 62l-6-6 8-1z" fill="#6fb2b4"/>
 <g stroke="#e8d6b6" stroke-width="4" stroke-linecap="round"><path d="M142 112l-4-12 6-12M144 88l-8 -18"/><circle cx="135" cy="64" r="5" fill="#e8d6b6"/></g>
 <text x="12" y="20" fill="#e6b65e" font-family="JetBrains Mono" font-size="11" font-weight="600">L = I · ω</text></svg>`;
+const thumbLand=`<svg viewBox="0 0 200 150" aria-hidden="true"><ellipse cx="100" cy="136" rx="88" ry="10" fill="#000" opacity=".35"/><rect x="10" y="126" width="180" height="10" fill="#c9965c"/><rect x="22" y="76" width="40" height="50" fill="#c4935a"/><rect x="22" y="72" width="40" height="6" fill="#8a5a36"/><path d="M34 66 Q70 30 104 92" fill="none" stroke="#e6b65e" stroke-width="1.5" stroke-dasharray="3 3"/>
+<g stroke="#e8d6b6" stroke-width="4" stroke-linecap="round" fill="none"><path d="M110 92l8 12-6 14M110 92l-4 12 8 12"/><path d="M110 92l-2-20"/><path d="M108 76l14 6"/></g><circle cx="106" cy="66" r="6" fill="#e8d6b6"/><path d="M118 124v-40" stroke="#e6b65e" stroke-width="3"/><path d="M118 80l-5 8h10z" fill="#e6b65e"/>
+<path d="M140 120 C148 120 150 60 158 60 C166 60 168 120 176 120" fill="rgba(230,182,94,.25)" stroke="#e6b65e" stroke-width="1.5"/><path d="M134 120 C138 120 140 104 146 104" fill="none" stroke="#aab3b4" stroke-width="1.2"/><text x="12" y="20" fill="#e6b65e" font-family="JetBrains Mono" font-size="11" font-weight="600">F · Δt = m · Δv</text></svg>`;
+const thumbRing=`<svg viewBox="0 0 200 150" aria-hidden="true"><ellipse cx="100" cy="136" rx="88" ry="10" fill="#000" opacity=".35"/><rect x="10" y="126" width="180" height="10" fill="#c9965c"/><rect x="40" y="118" width="120" height="8" fill="#2e5fa3"/><path d="M10 14h180" stroke="#6b7378" stroke-width="5"/>
+<path d="M100 16 L132 76" stroke="#e8e2d4" stroke-width="1.6"/><circle cx="132" cy="78" r="4" fill="none" stroke="#c89a5e" stroke-width="2"/><path d="M58 70 A64 64 0 0 0 142 70" fill="none" stroke="#e6b65e" stroke-width="1.5" stroke-dasharray="3 3"/>
+<g stroke="#e8d6b6" stroke-width="4" stroke-linecap="round"><path d="M132 80l8 24"/><path d="M140 104l-2 18"/></g><circle cx="128" cy="86" r="5" fill="#e8d6b6"/>
+<rect x="14" y="34" width="8" height="44" rx="2" fill="#6fa8dc"/><rect x="26" y="58" width="8" height="20" rx="2" fill="#f08a5d"/><text x="12" y="30" fill="#e6b65e" font-family="JetBrains Mono" font-size="10" font-weight="600">Ez + Ek</text></svg>`;
 document.getElementById('list').innerHTML=W.map(w=>`<div class="row${w.live?' live':''}" data-n="${w.n}"><div class="num">${w.n}</div><div>
   <div class="meta">Week ${w.n} · ${w.live?'interactief lab':'thema'}</div><h3>${w.t}: ${w.s}</h3><p>${w.sum}</p>
   <div class="chips">${w.chips.map(c=>`<span class="chip${/[=·²]/.test(c)?' f':''}">${c}</span>`).join('')}</div>
   <div class="gym"><div><b>In de gymles · PO</b><ul>${w.po.map(x=>`<li>${x}</li>`).join('')}</ul></div><div><b>In de gymles · VO</b><ul>${w.vo.map(x=>`<li>${x}</li>`).join('')}</ul></div>
   <div><b>Aanwijzing</b><span class="cue">${w.cue}</span></div>${w.hv?`<div class="hv"><b>Hulpverlenen en veiligheid</b>${w.hv}</div>`:''}</div>
-  ${w.live?`<div class="card"><a class="thumb" href="${w.url}" aria-label="Open het saltolab">${thumb}</a><div><div class="tags"><span class="tag kind">${w.kind}</span><span class="tag">8 uitlegpunten</span><span class="tag">8 opdrachten · RTTI</span><span class="tag">presentatiestand</span></div><p>${w.what}</p><details><summary>Leerdoelen</summary><ul>${w.goals.map(x=>`<li>${x}</li>`).join('')}</ul></details></div><a class="open" href="${w.url}">Openen →</a></div>`:''}
+  ${w.live?`<div class="card"><a class="thumb" href="${w.url}" aria-label="Open ${w.kind}">${w.thumb==='land'?thumbLand:w.thumb==='ring'?thumbRing:thumb}</a><div><div class="tags"><span class="tag kind">${w.kind}</span><span class="tag">8 uitlegpunten</span><span class="tag">8 opdrachten · RTTI</span><span class="tag">presentatiestand</span></div><p style="font-size:14px;color:var(--muted);margin:0">${w.what}</p><details><summary>Leerdoelen</summary><ul>${w.goals.map(x=>`<li>${x}</li>`).join('')}</ul></details></div><a class="open" href="${w.url}">Openen →</a></div>`:''}
   </div></div>`).join('');
 /* ---- matrix ---- */
 const COLS=['Newton','Momenten','Rotaties','Krachten','Impuls','Energie'];
