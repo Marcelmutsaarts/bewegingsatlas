@@ -273,8 +273,8 @@ mesh(new THREE.BoxGeometry(FW,6.2,.12),std(0xcfd6d8),[0,3.1,-FD/2]);
 const steel=std(0x8d969b,{metalness:.6,roughness:.35});
 mesh(new THREE.BoxGeometry(FW,.18,.24),std(0x6b7378),[0,PIV[1]+.18,0]).castShadow=false;
 [-RZ,RZ].forEach(z=>mesh(new THREE.CylinderGeometry(.05,.05,.12,12),steel,[0,PIV[1]+.05,z]));
-const ropes=[-RZ,RZ].map(z=>{const r=mesh(new THREE.CylinderGeometry(.012,.012,1,8),std(0xe8e2d4,{roughness:.9}),[0,0,z]);r.castShadow=false;return {r,z};});
-const ringsM=[-RZ,RZ].map(z=>{const t=mesh(new THREE.TorusGeometry(.09,.016,10,28),std(0xc89a5e,{roughness:.5}),[0,0,z]);return {t,z};});
+const ropes=[-RZ,RZ].map(z=>{const r=mesh(new THREE.CylinderGeometry(1,1,1,10),std(0x7a5a3a,{roughness:.9}),[0,0,z]);r.castShadow=true;return {r,z};});
+const ringsM=[-RZ,RZ].map(z=>{const t=mesh(new THREE.TorusGeometry(.1,.022,12,32),std(0xb07a3e,{roughness:.45}),[0,0,z]);return {t,z};});
 // landingsmatten
 mesh(new THREE.BoxGeometry(8,MAT,2.2),std(0x2e5fa3,{roughness:.85}),[0,MAT/2,0]);
 mesh(new THREE.BoxGeometry(7.94,.01,2.14),std(0x3a73c0,{roughness:.9}),[0,MAT+.005,0]);
@@ -482,7 +482,7 @@ function render(dt){clock+=dt;const sdt=dt*S.speed;physics(sdt);SC=WHO[S.cfg.who
   if(!handsOn){// touwen slingeren vrij uit
     S.freeTh=(S.freeTh??(S.fly?S.fly.relTh:0));S.freeW=(S.freeW??(S.fly?S.fly.relW:0));S.freeW+=(-(g/ROPE)*Math.sin(S.freeTh)-.25*S.freeW)*sdt;S.freeTh+=S.freeW*sdt;}else{S.freeTh=undefined;S.freeW=undefined;}
   const rth=handsOn?Math.atan2(hx-PIV[0],PIV[1]-hy):S.freeTh;const rx=PIV[0]+ROPE*Math.sin(rth),ry=PIV[1]-ROPE*Math.cos(rth);
-  ropes.forEach(({r,z})=>placeSeg(r,PIV[0],PIV[1],z,rx,ry+.09,z,.012));ringsM.forEach(({t,z})=>{t.position.set(rx,ry,z);t.rotation.set(0,Math.PI/2,0);});
+  ropes.forEach(({r,z})=>placeSeg(r,PIV[0],PIV[1],z,rx,ry+.1,z,.022));ringsM.forEach(({t,z})=>{t.position.set(rx,ry,z);t.rotation.set(0,Math.PI/2,0);});
   // kast schuift weg na de start
   kast.visible=S.phase==='ready'||(S.phase!=='fly'&&S.phase!=='landed'&&S.kastT<.7);if(kast.visible&&S.phase!=='ready'){kast.position.x=-ease(S.kastT/.7)*1.2;}else if(S.phase==='ready')kast.position.x=0;
   // lagen
