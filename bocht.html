@@ -186,7 +186,7 @@ const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 const WHO={po:{m:30,sc:.8,n:'PO-leerling'},vo:{m:55,sc:.95,n:'VO-leerling'},st:{m:70,sc:1.03,n:'Student'}};
 const MU={shoe:{mu:.8,n:'Zaalschoenen'},bare:{mu:.6,n:'Blote voeten'},dust:{mu:.45,n:'Schoenen op een stoffige vloer'},sock:{mu:.3,n:'Sokken'}};
 const L1=6,WALL=6.4,MUK=.75; // aanloop, afstand tot de muur, glijwrijving t.o.v. statische wrijving
-const S={who:store.get('who','vo'),v:store.get('v',4),r:store.get('r',2),mu:store.get('mu','shoe'),speed:1,phase:'ready',s:0,t:0,ph:0,lean:0,slip:null,trail:[],last:null};
+const S={who:store.get('who','vo'),v:store.get('v',3.4),r:store.get('r',2),mu:store.get('mu','shoe'),speed:1,phase:'ready',s:0,t:0,ph:0,lean:0,slip:null,trail:[],last:null};
 function need(){const m=WHO[S.who].m;return {Fc:m*S.v*S.v/S.r,Fw:MU[S.mu].mu*m*g,phi:Math.atan(S.v*S.v/(g*S.r)),vmax:Math.sqrt(MU[S.mu].mu*g*S.r),m};}
 function pathAt(s){const r=S.r,arc=Math.PI*r;if(s<L1)return {x:-L1+s,z:-r,a:0,arc:false};if(s<L1+arc){const th=-Math.PI/2+(s-L1)/r;return {x:r*Math.cos(th),z:r*Math.sin(th),a:th+Math.PI/2,arc:true};}const u=s-L1-arc;return {x:-u,z:r,a:Math.PI,arc:false};}
 
@@ -198,7 +198,7 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,22,48);
 const camera=new THREE.PerspectiveCamera(36,1,.05,120);
 const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=3;controls.maxDistance=30;controls.maxPolarAngle=1.45;
-const HOME=innerWidth<820?{p:[-4,10,13],t:[0,0,0]}:{p:[-7,4.6,4.6],t:[.3,0,-.5]};camera.position.set(...HOME.p);controls.target.set(...HOME.t);
+const HOME=innerWidth<820?{p:[-4,10,13],t:[0,0,0]}:{p:[-8.8,6.6,6.4],t:[-1.5,0,-.4]};camera.position.set(...HOME.p);controls.target.set(...HOME.t);
 scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.6));
 const key=new THREE.DirectionalLight(0xfff1dc,1.1);key.position.set(4,10,6);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-9,right:9,top:8,bottom:-8,near:1,far:30});key.shadow.bias=-.0004;scene.add(key);
 const std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7},o||{}));
@@ -263,7 +263,7 @@ const _p=new THREE.Vector3();
 function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';el.style.transform=`translate(${((_p.x*.5+.5)*innerWidth-(ox||0)).toFixed(1)}px,${((-_p.y*.5+.5)*innerHeight-(oy||0)).toFixed(1)}px)`;}
 
 /* ================= rennen ================= */
-function reset(){S.phase='ready';S.s=0;S.t=0;S.ph=0;S.lean=0;S.slip=null;S.trail=[];buildPlanned();wallFlash.material.opacity=0;$('#bGo').textContent='Rennen!';const n=need();const r=$('#res');r.className='';r.innerHTML=`<span class="k">${WHO[S.who].n} · ${MU[S.mu].n.toLowerCase()}</span><b class="t">Lukt de bocht?</b>Voorspel eerst: maakt de leerling de bocht? Druk dan op spatie.`;}
+function reset(){S.phase='ready';S.s=2.2;S.t=0;S.ph=0;S.lean=0;S.slip=null;S.trail=[];buildPlanned();wallFlash.material.opacity=0;$('#bGo').textContent='Rennen!';const n=need();const r=$('#res');r.className='';r.innerHTML=`<span class="k">${WHO[S.who].n} · ${MU[S.mu].n.toLowerCase()}</span><b class="t">Lukt de bocht?</b>Voorspel eerst: maakt de leerling de bocht? Druk dan op spatie.`;}
 function go(){SND.init();if(S.phase==='run'){S.phase='pause';$('#bGo').textContent='▶ Verder';return;}if(S.phase==='pause'){S.phase='run';$('#bGo').textContent='⏸ Pauze';return;}if(S.phase==='done')reset();S.phase='run';$('#bGo').textContent='⏸ Pauze';}
 function startSlip(p){const n=need();const ratio=n.Fc/n.Fw;const dist=S.v*S.v/(2*MUK*MU[S.mu].mu*g);const hit=p.x+dist>WALL-.35;
   S.slip={x0:p.x,z0:p.z,a:p.a,t:0,dist:Math.min(dist,WALL-.35-p.x),hit,v0:S.v,dec:MUK*MU[S.mu].mu*g};SND.skid();
