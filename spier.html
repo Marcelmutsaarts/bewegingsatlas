@@ -33,6 +33,29 @@ body.lv4 #app{background:radial-gradient(110% 90% at 55% 45%,#14263d 0%,#0a1424 
 #lensTxt{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;font:700 30px Fraunces,serif;color:#1d2a33;opacity:0;transition:opacity .4s;pointer-events:none;text-align:center}
 #lensTxt small{display:block;font:600 13px "JetBrains Mono",monospace;letter-spacing:.12em;margin-top:6px;color:#4b5b66}
 #lensTxt.on{opacity:1}
+/* film */
+#filmOv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:11;display:none}
+body.film #filmOv{display:block}
+body.film #top,body.film #left,body.film #hud,body.film #hint,body.film #markers,body.film .panel,body.film #lens,body.film #lensTxt,body.film #flash{display:none!important}
+#filmBar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:6px;background:rgba(12,16,18,.82);border:1px solid var(--line);border-radius:14px;padding:6px;backdrop-filter:blur(10px);transition:opacity .5s}
+#filmBar[hidden]{display:none}
+#filmBar.idle{opacity:0}
+#filmBar:hover{opacity:1}
+#filmBar button{border:0;background:none;color:#e9e1d2;font:600 13.5px "Instrument Sans",sans-serif;padding:8px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
+#filmBar button:hover{background:rgba(255,255,255,.08)}
+#filmBar button.on{color:var(--gold)}
+#filmBar button.rec{color:#ff6b5a}
+#filmBar #fPlay{min-width:44px;background:var(--bone);color:#1c1a17}
+#filmBar #fPos{font:600 11.5px "JetBrains Mono",monospace;color:var(--muted);padding:0 8px;letter-spacing:.06em}
+#filmBar .sep{width:1px;height:22px;background:var(--line)}
+#recNote{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:12;background:rgba(160,30,20,.9);color:#fff;font:600 13px "Instrument Sans",sans-serif;padding:8px 14px;border-radius:10px}
+#recNote[hidden]{display:none}
+#filmStart{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:rgba(6,10,12,.72);backdrop-filter:blur(4px)}
+#filmStart[hidden]{display:none}
+#recView{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;z-index:11}
+body.rec #filmOv{display:none}
+#filmStart button{border:0;background:var(--accent);color:#fff;font:700 22px Fraunces,serif;padding:18px 30px;border-radius:16px;cursor:pointer;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#filmStart p{color:var(--muted);text-align:center;margin:12px 0 0;font-size:14px}
 
 /* header */
 #top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none;z-index:5}
@@ -208,6 +231,10 @@ body.present #cap{font-size:15px;width:340px}
   <div id="flash"></div>
   <div id="markers"></div>
   <div id="lens"></div><div id="lensTxt"></div>
+  <canvas id="filmOv" aria-hidden="true"></canvas>
+  <div id="filmBar" hidden><button id="fPrev" title="Vorig hoofdstuk (←)">⏮</button><button id="fPlay" title="Pauze / afspelen (spatie)">⏸</button><button id="fNext" title="Volgend hoofdstuk (→)">⏭</button><span id="fPos"></span><span class="sep"></span><button id="fVoice">Stem: aan</button><button id="fRec" title="Neemt de film in 1080p op en downloadt hem (ca. 4 minuten, ondertiteld)">⬇ Download als video</button><span class="sep"></span><button id="fClose" title="Film sluiten (Esc)">✕ Sluiten</button></div>
+  <div id="recNote" hidden>● Opname loopt. Laat dit tabblad open en zichtbaar tot de download start.</div>
+  <div id="filmStart" hidden><div><button id="filmStartBtn">▶ Bekijk de film</button><p>Hoe een spier kracht maakt · ca. 4 minuten · met stem en ondertitels</p></div></div>
 
   <header id="top">
     <div class="title">
@@ -221,6 +248,7 @@ body.present #cap{font-size:15px;width:340px}
         <button data-state="2"><kbd>2</kbd><span id="s2lbl">Sprint</span></button>
         <button data-state="3"><kbd>3</kbd><span id="s3lbl">Scheur</span></button>
       </div>
+      <button class="btn accent" id="bFilm" title="Uitlegfilm met stem en ondertitels"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg><span class="t">Film</span></button>
       <button class="btn" id="bSound" title="Geluid (G)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
       <button class="btn" id="bPresent" title="Presenteren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
     </div>
@@ -651,8 +679,8 @@ const STEPS=['Binden','Powerslag','ATP: loslaten','Opspannen'];
 const DUR=[1.1,1.3,1.1,1.2];
 function cycleStep(dt){
   const sp=xSpeed;X5.t+=dt*sp;
-  if(X5.phase==='ca'){X5.ca=smooth(X5.t/1.4);caIons.forEach((c,i)=>{const to=W.tn.clone().add(V(i*.12-.18,.1+i*.05,.1));const from=V(-3+i*1.8,6,1.5);c.position.lerpVectors(from,to,smooth(X5.t/1.2));c.visible=true;});
-    if(X5.t>1.5){X5.phase='cycle';X5.step=0;X5.t=0;}return;}
+  if(X5.phase==='ca'){X5.ca=smooth(X5.t/1.4);caIons.forEach((c,i)=>{const to=(W.tn||V(0,L5.Ya+.7,0)).clone().add(V(i*.12-.18,.1+i*.05,.1));const from=V(-3+i*1.8,6,1.5);c.position.lerpVectors(from,to,smooth(X5.t/1.2));c.visible=true;});
+    if(X5.t>1.5){if(X5.manual){X5.t=1.5;return;}X5.phase='cycle';X5.step=0;X5.t=0;}return;}
   if(X5.phase!=='cycle')return;
   const st=X5.step,u=clamp(X5.t/DUR[st],0,1);
   const mc=motorBase();
@@ -753,7 +781,7 @@ function step0(dt){
     $('#b2').style.width=Math.round(M0.act*100)+'%';const m2=$('#m2');m2.textContent=M0.mode;m2.className='m '+({excentrisch:'ecc',concentrisch:'con',isometrisch:'iso'}[M0.mode]||'');
     $('#b3').style.width=Math.round(clamp(M0.force,0,1)*100)+'%';$('#m3').textContent=Math.round(clamp(M0.force,0,1.2)*1800)+' N';}
 }
-function onTear(){const f=$('#flash');f.style.transition='none';f.style.opacity=1;requestAnimationFrame(()=>{f.style.transition='opacity 1.1s';f.style.opacity=0;});SND.rip(true);shake=.45;}
+function onTear(){const f=$('#flash');f.style.transition='none';f.style.opacity=1;requestAnimationFrame(()=>{f.style.transition='opacity 1.1s';f.style.opacity=0;});SND.rip(true);shake=.45;FILM.flashA=1;}
 let shake=0;
 function step1(dt){
   if(state===1){F1.contract=0;capSet(stateText(),'Elke bundel (fascikel) is een kabeltje van spiervezels in een eigen vlies. Zoom verder in op één vezel.');}
@@ -972,7 +1000,8 @@ function goLevel(n,after){if(n<0||n>=LEVELS.length||zooming){return;}if(n===lvl)
 $('#zIn').addEventListener('click',()=>goLevel(lvl+1));$('#zOut').addEventListener('click',()=>goLevel(lvl-1));
 
 /* ================= sound ================= */
-const SND=(function(){let C=null,master,rev,noiseBuf,on=false,nextAmb=0,drone=null;
+const SND=(function(){let C=null,master,rev,noiseBuf,on=false,nextAmb=0,drone=null,mus=null,musOn=false,dest=null;
+  const CH=[[110,164.8,220,261.6,55],[87.3,130.8,174.6,220,43.65],[130.8,196,261.6,329.6,65.4],[98,146.8,196,246.9,49]];
   function init(){if(C)return;C=new (window.AudioContext||window.webkitAudioContext)();master=C.createGain();master.gain.value=0;master.connect(C.destination);
     rev=C.createConvolver();const len=C.sampleRate*2.2|0;const ir=C.createBuffer(2,len,C.sampleRate);for(let ch=0;ch<2;ch++){const d=ir.getChannelData(ch);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3);}rev.buffer=ir;const rg=C.createGain();rg.gain.value=.45;rev.connect(rg);rg.connect(master);
     noiseBuf=C.createBuffer(1,C.sampleRate*2,C.sampleRate);const nd=noiseBuf.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
@@ -986,13 +1015,19 @@ const SND=(function(){let C=null,master,rev,noiseBuf,on=false,nextAmb=0,drone=nu
   return {
     set(v){init();on=v;C.resume();master.gain.setTargetAtTime(v?.9:0,C.currentTime,.15);nextAmb=C.currentTime+1;},
     get on(){return on;},
-    tick(){if(!on||!C)return;drone.gain.setTargetAtTime(lvl>=2?.035:0,C.currentTime,.5);
+    tick(){if(!on||!C)return;this.musicTick();drone.gain.setTargetAtTime(lvl>=2?.035:0,C.currentTime,.5);
       if(lvl===0&&state>1&&!(state===3&&tearFired)){const now=C.currentTime;if(now>nextAmb){thump(110,.08,.12);nextAmb=now+(state===2?.31:.29);}}},
     click(p){if(!on||!C)return;const t=C.currentTime;const o=C.createOscillator();o.frequency.value=900*(p||1);const g=C.createGain();env(g,t,.003,.04,.06);o.connect(g);out(g,0);o.start(t);o.stop(t+.1);},
     stroke(){if(!on||!C)return;thump(220,.12,.12);noise(.05,'bandpass',2400,4,.08,.002);},
     split(){if(!on||!C)return;noise(.06,'highpass',4000,.7,.12,.002);},
     rip(big){if(!on||!C)return;const t=C.currentTime;noise(big?.35:.22,'bandpass',3200,1.2,big?.5:.3,.004,t,500);noise(.04,'highpass',2500,.7,.4,.001,t);if(big){thump(70,.4,.7,t);noise(1.2,'bandpass',600,1,.14,.25,t+.3);}},
     whoosh(dir){if(!on||!C)return;noise(.7,'bandpass',dir>0?400:2400,1.5,.18,.2,C.currentTime,dir>0?2400:400);},
+    // zachte muziekbedding voor de film
+    music(v){init();if(v&&!mus){const g=C.createGain();g.gain.value=0;const lp=C.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.connect(g);out(g,.7);
+        const oscs=[0,1,2,3,4].map(i=>{const o=C.createOscillator();o.type=i<3?'triangle':'sine';o.detune.value=i===1?6:i===2?-5:0;const og=C.createGain();og.gain.value=i===4?.35:.2;o.connect(og);og.connect(lp);o.start();return o;});mus={g,oscs,i:0,next:0};}
+      musOn=v;if(mus)mus.g.gain.setTargetAtTime(v?.075:0,C.currentTime,v?1.6:.5);},
+    musicTick(){if(!mus||!musOn||!C)return;const now=C.currentTime;if(now<mus.next)return;const ch=CH[mus.i%CH.length];mus.oscs.forEach((o,i)=>o.frequency.setTargetAtTime(ch[i],now,.35));mus.i++;mus.next=now+6.4;},
+    tap(){init();if(!dest){dest=C.createMediaStreamDestination();master.connect(dest);}return dest.stream;},
   };})();
 
 function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
@@ -1030,9 +1065,10 @@ function frame(dt){
   [step0,step1,step2,step3,step4][lvl](pdt);
   if(fly){fly.k+=dt/fly.dur;const e=ease(fly.k);camera.position.lerpVectors(fly.p0,fly.p1,e);controls.target.lerpVectors(fly.t0,fly.t1,e);if(fly.k>=1)fly=null;}
   else if(ride){rideA+=dt*.2;const v=LEVELS[lvl].view;const T=V(...v[1]);const r=V(...v[0]).distanceTo(T)*(.9+.12*Math.sin(rideA*.7));camera.position.set(T.x+Math.sin(rideA)*r,T.y+r*.3+r*.12*Math.sin(rideA*.5),T.z+Math.cos(rideA)*r);controls.target.lerp(T,.05);}
+  else if(FILM.on&&!zooming)filmCam(dt);
   controls.update();
   if(shake>0){shake=Math.max(0,shake-dt);const s=shake*.12;camera.position.x+=(R()-.5)*s;camera.position.y+=(R()-.5)*s;}
-  renderer.render(scene,camera);updateMarkers();SND.tick();
+  renderer.render(scene,camera);filmDraw(dt);updateMarkers();SND.tick();
   if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}
   frames++;fpsT+=dt;if(!autoChecked&&fpsT>4){autoChecked=true;if(frames/fpsT<28&&quality==='hi')setQuality('lo');}
 }
@@ -1040,8 +1076,149 @@ showLevel(0);
 const v0=LEVELS[0].view;camera.position.set(...v0[0]).sub(V(...v0[1])).multiplyScalar(1.4).add(V(...v0[1]));controls.target.set(...v0[1]);flyTo(v0[0],v0[1],2.4);
 // deep links: spier.html#niveau=3 or #5 (point)
 (function(){const h=location.hash.slice(1);const m=h.match(/niveau=(\d)/);if(m){const n=clamp(+m[1]-1,0,4);setTimeout(()=>goLevel(n),600);}else{const p=parseInt(h);if(p>=1&&p<=POINTS.length)setTimeout(()=>openPoint(p-1),900);}})();
+/* ================= FILM: zo werkt een spier ================= */
+const FILM={on:false,si:-1,li:-1,lt:0,ld:0,voice:true,vDone:true,playing:false,camT:0,view:null,bars:0,cap:'',capA:0,chap:'',chapA:0,title:null,titleA:0,flashA:0,lensT:9,lensName:'',steps:false,rec:null,end:false,waiting:false,idle:0};
+const CAM={wide:[[15.5,9.6,22],[.4,4.2,.6]],muscle:[[6,8.5,14],[-4,5.6,0]],sarc:[[2.4,3.8,10.8],[0,-.2,0]],cross:[[3,1.9,13.5],[.3,.45,0]],runner:[[9.5,3.4,9.5],[3.4,1.3,2.4]]};
+function filmSetView(v,dur){if(FILM.view===v)return;FILM.view=v;FILM.camT=0;const q=filmPose(v,0);fly={p0:camera.position.clone(),t0:controls.target.clone(),p1:q.p,t1:q.t,k:0,dur:dur||2.2};ride=false;}
+const SCENES=[
+ {chap:'',lv:0,st:1,view:CAM.wide,title:['Hoe een spier kracht maakt','Van sprint tot powerslag · vijf keer inzoomen'],lines:[
+  {t:'Elke sprint, elke sprong en elke landing begint met hetzelfde: een spier die korter wil worden.'},
+  {t:'Maar hoe doet een spier dat eigenlijk?'},
+  {t:'We zoomen in: van de hamstring tot één enkel eiwit.',do:()=>{FILM.title=null;}}]},
+ {chap:'1 · De spier',lv:0,st:2,lines:[
+  {t:'Dit is de hamstring: de lange kop van de biceps femoris, achter op het bovenbeen.',cam:CAM.muscle},
+  {t:'Kijk naar de sprinter. Bij elke pas spant de spier aan, wordt korter en daarna weer langer.',cam:CAM.wide},
+  {t:'De hamstring buigt de knie en strekt de heup. In de sprint remt hij ook het onderbeen af.',cam:CAM.runner}]},
+ {chap:'2 · Spierbundels',lv:1,st:1,lines:[
+  {t:'Zoom in, en je ziet dat een spier geen massief stuk vlees is.'},
+  {t:'Hij bestaat uit bundels, de fascikels, elk verpakt in bindweefsel: het perimysium.'},
+  {t:'Daartussen lopen bloedvaten die zuurstof en brandstof aanvoeren.'},
+  {t:'Spant de spier aan, dan trekken al die bundels tegelijk samen.',do:()=>setState(2)}]},
+ {chap:'3 · De spiervezel',lv:2,st:2,lines:[
+  {t:'Eén bundel bevat honderden spiervezels. Elke vezel is één cel, soms tientallen centimeters lang.'},
+  {t:'Het startsignaal komt van een zenuw. Een elektrische impuls loopt over de vezel.',do:()=>setState(2)},
+  {t:'Die impuls laat calcium vrij in de cel. Calcium is de schakelaar die de samentrekking aanzet.'}]},
+ {chap:'4 · Het sarcomeer',lv:3,st:1,view:CAM.sarc,lines:[
+  {t:'In de vezel liggen myofibrillen, opgedeeld in duizenden sarcomeren achter elkaar.'},
+  {t:'Een sarcomeer is de kleinste eenheid van een spier die kan samentrekken.'},
+  {t:'Dunne actinedraden en dikke myosinedraden schuiven in elkaar.',do:()=>setState(2)},
+  {t:'De draden worden zelf niet korter. Ze glijden langs elkaar, en zo wordt het hele sarcomeer korter.'}]},
+ {chap:'5 · De powerslag',lv:4,st:2,view:CAM.cross,steps:true,setup:()=>{X5.phase='rust';X5.ca=0;X5.manual=true;},lines:[
+  {t:'Hoe trekken ze dan? Dit is één myosinekop, naast een actinedraad.',do:()=>{X5.phase='rust';X5.ca=0;}},
+  {t:'Eerst schuift calcium de blokkade van tropomyosine opzij. Nu kan de kop binden.',do:L=>{X5.phase='ca';X5.t=0;xSpeed=clamp(1.5/(L*.8),.2,2);}},
+  {t:'Stap 1, binden: de kop hecht zich aan de actine.',do:L=>{X5.phase='cycle';X5.ca=1;caIons.forEach(c=>c.visible=false);X5.step=0;X5.t=0;X5.manual=true;xSpeed=clamp(DUR[0]/(L*.85),.15,2);}},
+  {t:'Stap 2, de powerslag: de kop kantelt en trekt de actine een stukje mee.',do:L=>{nextStep();X5.manual=true;xSpeed=clamp(DUR[1]/(L*.85),.15,2);}},
+  {t:'Stap 3, loslaten: een nieuw ATP-molecuul maakt de kop weer los.',do:L=>{nextStep();X5.manual=true;xSpeed=clamp(DUR[2]/(L*.85),.15,2);}},
+  {t:'Stap 4, opspannen: ATP wordt gesplitst en de kop spant zich op voor de volgende slag.',do:L=>{nextStep();X5.manual=true;xSpeed=clamp(DUR[3]/(L*.85),.15,2);}},
+  {t:'Zo trekken miljoenen koppen tegelijk, telkens opnieuw. Samen maken ze de kracht van de spier.',do:()=>{nextStep();X5.manual=false;xSpeed=1.1;}}]},
+ {chap:'6 · Zonder ATP',lv:4,st:2,view:CAM.cross,steps:true,setup:()=>{X5.phase='cycle';X5.ca=1;X5.manual=false;xSpeed=.9;},lines:[
+  {t:'En zonder ATP? Kijk: de kop bindt en maakt de slag, maar blijft daarna vastzitten.',do:()=>{X5.noATP=true;}},
+  {t:'Er is geen ATP om hem los te maken. Dat gebeurt bij lijkstijfheid.'},
+  {t:'ATP is dus niet alleen brandstof voor de powerslag. Het is ook nodig om los te laten.',end:()=>{X5.noATP=false;}}]},
+ {chap:'7 · Excentrisch',lv:4,st:3,view:CAM.cross,setup:()=>{xSpeed=.8;},lines:[
+  {t:'Bij een excentrische contractie wordt de spier langer terwijl hij kracht levert, zoals bij afremmen.'},
+  {t:'De koppen houden vast terwijl de actine wegtrekt. Sommige worden losgerukt.'},
+  {t:'Excentrisch werk levert de grootste kracht, maar ook de meeste microschade.'}]},
+ {chap:'8 · De scheur',lv:0,st:2,view:CAM.wide,setup:()=>{xSpeed=1;grade=2;},lines:[
+  {t:'Terug naar de sprinter. In de late zwaaifase remt de hamstring het onderbeen af: excentrisch, op volle lengte.'},
+  {t:'Precies daar gaat het mis bij een hamstringblessure. Kijk goed.',do:()=>{grade=2;setState(3);},min:5.2,cam:CAM.muscle},
+  {t:'Een graad-2-scheur: een deel van de bundels scheurt door, er ontstaat een bloeding en de spier verliest kracht.',cam:CAM.runner}]},
+ {chap:'Tot slot',lv:0,st:2,view:CAM.wide,lines:[
+  {t:'Excentrische training, zoals de Nordic curl, maakt de hamstring sterker in precies die situatie.'},
+  {t:'Van ATP tot sprint: alles hangt samen.'},
+  {t:'',min:5,do:()=>{FILM.title=['Verken het zelf','De Bewegingsatlas · zoom in, van spier tot kruisbrug'];}}]}];
+const estDur=t=>t?Math.max(2.4,.7+t.length/13.2):3;
+let nlVoice=null;function pickVoice(){try{const vs=speechSynthesis.getVoices();nlVoice=vs.find(v=>/^nl/i.test(v.lang)&&/google|microsoft|natural|online/i.test(v.name))||vs.find(v=>/^nl/i.test(v.lang))||null;}catch(e){}}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
+function speak(t){FILM.vDone=true;if(!FILM.voice||!t||!('speechSynthesis' in window)||FILM.rec)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='nl-NL';if(nlVoice)u.voice=nlVoice;u.rate=1;u.pitch=1;FILM.vDone=false;u.onend=u.onerror=()=>{FILM.vDone=true;};speechSynthesis.speak(u);}catch(e){FILM.vDone=true;}}
+function filmScene(i){if(i>=SCENES.length){filmEnd();return;}const sc=SCENES[i],prev=SCENES[FILM.si];if(prev&&prev.lines[FILM.li]&&prev.lines[FILM.li].end)prev.lines[FILM.li].end();
+  if(prev)prev.lines.forEach(l=>l.end&&l.end());
+  FILM.si=i;FILM.li=-1;FILM.waiting=true;FILM.steps=!!sc.steps;FILM.chap=sc.chap;FILM.chapA=0;FILM.cap='';FILM.title=sc.title||null;
+  try{speechSynthesis.cancel();}catch(e){}paused=false;X5.noATP=false;X5.manual=false;
+  const go=()=>{setState(sc.st);if(sc.setup)sc.setup();filmSetView(sc.view||LEVELS[lvl].view,1.8);FILM.waiting=false;filmLine(0);};
+  if(sc.lv!==lvl){FILM.lensT=0;FILM.lensName=LEVELS[sc.lv].name;FILM.camT=0;goLevel(sc.lv,()=>setTimeout(go,250));}else{go();}
+  filmUI();}
+function filmLine(j){const sc=SCENES[FILM.si];if(j>=sc.lines.length){filmScene(FILM.si+1);return;}const L=sc.lines[j];FILM.li=j;FILM.lt=0;FILM.ld=Math.max(L.min||0,estDur(L.t));
+  if(L.cam)filmSetView(L.cam,2.4);if(L.do)L.do(FILM.ld);FILM.cap=L.t;FILM.capA=0;speak(L.t);filmUI();}
+function filmTick(dt){if(!FILM.on)return;FILM.bars=Math.min(1,FILM.bars+dt*1.5);FILM.chapA=Math.min(1,FILM.chapA+dt*1.2);FILM.capA=Math.min(1,FILM.capA+dt*3);
+  FILM.titleA=lerp(FILM.titleA,FILM.title?1:0,Math.min(1,dt*2.2));FILM.lensT+=dt;FILM.flashA=Math.max(0,FILM.flashA-dt*.9);
+  if(!FILM.playing||FILM.waiting||FILM.end)return;FILM.lt+=dt;const L=SCENES[FILM.si]&&SCENES[FILM.si].lines[FILM.li];if(!L)return;
+  if(FILM.lt>=FILM.ld&&(FILM.vDone||FILM.lt>FILM.ld*2+2)){filmLine(FILM.li+1);}}
+function filmPose(v,ct){const T=V(...v[1]),off=V(...v[0]).sub(T);const asp=camera.aspect;if(asp<1)off.multiplyScalar(Math.min(1.9,1/Math.pow(asp,.85)));const a=(lvl===0?.3:.2)*Math.sin(ct*.16);off.applyAxisAngle(AY,a).multiplyScalar(1-.07*Math.sin(ct*.11));off.y+=(lvl===0?.5:.25)*Math.sin(ct*.13);return {p:T.clone().add(off),t:T};}
+function filmCam(dt){if(!FILM.view||fly)return;FILM.camT+=dt;const q=filmPose(FILM.view,FILM.camT);camera.position.copy(q.p);controls.target.copy(q.t);}
+function filmStart(fromRec){closeInfo();closeQuiz();FILM.on=true;FILM.end=false;FILM.playing=true;FILM.bars=0;FILM.title=null;FILM.titleA=0;FILM.camT=0;ride=false;document.body.classList.add('film');$('#help').classList.remove('open');
+  if(!SND.on)setSound(true);SND.music(true);filmResize();filmScene(0);}
+function filmStop(){FILM.on=false;FILM.playing=false;FILM.si=-1;try{speechSynthesis.cancel();}catch(e){}SND.music(false);X5.noATP=false;X5.manual=false;xSpeed=1;document.body.classList.remove('film');const v=LEVELS[lvl].view;flyTo(v[0],v[1]);filmUI();if(FILM.rec)recStop(false);}
+function filmEnd(){FILM.end=true;FILM.playing=false;filmUI();if(FILM.rec)setTimeout(()=>recStop(true),2500);}
+function filmPause(){if(!FILM.on)return;if(FILM.end){filmStart();return;}FILM.playing=!FILM.playing;paused=!FILM.playing&&!(lvl===4&&state===2);try{FILM.playing?speechSynthesis.resume():speechSynthesis.pause();}catch(e){}filmUI();}
+function filmJump(d){if(!FILM.on||zooming)return;const i=clamp(FILM.si+d,0,SCENES.length-1);FILM.end=false;FILM.playing=true;filmScene(i);}
+// ---- tekenen (scherm én video) ----
+const BGS=[['#2c3a42','#18232a','#0d1316'],['#3a2f2a','#1d1715','#0c0908'],['#2d2533','#17121c','#09070c'],['#1d3036','#0f1b1f','#060b0d'],['#14263d','#0a1424','#03070d']];
+function wrapText(ctx,t,maxW){const words=t.split(' ');const lines=[];let cur='';for(const w of words){const test=cur?cur+' '+w:w;if(ctx.measureText(test).width>maxW&&cur){lines.push(cur);cur=w;}else cur=test;}if(cur)lines.push(cur);return lines;}
+function drawOverlay(ctx,w,h,rec){const s=Math.min(h/1080,w/1500);ctx.save();
+  if(rec){const g=ctx.createRadialGradient(w*.55,h*.4,0,w*.55,h*.4,w*.75);const b=BGS[lvl];g.addColorStop(0,b[0]);g.addColorStop(.55,b[1]);g.addColorStop(1,b[2]);ctx.globalCompositeOperation='destination-over';ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='source-over';
+    const vg=ctx.createRadialGradient(w/2,h*.45,h*.35,w/2,h*.45,w*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=vg;ctx.fillRect(0,0,w,h);}
+  // scheurflits
+  if(FILM.flashA>0){const fg=ctx.createRadialGradient(w/2,h/2,h*.2,w/2,h/2,w*.7);fg.addColorStop(0,'rgba(214,60,40,0)');fg.addColorStop(1,`rgba(214,60,40,${.5*FILM.flashA})`);ctx.fillStyle=fg;ctx.fillRect(0,0,w,h);}
+  // zoomlens
+  const lt=FILM.lensT;const la=lt<.75?lt/.75:lt<1.1?1:Math.max(0,1-(lt-1.1)/.6);if(la>0){const lg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*.6);lg.addColorStop(0,`rgba(255,255,255,0)`);lg.addColorStop(.45,`rgba(225,236,245,${.65*la})`);lg.addColorStop(1,`rgba(240,246,250,${la})`);ctx.fillStyle=lg;ctx.fillRect(0,0,w,h);
+    if(la>.5){ctx.globalAlpha=(la-.5)*2;ctx.fillStyle='#1d2a33';ctx.textAlign='center';ctx.font=`700 ${56*s}px Fraunces, serif`;ctx.fillText(FILM.lensName,w/2,h/2);ctx.font=`600 ${20*s}px "JetBrains Mono", monospace`;ctx.fillStyle='#4b5b66';ctx.fillText('INZOOMEN · '+(LEVELS.find(L=>L.name===FILM.lensName)||{scale:''}).scale,w/2,h/2+44*s);ctx.globalAlpha=1;}}
+  // titelkaart
+  if(FILM.titleA>.01&&FILM.title){ctx.globalAlpha=FILM.titleA;const tg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*.6);tg.addColorStop(0,'rgba(8,12,14,.55)');tg.addColorStop(1,'rgba(8,12,14,.15)');ctx.fillStyle=tg;ctx.fillRect(0,0,w,h);
+    ctx.textAlign='center';ctx.fillStyle='#e6b65e';ctx.font=`600 ${22*s}px "JetBrains Mono", monospace`;ctx.fillText('DE BEWEGINGSATLAS · SPIERWEEFSEL',w/2,h*.4);
+    ctx.fillStyle='#f1e9da';ctx.font=`700 ${92*s}px Fraunces, serif`;ctx.fillText(FILM.title[0],w/2,h*.4+100*s);ctx.fillStyle='#c9c0ae';ctx.font=`500 ${32*s}px "Instrument Sans", sans-serif`;ctx.fillText(FILM.title[1],w/2,h*.4+160*s);ctx.globalAlpha=1;}
+  // filmbalken
+  const bh=74*s*FILM.bars;ctx.fillStyle='#000';ctx.fillRect(0,0,w,bh);ctx.fillRect(0,h-bh,w,bh);
+  // hoofdstuk
+  if(FILM.chap){ctx.globalAlpha=FILM.chapA;ctx.textAlign='left';ctx.fillStyle='#e6b65e';ctx.font=`600 ${22*s}px "JetBrains Mono", monospace`;ctx.fillText(FILM.chap.toUpperCase(),70*s,bh+52*s);
+    ctx.fillStyle='rgba(241,233,218,.75)';ctx.font=`500 ${20*s}px "JetBrains Mono", monospace`;ctx.fillText('≈ '+LEVELS[lvl].scale,70*s,bh+82*s);ctx.globalAlpha=1;}
+  // stappen van de kruisbrugcyclus
+  if(FILM.steps&&lvl===4){const names=STEPS;const cw=230*s,gap=14*s,x0=w/2-(names.length*cw+(names.length-1)*gap)/2,y=bh+(w/h<1.6?112:30)*s;names.forEach((n,i)=>{const on=X5.phase==='cycle'&&X5.step===i;ctx.fillStyle=on?'rgba(230,182,94,.95)':'rgba(15,20,23,.7)';roundRect(ctx,x0+i*(cw+gap),y,cw,46*s,12*s);ctx.fill();
+    ctx.fillStyle=on?'#1c1a17':'rgba(241,233,218,.8)';ctx.textAlign='center';ctx.font=`600 ${21*s}px "Instrument Sans", sans-serif`;ctx.fillText((i+1)+' · '+n,x0+i*(cw+gap)+cw/2,y+31*s);});}
+  // ondertitel
+  if(FILM.cap){ctx.font=`600 ${38*s}px "Instrument Sans", sans-serif`;const lines=wrapText(ctx,FILM.cap,Math.min(1380*s,w-120*s));const lh=50*s,boxH=lines.length*lh+36*s;let maxW=0;lines.forEach(l=>maxW=Math.max(maxW,ctx.measureText(l).width));const bw=maxW+64*s,bx=w/2-bw/2,by=h-bh-boxH-34*s;
+    ctx.globalAlpha=FILM.capA;ctx.fillStyle='rgba(10,14,16,.78)';roundRect(ctx,bx,by,bw,boxH,16*s);ctx.fill();ctx.fillStyle='#f1e9da';ctx.textAlign='center';lines.forEach((l,i)=>ctx.fillText(l,w/2,by+18*s+lh*(i+.78)));ctx.globalAlpha=1;}
+  // merk
+  ctx.textAlign='right';ctx.fillStyle='rgba(241,233,218,.55)';ctx.font=`600 ${18*s}px "JetBrains Mono", monospace`;ctx.fillText('DE BEWEGINGSATLAS',w-60*s,h-bh/2+6*s);
+  ctx.restore();}
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+const ov=$('#filmOv'),ovx=ov.getContext('2d');
+function filmResize(){const d=Math.min(devicePixelRatio,2);ov.width=innerWidth*d;ov.height=innerHeight*d;}
+addEventListener('resize',filmResize);
+function filmDraw(dt){filmTick(dt);if(!FILM.on){if(ov.width&&ov.dataset.clear!=='1'){ovx.clearRect(0,0,ov.width,ov.height);ov.dataset.clear='1';}return;}ov.dataset.clear='0';
+  ovx.clearRect(0,0,ov.width,ov.height);// scherm: 16:9-beeld centreren
+  drawOverlay(ovx,ov.width,ov.height,false);
+  if(FILM.rec){const R2=FILM.rec,c=R2.ctx,W2=1920,H2=1080;const src=renderer.domElement,sw=src.width,sh=src.height;FILM.idle=0;const a=W2/H2;let cw=sw,ch=sw/a;if(ch>sh){ch=sh;cw=sh*a;}const sx=(sw-cw)/2,sy=(sh-ch)/2;
+    c.clearRect(0,0,W2,H2);c.drawImage(src,sx,sy,cw,ch,0,0,W2,H2);drawOverlay(c,W2,H2,true);}
+  FILM.idle+=dt;$('#filmBar').classList.toggle('idle',FILM.idle>2.6&&FILM.playing);}
+// ---- bediening ----
+function filmUI(){const bar=$('#filmBar');bar.hidden=!FILM.on;if(!FILM.on)return;$('#fPlay').textContent=FILM.end?'↻ Opnieuw':FILM.playing?'⏸':'▶';$('#fPos').textContent=FILM.end?'Einde':`Hoofdstuk ${Math.max(0,FILM.si)} van ${SCENES.length-1}`;$('#fVoice').classList.toggle('on',FILM.voice);$('#fVoice').textContent=FILM.voice?'Stem: aan':'Stem: uit';
+  $('#fRec').textContent=FILM.rec?'● Opnemen…':'⬇ Download als video';$('#fRec').classList.toggle('rec',!!FILM.rec);}
+$('#bFilm').addEventListener('click',()=>filmStart());
+$('#fPlay').addEventListener('click',filmPause);$('#fPrev').addEventListener('click',()=>filmJump(-1));$('#fNext').addEventListener('click',()=>filmJump(1));
+$('#fVoice').addEventListener('click',()=>{FILM.voice=!FILM.voice;if(!FILM.voice){try{speechSynthesis.cancel();}catch(e){}FILM.vDone=true;}filmUI();});
+$('#fClose').addEventListener('click',filmStop);
+addEventListener('mousemove',()=>{FILM.idle=0;});
+// ---- opnemen als video ----
+function recMime(){const c=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];return c.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';}
+function recStart(){if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){alert('Deze browser kan geen video opnemen. Gebruik Chrome of Edge.');return;}
+  const mime=recMime();const cv=document.createElement('canvas');cv.width=1920;cv.height=1080;const ctx=cv.getContext('2d');const vs=cv.captureStream(30);
+  if(!SND.on)setSound(true);const as=SND.tap();if(as)as.getAudioTracks().forEach(t=>vs.addTrack(t));
+  const chunks=[];let mr;try{mr=new MediaRecorder(vs,{mimeType:mime,videoBitsPerSecond:12e6});}catch(e){mr=new MediaRecorder(vs);}
+  mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
+  mr.onstop=()=>{const type=(mr.mimeType||mime||'video/webm').split(';')[0];const blob=new Blob(chunks,{type});if(FILM.recOk){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='spier-uitleg-bewegingsatlas.'+(type.includes('mp4')?'mp4':'webm');document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}};
+  FILM.rec={mr,ctx,cv};FILM.recOk=false;autoChecked=true;document.body.classList.add('rec');cv.id='recView';$('#app').appendChild(cv);FILM.voice=false;try{speechSynthesis.cancel();}catch(e){}if(quality!=='hi')setQuality('hi');
+  recSize();$('#recNote').hidden=false;filmStart(true);setTimeout(()=>mr.start(500),400);filmUI();}
+function recSize(){if(!FILM.rec)return;renderer.setPixelRatio(1);renderer.setSize(1920,1080,false);camera.aspect=16/9;camera.fov=36;camera.updateProjectionMatrix();}
+addEventListener('resize',recSize);
+function recStop(ok){const R2=FILM.rec;if(!R2)return;FILM.recOk=ok;FILM.rec=null;try{R2.mr.stop();}catch(e){}$('#recNote').hidden=true;document.body.classList.remove('rec');R2.cv.remove();setQuality(quality);FILM.voice=true;filmUI();}
+$('#fRec').addEventListener('click',()=>{if(FILM.rec){recStop(false);return;}recStart();});
+addEventListener('keydown',e=>{if(!FILM.on)return;if(e.key===' '){e.stopImmediatePropagation();e.preventDefault();filmPause();}else if(e.key==='ArrowRight'){e.stopImmediatePropagation();e.preventDefault();filmJump(1);}else if(e.key==='ArrowLeft'){e.stopImmediatePropagation();e.preventDefault();filmJump(-1);}else if(e.key==='Escape'){e.stopImmediatePropagation();filmStop();}},true);
+if(/film/.test(location.hash))setTimeout(()=>{$('#filmStart').hidden=false;},900);
+$('#filmStartBtn').addEventListener('click',()=>{$('#filmStart').hidden=true;filmStart();});
+
 requestAnimationFrame(loop);
-window.__spier={step:(n,d)=>{for(let i=0;i<n;i++)frame(d||1/60);},goLevel,setState,showLevel,W,X5,S3,M0,camera,controls,get lvl(){return lvl;}};
+window.__spier={step:(n,d)=>{for(let i=0;i<n;i++)frame(d||1/60);},goLevel,setState,showLevel,W,X5,S3,M0,camera,controls,get lvl(){return lvl;},FILM,SCENES,filmScene,filmStart,filmStop,recMime};
 })();
 </script>
 </body>
