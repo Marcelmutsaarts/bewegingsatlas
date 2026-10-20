@@ -1128,7 +1128,7 @@ const SCENES=[
   {t:'Van ATP tot sprint: alles hangt samen.'},
   {t:'',min:5,do:()=>{FILM.title=['Verken het zelf','De Bewegingsatlas · zoom in, van spier tot kruisbrug'];}}]}];
 const estDur=t=>t?Math.max(2.4,.7+t.length/13.2):3;
-let nlVoice=null;function pickVoice(){try{const vs=speechSynthesis.getVoices();nlVoice=vs.find(v=>/^nl/i.test(v.lang)&&/google|microsoft|natural|online/i.test(v.name))||vs.find(v=>/^nl/i.test(v.lang))||null;}catch(e){}}
+let nlVoice=null;function pickVoice(){try{const vs=speechSynthesis.getVoices();const nl=vs.filter(v=>/^nl/i.test(v.lang));nlVoice=nl.find(v=>/natural|online|neural/i.test(v.name))||nl.find(v=>/google/i.test(v.name))||nl.find(v=>/nl-NL/i.test(v.lang))||nl[0]||null;}catch(e){}}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
 function speak(t){FILM.vDone=true;if(!FILM.voice||!t||!('speechSynthesis' in window)||FILM.rec)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='nl-NL';if(nlVoice)u.voice=nlVoice;u.rate=1;u.pitch=1;FILM.vDone=false;u.onend=u.onerror=()=>{FILM.vDone=true;};speechSynthesis.speak(u);}catch(e){FILM.vDone=true;}}
 function filmScene(i){if(i>=SCENES.length){filmEnd();return;}const sc=SCENES[i],prev=SCENES[FILM.si];if(prev&&prev.lines[FILM.li]&&prev.lines[FILM.li].end)prev.lines[FILM.li].end();
