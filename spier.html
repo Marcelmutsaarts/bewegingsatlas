@@ -822,11 +822,11 @@ function step4(dt){
     capSet(stateText(),lab);$$('#steps span').forEach(e=>e.classList.toggle('on',X5.phase==='cycle'&&+e.dataset.s===X5.step));}
   else{if(!paused)eccStep(dt*xSpeed);molA.visible=true;setP(molA,2);molA.position.copy(W.pocket||V(0,0,0));
     $$('#steps span').forEach(e=>e.classList.remove('on'));
-    capSet(stateText(),'Een externe kracht trekt de actine de <b>andere kant</b> op. Gebonden koppen worden uitgerekt en <b>losgetrokken</b> voordat ze hun slag afmaken. Meer kracht, minder ATP, en bij overbelasting schade.');}
+    capSet(stateText(),'Een externe kracht trekt de actine de <b>andere kant</b> op. Gebonden koppen (nog met ADP + Pᵢ) worden uitgerekt en <b>losgetrokken</b> voordat ze hun slag afmaken. Ze binden opnieuw zonder nieuw ATP: meer kracht, minder ATP, en bij overbelasting schade.');}
   placeHead();
   if(molA.visible&&!(state===2&&X5.step===1&&X5.t/DUR[1]>.6))molA.position.copy(W.pocket);
   // gespannen kop draagt ADP + Pi tot de powerslag: Pi blijft zichtbaar in rust, tijdens de Ca-fase en bij het binden
-  const cocked=state===1||(state===2&&(X5.phase!=='cycle'||X5.step===0));if(cocked)molPi.visible=true;
+  const cocked=state===1||state===3||(state===2&&(X5.phase!=='cycle'||X5.step===0));if(cocked)molPi.visible=true;
   if(molPi.visible&&(cocked||(state===2&&X5.step===3)))molPi.position.copy(W.pocket).add(V(.78,0,0));
   W.molA=molA.position.clone();W.molB=molB.position.clone();W.molPi=molPi.position.clone();
 }
