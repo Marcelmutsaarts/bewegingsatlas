@@ -684,9 +684,9 @@ function cycleStep(dt){
   if(X5.phase!=='cycle')return;
   const st=X5.step,u=clamp(X5.t/DUR[st],0,1);
   const mc=motorBase();
-  if(st===0){X5.bound=false;X5.a=L5.a0;X5.drop=lerp(.7,0,smooth(u));setP(molA,2);molA.visible=true;molPi.visible=false;molB.visible=false;}
+  if(st===0){X5.bound=false;X5.a=L5.a0;X5.drop=lerp(.7,0,smooth(u));setP(molA,2);molA.visible=true;molPi.visible=true;molB.visible=false;}
   if(st===1){X5.bound=true;X5.drop=0;const e=smooth(u);const a=lerp(L5.a0,L5.a1,e);const prev=X5.a;X5.a=a;X5.off+=L5.L*(Math.sin(a*D2R)-Math.sin(prev*D2R))*-1*0+L5.L*(Math.sin(a*D2R)-Math.sin(prev*D2R));
-    molPi.visible=u<.95;molPi.position.copy(W.pocket).add(V(-u*1.4,-u*1.2,u*1.6));if(u>.6){setP(molA,2);molA.position.copy(W.pocket).add(V(-(u-.6)*3,-(u-.6)*2.5,(u-.6)*2.2));}
+    molPi.visible=u<.95;molPi.position.copy(W.pocket).add(V(.78-u*2.2,-u*1.2,u*1.6));if(u>.6){setP(molA,2);molA.position.copy(W.pocket).add(V(-(u-.6)*3,-(u-.6)*2.5,(u-.6)*2.2));}
     hdMat.emissiveIntensity=.6*Math.sin(Math.PI*u);if(X5.t<dt*sp*1.5)SND.stroke();}
   if(st===2){if(X5.noATP){X5.bound=true;X5.drop=0;molB.visible=false;molA.visible=false;return;}
     molA.visible=false;molB.visible=true;setP(molB,3);molB.position.lerpVectors(V(-4,-.5,3.5),W.pocket,smooth(u*1.6));
@@ -825,6 +825,9 @@ function step4(dt){
     capSet(stateText(),'Een externe kracht trekt de actine de <b>andere kant</b> op. Gebonden koppen worden uitgerekt en <b>losgetrokken</b> voordat ze hun slag afmaken. Meer kracht, minder ATP, en bij overbelasting schade.');}
   placeHead();
   if(molA.visible&&!(state===2&&X5.step===1&&X5.t/DUR[1]>.6))molA.position.copy(W.pocket);
+  // gespannen kop draagt ADP + Pi tot de powerslag: Pi blijft zichtbaar in rust, tijdens de Ca-fase en bij het binden
+  const cocked=state===1||(state===2&&(X5.phase!=='cycle'||X5.step===0));if(cocked)molPi.visible=true;
+  if(molPi.visible&&(cocked||(state===2&&X5.step===3)))molPi.position.copy(W.pocket).add(V(.78,0,0));
   W.molA=molA.position.clone();W.molB=molB.position.clone();W.molPi=molPi.position.clone();
 }
 
