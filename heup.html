@@ -1,0 +1,732 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Heup en bekken · Bewegingsatlas</title>
+<meta name="description" content="Halte 7 van De Bewegingsatlas: zoom in op de heup bij de sprint. Van bekken en bilspieren via kop, kom en labrum tot het kraakbeen, met speurtocht en uitlegfilm.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="atlas3d.css">
+<style>
+.tg.h2o{color:#9cd4ff;border-color:rgba(120,190,255,.5)}
+.tg.lig{color:#f4efe0;border-color:rgba(244,239,224,.4)}
+.tg.zone{color:#cfe3ef;background:rgba(10,14,16,.5);border-color:rgba(160,200,230,.35)}
+.tg.bad{color:#ff9d8c;border-color:rgba(255,120,100,.6)}
+#capX a,.pb a,.fb a{color:var(--gold);font-weight:600}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="atlas3d.js"></script>
+<script>
+Atlas3D({
+ id:'heup',halte:7,name:'Heup en bekken',docTitle:'Heup en bekken · Bewegingsatlas',
+ aria:'3D-zoomreis door de heup: van bekken en bilspieren via kop en kom tot het kraakbeen',
+ loader:['Het bekken wordt opgebouwd…','Van sprint tot kraakbeen'],seed:7,
+ shadow:{left:-13,right:13,top:15,bottom:-6},
+ levels:[
+  {name:'Heup',scale:'25 cm',sc:'BEKKEN EN HEUP',title:'Heup en bekken',sub:'<i>Articulatio coxae</i> · bilspieren bij de sprint',
+   view:(innerWidth<innerHeight?[[-4.6,5.8,15.5],[-1.4,3.0,0]]:[[-6.2,7.5,23],[-.5,3.8,0]]),zoomTo:[-4.32,6.5,-.9],s1:'Rust',s2:'Sprint',s3:'Vermoeid',
+   bg:['#2c3a42','#18232a','#0d1316'],fog:0x17222a,hemi:.6,shadows:true},
+  {name:'Gewricht',scale:'5 cm',sc:'KOGELGEWRICHT',title:'Kop in de kom',sub:'Doorsnede van de rechterheup · <i>acetabulum, labrum en capsula articularis</i>',
+   view:(innerWidth<innerHeight?[[1.0,.9,9.2],[-.6,-.2,0]]:[[1.8,1.1,15],[-.5,-.3,0]]),zoomTo:[-.35,1.62,.05],s1:'Rust',s2:'Belasting',s3:'Impingement',
+   bg:['#3b3029','#1f1815','#0c0908'],fog:0x1d1715,hemi:.75,drone:true},
+  {name:'Kraakbeen',scale:'2 mm',sc:'HYALIEN KRAAKBEEN',title:'Hyalien kraakbeen',sub:'<i>Cartilago hyalina</i> · collageen, cellen, proteoglycanen en water',
+   view:(innerWidth<innerHeight?[[5.4,2.1,10.6],[-.2,-1.75,0]]:[[7.4,3.1,14.6],[0,-1.15,0]]),s1:'Rust',s2:'Compressie',s3:'Overbelasting',
+   bg:['#1e2c44','#101827','#060910'],fog:0x121a28,hemi:.85,drone:true}],
+ help:{title:'Zo werkt de zoomreis',
+  html:'<p>Je begint bij het <b>bekken met het rechterdijbeen</b>, vergroot op een standaard in het lab. Op de baan sprint een loper die precies dezelfde beweging maakt. Met <b>+</b> zoom je in: eerst op een doorsnede van het <b>heupgewricht</b>, daarna op een stukje <b>kraakbeen</b> van twee millimeter.</p><ul><li>De spiervezels lichten op als de spier aanspant. In de HUD zie je of hij <b>concentrisch</b> (korter), <b>excentrisch</b> (langer) of <b>isometrisch</b> (gelijke lengte) werkt.</li><li>De oranje pijl is de kracht op de heupkop, in keer het lichaamsgewicht (× LG).</li><li>Banden kleuren van grijs (slap) naar wit (gespannen).</li><li>Klik op een genummerd punt of op het model voor uitleg in vier tabjes.</li></ul><h3>Drie standen per niveau</h3><p><b>Heup</b>: rust (ook op één been), sprint, vermoeid. <b>Gewricht</b>: rust, belasting, impingement. <b>Kraakbeen</b>: rust, compressie, overbelasting. In stand 3 kies je soms een graad en start je opnieuw met ↻.</p>',
+  states:'Rust · belasting · blessure (per niveau)',keys:[['<kbd>S</kbd>','In stand 2: één stukje van de pas verder'],['<kbd>M</kbd>','Slow motion']],
+  note:'Vereenvoudigd didactisch model: aantallen, kleuren, verhoudingen en de vervorming van het kraakbeen zijn aangepast om ze zichtbaar te maken. Krachten zijn ordegroottes uit metingen en modellen.'},
+ film:{brand:'HEUP EN BEKKEN',blurb:'Hoe de heup je sprint draagt · ca. 4 minuten · met stem en ondertitels',file:'heup-uitleg'},
+ quizEnd:'<p>Bespreek de slotvraag met je groep. Probeer daarna in de gymzaal: laat een tweetal om de beurt tien keer op één been squatten en kijk alleen naar het bekken en de knie. Zakt het bekken aan de kant van het vrije been, of klapt de knie naar binnen? Kijk ook in <a href="knie.html">de knie</a> wat dat voor de kruisband betekent.</p>',
+ build(K){
+const {THREE,V,AX,AY,AZ,clamp,lerp,smooth,bump,D2R,TAU,mesh,std,glass,glow,add,orient,segMatrix,ZERO,inst,tube,lathe,boneGeo,groups,W,S,R}=K;
+const BM=K.BONE(),BMd=std(0xefe3c8,{roughness:.55,side:THREE.DoubleSide}),HEADM=std(0xd8ebf0,{roughness:.25});
+const _c=new THREE.Color(),_v=V(0,0,0),_w=V(0,0,0),_a=V(0,0,0),_b=V(0,0,0),_e=V(0,0,0);
+const vv=a=>a.map(p=>V(p[0],p[1],p[2]));
+/* ---------- algemene hulpjes: strengen (vezels) als instances ---------- */
+const FGEO=new THREE.CylinderGeometry(1,1,1,7,1);FGEO.translate(0,.5,0);
+function strands(parent,N,KS,mat,geo){const m=inst(geo||FGEO,mat,N*KS);parent.add(m);m.userData.KS=KS;_c.setRGB(1,1,1);for(let i=0;i<N*KS;i++){m.setColorAt(i,_c);m.setMatrixAt(i,ZERO);}return m;}
+function setStrand(m,i,P,rad,colF){const KS=m.userData.KS;for(let j=0;j<KS;j++){_a.copy(P[j]);_b.copy(P[j+1]);_e.subVectors(_b,_a).multiplyScalar(.07);_a.sub(_e);_b.add(_e);const t=(j+.5)/KS;m.setMatrixAt(i*KS+j,segMatrix(_a,_b,rad(t,j)));if(colF){colF(t,_c,j);m.setColorAt(i*KS+j,_c);}}}
+function hideSeg(m,i,j){m.setMatrixAt(i*m.userData.KS+j,ZERO);}
+function done(m){m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;}
+function bez(O,C,I,t,out){const a=(1-t)*(1-t),b=2*t*(1-t),c=t*t;return out.set(a*O.x+b*C.x+c*I.x,a*O.y+b*C.y+c*I.y,a*O.z+b*C.z+c*I.z);}
+function poly(arr,u,out){const n=arr.length-1;const f=clamp(u,0,1)*n;const i=Math.min(n-1,Math.floor(f));return out.copy(arr[i]).lerp(arr[i+1],f-i);}
+const PT=[];for(let j=0;j<=20;j++)PT.push(V(0,0,0));
+function arrow(parent,col,op){const g=new THREE.Group();parent.add(g);const mat=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:op||.95,depthWrite:false,depthTest:false,toneMapped:false});
+  const sh=new THREE.Mesh(K.BAND,mat),hd=new THREE.Mesh(new THREE.ConeGeometry(1,1,18).translate(0,-.5,0),mat);sh.renderOrder=hd.renderOrder=6;g.add(sh,hd);g.userData={sh,hd,mat};return g;}
+function setArrow(g,tip,dir,len,w){const hl=Math.min(len*.45,w*3.4);_a.copy(tip).addScaledVector(dir,-len);_b.copy(tip).addScaledVector(dir,-hl);orient(g.userData.sh,_a,_b,w);
+  const hd=g.userData.hd;hd.position.copy(tip);hd.quaternion.setFromUnitVectors(AY,dir);hd.scale.set(w*2.5,hl,w*2.5);g.visible=len>.06;}
+function wpos(obj,v,out){return (out||V(0,0,0)).copy(v).applyMatrix4(obj.matrixWorld);}
+const cr=pts=>new THREE.CatmullRomCurve3(vv(pts));
+const deg=x=>Math.round(x)+'°';
+const nl=(x,d)=>x.toFixed(d===undefined?1:d).replace('.',',');
+
+/* =====================================================================
+   NIVEAU 0 · bekken en rechterdijbeen in het lab, sprinter op de baan
+   ===================================================================== */
+const G0=groups[0];
+K.base({parent:G0,floor:'split',plaque:['ARTICULATIO COXAE','bekken en rechterdijbeen · bij de sprint'],plaqueX:-1.6});
+const MG=new THREE.Group();MG.position.set(-3.2,0,-1.2);MG.scale.setScalar(.72);G0.add(MG);
+const RH=V(-1.55,0,0);                                   // middelpunt van de rechterheupkop (bekkenassen)
+const PIV=new THREE.Group();PIV.position.set(RH.x,9,0);MG.add(PIV);  // het bekken kantelt om de rechterheup (standbeen)
+const PG=new THREE.Group();PG.position.set(-RH.x,0,0);PIV.add(PG);
+const FG=new THREE.Group();FG.position.copy(RH);PG.add(FG);           // het dijbeen draait in de kom
+const BONES=new THREE.Group();PG.add(BONES);const FB=new THREE.Group();FG.add(FB);
+// standaard met arm naar het heiligbeen
+K.stand({parent:MG,x:0,z:-3.55,h:9.62,foot:1.25});
+const armM=mesh(K.BAND,K.ENV.metal,0,0,0,MG);const ARM0=V(0,9.9,-3.55),_armE=V(0,0,0);
+mesh(new THREE.SphereGeometry(.17,16,12),K.ENV.metal,[0,9.9,-3.55],0,0,MG);
+const clampB=mesh(new THREE.SphereGeometry(.24,18,12),K.ENV.dark,[0,1.6,-2.3],0,0,PG);
+mesh(new THREE.BoxGeometry(.7,.5,.12),K.ENV.metal,[0,1.6,-2.12],[.3,0,0],0,PG);
+// darmbeenvleugel: een gebogen plaat tussen kam en onderrand, met randen als buizen
+const WG={};
+function wingPt(s,u,v,side,out){const a=WG[s].crest.getPoint(u),b=WG[s].bot.getPoint(u);out.copy(b).lerp(a,v);out.x+=s*(.32*Math.sin(Math.PI*u)*Math.sin(Math.PI*(.12+.8*v))+side*.075*(1-.5*v));out.z+=-.12*Math.sin(Math.PI*v)*Math.sin(Math.PI*u);return out;}
+function wing(s){const crest=cr([[.92*s,2.55,-1.85],[1.75*s,3.3,-1.38],[2.6*s,3.5,-.25],[2.62*s,3.0,.62],[2.3*s,2.12,1.28]]),
+   bot=cr([[.98*s,1.45,-1.86],[1.22*s,.72,-1.2],[1.5*s,.82,-.4],[1.78*s,.92,.45],[1.98*s,1.02,1.15]]);WG[s]={crest,bot};
+  const NU=24,NV=9,pos=[],idx=[];const a=V(0,0,0),b=V(0,0,0);
+  for(const side of [1,-1]){const base=pos.length/3;for(let i=0;i<=NU;i++){const u=i/NU;crest.getPoint(u,a);bot.getPoint(u,b);
+    for(let j=0;j<=NV;j++){const v=j/NV;const p=b.clone().lerp(a,v);p.x+=s*(.32*Math.sin(Math.PI*u)*Math.sin(Math.PI*(.12+.8*v))+side*.075*(1-.5*v));p.z+=-.12*Math.sin(Math.PI*v)*Math.sin(Math.PI*u);pos.push(p.x,p.y,p.z);}}
+   for(let i=0;i<NU;i++)for(let j=0;j<NV;j++){const q=base+i*(NV+1)+j;idx.push(q,q+NV+1,q+1,q+1,q+NV+1,q+NV+2);}}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+  mesh(g,BMd,0,0,0,BONES);
+  tube(crest.points,.17,BM,BONES,64);tube([[2.3*s,2.12,1.28],[2.12*s,1.55,1.32],[1.98*s,1.02,1.15]],.15,BM,BONES,20);
+  tube([[.92*s,2.55,-1.85],[.96*s,2.0,-1.92],[.98*s,1.45,-1.86]],.17,BM,BONES,16);
+  mesh(new THREE.SphereGeometry(.2,14,10),BM,[2.3*s,2.12,1.28],0,0,BONES);mesh(new THREE.SphereGeometry(.17,14,10),BM,[1.98*s,1.02,1.18],0,0,BONES);}
+wing(-1);wing(1);
+// heupkom (komvormige draaivorm) en labrum
+const CUPN=[];
+function cup(s){const n=V(.78*s,-.48,.36).normalize();CUPN.push(n);const prof=[];
+  for(let i=0;i<=12;i++){const t=i/12*Math.PI/2;prof.push([.76*Math.sin(t)+.002,-.76*Math.cos(t)]);}prof.push([.9,.04],[1.05,.02]);
+  for(let i=12;i>=0;i--){const t=i/12*Math.PI/2;prof.push([1.06*Math.sin(t)+.002,-1.06*Math.cos(t)-.08]);}
+  const c=lathe(prof,BMd,BONES,40,[s*1.55,0,0]);c.quaternion.setFromUnitVectors(AY,n);
+  const lun=new THREE.Mesh(new THREE.LatheGeometry(Array.from({length:11},(_,i)=>{const t=(.18+i/10*.82)*Math.PI/2;return new THREE.Vector2(.765*Math.sin(t),-.765*Math.cos(t));}),40,.9,TAU-1.5),std(0xc9e3ea,{roughness:.25,side:THREE.DoubleSide}));
+  lun.position.set(s*1.55,0,0);lun.quaternion.copy(c.quaternion);BONES.add(lun);
+  const lab=mesh(new THREE.TorusGeometry(.86,.1,10,56),std(0xe4f0f2,{roughness:.3}),[s*1.55,0,0],0,0,BONES);lab.quaternion.setFromUnitVectors(AZ,n);
+  return c;}
+cup(-1);cup(1);
+// zitbeen, schaambeen, bekkenrand
+[-1,1].forEach(s=>{
+  tube([[1.3*s,-.12,.55],[.88*s,-.3,1.06],[.3*s,-.52,1.32]],.21,BM,BONES,24);
+  tube([[.3*s,-.78,1.25],[.55*s,-1.3,.78],[.95*s,-1.56,.02],[1.16*s,-1.5,-.62]],.18,BM,BONES,32);
+  tube([[1.5*s,-.5,-.42],[1.36*s,-1.05,-.7],[1.17*s,-1.48,-.76]],.27,BM,BONES,20);
+  tube([[1.45*s,-.3,-.55],[1.27*s,.42,-1.12],[1.02*s,1.2,-1.62],[.94*s,1.6,-1.82]],.2,BM,BONES,28);
+  tube([[.62*s,2.45,-1.32],[1.24*s,1.62,-.82],[1.36*s,.82,-.05],[1.08*s,.02,.74],[.34*s,-.46,1.3]],.13,BM,BONES,40);
+  mesh(new THREE.SphereGeometry(.31,16,12),BM,[1.18*s,-1.55,-.74],0,[1,1.35,1.05],BONES);
+  mesh(new THREE.SphereGeometry(.27,14,10),BM,[.27*s,-.62,1.3],0,[.8,1.25,.9],BONES);
+  mesh(new THREE.SphereGeometry(.12,10,8),BM,[1.22*s,-.62,-1.12],0,0,BONES);});
+const symph=mesh(new THREE.CylinderGeometry(.24,.24,.16,20),K.CART(),[0,-.62,1.32],[0,0,Math.PI/2],0,BONES);
+// heiligbeen, stuitje en twee lendenwervels
+const sS=new THREE.Shape();sS.moveTo(-1.02,0);sS.quadraticCurveTo(0,.2,1.02,0);sS.lineTo(.62,-1.6);sS.quadraticCurveTo(.4,-2.6,.12,-2.85);sS.lineTo(-.12,-2.85);sS.quadraticCurveTo(-.4,-2.6,-.62,-1.6);sS.closePath();
+const sG=new THREE.ExtrudeGeometry(sS,{depth:.55,bevelEnabled:true,bevelThickness:.12,bevelSize:.1,bevelSegments:2,curveSegments:10});sG.translate(0,0,-.3);
+const SAC=new THREE.Group();SAC.position.set(0,2.55,-1.35);SAC.rotation.x=.3;BONES.add(SAC);mesh(sG,BM,0,0,0,SAC);
+for(let k=0;k<4;k++)[-1,1].forEach(s=>mesh(new THREE.SphereGeometry(.09,10,8),std(0x5a4a38),[s*(.42-.07*k),-.45-.55*k,.4],0,[1,1,.4],SAC));
+[0,1,2].forEach(k=>mesh(new THREE.CapsuleGeometry(.11-.02*k,.12,4,8),BM,[0,-3.0-.24*k,.25+.12*k],[.5,0,0],0,SAC));
+const DISC=K.CART();
+[[2.98,.56],[3.66,.55]].forEach((L,i)=>{mesh(new THREE.CylinderGeometry(L[1],L[1]*.97,.44,28),BM,[0,L[0],-1.2],0,[1,1,.78],BONES);
+  mesh(new THREE.CylinderGeometry(L[1]*.98,L[1]*.98,.15,28),DISC,[0,L[0]-.3,-1.2],0,[1,1,.78],BONES);
+  mesh(new THREE.BoxGeometry(.2,.3,.85),BM,[0,L[0]+.02,-1.95],[-.3,0,0],0,BONES);[-1,1].forEach(s=>mesh(new THREE.BoxGeometry(.85,.14,.18),BM,[s*.78,L[0]+.05,-1.55],[0,0,s*-.15],0,BONES));});
+mesh(new THREE.CylinderGeometry(.54,.54,.15,28),DISC,[0,4.0,-1.2],0,[1,1,.78],BONES);
+// het rechterdijbeen (assen: kop in het midden)
+const NB=V(-.95,-.67,-.24);
+mesh(new THREE.SphereGeometry(.71,32,22),HEADM,[0,0,0],0,0,FB);
+mesh(new THREE.SphereGeometry(.09,10,8),std(0x9a7a5a),[.48,-.5,.1],0,0,FB);
+orient(mesh(K.BAND,BM,0,0,0,FB),V(-.1,-.07,-.03),NB,.37,.4);
+mesh(new THREE.SphereGeometry(.4,20,14),BM,[-1.38,-.5,-.3],0,[1,1.25,1.1],FB);
+mesh(new THREE.SphereGeometry(.2,14,10),BM,[-.72,-1.28,-.32],0,0,FB);
+const shaftG=boneGeo(6.55,.29,.35,1.25,24);const shaft=mesh(shaftG,BM,[-.6,-7.05,-.05],0,0,FB);shaft.quaternion.setFromUnitVectors(AY,V(-1.12+.6,-.62+7.05,-.22+.05).normalize());
+[[-.3,-7.22,-.12],[-.92,-7.22,-.12]].forEach(p=>mesh(new THREE.SphereGeometry(.42,18,14),BM,p,0,[1,1.05,1.35],FB));
+mesh(new THREE.SphereGeometry(.3,16,12),BM,[-.6,-6.72,.56],0,[1,1.2,.5],FB);
+tube([[-1.42,-.35,-.45],[-1.2,-.9,-.52],[-.8,-1.25,-.42]],.09,BM,FB,16);
+tube([[-1.05,-1.6,-.4],[-.9,-4,-.4],[-.62,-6.4,-.34]],.07,BM,FB,24);
+/* ---------- spieren en banden als vezelbundels (instancing) ---------- */
+const MUS=[],LIGS=[];const MK={};
+const _I=V(0,0,0),_C=V(0,0,0),_Vw=V(0,0,0),_m=V(0,0,0);
+function bundle(o,isLig){const mat=isLig?std(0xffffff,{roughness:.32,emissive:0xffffff,emissiveIntensity:0}):std(0xffffff,{roughness:.5,emissive:0xff3a1c,emissiveIntensity:0});
+  const N=o.N,KS=o.KS||10;const m=strands(PG,N,KS,mat);const M=Object.assign({mesh:m,mat,KS,act:0,ten:0,mode:'rust',fat:0,anchor:V(0,0,0),fib:[]},o);
+  const per=Math.ceil(N/(o.layers||1));
+  for(let i=0;i<N;i++){const L=Math.floor(i/per),u=per>1?(i%per)/(per-1):.5;const sp=o.spread||0;const j=V((R()-.5)*sp,(R()-.5)*sp,(R()-.5)*sp);
+    const Ou=(typeof o.O==='function'?o.O(u,L,V(0,0,0)):poly(o.O,u,V(0,0,0))).add(j);
+    const Iu=poly(o.I,o.map?o.map(u):u,V(0,0,0)).add(j.clone().multiplyScalar(.6));
+    M.fib.push({O:Ou,I:Iu,via:o.via?o.via.clone().add(j.clone().multiplyScalar(1.3)):null,b:1-.3*L+(R()-.5)*.14,L});}
+  if(isLig){const f=M.fib[0];M.bul=_m.addVectors(f.O,f.I.clone().add(RH)).multiplyScalar(.5).sub(RH).normalize().clone();}
+  M.mid=Math.floor(per/2);M.per=per;M.nb=M.bul.clone().normalize();
+  // vlies: een strook tussen naburige vezels van dezelfde laag, zodat de bundel een gesloten spierbuik wordt
+  {const nv=N*(KS+1),pos=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=[];
+    for(let i=0;i<N;i++){for(let j=0;j<=KS;j++){const t=j/KS,v=i*(KS+1)+j;let c;
+        if(isLig)c=[.86,.84,.8];else if(t<M.tend[0]||t>1-M.tend[1])c=[.9,.86,.78];else{const k=Math.pow(Math.sin(Math.PI*t),.5);c=[M.col[0]*(.72+.18*k),M.col[1]*(.7+.15*k),M.col[2]*(.72+.15*k)];}
+        col.set(c,v*3);}
+      if(i+1<N&&Math.floor((i+1)/per)===Math.floor(i/per))for(let j=0;j<KS;j++){const a=i*(KS+1)+j,b=a+KS+1;idx.push(a,b,a+1,a+1,b,b+1);}}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(idx);
+    const sm=isLig?std(0xffffff,{vertexColors:true,roughness:.4,transparent:true,opacity:.72,side:THREE.DoubleSide,depthWrite:false}):std(0xffffff,{vertexColors:true,roughness:.62,side:THREE.DoubleSide,emissive:0xff3a1c,emissiveIntensity:0});
+    const sh=new THREE.Mesh(g,sm);sh.frustumCulled=false;sh.castShadow=!isLig;sh.receiveShadow=true;PG.add(sh);M.sheath=sh;M.smat=sm;M.shPos=pos;m.userData.sheath=sh;}
+  (isLig?LIGS:MUS).push(M);MK[o.k]=M;return M;}
+const tapr=(t,a,b)=>{const k=Math.min(clamp(t/Math.max(a,.02),0,1),clamp((1-t)/Math.max(b,.02),0,1));return smooth(k);};
+function updBundle(M,isLig){const KS=M.KS,act=M.act;
+  M.fib.forEach((f,i)=>{_I.copy(f.I).applyMatrix4(FG.matrix);
+    if(f.via){_Vw.copy(f.via);if(M.viaF)_Vw.applyMatrix4(FG.matrix);_C.copy(_Vw).multiplyScalar(2).sub(_m.addVectors(f.O,_I).multiplyScalar(.5));}else _C.addVectors(f.O,_I).multiplyScalar(.5);
+    const bm=M.bm*f.b*(isLig?1:(1+.35*act));
+    for(let j=0;j<=KS;j++){const t=j/KS;bez(f.O,_C,_I,t,PT[j]);PT[j].addScaledVector(M.bul,bm*Math.sin(Math.PI*t));}
+    if(i===M.mid)M.anchor.copy(PT[KS>>1]);
+    const sp=M.shPos,inw=isLig?.012:.05;for(let j=0;j<=KS;j++){const v=(i*(KS+1)+j)*3,s=Math.sin(Math.PI*j/KS);sp[v]=PT[j].x-M.nb.x*inw*s;sp[v+1]=PT[j].y-M.nb.y*inw*s;sp[v+2]=PT[j].z-M.nb.z*inw*s;}
+    if(isLig)setStrand(M.mesh,i,PT,()=>M.r,(t,c)=>{const k=M.ten,o=clamp((k-.9)*10,0,1);c.setRGB(lerp(.5,1,k),lerp(.48,.98,k)-.28*o,lerp(.45,.92,k)-.32*o);});
+    else setStrand(M.mesh,i,PT,t=>M.r*lerp(.42,(.48+.52*Math.pow(Math.sin(Math.PI*t),.6))*(1+.24*act),tapr(t,M.tend[0],M.tend[1])),
+      (t,c)=>{const k=tapr(t,M.tend[0],M.tend[1]);const fa=M.fat;c.setRGB(lerp(.93,lerp(M.col[0],1,act*.8)*(1-fa*.4)+fa*.16,k),lerp(.9,lerp(M.col[1],.45,act*.7)+fa*.14,k),lerp(.84,lerp(M.col[2],.24,act*.6)+fa*.16,k));});});
+  // altijd het eigen materiaal bijwerken: bij focus hangt de motor tijdelijk een gedimde kopie aan de mesh
+  done(M.mesh);M.mat.emissiveIntensity=isLig?.12*M.ten:.5*act*(1-M.fat*.6);
+  const g=M.sheath.geometry;g.attributes.position.needsUpdate=true;g.computeVertexNormals();
+  if(isLig){const k=M.ten,o=clamp((k-.9)*10,0,1);M.smat.color.setRGB(lerp(.62,1,k),lerp(.6,1,k)-.28*o,lerp(.58,.98,k)-.32*o);}
+  else{M.smat.emissiveIntensity=.32*act*(1-M.fat*.6);const fa=M.fat;M.smat.color.setRGB(1-fa*.25,1-fa*.1,1-fa*.05);}}
+// grote bilspier: van heiligbeen en achterste darmbeenkam naar de tractus iliotibialis en de tuberositas glutea
+bundle({k:'gmax',N:36,layers:2,KS:10,r:.115,col:[.6,.16,.12],tend:[.04,.15],bul:V(-.3,-.12,-.85),bm:.8,
+  O:vv([[-1.35,2.92,-1.72],[-1.0,2.2,-1.98],[-.74,1.3,-2.0],[-.52,.3,-2.12],[-.3,-.55,-1.98]]),I:vv([[-1.66,-.8,-.42],[-1.55,-1.7,-.54],[-1.32,-2.7,-.56]])});
+// middelste en kleine bilspier: buitenkant van de darmbeenvleugel naar de grote rolheuvel
+bundle({k:'gmed',N:34,layers:2,KS:10,r:.1,col:[.64,.2,.13],tend:[.02,.2],bul:V(-.6,.12,0),bm:.42,
+  O:(u,L,o)=>wingPt(-1,lerp(.1,.97,u),L?.5:.8,1,o).add(V(-.06,0,0)),I:vv([[-1.45,-.3,-.44],[-1.64,-.38,-.12],[-1.5,-.33,.18]])});
+// iliopsoas: lendenwervels en binnenkant van de vleugel, voor de heup langs naar de kleine rolheuvel
+bundle({k:'ilio',N:16,KS:12,r:.12,col:[.62,.18,.14],tend:[.02,.2],bul:V(.08,0,.3),bm:.25,via:V(-1.28,-.2,1.1),
+  O:(u,L,o)=>u<.38?o.copy(V(-.52,3.95,-.98)).lerp(V(-.62,2.65,-.92),u/.38):wingPt(-1,lerp(.12,.95,(u-.38)/.62),.6,-1,o).add(V(.12,0,0)),I:vv([[-.75,-1.25,-.26],[-.7,-1.34,-.3]])});
+// adductoren: schaambeen en zitbeentak naar de linea aspera
+bundle({k:'add',N:18,KS:10,r:.12,col:[.58,.17,.14],tend:[.04,.06],bul:V(.55,0,.12),bm:.5,map:u=>.08+.92*u,
+  O:vv([[-.32,-.62,1.27],[-.45,-1.12,.98],[-.72,-1.5,.38],[-1.02,-1.62,-.32],[-1.2,-1.6,-.72]]),I:vv([[-1.0,-1.9,-.42],[-.88,-4.0,-.4],[-.52,-6.45,-.32]])});
+// rechte dijbeenspier: spina iliaca anterior inferior naar de knieschijf
+bundle({k:'rect',N:9,KS:12,r:.12,col:[.64,.19,.14],tend:[.1,.2],bul:V(0,0,.25),bm:.15,via:V(-.95,-3.4,.68),viaF:true,spread:.16,
+  O:vv([[-1.98,1.02,1.22],[-1.92,.88,1.25]]),I:vv([[-.66,-6.4,.68],[-.56,-6.4,.64]])});
+// hamstrings (halte 8): zitbeenknobbel naar achter de knie
+bundle({k:'ham',N:8,KS:12,r:.11,col:[.52,.2,.18],tend:[.1,.1],bul:V(0,0,-.25),bm:.18,via:V(-1.05,-3.9,-.88),viaF:true,spread:.12,
+  O:vv([[-1.22,-1.62,-.92],[-1.1,-1.66,-.9]]),I:vv([[-.98,-6.9,-.8],[-.42,-6.9,-.76]])});
+// kapselbanden
+// Y-band: één gezamenlijke oorsprong onder de SIAI, twee armen naar de linea intertrochanterica (omgekeerde Y)
+bundle({k:'yl',N:13,KS:8,r:.05,bm:.3,spread:.05,O:vv([[-1.92,.78,1.0],[-1.84,.74,1.05]]),I:vv([[-1.42,-.4,.36],[-1.22,-.66,.38]])},true);
+bundle({k:'ym',N:13,KS:8,r:.05,bm:.3,spread:.05,O:vv([[-1.84,.74,1.05],[-1.76,.7,1.09]]),I:vv([[-1.04,-1.3,.28],[-.86,-1.2,.25]])},true);
+bundle({k:'pf',N:9,KS:7,r:.045,bm:.25,spread:.06,O:vv([[-1.12,-.28,.88],[-1.0,-.36,.94]]),I:vv([[-.85,-1.12,.14],[-.8,-1.05,.22]])},true);
+bundle({k:'if',N:9,KS:7,r:.045,bm:.28,spread:.06,O:vv([[-1.7,-.55,-.8],[-1.6,-.66,-.76]]),I:vv([[-1.3,-.42,-.47],[-1.25,-.55,-.49]])},true);
+// het kapsel als doorzichtige mouw om de hals (draait mee met het dijbeen)
+const capSleeveM=glass(0xf4efe0,.2);capSleeveM.side=THREE.DoubleSide;
+const capSleeve=lathe([[.98,-.2],[1.0,.18],[.9,.55],[.7,.88],[.56,1.12],[.52,1.22]],capSleeveM,FB,40);capSleeve.quaternion.setFromUnitVectors(AY,NB.clone().normalize());capSleeve.castShadow=false;capSleeve.renderOrder=2;
+const MUSO=k=>[MK[k].mesh,MK[k].sheath];const LIGO=()=>[...LIGS.map(M=>M.mesh),...LIGS.map(M=>M.sheath),capSleeve];
+/* ---------- sporter, krachtpijlen en waterpas ---------- */
+const F=K.figure({parent:G0,pos:[1.6,.08,3.3],scale:1.6});
+const loadA=arrow(PG,0xff9a3c),grfA=arrow(G0,0x7fd4ff,.8);
+const LDIR=V(-.25,-1,.05).normalize(),LTIP=RH.clone().addScaledVector(LDIR,-.73);
+const lvlMat=glow(0xe6b65e,0xe6b65e,.9);const lvlBar=mesh(K.BAND,lvlMat,0,0,0,PG);orient(lvlBar,V(-2.55,2.12,1.58),V(2.55,2.12,1.58),.035);lvlBar.castShadow=false;
+[-2.55,2.55].forEach(x=>{const e=mesh(new THREE.SphereGeometry(.08,10,8),lvlMat,[x,2.12,1.58],0,0,PG);e.castShadow=false;});
+const refMat=new THREE.MeshBasicMaterial({color:0x7fc8a0,transparent:true,opacity:.8,depthWrite:false});const refBar=mesh(K.BAND,refMat,0,0,0,MG);refBar.castShadow=false;
+const REST={py:F.standY,hipL:[0,0,0],hipR:[0,0,0],kneeL:.05,kneeR:.05,ankL:0,ankR:0,shR:[.05,0,-.1],shL:[.05,0,.1],elbR:-.15,elbL:-.15,lean:0,side:0,pelvisZ:0};
+const ONE={py:F.standY-.01,hipL:[-.55,0,-.03],hipR:[0,0,.03],kneeL:1.4,kneeR:.1,ankL:.3,ankR:0,shR:[.1,0,-.5],shL:[.1,0,.5],elbR:-.35,elbL:-.35,lean:.04,side:-.04,pelvisZ:0};
+const W0={ph:.1,auto:true,tempo:1,one:false,oneK:0,flashT:-1,prevPh:0,load:.35,grf:0,flex:0,tilt:0,valg:0,phase:''};
+const flexAt=ph=>27.5+42.5*Math.sin(TAU*ph);              // heuphoek in graden: +70 buiging tot −15 strekking
+const knAt=ph=>68+50*Math.cos(TAU*(ph-.06));          // kniebuiging: maximaal in de vroege zwaai, bijna gestrekt bij de landing
+function sprintPose(ph,amp,tilt,add,ir){const fr=flexAt(ph)*amp,fl=flexAt(ph+.5)*amp;
+  return {py:F.standY-.09*amp+.05*Math.sin(2*TAU*ph+.6)*amp,lean:.24*amp,side:-tilt*D2R*.5,pelvisZ:-tilt*D2R,
+    hipR:[-fr*D2R,ir*D2R,(tilt+add)*D2R],kneeR:(knAt(ph)*amp+4)*D2R,ankR:-.12*amp,
+    hipL:[-fl*D2R,0,-tilt*D2R*.4],kneeL:(knAt(ph+.5)*amp+4)*D2R,ankL:-.12*amp,
+    shR:[.95*Math.sin(TAU*ph)*amp,0,-.12],shL:[-.95*Math.sin(TAU*ph)*amp,0,.12],elbR:-.3-1.15*amp,elbL:-.3-1.15*amp,head:-.1*amp};}
+const PHASES=[[.48,.56,'Landing','De voet landt onder het lichaam. Grote bilspier en hamstrings strekken de heup al: <b>duw de grond weg</b>.'],
+  [.56,.66,'Steunfase','Eén been draagt alles. De <b>middelste bilspier</b> houdt het bekken horizontaal (isometrisch). De heupkop krijgt zo’n 5 keer het lichaamsgewicht of meer.'],
+  [.66,.76,'Afzet','De heup strekt tot ongeveer 15°. De Y-band staat strak en de heupbuiger wordt opgerekt: hij remt af (excentrisch).'],
+  [.76,1.12,'Vroege zwaai','De <b>iliopsoas</b> en de rechte dijbeenspier trekken het been naar voren (concentrisch). De knie klapt dicht.'],
+  [.12,.48,'Late zwaai','De heup staat tot 70° gebogen. Grote bilspier en hamstrings remmen de zwaai eerst af (<b>excentrisch</b>). Daarna trekken ze het been terug naar de grond (<b>concentrisch</b>).']];
+function phaseOf(ph){for(const p of PHASES){const x=ph<p[0]&&p[1]>1?ph+1:ph;if(x>=p[0]&&x<p[1])return p;}return PHASES[4];}
+const MODEC={concentrisch:'con',excentrisch:'ecc',isometrisch:'iso'};
+function upd0(){FG.updateMatrix();MUS.forEach(M=>updBundle(M,false));LIGS.forEach(M=>updBundle(M,true));
+  setArrow(loadA,LTIP,LDIR,.3+.32*W0.load,.065);lvlBar.visible=refBar.visible=S.state===3||W0.oneK>.3;
+  MG.updateMatrixWorld(true);clampB.getWorldPosition(_armE);MG.worldToLocal(_armE);orient(armM,ARM0,_armE,.09);
+  _v.set(-2.55,2.12,1.58).applyMatrix4(PG.matrixWorld);MG.worldToLocal(_v);_w.copy(_v).add(V(5.1,0,0));orient(refBar,_v,_w,.022);
+  F.root.updateMatrixWorld(true);const ft=wpos(F.lR.an,V(0,-.1,.07));W.foot=ft;_a.set(ft.x,.12,ft.z);setArrow(grfA,_a.clone().addScaledVector(AY,.25+.42*W0.grf),AY,.25+.42*W0.grf,.05);grfA.visible=showRunner&&W0.grf>.35;
+  ['gmax','gmed','ilio','add','rect','ham'].forEach(k=>{W[k]=wpos(PG,MK[k].anchor);});
+  W.ylig=wpos(PG,MK.yl.anchor);W.pelvis=wpos(PG,V(2.58,3.25,-.3));W.it=wpos(PG,V(-1.2,-1.85,-.85));W.sym=wpos(PG,V(0,-.62,1.45));
+  W.loadTag=wpos(PG,LTIP.clone().addScaledVector(LDIR,-(.5+.32*W0.load)));W.lvl=wpos(PG,V(2.6,2.12,1.6));W.grfTag=_a.clone().add(V(.35,.25+.42*W0.grf,0));W.asisR=wpos(PG,V(-2.3,2.12,1.3));}
+const H0={
+  hud(){const s=S.state;return K.bars(s===1?['Heuphoek','Grote bilspier','Middelste bilspier','Belasting heupkop']:s===2?['Heuphoek','Grote bilspier','Middelste bilspier','Heupbuiger','Belasting heupkop']:['Bekkenkanteling','Valgus knie','Middelste bilspier','Belasting heupkop']);},
+  ctl(){const s=S.state;if(s===1)return `<button id="hOne" class="${W0.one?'on':''}" aria-pressed="${W0.one}">Op één been</button>`;
+    if(s===2)return `<button id="hAuto" class="${W0.auto?'on':''}">Automatisch</button><label>Pasfase</label><input type="range" id="hPh" min="0" max="1" step=".01" value="${W0.ph.toFixed(2)}" aria-label="Pasfase"><label>Tempo</label><input type="range" id="hT" min=".25" max="1.5" step=".05" value="${W0.tempo}" aria-label="Tempo">`;return '';},
+  bind(){const o=K.$('#hOne');if(o)o.addEventListener('click',()=>{W0.one=!W0.one;o.classList.toggle('on',W0.one);o.setAttribute('aria-pressed',W0.one);});
+    const a=K.$('#hAuto');if(a)a.addEventListener('click',()=>{W0.auto=!W0.auto;a.classList.toggle('on',W0.auto);});
+    const p=K.$('#hPh');if(p)p.addEventListener('input',e=>{W0.auto=false;W0.ph=+e.target.value;const b=K.$('#hAuto');if(b)b.classList.remove('on');});
+    const t=K.$('#hT');if(t)t.addEventListener('input',e=>{W0.tempo=+e.target.value;});},
+  grades:true,
+  stepOnce(){if(S.state!==2)return;W0.auto=false;W0.ph=(W0.ph+1/16)%1;const b=K.$('#hAuto');if(b)b.classList.remove('on');const p=K.$('#hPh');if(p)p.value=W0.ph.toFixed(2);},
+  reset(n){W0.flashT=-1;W0.tiltPk=W0.valgPk=0;if(n===3)W0.ph=.1;MUS.forEach(M=>M.fat=0);},
+  step(dt){const st=S.state;let ph=W0.ph,amp=1,tilt=0,add=0,ir=0,valg=0,load,grf=0,flex=0,fat=0;const A={};
+    if(st===1){W0.oneK=lerp(W0.oneK,W0.one?1:0,clamp(dt*3.5,0,1));const k=W0.oneK,br=.012*Math.sin(S.clock*1.6);
+      const p=K.mixPose(REST,ONE,k);p.lean+=br;F.pose(p);PIV.rotation.z=0;FG.rotation.set(0,0,.03*k);
+      Object.assign(A,{gmax:.05+.05*k,gmed:.06+.52*k,ilio:.05,add:.07+.04*k,rect:.05,ham:.05+.05*k});load=lerp(.35,2.8,k);grf=0;flex=0;
+      K.capSet(K.stateText(),k>.5?'Op één been moet de <b>middelste bilspier</b> van het standbeen het bekken horizontaal houden. Zijn hefboom is kort, dus hij levert zo’n 2 keer het lichaamsgewicht. De heupkop krijgt bijna 3 keer het lichaamsgewicht.':'Het bekken en het rechterdijbeen, op een standaard in het lab. Klik op een punt, druk op <b>Op één been</b>, of zoom in met <b>+</b>.');}
+    else{W0.oneK=0;
+      if(st===2){if(W0.auto&&dt>0)W0.ph=(W0.ph+dt*W0.tempo/.66)%1;}
+      else{const after=W0.flashT>=0?S.stT-W0.flashT:-1;const per=after>0?lerp(.66,1.1,smooth(after/1.6)):.66;W0.ph=(W0.ph+dt/per)%1;amp=after>0?lerp(1,.84,smooth(after/1.6)):1;
+        fat=smooth((S.stT-.5)/4.2);const g=S.grade,sb=bump(W0.ph,.6,.085);tilt=[0,4,8,12][g]*fat*sb;valg=[0,5,9,14][g]*fat*sb;
+        if(!S.tearFired&&S.stT>4.8&&Math.abs(W0.ph-.6)<.04){S.tearFired=true;W0.flashT=S.stT;K.flash({big:false,shake:.22});}
+        if(after>=0)valg+=[0,3,6,9][g]*Math.exp(-after*1.2)*sb;add=.5*valg;ir=.9*valg;}
+      ph=W0.ph;flex=flexAt(ph)*amp;const ext=Math.cos(TAU*ph)<0;
+      A.gmax=(.06+.9*bump(ph,.5,.11)+.5*bump(ph,.22,.07))*amp;A.gmed=(.06+.8*bump(ph,.6,.08))*amp;A.ilio=(.06+.88*bump(ph,.83,.09))*amp;A.add=(.08+.5*bump(ph,.74,.06)+.38*bump(ph,.24,.06))*amp;A.rect=(.06+.72*bump(ph,.8,.07))*amp;A.ham=(.06+.85*bump(ph,.4,.08)+.55*bump(ph,.24,.07))*amp;
+      if(st===3){A.gmed*=1-.5*fat*(.4+.2*S.grade);MK.gmed.fat=fat*S.grade/3;MK.gmax.fat=fat*.25;}
+      const stance=bump(ph,.6,.075);load=(.55+5.0*stance+.5*bump(ph,.84,.07))*lerp(1,.92,1-amp);grf=3.5*stance*amp;
+      F.pose(sprintPose(ph,amp,tilt,add,ir));F.lR.kn.rotation.z=-(tilt+add)*D2R*.9;
+      PIV.rotation.z=-tilt*D2R;FG.rotation.set(-flex*D2R,ir*D2R,(tilt+add)*D2R);
+      MK.gmax.mode=A.gmax<.2?'rust':ext?'concentrisch':'excentrisch';MK.ilio.mode=A.ilio<.2?'rust':ext?'excentrisch':'concentrisch';MK.gmed.mode=A.gmed<.2?'rust':'isometrisch';
+      if(st===2){const P=phaseOf(ph);W0.phase=P[2];const pa=K.$('#hPh');if(pa&&W0.auto)pa.value=ph.toFixed(2);
+        if(!W0.auto)K.capSet(K.stateText()+' · '+P[2],P[3]);else if(S.slow||W0.tempo<.5)K.capSoft(K.stateText()+' · '+P[2],P[3],.12/W0.tempo);
+        else K.capSet(K.stateText(),'Elke pas: de grote bilspier strekt, de middelste bilspier stabiliseert en de iliopsoas trekt het been naar voren. Zet <b>Slow motion</b> aan of sleep de <b>pasfase</b>.');}
+      else{const after=W0.flashT>=0?S.stT-W0.flashT:-1;
+        K.capSoft(K.stateText(),after<0?(fat<.35?'Een lange sprintreeks. Let op het bekken en de waterpas boven de spina’s…':'De middelste bilspier raakt vermoeid. In de steunfase zakt het bekken aan de kant van het <b>zwaaibeen</b> (Trendelenburg).'):
+          `<b>Graad ${S.grade}</b>: het standbeen draait naar binnen en de <b>knie klapt naar binnen</b> (valgus). Dat patroon wordt in verband gebracht met lies- en knieklachten. Zie <a href="knie.html">de knie</a>.`,2.2);}}
+    MK.gmed.mode=st===1?(W0.oneK>.5?'isometrisch':'rust'):MK.gmed.mode;if(st===1){MK.gmax.mode='rust';MK.ilio.mode='rust';}
+    MUS.forEach(M=>{M.act=A[M.k]||0;});const ten=clamp((10-flex)/25,0,1);LIGS.forEach(M=>{M.ten=clamp(ten+(M.k==='if'?ir/30:0)+(st===1?.08:0),0,1);});
+    W0.load=load;W0.grf=grf;W0.flex=flex;W0.tilt=tilt;W0.valg=valg+add*.4;upd0();
+    if(st===3){const dk=Math.exp(-dt*.7);W0.tiltPk=Math.max(W0.tilt,(W0.tiltPk||0)*dk);W0.valgPk=Math.max(W0.valg,(W0.valgPk||0)*dk);}else W0.tiltPk=W0.valgPk=0;
+    // HUD
+    const md=M=>M.mode==='rust'?'rust':M.mode,cl=M=>MODEC[M.mode]||'';
+    const fx=flex>=0?deg(flex)+' buiging':deg(-flex)+' strekking';const ldc=load>4?'bad':load>2?'ecc':'ok';
+    if(st===3){const tp=W0.tiltPk,vp=W0.valgPk;K.bar(1,tp/12,tp<.5?'horizontaal':'max −'+nl(tp,0)+'° per pas',tp>5?'bad':tp>2?'ecc':'ok');K.bar(2,vp/18,vp<.5?'recht':'max '+nl(vp,0)+'° per pas',vp>9?'bad':vp>4?'ecc':'ok',vp>9?'var(--bad)':'');
+      K.bar(3,MK.gmed.act,MK.gmed.fat>.3?'vermoeid':md(MK.gmed),MK.gmed.fat>.3?'bad':cl(MK.gmed));K.bar(4,load/7,nl(load)+'× LG',ldc);}
+    else{K.bar(1,(flex+15)/85,fx);K.bar(2,MK.gmax.act,md(MK.gmax),cl(MK.gmax));K.bar(3,MK.gmed.act,md(MK.gmed),cl(MK.gmed));
+      if(st===2){K.bar(4,MK.ilio.act,md(MK.ilio),cl(MK.ilio));K.bar(5,load/7,nl(load)+'× LG',ldc);}else K.bar(4,load/7,nl(load)+'× LG',ldc);}},
+  sound(api){if(S.state===1)return;const ph=W0.ph,p0=W0.prevPh;W0.prevPh=ph;const cross=c=>(p0<c&&ph>=c)||(p0>ph&&(c>p0||c<=ph));
+    if(cross(.48)){api.thump(86,.09,.3);api.noise(.05,'lowpass',1300,1,.12,.002);}if(cross(.98)){api.thump(80,.09,.24);api.noise(.05,'lowpass',1200,1,.1,.002);}}
+};
+/* =====================================================================
+   NIVEAU 1 · doorsnede van de rechterheup (van voren gezien: links is lateraal)
+   ===================================================================== */
+const G1=groups[1];const R1=1.5,RC=1.7,RA=1.78,RS=1.96;            // kop, kraakbeen van de kop, binnenkant van het kraakbeen van de kom
+const L1P=new THREE.Group();G1.add(L1P);const L1F=new THREE.Group();G1.add(L1F);
+const sponge=(c1,c2,c3)=>K.canvasTex(256,256,(x,w,h)=>{x.fillStyle=c1;x.fillRect(0,0,w,h);for(let i=0;i<420;i++){const px=R()*w,py=R()*h,r=2+R()*6;x.fillStyle=R()<.18?c3:c2;x.beginPath();x.ellipse(px,py,r,r*(.45+R()*.6),R()*3,0,TAU);x.fill();}
+  x.strokeStyle='rgba(255,250,236,.6)';x.lineWidth=2.2;for(let i=0;i<160;i++){const px=R()*w,py=R()*h,a=R()*TAU,l=6+R()*16;x.beginPath();x.moveTo(px,py);x.lineTo(px+Math.cos(a)*l,py+Math.sin(a)*l);x.stroke();}},[.42,.42]);
+const fTexM=sponge('#f1e6cc','#dcc29c','#c99682'),pTexM=sponge('#ede0c6','#d8bc96','#c48c78');
+const fFace=std(0xffffff,{map:fTexM,roughness:.75}),pFace=std(0xffffff,{map:pTexM,roughness:.75});
+function arcPts(a0,a1,n,rf){const p=[];for(let i=0;i<=n;i++){const a=lerp(a0,a1,i/n);const r=rf(a);p.push(new THREE.Vector2(r*Math.cos(a*D2R),r*Math.sin(a*D2R)));}return p;}
+const fossa=a=>Math.pow(clamp(1-Math.abs(a+22)/16,0,1),.6);
+const rSock=a=>RS+.22*fossa(a);
+// dijbeen: kop, hals, grote en kleine rolheuvel, schacht
+const fS=new THREE.Shape();arcPts(254,535.5,72,()=>R1).forEach((p,i)=>i?fS.lineTo(p.x,p.y):fS.moveTo(p.x,p.y));
+fS.lineTo(-2.18,-.36);fS.quadraticCurveTo(-2.4,.05,-2.75,0);fS.quadraticCurveTo(-3.2,-.1,-3.12,-.6);fS.lineTo(-3.0,-1.5);fS.quadraticCurveTo(-2.6,-2.4,-2.6,-3.2);fS.lineTo(-2.52,-5.6);fS.lineTo(-1.18,-5.6);fS.lineTo(-1.2,-3.1);
+fS.quadraticCurveTo(-1.18,-2.62,-.82,-2.5);fS.quadraticCurveTo(-.92,-2.15,-1.1,-1.92);fS.quadraticCurveTo(-.72,-1.7,-.41,-1.44);
+const exo={depth:1.3,bevelEnabled:true,bevelThickness:.1,bevelSize:.08,bevelSegments:2,curveSegments:20};
+const fSlabG=new THREE.ExtrudeGeometry(fS,exo);fSlabG.translate(0,0,-1.4);const fSlab=mesh(fSlabG,BM,0,0,0,L1F);
+const fCut=mesh(new THREE.ShapeGeometry(fS,24),fFace,[0,0,.004],0,0,L1F);
+mesh(new THREE.SphereGeometry(RC,48,24,Math.PI,Math.PI),std(0xc6e2ea,{roughness:.25}),0,0,0,L1F);
+const CORT=std(0xfbf5e6,{roughness:.4});
+tube([[-2.86,-1.2,.02],[-2.48,-2.4,.02],[-2.42,-3.4,.02],[-2.4,-5.5,.02]],.13,CORT,L1F,30);
+tube([[-.5,-1.56,.02],[-.98,-2.0,.02],[-1.32,-2.9,.02],[-1.36,-4.0,.02],[-1.34,-5.5,.02]],.14,CORT,L1F,30);
+tube(arcPts(256,533,60,()=>R1-.05).map(p=>V(p.x,p.y,.02)),.045,CORT,L1F,90);
+// botbalkjes langs de krachtlijnen (drukbundel warm, trekbundel koel)
+const trC=glow(0xf7d7a0,0xff8a2c,.3),trT=glow(0xcfe6f0,0x4aa8ff,.25);const TRAB=new THREE.Group();L1F.add(TRAB);
+for(let k=0;k<5;k++){const a=(62+13*k)*D2R;tube([[1.36*Math.cos(a),1.36*Math.sin(a),.035],[-.38-.1*k,-.95-.12*k,.035],[-1.42-.02*k,-2.5-.45*k,.035]],.055,trC,TRAB,30,6);
+  const b=(232+14*k)*D2R;tube([[-2.78+.04*k,-1.3-.35*k,.035],[-1.62+.1*k,-.52-.1*k,.035],[1.3*Math.cos(b),1.3*Math.sin(b),.035]],.048,trT,TRAB,30,6);}
+// cam-bult op de overgang kop-hals (alleen in stand 3)
+// een lens van extra bot op de kop-halsovergang boven-lateraal, die boven de contour uitbolt
+const camM=glow(0xefe3c8,0xff3a20,0);const CAMB=V(-1.6,.06,0);const cam=new THREE.Group();cam.position.copy(CAMB);L1F.add(cam);cam.visible=false;
+const camPts=[[-1.391,.562],[-1.541,.501],[-1.734,.4],[-1.881,.264],[-1.917,.1],[-1.857,-.097],[-1.975,-.217],[-1.7,-.03],[-1.496,.105],[-1.48,.235],[-1.449,.388]].map(p=>new THREE.Vector2(p[0]-CAMB.x,p[1]-CAMB.y));
+const camS=new THREE.Shape(camPts);
+const camG=new THREE.ExtrudeGeometry(camS,{depth:1.3,bevelEnabled:true,bevelThickness:.1,bevelSize:.04,bevelSegments:2,curveSegments:12});camG.translate(0,0,-1.4);mesh(camG,camM,0,0,0,cam);
+const camFaceM=std(0xff9c88,{map:fTexM,roughness:.7,emissive:0xff3a20,emissiveIntensity:0});const camFace=mesh(new THREE.ShapeGeometry(camS,12),camFaceM,[0,0,.012],0,0,cam);camFace.castShadow=false;
+tube(camPts.slice(0,7).map(p=>V(p.x,p.y,.03)),.05,std(0xd8402c,{roughness:.4,emissive:0xa01810,emissiveIntensity:.5}),cam,40);
+// spieren rond het gewricht in doorsnede (vezeltextuur)
+const muTex=K.canvasTex(256,256,(x,w,h)=>{x.fillStyle='#9c3a2e';x.fillRect(0,0,w,h);for(let i=0;i<180;i++){const y=R()*h;x.strokeStyle=R()<.5?'rgba(190,80,60,.55)':'rgba(90,25,20,.5)';x.lineWidth=1+R()*2.5;x.beginPath();x.moveTo(0,y);x.bezierCurveTo(w*.3,y+(R()-.5)*14,w*.7,y+(R()-.5)*14,w,y+(R()-.5)*6);x.stroke();}
+  x.strokeStyle='rgba(240,220,200,.35)';x.lineWidth=2;for(let i=0;i<9;i++){const y=R()*h;x.beginPath();x.moveTo(0,y);x.lineTo(w,y+(R()-.5)*20);x.stroke();}},[.5,.5]);
+const muM=std(0xffffff,{map:muTex,roughness:.6});
+function muSec(pts,parent,rot){const sh=new THREE.Shape();pts.forEach((p,i)=>i?sh.lineTo(p[0],p[1]):sh.moveTo(p[0],p[1]));sh.closePath();const g=new THREE.ExtrudeGeometry(sh,{depth:1.2,bevelEnabled:true,bevelThickness:.06,bevelSize:.05,bevelSegments:1,curveSegments:8});g.translate(0,0,-1.32);
+  if(rot){const uv=g.attributes.uv;for(let i=0;i<uv.count;i++){const u=uv.getX(i),v=uv.getY(i);uv.setXY(i,u*Math.cos(rot)-v*Math.sin(rot),u*Math.sin(rot)+v*Math.cos(rot));}}return mesh(g,muM,[0,0,-.03],0,0,parent);}
+const MUS1=[muSec([[-1.25,4.6],[-1.62,2.6],[-1.52,1.95],[-2.3,1.15],[-2.78,.12],[-3.35,-.15],[-3.75,1.2],[-3.25,3.0],[-2.55,4.6]],L1P,1.2),
+  muSec([[-3.15,-.75],[-3.7,-1.6],[-3.5,-5.6],[-2.55,-5.6],[-2.62,-3.2],[-3.02,-1.5]],L1F,1.57),
+  muSec([[1.22,-2.3],[1.85,-2.4],[2.4,-3.2],[1.1,-4.4],[-.9,-3.4],[-.98,-2.7],[0,-2.82]],L1P,.2),
+  muSec([[2.32,1.25],[1.42,2.7],[1.32,4.6],[3.3,4.6],[3.5,1.0],[2.3,-.4]],L1P,1.4),
+  muSec([[-1.16,-3.15],[-.86,-3.45],[1.05,-4.5],[1.25,-5.6],[-1.15,-5.6]],L1F,1.3)];
+const bgTex1=K.canvasTex(512,512,(x,w,h)=>{const g=x.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);g.addColorStop(0,'rgba(58,24,19,1)');g.addColorStop(.38,'rgba(44,19,15,.92)');g.addColorStop(.7,'rgba(32,16,13,.45)');g.addColorStop(1,'rgba(28,16,13,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});bgTex1.wrapS=bgTex1.wrapT=THREE.ClampToEdgeWrapping;
+const bg1=mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshBasicMaterial({map:bgTex1,transparent:true,depthWrite:false,fog:false}),[-.5,-.5,-1.6],0,0,G1);bg1.castShadow=bg1.receiveShadow=false;bg1.renderOrder=-1;
+// bekken: dak van de kom, binnenwand en zitbeen
+const pS=new THREE.Shape();pS.moveTo(RS*Math.cos(120*D2R),RS*Math.sin(120*D2R));pS.lineTo(-1.42,1.8);pS.quadraticCurveTo(-1.62,2.6,-1.18,3.4);pS.lineTo(-.85,4.6);pS.lineTo(1.3,4.6);
+pS.quadraticCurveTo(1.4,2.7,2.3,1.25);pS.lineTo(2.28,-.4);pS.quadraticCurveTo(2.22,-1.6,1.75,-2.35);pS.lineTo(1.2,-2.25);pS.lineTo(1.22,-1.6);arcPts(-48,120,70,rSock).forEach(p=>pS.lineTo(p.x,p.y));
+const pSlabG=new THREE.ExtrudeGeometry(pS,Object.assign({},exo,{depth:1.5}));pSlabG.translate(0,0,-1.6);const pSlab=mesh(pSlabG,BM,0,0,0,L1P);
+const pCut=mesh(new THREE.ShapeGeometry(pS,24),pFace,[0,0,.004],0,0,L1P);
+tube(arcPts(-48,120,60,a=>rSock(a)+.05).map(p=>V(p.x,p.y,.02)),.05,CORT,L1P,80);
+// kraakbeen als ring met drukkleuren (vertex colors)
+function ringFace(r0,r1,a0,a1,parent){const g=new THREE.RingGeometry(r0,r1,Math.max(8,Math.round((a1-a0)/2.5)),1,a0*D2R,(a1-a0)*D2R);const p=g.attributes.position,n=p.count;
+  g.setAttribute('color',new THREE.Float32BufferAttribute(new Float32Array(n*3).fill(1),3));const ang=new Float32Array(n);for(let i=0;i<n;i++)ang[i]=Math.atan2(p.getY(i),p.getX(i))/D2R;g.userData.ang=ang;
+  return mesh(g,std(0xffffff,{vertexColors:true,roughness:.28}),[0,0,.012],0,0,parent);}
+const CA=[ringFace(RA,RS,-5,118,L1P),ringFace(RA,RS,-47,-38,L1P)],CH=[ringFace(R1,RC,257,328,L1F),ringFace(R1,RC,342,532,L1F)];
+function heat(m,aL,P,off){const g=m.geometry,ang=g.userData.ang,col=g.attributes.color;for(let i=0;i<ang.length;i++){let d=Math.abs(((ang[i]+off-aL)%360+540)%360-180);const p=P*Math.pow(Math.max(0,Math.cos(d*D2R)),3);
+  const q=clamp(p*2.2,0,1),q2=clamp(p*2.2-1,0,1);col.setXYZ(i,lerp(.72,1,q),lerp(.87,.55,q)-.35*q2,lerp(.94,.2,q)-.1*q2);}col.needsUpdate=true;}
+// fossa met vetkussen, kopband en synovia
+const pulv=mesh(new THREE.RingGeometry(RA+.02,RS+.2,12,1,-38*D2R,32*D2R),std(0xe7c15a,{roughness:.6}),[0,0,.006],0,0,L1P);
+const LIGT=mesh(K.BAND,std(0xf0d8cc,{roughness:.4}),0,0,0,G1),LIGA=mesh(K.BAND,std(0xc0392b,{roughness:.4}),0,0,0,G1);
+const FOV=V(R1*.97*Math.cos(335*D2R),R1*.97*Math.sin(335*D2R),-.1),FOSS=V((RS+.12)*Math.cos(-22*D2R),(RS+.12)*Math.sin(-22*D2R),-.1);
+const synM=new THREE.MeshBasicMaterial({color:0x4aa8ff,transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide});
+const SYN=mesh(new THREE.RingGeometry(RC,RA,90,1,-48*D2R,190*D2R),synM,[0,0,.014],0,0,L1P);SYN.castShadow=false;
+const NSP=120,SP=inst(new THREE.SphereGeometry(.036,8,6),std(0x4aa8ff,{roughness:.2,emissive:0x1a70e0,emissiveIntensity:.7}),NSP);SP.castShadow=false;L1P.add(SP);
+const SPD=[];for(let i=0;i<NSP;i++){const t=R();SPD.push(t<.72?{k:0,a:-44+R()*178,r:lerp(RC+.01,RA-.01,R()),ph:R()*TAU}:t<.86?{k:1,a:136+R()*16,r:RS-.05+R()*.3,ph:R()*TAU}:{k:2,a:-56-R()*22,r:1.66+R()*.45,ph:R()*TAU});}
+// labrum: driehoek op de rand, met een ring achterlangs
+const LABG=new THREE.Group();LABG.position.set(-1.42,1.8,0);L1P.add(LABG);
+const lS=new THREE.Shape();lS.moveTo(0,0);lS.lineTo(RS*Math.cos(120*D2R)+1.42,RS*Math.sin(120*D2R)-1.8);lS.lineTo(RA*Math.cos(143*D2R)+1.42+.02,RA*Math.sin(143*D2R)-1.8);lS.closePath();
+const labM=std(0xbfe4ee,{roughness:.3,emissive:0xff3020,emissiveIntensity:0});
+const labG=new THREE.ExtrudeGeometry(lS,{depth:.3,bevelEnabled:true,bevelThickness:.04,bevelSize:.03,bevelSegments:1});labG.translate(0,0,-.32);const LAB=mesh(labG,labM,0,0,0,LABG);
+(function(){const A=V(RS*Math.cos(120*D2R),RS*Math.sin(120*D2R),0),B=V(RS*Math.cos(-48*D2R),RS*Math.sin(-48*D2R),0);const C=A.clone().add(B).multiplyScalar(.5),r=A.distanceTo(B)/2,u=A.clone().sub(C).normalize();
+  const pts=[];for(let i=0;i<=24;i++){const t=i/24*Math.PI;pts.push(C.clone().addScaledVector(u,r*Math.cos(t)).add(V(0,0,-r*Math.sin(t))).multiplyScalar(1.04));}tube(pts,.17,std(0xdfeef1,{roughness:.32}),L1P,60,10);})();
+const crackM=new THREE.MeshBasicMaterial({color:0xd6402f,transparent:true,opacity:0});const crack=mesh(new THREE.BoxGeometry(.06,.34,.36),crackM,[RS*Math.cos(121*D2R),RS*Math.sin(121*D2R),-.12],[0,0,30*D2R],0,L1P);crack.castShadow=false;
+const SPARK=inst(new THREE.SphereGeometry(.05,8,6),new THREE.MeshBasicMaterial({color:0xffc81e}),14);L1P.add(SPARK);
+// kapsel: banden van de rand van de kom naar de basis van de hals
+const capM=std(0xffffff,{roughness:.4}),CAPS=[];
+function capsule(Oa,Ob,Ia,Ib,via,N){const m=strands(G1,N,14,capM);const f=[];for(let i=0;i<N;i++){const u=i/(N-1),z=lerp(.12,-.55,u);f.push({O:V(lerp(Oa[0],Ob[0],u),lerp(Oa[1],Ob[1],u),z),I:V(lerp(Ia[0],Ib[0],u),lerp(Ia[1],Ib[1],u),z),via:V(via[0],via[1],z),L0:0});}const C={m,f};CAPS.push(C);return C;}
+capsule([-1.5,1.95],[-1.62,2.2],[-2.42,-.1],[-2.6,-.3],[-2.28,1.02],5);capsule([1.3,-2.15],[1.05,-2.3],[-1.3,-2.36],[-1.45,-2.5],[-.1,-2.58],5);
+const loadA1=arrow(L1P,0xff9a3c);const L1TIP=V(RC*Math.cos(74*D2R),RC*Math.sin(74*D2R),.3),L1DIR=V(-Math.cos(74*D2R),-Math.sin(74*D2R),0);
+const W1={ph:0,tempo:1,load:.35,gam:0,push:0,tear:0,cam:0,gap:9,flashT:-1,prevPh:0};
+const _fv=V(0,0,0),_fo=V(0,0,0);
+function upd1(){const L=clamp(W1.load/6,0,1.2);L1F.rotation.z=W1.gam*D2R;L1F.position.set(.05*W1.push,.035*L-.05*W1.push,0);L1F.updateMatrix();L1F.updateMatrixWorld(true);L1P.updateMatrixWorld(true);
+  heat(CA[0],74,L,0);heat(CA[1],74,L,0);heat(CH[0],74,L,W1.gam);heat(CH[1],74,L,W1.gam);
+  trC.emissiveIntensity=.25+1.6*L;trT.emissiveIntensity=.2+1.1*L;
+  _fv.copy(FOV).applyMatrix4(L1F.matrix);orient(LIGT,_fv,FOSS,.12,.07);_fo.copy(_fv).add(V(.05,.05,.07));orient(LIGA,_fo,FOSS.clone().add(V(0,.05,.07)),.025);
+  synM.opacity=.18+.3*(1-L)+.1*Math.sin(S.clock*2);
+  SPD.forEach((d,i)=>{let a=d.a,r=d.r;const j=.015*Math.sin(S.clock*2.3+d.ph);
+    if(d.k===0){const da=a-74;const lim=da>0?135-a:a+46;a+=Math.sign(da)*Math.min(lim,38*L*(1-Math.abs(da)/200));r=lerp(r,(RC+RA)/2,L*.6);}else r+=.1*L;
+    _v.set(r*Math.cos(a*D2R)+j,r*Math.sin(a*D2R)+j*.6,.03+.02*Math.sin(d.ph));SP.setMatrixAt(i,K.placeMatrix(_v,0,1+.4*L));});done(SP);
+  CAPS.forEach(C=>{C.f.forEach((f,i)=>{_I.copy(f.I).applyMatrix4(L1F.matrix);_C.copy(f.via).multiplyScalar(2).sub(_m.addVectors(f.O,_I).multiplyScalar(.5));for(let j=0;j<=14;j++)bez(f.O,_C,_I,j/14,PT[j]);
+    const len=f.O.distanceTo(_I);if(!f.L0)f.L0=len;const t=clamp((len/f.L0-.97)*12,0,1);setStrand(C.m,i,PT,()=>.075,(u,c)=>c.setRGB(lerp(.72,1,t),lerp(.66,.98,t),lerp(.62,.94,t)));});done(C.m);});
+  setArrow(loadA1,L1TIP,L1DIR,.4+.38*W1.load,.07);
+  LABG.rotation.z=-(W1.push*7+W1.tear*16)*D2R;labM.emissiveIntensity=.5*W1.tear+.25*W1.push;labM.color.setRGB(lerp(.75,1,W1.tear),lerp(.89,.72,W1.tear),lerp(.93,.7,W1.tear));crackM.opacity=.9*W1.tear;
+  cam.visible=W1.cam>.01;cam.scale.set(W1.cam,W1.cam,1);const cp=S.state===3?.15+W1.push*(.55+.35*Math.sin(S.clock*9)):0;camM.emissiveIntensity=cp;camFaceM.emissiveIntensity=cp*.8;
+  for(let i=0;i<14;i++){if(W1.tear<.5){SPARK.setMatrixAt(i,ZERO);continue;}const u=((S.clock*.9+i/14)%1);const a=(118+i*1.7)*D2R;_v.set(2.0*Math.cos(a)-u*.6,2.0*Math.sin(a)+u*.9,.25);SPARK.setMatrixAt(i,K.placeMatrix(_v,0,(1-u)*1.4));}done(SPARK);
+  W.l1head=wpos(L1F,V(-.2,.25,.05));W.l1neck=wpos(L1F,V(-1.85,-1.0,.05));W.l1lab=wpos(L1P,V(-1.2,1.45,.1));W.l1cart=wpos(L1F,V(.55,1.48,.05));W.l1capA=wpos(L1P,V(-2.3,1.0,.05));W.l1lig=_fv.clone().lerp(FOSS,.5);W.l1syn=wpos(L1P,V(.9*1.67,.44*1.67,.05));
+  W.l1cam=wpos(L1F,V(-1.75,.2,.1));W.l1fos=wpos(L1P,V(1.9,-.75,.05));W.l1trab=wpos(L1F,V(-.85,-1.3,.05));W.l1tag=wpos(L1P,L1TIP.clone().addScaledVector(L1DIR,-(.55+.38*W1.load)));}
+const H1={
+  hud(){return K.bars(S.state===3?['Ruimte hals–rand','Druk op labrum','Labrum']:['Belasting heupkop','Contactdruk','Smeerfilm']);},
+  ctl(){return S.state===2?`<label>Tempo</label><input type="range" id="gT" min=".25" max="1.5" step=".05" value="${W1.tempo}" aria-label="Tempo">`:'';},
+  bind(){const t=K.$('#gT');if(t)t.addEventListener('input',e=>{W1.tempo=+e.target.value;});},
+  reset(){W1.flashT=-1;W1.tear=0;W1.push=0;W1.cam=0;W1.gam=0;W1.t0=0;W1.noTear=false;},
+  step(dt){const st=S.state;
+    if(st===1){W1.gam=2.5*Math.sin(S.clock*.7);W1.load=.35;W1.push=0;W1.tear=0;W1.cam=0;
+      K.capSet(K.stateText(),'Doorsnede van voren (links is de buitenkant). De kop zit diep in de kom. Het <b>labrum</b> maakt de kom dieper, het <b>kapsel</b> sluit het gewricht af en de <b>kopband</b> loopt naar de bodem van de kom. Zoom in op het kraakbeen met <b>+</b>.');}
+    else if(st===2){W1.ph=(W1.ph+dt*W1.tempo/.9)%1;const ph=W1.ph;W1.load=.55+5.0*bump(ph,.6,.075)+.5*bump(ph,.84,.07);W1.gam=3*bump(ph,.6,.1)-2.5*bump(ph,.1,.12);W1.cam=0;
+      if(!S.slow&&W1.tempo>.6)K.capSet(K.stateText(),'Bij elke landing drukt de kop met zo’n 5 keer het lichaamsgewicht of meer in het <b>dak van de kom</b> (rood). De synovia (blauw) wordt weggeperst en stroomt terug, en de botbalkjes lichten op. Zet <b>Slow motion</b> aan om de fasen te volgen.');
+      else K.capSoft(K.stateText(),W1.load>2.5?'Landing: de kop drukt met zo’n 5 keer het lichaamsgewicht of meer in het <b>dak van de kom</b> (rood). Het kraakbeen geeft mee, de synovia wordt weggeperst en de botbalkjes lichten op langs de krachtlijnen.':'Zwaaifase: de druk valt weg. De synovia stroomt terug tussen de kraakbeenlagen en smeert het gewricht.',.2/W1.tempo);}
+    else{const t=Math.max(0,S.stT-(W1.t0||0));W1.cam=smooth(S.stT/.6);W1.load=.9;
+      let g=-38*smooth((t-.7)/2.0);if(W1.noTear)g=Math.max(g,-35.2);if(W1.flashT>=0){const a=t-W1.flashT;g=lerp(-36.5,-9,smooth((a-.7)/1.6));}
+      W1.gam=g;W1.push=clamp((-g-29)/7,0,1);
+      if(!S.tearFired&&g<-35.8){S.tearFired=true;W1.flashT=t;K.flash({big:false,shake:.18});}
+      W1.tear=W1.flashT>=0?smooth((t-W1.flashT)/.35):0;
+      K.capSoft(K.stateText(),W1.tear>0?'Het labrum scheurt los van de rand: een <b>labrumscheur</b>. Het labrum bevat zenuwuiteinden (geel). Zo’n scheur kan liespijn geven, soms met klikken of haperen. Lang niet elke scheur geeft klachten.':W1.push>0?'De bult loopt tegen de rand van de kom en klemt het labrum: <b>impingement</b>.':'Diep buigen met binnendraaien, zoals bij een diepe squat, een sliding of in de schaatshouding. Deze doorsnede laat alleen het gevolg zien: de <b>cam-bult</b> (rood omrand) schuift naar de bovenrand van de kom.',1.6);}
+    upd1();const L=W1.load;
+    if(st===3){const gap=clamp((35.8+W1.gam)/35.8,0,1)*9;K.bar(1,gap/9,nl(gap)+' mm',gap<1.5?'bad':gap<4?'ecc':'ok');K.bar(2,W1.push*.8+W1.tear*.2,W1.push>.1?'ingeklemd':'laag',W1.push>.1?'bad':'ok');K.bar(3,1-W1.tear*.7,W1.tear>.1?'gescheurd':'heel',W1.tear>.1?'bad':'ok');}
+    else{K.bar(1,L/7,nl(L)+'× LG',L>4?'bad':L>2?'ecc':'ok');K.bar(2,L*1.6/11,nl(L*1.6)+' MPa',L>4?'ecc':'');const fl=1-.75*clamp(L/6,0,1);K.bar(3,fl,fl>.8?'dik':fl>.5?'dunner':'dun, onder druk','',fl>.5?'#7fd0ff':'#e6b65e');}},
+  sound(api){if(S.state!==2)return;const p0=W1.prevPh,ph=W1.ph;W1.prevPh=ph;if(p0<.55&&ph>=.55){api.thump(52,.18,.26);api.noise(.18,'lowpass',380,1,.05,.02);}}
+};
+/* =====================================================================
+   NIVEAU 2 · een blokje hyalien kraakbeen van de heupkop
+   ===================================================================== */
+const G2=groups[2];const XB=4,ZB=2.4,YT=-1.9,YS=2.0,HC=YS-YT;
+const W2={c:0,cw:0,ph:0,tempo:1,fis:0,pg:1,fib:0,clus:0,water:75,flashT:-1,prevC:0,avgQ:0};
+function ymap(y,c){if(y<=YT)return y;const f=(y-YT)/HC;return YT+HC*(f-.16*c*Math.pow(f,1.6));}
+// matrix, zones, tidemark, verkalkte laag en bot
+const MATRIX=mesh(new THREE.BoxGeometry(2*XB,1,2*ZB).translate(0,.5,0),glass(0x6c9ed2,.18),[0,YT,0],0,0,G2);MATRIX.castShadow=false;
+const zoneTex=K.canvasTex(64,256,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'rgba(70,165,235,.95)');g.addColorStop(.13,'rgba(70,165,235,.9)');g.addColorStop(.14,'rgba(90,140,225,.6)');g.addColorStop(.55,'rgba(100,130,220,.55)');g.addColorStop(.56,'rgba(140,95,210,.65)');g.addColorStop(1,'rgba(150,90,200,.75)');x.fillStyle=g;x.fillRect(0,0,w,h);
+  x.fillStyle='rgba(220,240,255,.45)';for(let i=0;i<40;i++)x.fillRect(0,R()*h*.13,w,1);x.fillStyle='rgba(80,50,150,.45)';for(let i=0;i<14;i++)x.fillRect(R()*w,h*.6+R()*h*.38,2,8+R()*20);});
+zoneTex.wrapS=zoneTex.wrapT=THREE.ClampToEdgeWrapping;
+const zoneM=new THREE.MeshBasicMaterial({map:zoneTex,transparent:true,opacity:.26,depthWrite:false,side:THREE.DoubleSide});
+const ZF=mesh(new THREE.PlaneGeometry(2*XB,1).translate(0,.5,0),zoneM,[0,YT,ZB+.01],0,0,G2),ZS=mesh(new THREE.PlaneGeometry(2*ZB,1).translate(0,.5,0),zoneM,[XB+.01,YT,0],[0,Math.PI/2,0],0,G2);ZF.castShadow=ZS.castShadow=false;
+mesh(new THREE.BoxGeometry(2*XB+.02,.03,2*ZB+.02),glow(0x5a8fd0,0x3a78d0,.35),[0,YT,0],0,0,G2);
+// tidemark als golvende blauwe lijn langs de voor- en zijkant
+const tideM=glow(0x4a8ae0,0x3a78d0,1.1);
+tube(Array.from({length:41},(_,i)=>{const x=-XB+2*XB*i/40;return V(x,YT+.035*Math.sin(x*3.1)+.02*Math.sin(x*7.3),ZB+.03);}),.035,tideM,G2,120,6);
+tube(Array.from({length:25},(_,i)=>{const z=ZB-2*ZB*i/24;return V(XB+.03,YT+.035*Math.sin(z*3.4+1)+.02*Math.sin(z*8.1),z);}),.035,tideM,G2,80,6);
+const calcTex=K.canvasTex(256,64,(x,w,h)=>{x.fillStyle='#cdb98e';x.fillRect(0,0,w,h);for(let i=0;i<500;i++){x.fillStyle=R()<.5?'rgba(160,130,90,.5)':'rgba(240,226,190,.5)';x.beginPath();x.arc(R()*w,R()*h,.8+R()*1.8,0,TAU);x.fill();}
+  x.fillStyle='rgba(120,90,60,.4)';for(let i=0;i<14;i++){x.beginPath();x.ellipse(R()*w,h*.3+R()*h*.6,3,5,0,0,TAU);x.fill();}});
+mesh(new THREE.BoxGeometry(2*XB,.45,2*ZB),std(0xffffff,{map:calcTex,roughness:.7}),[0,YT-.225,0],0,0,G2);
+const plateTex=sponge('#f3e8cf','#e2cfa8','#d6b49c');plateTex.repeat.set(1.6,.25);
+const plateM=std(0xffffff,{map:plateTex,roughness:.6});const PLATE=mesh(new THREE.BoxGeometry(2*XB,.55,2*ZB),plateM,[0,YT-.45-.275,0],0,0,G2);
+const marrowTex=K.canvasTex(256,128,(x,w,h)=>{x.fillStyle='#6e1f1a';x.fillRect(0,0,w,h);for(let i=0;i<260;i++){x.fillStyle=R()<.3?'rgba(230,190,90,.55)':'rgba(150,40,34,.6)';x.beginPath();x.arc(R()*w,R()*h,1+R()*4,0,TAU);x.fill();}});
+mesh(new THREE.BoxGeometry(2*XB-.04,1.6,2*ZB-.04),std(0xffffff,{map:marrowTex,transparent:true,opacity:.55,depthWrite:false,roughness:.8,side:THREE.DoubleSide}),[0,YT-1.0-.8,0],0,0,G2).castShadow=false;
+// botbalkjes: een verstoord 3D-rooster waarvan naburige knopen verbonden zijn (trabeculair netwerk)
+const TB=[],TNX=10,TNY=3,TNZ=6;for(let ix=0;ix<TNX;ix++)for(let iy=0;iy<TNY;iy++)for(let iz=0;iz<TNZ;iz++)TB.push(V(-3.75+7.5*ix/(TNX-1)+(R()-.5)*.45,YT-1.15-.65*iy+(R()-.5)*.3,-2.15+4.3*iz/(TNZ-1)+(R()-.5)*.4));
+const tId=(ix,iy,iz)=>(ix*TNY+iy)*TNZ+iz,TL=[];
+for(let ix=0;ix<TNX;ix++)for(let iy=0;iy<TNY;iy++)for(let iz=0;iz<TNZ;iz++){const a=tId(ix,iy,iz);
+  if(ix+1<TNX&&R()<.8)TL.push([a,tId(ix+1,iy,iz)]);if(iy+1<TNY&&R()<.9)TL.push([a,tId(ix,iy+1,iz)]);if(iz+1<TNZ&&R()<.75)TL.push([a,tId(ix,iy,iz+1)]);if(iy===0)TL.push([a,-1]);}
+const trabM=std(0xeadbb8,{roughness:.55});const STR=inst(FGEO,trabM,TL.length);G2.add(STR);
+TL.forEach((l,i)=>{const a=TB[l[0]],b=l[1]<0?V(a.x+(R()-.5)*.2,YT-.92,a.z+(R()-.5)*.2):TB[l[1]];STR.setMatrixAt(i,segMatrix(a,b,.05+R()*.04));});done(STR);
+const TKN=inst(new THREE.SphereGeometry(1,10,8),trabM,TB.length);G2.add(TKN);TB.forEach((p,i)=>TKN.setMatrixAt(i,K.placeMatrix(p,0,.08+R()*.04)));done(TKN);
+const vesM=std(0xc0392b,{roughness:.4,emissive:0x801010,emissiveIntensity:.4});
+[[[-4,YT-1.5,1.2],[-1.5,YT-1.3,.8],[1,YT-1.7,1.4],[4,YT-1.45,.9]],[[-4,YT-2.1,-1.1],[-.5,YT-2.3,-.6],[2.2,YT-2.0,-1.3],[4,YT-2.2,-.8]],[[-1.2,YT-2.6,2.4],[-1.0,YT-1.9,.4],[-1.4,YT-1.2,-1.6],[-1.1,YT-.95,-2.4]]].forEach(p=>tube(vv(p),.05,vesM,G2,40,6));
+// synovia en de tegenoverliggende kraakbeenlaag van de kom
+const filmM=new THREE.MeshBasicMaterial({color:0x6fc6ff,transparent:true,opacity:.22,blending:THREE.AdditiveBlending,depthWrite:false});
+const FILM2=mesh(new THREE.BoxGeometry(2*XB,.16,2*ZB),filmM,[0,YS+.08,0],0,0,G2);FILM2.castShadow=false;
+const OPP=mesh(new THREE.BoxGeometry(2*XB,.5,2*ZB),glass(0x7fb6dc,.24),[0,YS+.41,0],0,0,G2);OPP.castShadow=false;
+const loadA2=arrow(G2,0xff9a3c);
+// collageenarcades (Benninghoff): verankerd in de verkalkte laag, boog naar het oppervlak
+const ARCS=[];for(let zi=0;zi<5;zi++){const z=-1.9+zi*.95;for(let x0=-4.15+(zi%2)*.39;x0+1.1<=4.2;x0+=.78){const w=1.1;
+  const cv=cr([[x0,YT-.4,z],[x0,YT+HC*.3,z],[x0+.06*w,YT+HC*.7,z],[x0+.25*w,YT+HC*.93,z],[x0+.5*w,YS-.06,z],[x0+.75*w,YT+HC*.93,z],[x0+.94*w,YT+HC*.7,z],[x0+w,YT+HC*.3,z],[x0+w,YT-.4,z]]);
+  ARCS.push({x0,w,z,pts:cv.getSpacedPoints(18),brk:R()});}}
+const AKS=18,ARC=strands(G2,ARCS.length,AKS,std(0xffffff,{roughness:.35,emissive:0xfff4d8,emissiveIntensity:.08}));
+// kraakbeencellen per zone (plat, rond, in kolommen) en hun kernen
+const CEL=[];
+for(let i=0;i<52;i++)CEL.push({x:(R()-.5)*7.6,y:YS-.1-R()*.32,z:(R()-.5)*4.4,s:[.2,.06,.16],cl:0});
+for(let i=0;i<46;i++){const x=(R()-.5)*7.4,y=YT+HC*.32+R()*HC*.5,z=(R()-.5)*4.2;CEL.push({x,y,z,s:[.14,.13,.14],cl:0});if(R()<.35)CEL.push({x:x+.3,y,z,s:[.13,.12,.13],cl:0});}
+for(let c=0;c<20;c++){const x=(R()-.5)*7.2,z=(R()-.5)*4.2;for(let k=0;k<4;k++)CEL.push({x:x+(R()-.5)*.05,y:YT+.25+k*.3,z,s:[.13,.1,.13],cl:0,col:c});}
+const FISX=[-1.7,.42,2.3];
+FISX.forEach(fx=>{for(let k=0;k<6;k++)CEL.push({x:fx+(k%2?.32:-.32)+(R()-.5)*.1,y:YS-.5-k*.18,z:(R()-.5)*2.6,s:[.13,.12,.13],cl:1});});
+const cellM=std(0xf08fbf,{roughness:.4,transparent:true,opacity:.6,depthWrite:false,emissive:0x802050,emissiveIntensity:.3}),nucM=std(0x5a2690,{roughness:.45,emissive:0x3a0f78,emissiveIntensity:.45});
+const lacM=glass(0xffffff,.13);lacM.depthWrite=false;
+const CELL=inst(new THREE.SphereGeometry(1,16,12),cellM,CEL.length),NUC=inst(new THREE.SphereGeometry(1,10,8),nucM,CEL.length),LAC=inst(new THREE.SphereGeometry(1,14,10),lacM,CEL.length);
+CELL.renderOrder=2;LAC.renderOrder=3;LAC.castShadow=CELL.castShadow=false;G2.add(NUC,CELL,LAC);
+// proteoglycanen (aggrecaan als flessenborstel)
+const AGG=[];for(let i=0;i<46;i++){const a=R()*TAU;AGG.push({x:(R()-.5)*7.2,y:YT+.3+R()*(HC-.7),z:(R()-.5)*4.2,d:V(Math.cos(a),(R()-.5)*.5,Math.sin(a)).normalize(),rk:R()});}
+const pgM=std(0xa04fe0,{roughness:.4,emissive:0x6a1aa0,emissiveIntensity:.45});const PGI=strands(G2,AGG.length,9,pgM);
+// water
+const NWA=520;const WAT=inst(new THREE.SphereGeometry(.062,10,8),std(0x2f8cff,{roughness:.2,emissive:0x2f8cff,emissiveIntensity:.9}),NWA);WAT.castShadow=false;G2.add(WAT);
+const WD=[];for(let i=0;i<NWA;i++){let h;if(R()<.6){const g=AGG[i%AGG.length];h=V(g.x+(R()-.5)*.7,g.y+(R()-.5)*.5,g.z+(R()-.5)*.7);}else h=V((R()-.5)*7.6,YT+.1+R()*(HC-.2),(R()-.5)*4.5);
+  h.y=clamp(h.y,YT+.08,YS-.06);const f=(h.y-YT)/HC;const side=R()<.25;WD.push({h,f,mob:R()<.68,o:side?V(Math.sign(h.x||1)*(XB+.15+R()*.5),h.y,h.z):V(h.x+(R()-.5)*.9,0,h.z+(R()-.5)*.6),oy:.03+R()*.12,side,ph:R()*TAU,q:0});}
+// scheuren (fissuren) en slijtsel
+// een fissuur is een gekartelde wig: boven open, naar onderen smal, de rand gerafeld (eenheidsmaat: breedte 1, diepte 1)
+function wedgeGeo(){const n=8,pos=[],col=[],idx=[];const jx=[],dd=[];for(let k=0;k<=n;k++){jx.push((R()-.5)*.9);dd.push(.12+.88*Math.pow(Math.sin(Math.PI*k/n),.7)*(.75+R()*.25));}
+  for(let k=0;k<=n;k++){const z=-.5+k/n,hw=.5*(k===0||k===n?.25:.75+R()*.45),x=jx[k];
+    pos.push(x-hw,0,z, x+hw,0,z, x*.6+(R()-.5)*.25,-dd[k],z);col.push(.3,.1,.08, .3,.1,.08, .03,.01,.01);}
+  for(let k=0;k<n;k++){const a=k*3,b=a+3;idx.push(a,b,a+2, b,b+2,a+2, a+1,a+2,b+1, b+1,a+2,b+2);}
+  idx.push(0,1,2, n*3,n*3+2,n*3+1);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();return g;}
+const fisM=std(0x9a8a86,{vertexColors:true,roughness:.95,metalness:0,side:THREE.DoubleSide});const FIS=[];FISX.forEach((x,i)=>{for(let k=0;k<5;k++){const m=new THREE.Mesh(wedgeGeo(),fisM);m.userData={x:x+(R()-.5)*.3,z:-2.0+k*1.0+(R()-.5)*.15,d:.45+R()*.55,i,r:(R()-.5)*.5,l:.9+R()*.3};m.rotation.y=m.userData.r;m.visible=false;G2.add(m);FIS.push(m);}});
+// gerafelde collageenstompjes langs de randen van de fissuren
+const STUB=[];FIS.forEach((m,fi)=>{for(let k=0;k<4;k++)STUB.push({fi,s:k%2?1:-1,z:(R()-.5)*.8,a:.3+R()*.5,l:.12+R()*.14});});
+const STB=inst(FGEO,std(0xf3e6c8,{roughness:.5}),STUB.length);STB.castShadow=false;G2.add(STB);
+const DEB=(function(){const n=70,g=new THREE.BufferGeometry(),p=new Float32Array(n*3);for(let i=0;i<n;i++){p[i*3]=(R()-.5)*7.6;p[i*3+1]=YS+.05+R()*.12;p[i*3+2]=(R()-.5)*4.4;}g.setAttribute('position',new THREE.BufferAttribute(p,3));
+  const m=new THREE.Points(g,new THREE.PointsMaterial({color:0xfff2e0,size:.07,transparent:true,opacity:0}));m.userData.mat=m.material;G2.add(m);return m;})();
+const _q=V(0,0,0),_p2=V(0,0,0),_n2=V(0,0,0);
+function upd2(){const c=W2.cw,st=S.state,g=S.grade;const ys=ymap(YS,c);
+  MATRIX.scale.y=ys-YT;ZF.scale.y=ZS.scale.y=ys-YT;FILM2.position.y=ys+.08;OPP.position.y=ys+.41;FILM2.scale.y=1-.5*clamp(W2.c,0,1);
+  setArrow(loadA2,V(0,ys+.7,0),V(0,-1,0),.3+1.6*W2.c,.09);
+  // arcades
+  const fisDepth=[0,.5,1.9,HC+.4][g]*W2.fis;
+  ARCS.forEach((A,i)=>{for(let j=0;j<=AKS;j++){const p=A.pts[j];const f=clamp((p.y-YT)/HC,0,1);const side=j<AKS/2?-1:1;PT[j].set(p.x+side*.14*c*Math.sin(Math.PI*f)+.03*c*Math.sin(p.y*9+i),ymap(p.y,c),p.z);}
+    setStrand(ARC,i,PT,()=>.024,(t,col)=>{const f=clamp((PT[0].y-YT)/HC,0,1);col.setRGB(.97,.9-.05*t*0,.74+.1*Math.sin(i));});
+    if(st===3)for(let j=0;j<AKS;j++){const p=A.pts[j],f=(p.y-YT)/HC;let hide=f>.86&&A.brk<W2.fib&&((j*7+i)%3!==0);
+      FISX.forEach(fx=>{if(Math.abs(p.x-fx)<.22&&YS-p.y<fisDepth)hide=true;});if(hide)hideSeg(ARC,i,j);}});done(ARC);
+  // cellen
+  CEL.forEach((C,i)=>{const f=clamp((C.y-YT)/HC,0,1);let s=1;if(C.cl)s=W2.clus;const sy=C.s[1]*(1-.3*c*f);_q.set(C.x,ymap(C.y,c),C.z);
+    if(s<.01){CELL.setMatrixAt(i,ZERO);NUC.setMatrixAt(i,ZERO);LAC.setMatrixAt(i,ZERO);return;}CELL.setMatrixAt(i,K.placeMatrix(_q,0,[C.s[0]*s,sy*s,C.s[2]*s]));NUC.setMatrixAt(i,K.placeMatrix(_q,0,[C.s[0]*.45*s,sy*.55*s,C.s[2]*.45*s]));LAC.setMatrixAt(i,K.placeMatrix(_q,0,[C.s[0]*1.35*s,sy*1.4*s,C.s[2]*1.35*s]));});done(CELL);done(NUC);done(LAC);
+  // proteoglycanen
+  AGG.forEach((A,i)=>{if(A.rk>W2.pg){for(let j=0;j<9;j++)hideSeg(PGI,i,j);return;}const y=ymap(A.y,c),sq=1-.35*c;_q.set(A.x,y,A.z);
+    _a.copy(_q).addScaledVector(A.d,-.3);_b.copy(_q).addScaledVector(A.d,.3);PGI.setMatrixAt(i*9,segMatrix(_a,_b,.034));
+    _n2.crossVectors(A.d,AY).normalize();for(let k=0;k<8;k++){_p2.copy(_q).addScaledVector(A.d,-.26+k*.075);const sg=k%2?1:-1;_e.copy(_n2).multiplyScalar(sg).applyAxisAngle(A.d,k*.7);
+      PGI.setMatrixAt(i*9+1+k,segMatrix(_p2,_b.copy(_p2).addScaledVector(_e,.25*sq),.019));}});done(PGI);pgM.emissiveIntensity=.25+.25*(1-c);
+  // water: bij compressie langzaam naar buiten (vertraagd), bij ontlasting terug naar de proteoglycanen
+  let sq=0,nq=0;const hold=st===3?(.55+.45*W2.pg):1;
+  WD.forEach((d,i)=>{let tq=d.mob?clamp((c-.12-.55*(1-d.f))*2.2,0,1):0;if(st===3)tq=Math.max(tq,(1-hold)*(d.mob?.6:0));d.q=tq;if(d.mob){sq+=tq;nq++;}
+    const hy=ymap(d.h.y,c);_q.set(d.h.x,hy,d.h.z);if(tq>0){_p2.copy(d.o);if(!d.side)_p2.y=ys+d.oy;_q.lerp(_p2,smooth(tq));}
+    _q.x+=.035*Math.sin(S.clock*1.7+d.ph);_q.y+=.025*Math.sin(S.clock*2.1+d.ph*1.3);_q.z+=.035*Math.cos(S.clock*1.5+d.ph);WAT.setMatrixAt(i,K.placeMatrix(_q,0,1));});done(WAT);
+  W2.avgQ=nq?sq/nq:0;W2.water=75-4.5*W2.avgQ;W2.carry=50+40*clamp((W2.pg-.25)/.75,0,1);
+  // fissuren
+  FIS.forEach(m=>{const u=m.userData,d=fisDepth*u.d*(u.i===1?1:.8);m.visible=st===3&&d>.05;const w=.06+.11*W2.fis*(g/3)+.04*c;m.scale.set(w,d,u.l);m.position.set(u.x,ys+.02,u.z);u.w=w;u.dd=d;});
+  STUB.forEach((s,i)=>{const m=FIS[s.fi],u=m.userData;if(!m.visible||u.dd<.15){STB.setMatrixAt(i,ZERO);return;}const cr=Math.cos(u.r),sr=Math.sin(u.r),lz=s.z*u.l,lx=s.s*u.w*.45;
+    _a.set(u.x+lx*cr+lz*sr,ys-.02,u.z-lx*sr+lz*cr);_b.copy(_a).add(_e.set(s.s*cr*s.l,s.l*s.a*.8,-s.s*sr*s.l));STB.setMatrixAt(i,segMatrix(_a,_b,.018));});done(STB);
+  DEB.userData.mat.opacity=st===3?.9*W2.fis*(g/3):0;DEB.position.y=ys-YS;
+  plateM.color.setRGB(1,1,1).lerp(_c.setRGB(.86,.76,.66),st===3&&g===3?W2.fis:0);
+  W.l2arc=V(ARCS[22].x0+.55,ymap(YS-.08,c),ARCS[22].z);W.l2cell=V(CEL[CEL.length-30].x,ymap(CEL[CEL.length-30].y,c),CEL[CEL.length-30].z);const A9=AGG[9];W.l2pg=V(A9.x,ymap(A9.y,c),A9.z);
+  W.l2wat=V(1.2,ys+.15,1.2);W.l2tide=V(-3.6,YT,ZB);W.l2bone=V(-3.2,YT-.8,ZB);W.l2surf=V(-3.4,ys-.15,ZB);W.l2mid=V(-3.4,ymap(YT+HC*.62,c),ZB);W.l2deep=V(-3.4,ymap(YT+HC*.2,c),ZB);W.l2fis=V(FISX[1],ys-.3,1.6);W.l2opp=V(-2.6,ys+.42,ZB);}
+const H2={
+  hud(){return K.bars(S.state===3?['Proteoglycanen','Water draagt','Oppervlak']:['Druk','Dikte','Water in matrix']);},
+  ctl(){return S.state===2?`<label>Tempo</label><input type="range" id="kT" min=".25" max="1.5" step=".05" value="${W2.tempo}" aria-label="Tempo">`:'';},
+  bind(){const t=K.$('#kT');if(t)t.addEventListener('input',e=>{W2.tempo=+e.target.value;});},
+  grades:true,
+  reset(n){W2.flashT=-1;W2.fis=0;W2.pg=1;W2.fib=0;W2.clus=0;W2.carry=90;if(n!==2){W2.c=0;}},
+  step(dt){const st=S.state,g=S.grade;let c=0;
+    if(st===2){W2.ph=(W2.ph+dt*W2.tempo/1.8)%1;c=Math.pow(Math.max(0,Math.sin(TAU*W2.ph)),1.3);}
+    else if(st===3){const t=S.stT;W2.ph=(W2.ph+dt/1.25)%1;c=1.25*Math.pow(Math.max(0,Math.sin(TAU*W2.ph)),1.2);W2.fis=smooth((t-1.4)/2.6);
+      if(!S.tearFired&&t>1.7&&c>.9){S.tearFired=true;W2.flashT=t;K.flash({big:false,shake:.15});}
+      W2.pg=1-[0,.25,.5,.75][g]*smooth((t-1)/4);W2.fib=[0,.35,.6,.9][g]*W2.fis;W2.clus=smooth((t-3)/2)*(g>=2?1:.45);}
+    W2.c=c;if(dt>0)W2.cw+=(c-W2.cw)*clamp(dt/.45,0,1);if(st===1)W2.cw=lerp(W2.cw,0,clamp(dt*3,0,1));
+    upd2();const ys=ymap(YS,W2.cw),th=(ys-YT)/HC;
+    if(st===3){K.bar(1,W2.pg,Math.round(W2.pg*100)+'% over',W2.pg<.6?'bad':W2.pg<.85?'ecc':'ok');K.bar(2,W2.carry/100,Math.round(W2.carry)+'% van de klap',W2.carry<65?'bad':W2.carry<82?'ecc':'ok',W2.carry<65?'var(--bad)':'#6fc6ff');
+      K.bar(3,W2.fis*(g/3),W2.fis<.2?'glad':['','gerafeld (fibrillatie)','diepe fissuren','tot op het bot'][g],W2.fis<.2?'ok':g>1?'bad':'ecc');
+      K.capSoft(K.stateText(),W2.fis<.15?'Te zwaar, te vaak en te weinig herstel: de matrix wordt telkens hard ingedrukt…':['','<b>Graad 1</b>: het oppervlak rafelt (fibrillatie). De bovenste collageenvezels breken.','<b>Graad 2</b>: diepe fissuren. De cellen vormen groepjes (clusters) en er gaan proteoglycanen verloren. Bij belasting stroomt het water nu sneller weg, dus collageen en cellen vangen meer van de klap op.','<b>Graad 3</b>: de scheuren lopen tot op het bot. Kraakbeen groeit nauwelijks terug: er lopen geen bloedvaten in.'][g],2);}
+    else{K.bar(1,W2.c*9/11,nl(W2.c*9)+' MPa',W2.c>.7?'ecc':'');K.bar(2,th,Math.round(th*100)+'% van rust','',th<.9?'#e6b65e':'');K.bar(3,(W2.water-60)/20,nl(W2.water,0)+'%','','#6fc6ff');
+      if(st===1)K.capSet(K.stateText(),'Twee millimeter kraakbeen. <b>Collageen</b> (crème) vormt bogen, de arcades. Daartussen zitten <b>kraakbeencellen</b> (roze) en <b>proteoglycanen</b> (paars) die water vasthouden (blauw). Er lopen geen bloedvaten of zenuwen in.');
+      else K.capSoft(K.stateText(),W2.c>W2.cw+.05||W2.c>.6?'Belasting: de matrix wordt ingedrukt en het water stroomt <b>langzaam</b> weg naar de synovia. Het water draagt de eerste klap.':'Ontlasting: de proteoglycanen trekken het water terug, als een spons. Zo krijgen de cellen ook voeding uit de synovia.',.8);}},
+  sound(api){const c=W2.c,p=W2.prevC;W2.prevC=c;if(p<.3&&c>=.3)api.noise(.4,'lowpass',420,1,.07,.12);if(p>.4&&c<=.4)api.noise(.5,'bandpass',900,2,.03,.2);}
+};
+/* =====================================================================
+   PUNTEN, LABELS, LAGEN
+   ===================================================================== */
+let showRunner=true;
+const POINTS=[
+ {lv:0,name:'Bekken',lat:'Os coxae (os ilium, os ischii, os pubis) · os sacrum · symphysis pubica',at:()=>W.pelvis,view:[[3.15,11,12.6],[-3.2,7,-1.2]],focus:()=>[BONES,FB],pick:()=>[BONES],tabs:[
+  `<p>Het bekken is een ring van botten. Links en rechts ligt een <b>heupbeen</b> (os coxae), achter zit het <b>heiligbeen</b> (os sacrum). Voor zijn de schaambeenderen met kraakbeen verbonden: de <b>symphysis pubica</b>.</p><p>Elk heupbeen is gegroeid uit drie botten: het <b>darmbeen</b> (de vleugel), het <b>zitbeen</b> (onder en achter) en het <b>schaambeen</b> (voor). Ze komen samen in de heupkom en groeien rond je 15e tot 17e jaar aan elkaar vast.</p>`,
+  `<p>Het bekken is het knooppunt tussen romp en benen. Bij elke afzet gaat de kracht via het bekken naar de romp. Een stabiele romp en een stabiel bekken zorgen dat die kracht niet ‘weglekt’. Daarom zie je oefeningen voor romp en bilspieren vaak terug in de training van sprinters.</p>`,
+  `<p>Het bekken van mannen en vrouwen verschilt. De schaamboog (angulus subpubicus) is bij vrouwen ongeveer 80–90°, bij mannen ongeveer 50–60°. Het vrouwelijke bekken is breder en ondieper, wat ruimte geeft bij een bevalling.</p>`,
+  `<p class="think">Het heiligbeen zit met twee gewrichten aan de heupbeenderen vast die bijna niet bewegen: de SI-gewrichten. Waarom is de bekkenring zo stevig? Wat doen de sterke banden aan de achterkant?</p>`]},
+ {lv:0,name:'Kapselbanden',lat:'Lig. iliofemorale (Y-band) · lig. pubofemorale · lig. ischiofemorale',layer:'Banden',at:()=>W.ylig,view:[[-7.6,7,7],[-4.5,6.3,-.7]],state:2,focus:()=>[...LIGO(),FB],pick:()=>LIGO(),tabs:[
+  `<p>Om het gewricht zit een stevig kapsel met drie banden die als een spiraal van bekken naar dijbeen lopen. De sterkste is de <b>Y-band</b> (lig. iliofemorale) aan de voorkant: een omgekeerde Y van de spina iliaca anterior inferior naar de linea intertrochanterica.</p><p>Kijk in stand 2: de banden kleuren wit als de heup <b>strekt</b>. Ze draaien zich dan strak om de hals en trekken de kop in de kom.</p>`,
+  `<p>Daardoor kun je rechtop staan zonder veel spierkracht: je ‘hangt’ in je Y-banden. Bij de afzet in de sprint, met ongeveer 15° strekking, staan ze strak. Verder strekken lukt alleen door het bekken te kantelen, met een holle rug.</p>`,
+  `<p>De Y-band wordt vaak de sterkste band van het lichaam genoemd. Op zijn dikste punt is hij ongeveer een centimeter dik.</p>`,
+  `<p class="think">Met gebogen knie kun je je heup zo’n 120° buigen, maar strekken lukt hooguit ongeveer 15°. Leg uit wat de banden daarmee te maken hebben.</p>`]},
+ {lv:0,name:'Grote bilspier',lat:'M. gluteus maximus',layer:'Spieren',at:()=>W.gmax,view:[[-10.2,8.1,-10.2],[-4.2,6,-2.4]],state:2,focus:()=>MUSO('gmax'),tabs:[
+  `<p>De grote bilspier is de grootste spier van het lichaam. Hij ontspringt aan de achterkant van het darmbeen, het heiligbeen en het stuitje, en hecht aan op het dijbeen en de tractus iliotibialis.</p><p>Hij <b>strekt</b> de heup en draait het been naar buiten. In stand 2 remt hij eerst de zwaai af (<b>excentrisch</b>). Van de late zwaaifase tot halverwege de steunfase strekt hij de heup (<b>concentrisch</b>).</p>`,
+  `<p>‘Duw de grond weg’: bij de sprintstart en de versnelling levert de grote bilspier een groot deel van de afzetkracht. Oefeningen voor de les: hip thrust, step-up, sprinten tegen een helling en skippings met een actieve voetplaatsing.</p>`,
+  `<p>Bij rustig wandelen doet de grote bilspier weinig, bij sprinten en springen werkt hij veel harder. Meetprothesen in de heup tonen bij joggen al ongeveer 5 keer het lichaamsgewicht op de heupkop (Bergmann e.a., 1993). Bij sprinten is het waarschijnlijk meer.</p>`,
+  `<p class="think">Waarom werkt de grote bilspier harder als je tegen een helling op sprint dan op een vlakke baan?</p>`]},
+ {lv:0,name:'Middelste en kleine bilspier',lat:'M. gluteus medius · m. gluteus minimus',layer:'Spieren',at:()=>W.gmed,view:[[-12.5,8.2,3.5],[-4.8,7.2,-1.3]],state:1,focus:()=>MUSO('gmed'),tabs:[
+  `<p>De middelste bilspier ligt als een waaier op de buitenkant van de darmbeenvleugel en hecht aan op de grote rolheuvel (trochanter major). De kleine bilspier ligt eronder. Samen <b>abduceren</b> ze de heup: het been zijwaarts heffen.</p><p>Hun belangrijkste taak is stabiliseren. Op één been houden ze het bekken horizontaal. Ze werken dan <b>isometrisch</b>. Probeer <b>Op één been</b> in stand 1.</p>`,
+  `<p>In de steunfase van de sprint draagt één been het hele lichaam. Schiet de middelste bilspier tekort, dan zakt het bekken aan de kant van het zwaaibeen (stand 3). Oefeningen: zijwaartse plank, lopen met een miniband en een squat op één been met het bekken horizontaal. Zie ook <a href="evenwicht.html">Evenwicht</a>.</p>`,
+  `<p>Op één been heeft het lichaamsgewicht een arm van ongeveer 10 cm tot de heup, en de middelste bilspier maar ongeveer 5 cm. De spier levert dus zo’n twee keer het lichaamsgewicht, en de heupkop draagt bijna drie keer het lichaamsgewicht. Dit model is van Pauwels (1935).</p>`,
+  `<p class="think">Iemand met pijn in de rechterheup loopt met een wandelstok. In welke hand hoort de stok, en waarom ontlast dat de heup?</p>`]},
+ {lv:0,name:'Heupbuiger',lat:'M. iliopsoas (m. iliacus · m. psoas major)',layer:'Spieren',at:()=>W.ilio,view:[[-2.7,8.1,10.5],[-4,6.7,-.5]],state:2,focus:()=>MUSO('ilio'),tabs:[
+  `<p>De iliopsoas heeft twee delen. De <b>m. psoas major</b> ontspringt aan de lendenwervels, de <b>m. iliacus</b> aan de binnenkant van de darmbeenvleugel. Samen lopen ze voor de heup langs naar de kleine rolheuvel (trochanter minor).</p><p>Het is de sterkste <b>heupbuiger</b>. In stand 2 trekt hij het been na de afzet naar voren (concentrisch). Vlak daarvoor remt hij de strekking af (excentrisch).</p>`,
+  `<p>Een snelle zwaai en een hoge knie maken een sprinter snel. Loopscholing traint dit: knieheffen, skippings en A-skips. Bij een uitvalspas wordt de iliopsoas van het achterste been ver gerekt.</p>`,
+  `<p>De psoas hecht aan de lendenwervels. Een stijve, korte heupbuiger trekt de onderrug naar voren, in een holle rug. Zie ook <a href="wervel.html">de wervelkolom</a>.</p>`,
+  `<p class="think">Waarom kan een te korte heupbuiger je pas bij het sprinten korter maken?</p>`]},
+ {lv:0,name:'Adductoren',lat:'M. adductor longus · m. adductor magnus',layer:'Spieren',at:()=>W.add,view:[[3.2,5,9.8],[-3.9,5.2,-.9]],state:2,focus:()=>MUSO('add'),tabs:[
+  `<p>De adductoren lopen van het schaambeen en het zitbeen naar de achterkant van het dijbeen (linea aspera). Ze trekken het been naar het midden: <b>adductie</b>.</p><p>Bij de sprint werken ze vooral bij de wissel van steun naar zwaai en terug. Ze helpen de heup te buigen als hij gestrekt is, en te strekken als hij gebogen is.</p>`,
+  `<p>Een <b>liesblessure</b> is vaak een verrekking van de adductor longus, vlak bij het schaambeen. Die komt veel voor bij voetbal, hockey en schaatsen: snelle richtingsveranderingen en harde trappen.</p>`,
+  `<p>Bij Noorse voetballers gaf een programma met de Copenhagen-adductoroefening ongeveer 40% minder lies- en adductorklachten (Harøy e.a., 2019).</p>`,
+  `<p class="think">Waarom raakt juist de adductor longus geblesseerd bij een sliding of een harde wreeftrap?</p>`]},
+ {lv:0,name:'Rechte dijbeenspier en spina',lat:'M. rectus femoris · spina iliaca anterior inferior',layer:'Spieren',at:()=>W.rect,view:[[-7,5.7,10.8],[-4.6,4.8,-.6]],state:2,focus:()=>MUSO('rect'),tabs:[
+  `<p>De rechte dijbeenspier is het enige deel van de quadriceps dat over twee gewrichten loopt. Hij ontspringt aan de <b>spina iliaca anterior inferior</b> (SIAI), vlak boven de kom, en loopt via de knieschijf naar het scheenbeen.</p><p>Hij <b>buigt de heup</b> en <b>strekt de knie</b>. In de sprint werkt hij vooral in de vroege zwaaifase.</p>`,
+  `<p>Bij een harde trap of een sprintstart kan de rectus femoris bij jeugdsporters de SIAI lostrekken (avulsie). De groeikern (apofyse) is dan nog zwakker dan de pees. Bij volwassenen scheurt eerder de spier zelf.</p>`,
+  `<p>Avulsies van het bekken komen vooral voor tussen ongeveer 14 en 17 jaar, vaker bij jongens. De zitbeenknobbel (hamstrings) is de meest voorkomende plek, daarna de SIAI (rechte dijbeenspier) en de spina iliaca anterior superior (SIAS, kleermakersspier) (Rossi en Dragoni, 2001).</p>`,
+  `<p class="think">Waarom is een maximale sprintstart riskanter voor een 15-jarige dan voor een 25-jarige?</p>`]},
+ {lv:0,name:'Zitbeenknobbel en hamstrings',lat:'Tuber ischiadicum · m. biceps femoris (caput longum), m. semitendinosus, m. semimembranosus',layer:'Spieren',at:()=>W.it,view:[[-1.4,5.5,-10.5],[-4.1,5.4,-1.9]],state:2,focus:()=>[...MUSO('ham'),BONES],pick:()=>MUSO('ham'),tabs:[
+  `<p>De <b>zitbeenknobbel</b> is het bot waar je op zit. Hier ontspringen de hamstrings: de lange kop van de biceps femoris, de semitendinosus en de semimembranosus.</p><p>Omdat ze aan het bekken beginnen en onder de knie aanhechten, <b>strekken</b> ze de heup én <b>buigen</b> ze de knie.</p>`,
+  `<p>Het is dezelfde sprinter als in <a href="spier.html#1">de spier</a>. Daar zie je hoe een hamstring in de late zwaaifase scheurt. Een bekken dat ver naar voren kantelt, rekt de hamstrings extra op.</p>`,
+  `<p>Bij sprinters zit een verrekking meestal in de lange kop van de biceps femoris, bij de bovenste spier-peesovergang (Askling e.a., 2007). Een volledige afscheuring van de pees van de zitbeenknobbel is zeldzaam.</p>`,
+  `<p class="think">Waarom rekt een voorwaartse buiging met gestrekte knieën de hamstrings zo sterk? Kijk naar de plek van de zitbeenknobbel.</p>`]},
+ {lv:1,name:'Heupkop en dijbeenhals',lat:'Caput et collum femoris · substantia spongiosa (trabeculae)',at:()=>W.l1head,view:[[-1.6,.2,8.6],[-1.1,-.9,0]],focus:()=>[L1F],tabs:[
+  `<p>De heupkop is ongeveer twee derde van een bol, bedekt met kraakbeen (blauw). De <b>dijbeenhals</b> staat in een hoek van ongeveer 125° op de schacht. Zo zit het been verder van het bekken af, en hebben de bilspieren een langere hefboom.</p><p>Binnenin liggen <b>botbalkjes</b> (trabekels) langs de krachtlijnen: een drukbundel (oranje) van het dak van de kop naar de binnenkant van de schacht, en een trekbundel (blauw) in een boog. In stand 2 lichten ze op.</p>`,
+  `<p>Bot past zich aan de belasting aan (de wet van Wolff). Springen en sprinten maken het bot in de hals dichter, vooral in de groeiperiode. Bij oudere mensen breekt juist de dijbeenhals bij een val.</p>`,
+  `<p>Bij een pasgeborene is de hoek tussen hals en schacht ongeveer 150°. Bij een volwassene is dat ongeveer 125°, doordat de belasting de hals tijdens het opgroeien vormt.</p>`,
+  `<p class="think">Waarom is een schuine hals handiger voor lopen en sprinten dan een kop die recht op de schacht zit?</p>`]},
+ {lv:1,name:'Heupkom en labrum',lat:'Acetabulum · facies lunata · labrum acetabuli',at:()=>W.l1lab,view:[[-2.4,2.6,7.6],[-1.0,1.2,0]],focus:()=>[pSlab,pCut,LABG,...CA],pick:()=>[LAB,pSlab,pCut],tabs:[
+  `<p>De <b>heupkom</b> is diep: hij omvat ongeveer de helft van de kop. Alleen de hoefijzervormige rand is met kraakbeen bekleed (facies lunata). In de bodem ligt een vetkussen (geel).</p><p>Het <b>labrum</b> is een ring van vezelkraakbeen op de rand. Het maakt de kom dieper en sluit hem af als een rubber ring. Zo blijft er een dun laagje synovia onder druk en zuigt de kop zich als het ware vast.</p>`,
+  `<p>Stabiliteit door vorm: een heup schiet veel minder snel uit de kom dan een schouder. Een heupluxatie gebeurt vooral bij grote krachten, zoals een verkeersongeval of een val bij het skiën. Vergelijk met <a href="schouder.html">de schouder</a>.</p>`,
+  `<p>Bij een <b>cam-vorm</b> zit er een bult op de overgang van kop naar hals. Bij diep buigen met binnendraaien, zoals bij een diepe squat, een sliding of in de schaatshouding, kan die het labrum klemmen (stand 3). Een cam-vorm komt vaker voor bij sporters die als tiener veel en zwaar trainden, zoals voetballers.</p>`,
+  `<p class="think">Een kogelgewricht is meestal beweeglijk maar instabiel. Leg uit hoe de heup toch allebei voor elkaar krijgt.</p>`]},
+ {lv:1,name:'Kopband en synovia',lat:'Lig. capitis femoris · synovia',at:()=>W.l1lig,view:[[3.6,-.4,7.6],[1.1,-.6,0]],state:2,focus:()=>[LIGT,LIGA,pulv,SYN,SP],pick:()=>[LIGT,pulv],tabs:[
+  `<p>De <b>kopband</b> (lig. capitis femoris) loopt van een putje in de kop (fovea) naar de bodem van de kom. Hij draagt weinig bij aan de stevigheid, maar er loopt een klein bloedvat in naar de kop (rood).</p><p>De <b>synovia</b> (blauw) is gewrichtsvloeistof. Ze smeert de kraakbeenlagen en voedt het kraakbeen. In stand 2 zie je haar bij elke landing wegstromen en terugkomen.</p>`,
+  `<p>Een warming-up maakt het gewricht warmer en de synovia minder stroperig. Door afwisselend te belasten en te ontlasten stroomt er vocht met voeding door het kraakbeen. Bewegen is voor een gewricht dus smeren én voeden.</p>`,
+  `<p>Kraakbeen met synovia glijdt soepeler dan ijs op ijs. De wrijvingscoëfficiënt is ongeveer 0,01 of lager.</p>`,
+  `<p class="think">Kraakbeen heeft beweging nodig om voeding te krijgen. Wat betekent dat voor een gewricht dat weken in het gips zit?</p>`]},
+ {lv:2,name:'Collageenarcades',lat:'Fibrae collagenosae (typus II) · arcaden van Benninghoff',at:()=>W.l2arc,view:[[4.2,3.6,9.6],[0,.8,0]],state:2,focus:()=>[ARC],tabs:[
+  `<p>Collageen type II vormt het skelet van het kraakbeen. De vezels zijn verankerd in de verkalkte laag, lopen in de <b>diepe zone</b> recht omhoog, buigen om in de <b>middenzone</b> en liggen plat in de <b>oppervlaktezone</b>. Samen vormen ze bogen: de arcaden van Benninghoff.</p><p>Bij compressie (stand 2) buigen de bogen door en spannen de platte vezels aan het oppervlak, zoals het vel van een trommel.</p>`,
+  `<p>Wisselend belasten en ontlasten, zoals bij hardlopen, is goed voor kraakbeen. Heel zwaar belasten zonder herstel is slecht, en helemaal niet bewegen ook.</p>`,
+  `<p>De blauwe lijn is de <b>tidemark</b>, de grens tussen gewoon en verkalkt kraakbeen. Daaronder ligt het bot. Het kraakbeen van de heup is maar 1 tot 3 millimeter dik.</p>`,
+  `<p class="think">Waarom liggen de vezels aan het oppervlak plat en diep in het kraakbeen rechtop? Denk aan de krachten op elke laag.</p>`]},
+ {lv:2,name:'Kraakbeencellen',lat:'Chondrocyti',at:()=>W.l2cell,view:[[5,1,9.8],[0,-.7,0]],focus:()=>[CELL,NUC,LAC],tabs:[
+  `<p><b>Kraakbeencellen</b> (chondrocyten, roze met een paarse kern) maken de matrix: collageen en proteoglycanen. Ze zijn plat aan het oppervlak, rond in het midden en liggen in kolommetjes in de diepe zone.</p><p>De cellen vormen maar een paar procent van het volume. De rest is matrix, en die bestaat voor 70 tot 80% uit water.</p>`,
+  `<p>Kraakbeen heeft geen bloedvaten. De cellen krijgen voeding uit de synovia, doordat water bij elke belasting in en uit stroomt. Daarom hebben gewrichten beweging nodig.</p>`,
+  `<p>Bij overbelasting (stand 3) vormen de cellen groepjes (<b>clusters</b>) en proberen ze de schade te herstellen. Echt nieuw hyalien kraakbeen maken ze bij een volwassene nauwelijks.</p>`,
+  `<p class="think">Waarom herstelt een beschadiging van kraakbeen zo veel slechter dan een spierscheur of een botbreuk?</p>`]},
+ {lv:2,name:'Proteoglycanen en water',lat:'Proteoglycana (aggrecan) · aqua',at:()=>W.l2pg,view:[[3.6,2.2,8.8],[0,.4,0]],state:2,focus:()=>[PGI,WAT],tabs:[
+  `<p><b>Proteoglycanen</b> (paars) bestaan uit een eiwitas met negatief geladen suikerketens (glycosaminoglycanen), als een flessenborstel. Ze trekken water aan (blauw) en willen opzwellen, maar het collageennet houdt ze tegen. Zo staat het kraakbeen onder spanning, als een opgepompte bal.</p><p>Bij belasting perst de druk het water <b>langzaam</b> weg. Bij ontlasting zuigen de proteoglycanen het weer terug.</p>`,
+  `<p>Na een lange duurloop is het kraakbeen tijdelijk een paar procent dunner. Na een paar uur rust is het water terug. Dat is een reden om zware trainingen te spreiden.</p>`,
+  `<p>Het water moet door een heel fijn netwerk stromen. Daardoor drukt kraakbeen maar langzaam in, en vangt het een snelle klap, zoals een landing, vooral met water op. Bij een snelle belasting draagt het water meer dan 90% van de kracht (Ateshian, 2009).</p>`,
+  `<p class="think">Bekijk stand 3. Waarom gaat kraakbeen sneller kapot als er minder proteoglycanen in zitten?</p>`]},
+];
+const noQuiz=()=>!document.body.classList.contains('quiz-on');
+const TAGS=[
+ {lv:0,cls:'force',txt:()=>nl(W0.load)+'× LG',at:()=>W.loadTag},
+ {lv:0,cls:'co2',txt:()=>'grond '+nl(W0.grf)+'× LG',at:()=>W.grfTag,show:()=>showRunner&&W0.grf>.35},
+ {lv:0,cls:'bad',txt:()=>'bekken −'+nl(W0.tilt,0)+'°',at:()=>W.lvl,show:()=>S.state===3&&W0.tilt>1},
+ {lv:0,cls:'lig',txt:()=>'Y-band',at:()=>W.ylig?W.ylig.clone().add(V(-.6,.6,.4)):null,show:()=>S.state===2&&MK.yl.ten>.6},
+ {lv:1,cls:'force',txt:()=>nl(W1.load)+'× LG',at:()=>W.l1tag},
+ {lv:1,cls:'',txt:()=>'kraakbeen',at:()=>W.l1cart,show:noQuiz},{lv:1,cls:'co2',txt:()=>'synovia',at:()=>W.l1syn,show:noQuiz},{lv:1,cls:'lig',txt:()=>'kapsel',at:()=>W.l1capA,show:noQuiz},
+ {lv:1,cls:'band',txt:()=>'botbalkjes',at:()=>W.l1trab,show:noQuiz},{lv:1,cls:'bad',txt:()=>'cam-bult',at:()=>W.l1cam,show:()=>S.state===3&&noQuiz()},
+ {lv:2,cls:'zone',txt:()=>'oppervlaktezone',at:()=>W.l2surf,show:noQuiz},{lv:2,cls:'zone',txt:()=>'middenzone',at:()=>W.l2mid,show:noQuiz},{lv:2,cls:'zone',txt:()=>'diepe zone',at:()=>W.l2deep,show:noQuiz},
+ {lv:2,cls:'band',txt:()=>'tidemark',at:()=>W.l2tide,show:noQuiz},{lv:2,cls:'',txt:()=>'subchondraal bot',at:()=>W.l2bone,show:noQuiz},{lv:2,cls:'',txt:()=>'kraakbeen van de kom',at:()=>W.l2opp,show:noQuiz},
+ {lv:2,cls:'h2o',txt:()=>'H₂O naar de synovia',at:()=>W.l2wat,show:()=>W2.avgQ>.25},{lv:2,cls:'bad',txt:()=>'fissuur',at:()=>W.l2fis,show:()=>S.state===3&&W2.fis>.3},
+];
+const LAYERS=[
+ {name:'Spieren',lv:0,objs:()=>[...MUS.map(M=>M.mesh),...MUS.map(M=>M.sheath)]},
+ {name:'Banden',lv:0,objs:()=>LIGO()},
+ {name:'Sporter',lv:0,objs:()=>[F.root],set(on){showRunner=on;}},
+ {name:'Kapsel',lv:1,objs:()=>CAPS.map(C=>C.m)},
+ {name:'Botbalkjes',lv:1,objs:()=>[TRAB]},
+ {name:'Water',lv:2,objs:()=>[WAT,FILM2]},
+ {name:'Proteoglycanen',lv:2,objs:()=>[PGI]},
+];
+/* =====================================================================
+   SPEURTOCHT (RTTI)
+   ===================================================================== */
+const QUIZ=[
+ {t:'R',type:'find',lv:0,state:1,view:[[-11.5,8,9.5],[-3.7,5.4,-1.2]],q:'Klik op de <b>middelste bilspier</b>: de spier die op één been het bekken horizontaal houdt.',
+  opts:[()=>W.gmax,()=>W.ilio,()=>W.gmed,()=>W.add],ok:2,fb:['Dat is de grote bilspier, aan de achterkant. Hij strekt de heup.','Dat is de iliopsoas, voor de heup langs. Hij buigt de heup.','Goed! De middelste bilspier ligt als een waaier op de buitenkant van de darmbeenvleugel en hecht aan op de grote rolheuvel.','Dat zijn de adductoren, aan de binnenkant. Ze trekken het been naar het midden.']},
+ {t:'R',type:'find',lv:1,state:1,view:[[2,1.2,15],[-.6,-.2,0]],q:'Klik op het <b>labrum</b>.',
+  opts:[()=>W.l1cart,()=>W.l1fos,()=>W.l1capA,()=>W.l1lab],ok:3,fb:['Dat is het kraakbeen van de kop.','Dat is het vetkussen in de bodem van de kom, bij de kopband.','Dat is het kapsel, buiten het labrum.','Goed! Het labrum is de driehoek van vezelkraakbeen op de rand van de kom.']},
+ {t:'R',type:'mc',q:'Het heupbeen (<i>os coxae</i>) is gegroeid uit drie botten die samenkomen in de heupkom. Welke?',opts:['Os ilium, os ischii en os pubis','Os ilium, os sacrum en os pubis','Os ischii, os pubis en os femoris','Os sacrum, os coccygis en os ischii'],ok:0,
+  ex:'Het heupbeen is gegroeid uit het darmbeen (os ilium), het zitbeen (os ischii) en het schaambeen (os pubis). Ze komen samen in de kom en groeien rond je 15e tot 17e jaar aan elkaar vast.',
+  why:[null,'Het heiligbeen (os sacrum) hoort bij de bekkenring, maar zit achter. Het raakt de heupkom niet.','Het dijbeen (os femoris) levert de kop, niet de kom.','Heiligbeen (os sacrum) en stuitje (os coccygis) liggen achter in het bekken, ver van de kom.']},
+ {t:'T1',type:'mc',lv:0,state:2,q:'Zet de sprint stil (Automatisch uit) en sleep de pasfase naar ongeveer 0,20 en daarna naar 0,45. Kijk naar de HUD. Wat doet de grote bilspier?',
+  opts:['Bij 0,20 trekt hij het been naar voren (concentrisch), bij 0,45 rust hij','Bij 0,20 remt hij de zwaai af (excentrisch), bij 0,45 strekt hij de heup (concentrisch)','Bij 0,20 en bij 0,45 houdt hij de heup op één hoek vast (isometrisch)','Bij 0,20 rust hij, bij 0,45 remt hij de landing af (excentrisch)'],ok:1,
+  ex:'In de late zwaai buigt de heup nog door, terwijl de grote bilspier al aanspant: hij wordt langer onder spanning en remt (excentrisch). Daarna keert de beweging om en strekt hij de heup tot halverwege de steunfase (concentrisch): duw de grond weg.',
+  why:['Het been naar voren trekken is werk voor de iliopsoas en de rechte dijbeenspier. De grote bilspier ligt achter de heup.',null,'Isometrisch werk zie je bij de middelste bilspier in de steunfase. De heuphoek verandert hier juist sterk.','Bij 0,20 staat de grote bilspier al aan. Bij 0,45 strekt de heup, dus hij wordt korter: concentrisch.']},
+ {t:'T1',type:'mc',lv:1,state:1,q:'Wat maakt de heup tegelijk beweeglijk én stabiel?',
+  opts:['Een bolle kop in een diepe kom, met een labrum dat de rand verhoogt en sterke kapselbanden','Een ondiepe kom die vooral door een sterke spiermantel op zijn plaats blijft','Een stevige kopband die de kop van binnenuit in de kom vastbindt','Een dik vetkussen dat de kop met onderdruk tegen de rand van de kom duwt'],ok:0,
+  ex:'De vorm doet het werk: een bol in een diepe kom kan alle kanten op draaien maar komt er moeilijk uit. Labrum en kapselbanden maken het af.',
+  why:[null,'Dat is de schouder: een ondiepe kom die vooral op spieren steunt. Daardoor luxeert de schouder veel vaker.','De kopband is dun en draagt weinig bij aan de stevigheid. Hij bevat vooral een klein bloedvat.','Het vetkussen vult de bodem van de kom op. Het duwt de kop nergens heen.']},
+ {t:'T2',type:'mc',lv:2,state:2,q:'Bekijk de compressie. Waarom wordt het kraakbeen <b>langzaam</b> dunner, terwijl de druk snel komt?',
+  opts:['Omdat de kraakbeencellen eerst hun eigen vocht moeten afgeven en krimpen','Omdat het water door het fijne netwerk van collageen en proteoglycanen moet wegstromen','Omdat het bot onder het kraakbeen eerst een beetje moet meegeven','Omdat de synovia als een laag tegendruk het kraakbeen op zijn plaats houdt'],ok:1,
+  ex:'Kraakbeen is een spons met heel kleine poriën. Het water kan er maar langzaam uit. Daardoor draagt het water de eerste klap en wordt het collageen gespaard.',
+  why:['De cellen zijn maar een paar procent van het volume. Ze bepalen de vervorming niet.',null,'Het bot onder het kraakbeen is veel stijver dan het kraakbeen zelf. Het geeft bijna niet mee.','De synovia staat juist het water toe om eruit te stromen, en terug.']},
+ {t:'T2',type:'mc',lv:0,state:3,q:'Een leerling squat op het <b>rechterbeen</b>. Het bekken zakt aan de linkerkant en de rechterknie klapt naar binnen. Welke spier schiet het meest tekort?',
+  opts:['De linker middelste bilspier','De rechter iliopsoas','De rechter middelste bilspier','De rechter adductoren'],ok:2,
+  ex:'De middelste bilspier van het standbeen moet het bekken aan de andere kant omhoog houden. Lukt dat niet, dan zakt het bekken aan de kant van het vrije been (Trendelenburg), en draait het standbeen naar binnen.',
+  why:['Het linkerbeen is het vrije been. De spier van het standbeen moet het werk doen.','De iliopsoas buigt de heup. Hij houdt het bekken niet horizontaal in het voorvlak.',null,'De adductoren trekken het been juist naar binnen. Ze helpen het patroon eerder dan dat ze het tegenhouden.']},
+ {t:'I',type:'open',q:'Je geeft sprint en loopscholing aan een klas 3 havo. Maak een kijkwijzer van drie punten waarmee leerlingen bij elkaar zien of de middelste bilspier het bekken stabiel houdt. Bedenk één oefening om dat te trainen, en leg uit waarom het ook voor de knie belangrijk is.',
+  model:'<p><b>Kijkwijzer</b> (van voren kijken, bij een squat of landing op één been, of bij skippings): 1. blijven de twee spina’s (heupbotjes voor) op één hoogte, of zakt het bekken aan de kant van het vrije been? 2. blijft de knie boven de voet, of klapt hij naar binnen? 3. blijft de romp rechtop, of buigt de leerling opzij naar het standbeen om te compenseren?</p><p><b>Oefening</b>: lopen met een miniband rond de knieën, of een zijwaartse plank, opgebouwd naar een squat op één been voor de spiegel of met een maatje als kijker.</p><p><b>Knie</b>: zakt het bekken en draait het standbeen naar binnen, dan komt de knie in valgus. Dat zet extra spanning op de voorste kruisband en wordt in verband gebracht met knie- en liesklachten. Het bewijs is niet hard, maar een stabiel bekken helpt de knie wel om goed boven de voet te blijven. Zie <a href="knie.html">de knie</a>.</p>'},
+];
+/* =====================================================================
+   FILM
+   ===================================================================== */
+const CAM={wide:[[-6.4,7.6,22],[-.6,4.0,0]],pelvis:[[-5.5,8.5,9],[-3.4,6.4,-1.1]],runner:[[8,4.4,19.5],[-.6,2.9,1.2]],runnerFront:[[2.6,2.4,14.6],[1.6,1.3,3.3]],lateral:[[-13.4,7.9,4.6],[-4.6,6.0,-1.3]],
+  back:[[-8,7.8,-9.5],[-4.1,6,-2.3]],front:[[-2.6,7.8,12.6],[-3.4,5.9,-.7]],j:[[1.8,1.1,15],[-.5,-.3,0]],jLab:[[-2.6,2.6,7.4],[-1.1,1.0,0]],k:[[7.4,3.1,14.6],[0,-1.15,0]],kClose:[[3.4,2.2,6.8],[0,.8,0]]};
+// de film zet de graad op 2; na de film krijgt de kijker zijn eigen graad terug
+let filmGrade=null;const keepGrade=()=>{if(filmGrade===null)filmGrade=S.grade;};
+const SCENES=[
+ {chap:'',lv:0,st:1,view:CAM.wide,title:['Hoe de heup je sprint draagt','Van bekken tot kraakbeen · twee keer inzoomen'],lines:[
+  {t:'Bij elke sprintpas draagt één heup even het hele lichaam, en nog veel meer.'},
+  {t:'Hoe houdt een gewricht dat vol, duizenden passen lang?'},
+  {t:'We zoomen in: van het bekken tot het kraakbeen op de heupkop.',do:()=>{K.FILM.title=null;}}]},
+ {chap:'1 · Het bekken',lv:0,st:1,view:CAM.pelvis,lines:[
+  {t:'Dit is het bekken: een ring van twee heupbeenderen en het heiligbeen.'},
+  {t:'Aan elke kant zit een heupkom. Daarin draait de kop van het dijbeen, als een kogel in een kom.',cam:CAM.front},
+  {t:'Om de heup liggen grote spieren: de bilspieren achter en opzij, de heupbuiger en de adductoren voor en binnen.',cam:CAM.lateral}]},
+ {chap:'2 · De sprint',lv:0,st:2,view:CAM.wide,setup:()=>{W0.auto=true;W0.tempo=.45;},end:()=>{W0.tempo=1;},lines:[
+  {t:'Kijk naar de sprinter. Het dijbeen in het lab maakt precies dezelfde beweging, vertraagd.',cam:CAM.runner},
+  {t:'Na de afzet trekt de iliopsoas het been naar voren. De heup buigt tot ongeveer zeventig graden.',cam:CAM.front},
+  {t:'Dan strekt de grote bilspier de heup. Duw de grond weg: dat is concentrisch werk.',cam:CAM.back},
+  {t:'In de steunfase drukt de heupkop met vijf keer het lichaamsgewicht of meer in de kom. Kijk naar de oranje pijl.',cam:CAM.pelvis}]},
+ {chap:'3 · Op één been',lv:0,st:1,view:CAM.front,setup:()=>{W0.one=true;},end:()=>{W0.one=false;},lines:[
+  {t:'Op één been wil het bekken kantelen naar de kant van het vrije been.'},
+  {t:'De middelste bilspier van het standbeen houdt het bekken horizontaal. Maar zijn hefboom is kort.',cam:CAM.lateral},
+  {t:'Daarom levert hij zo’n twee keer het lichaamsgewicht, en drukt de kop met bijna drie keer het lichaamsgewicht in de kom.'}]},
+ {chap:'4 · Het gewricht',lv:1,st:1,view:CAM.j,lines:[
+  {t:'We zoomen in op een doorsnede van de heup, van voren gezien.'},
+  {t:'De kop zit diep in de kom. Het labrum, een ring van vezelkraakbeen, maakt de kom nog dieper.',cam:CAM.jLab},
+  {t:'Het kapsel en de sterke banden sluiten het gewricht af. Zo is de heup beweeglijk én stabiel.',cam:CAM.j}]},
+ {chap:'5 · Belasting',lv:1,st:2,view:CAM.j,setup:()=>{W1.tempo=.4;},end:()=>{W1.tempo=1;},lines:[
+  {t:'Bij elke landing drukt de kop in het dak van de kom. Rood is de hoogste druk.'},
+  {t:'De synovia, de blauwe gewrichtsvloeistof, wordt weggeperst en stroomt daarna terug.'},
+  {t:'In de hals lichten de botbalkjes op. Ze liggen precies langs de lijnen van druk en trek.'}]},
+ {chap:'6 · Het kraakbeen',lv:2,st:1,view:CAM.k,lines:[
+  {t:'Nog dieper: een blokje kraakbeen van twee millimeter.'},
+  {t:'Collageenvezels vormen bogen. Daartussen zitten cellen en proteoglycanen die water vasthouden.',cam:CAM.kClose},
+  {t:'Bij belasting stroomt het water langzaam weg. Bij ontlasting komt het terug. Zo werkt kraakbeen als een spons.',do:()=>K.setState(2),min:6.5,cam:CAM.k}]},
+ {chap:'7 · Overbelasting',lv:2,st:3,view:CAM.kClose,setup:()=>{keepGrade();S.grade=2;},lines:[
+  {t:'Te zwaar, te vaak en zonder herstel: dan raakt het kraakbeen beschadigd.',min:4},
+  {t:'Het oppervlak rafelt, er ontstaan scheuren en de proteoglycanen gaan verloren.'},
+  {t:'Kraakbeen heeft geen bloedvaten. Daardoor herstelt het nauwelijks.'}]},
+ {chap:'8 · Impingement',lv:1,st:3,view:CAM.jLab,setup:()=>{W1.t0=1e9;W1.noTear=true;},end:()=>{W1.t0=0;W1.noTear=false;},lines:[
+  {t:'Soms zit er een bult op de overgang van kop naar hals: een cam-vorm. Hier is hij rood omrand.'},
+  {t:'Bij diep buigen met binnendraaien schuift die bult naar de rand van de kom en klemt het labrum.',min:4,do:()=>{W1.t0=S.stT;}},
+  {t:'Het labrum raakt ingeklemd en kan losscheuren. Dat kan liespijn geven.',min:3.5,do:()=>{W1.noTear=false;}}]},
+ {chap:'9 · Vermoeid',lv:0,st:3,view:CAM.front,setup:()=>{keepGrade();S.grade=2;},lines:[
+  {t:'Terug naar de sprint. Aan het eind van een lange reeks raakt de middelste bilspier vermoeid.',min:4.5},
+  {t:'Het bekken zakt aan de kant van het zwaaibeen. Het standbeen draait naar binnen en de knie klapt in.',min:5,cam:CAM.runnerFront},
+  {t:'Dat patroon wordt in verband gebracht met lies- en knieklachten, en met meer kans op een kruisbandblessure.',cam:CAM.runner}]},
+ {chap:'Tot slot',lv:0,st:2,view:CAM.wide,lines:[
+  {t:'Train de bilspieren dus niet alleen sterk, maar ook stabiel: op één been, met het bekken horizontaal.'},
+  {t:'Van sprint tot kraakbeen: de heup draagt je, als je haar slim belast.'},
+  {t:'',min:5,do:()=>{K.FILM.title=['Verken het zelf','De Bewegingsatlas · zoom in, van bekken tot kraakbeen'];}}]}];
+upd0();upd1();upd2();
+return {levels:[H0,H1,H2],points:POINTS,tags:TAGS,quiz:QUIZ,layers:LAYERS,
+  film:{scenes:SCENES,stop(){W0.one=false;W0.tempo=1;W0.auto=true;W1.tempo=1;W2.tempo=1;W1.t0=0;W1.noTear=false;if(filmGrade!==null){S.grade=filmGrade;filmGrade=null;}}}};
+ }});
+</script>
+</body>
+</html>

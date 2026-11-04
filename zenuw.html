@@ -1,0 +1,1020 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Zenuwstelsel · Bewegingsatlas</title>
+<meta name="description" content="3D-zoomreis door de reflexboog voor de propedeuse ALO: de kniepeesreflex op de kast, het ruggenmerg, één zenuwvezel met myeline en de synaps. Met een tijdlijn in milliseconden, de enkelverstuiking die de reflex niet kan voorkomen en de reactie op het startschot.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="atlas3d.css">
+<style>
+/* extra's voor het zenuwstelsel: kleuren van de banen, tijdlijn in ms, banen in stand 3 en de oscilloscoop */
+.tg.sens{color:#a9dcff;border-color:rgba(88,184,255,.55)}
+.tg.mot{color:#ffb3a0;border-color:rgba(255,90,60,.55)}
+.tg.inh{color:#a6f2c2;border-color:rgba(95,224,138,.55)}
+.tg.pyr{color:#e0c7ff;border-color:rgba(195,140,255,.55)}
+.tg.ion{color:#ffe08a;border-color:rgba(255,210,90,.45);background:rgba(10,14,16,.55)}
+.tg.ms{font-size:15px;color:#ffe08a;border-color:rgba(255,220,110,.6);background:rgba(10,14,16,.74);padding:3px 8px}
+#hudMid .lg{display:flex;gap:4px 10px;flex-wrap:wrap;font:10.5px "JetBrains Mono",monospace;color:#cfc6b6;margin-top:7px;max-width:330px}
+#hudMid .lg i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.tl{position:relative;width:290px;height:62px;margin-top:6px;font:10px "JetBrains Mono",monospace;color:var(--muted)}
+.tl .ax{position:absolute;left:0;right:0;top:40px;height:2px;background:rgba(255,255,255,.2);border-radius:2px}
+.tl .fill{position:absolute;left:0;top:39px;height:4px;width:0;background:linear-gradient(90deg,#58b8ff,#ff5a3c);border-radius:3px}
+.tl .tk{position:absolute;top:46px;transform:translateX(-50%);white-space:nowrap}
+.tl .ev{position:absolute;transform:translateX(-50%);white-space:nowrap;color:#d7cfc1;font-size:9.5px}
+.tl .ev.a{top:14px}.tl .ev.b{top:25px}
+.tl .ev::after{content:"";position:absolute;left:50%;top:11px;width:1px;height:15px;background:rgba(255,255,255,.25)}
+.tl .ev.b::after{height:4px}
+.tl .now{position:absolute;top:31px;width:2px;height:18px;margin-left:-1px;background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.tl .ms{position:absolute;left:0;top:0;color:var(--gold);font-weight:600;font-size:11px}
+.lanes{display:grid;grid-template-columns:auto 190px;gap:3px 8px;align-items:center;font:10.5px "JetBrains Mono",monospace;color:#d7cfc1;margin-top:7px;position:relative}
+.lanes .lt{position:relative;height:9px;background:rgba(255,255,255,.07);border-radius:4px}
+.lanes .lt i{position:absolute;top:0;height:100%;border-radius:4px}
+.lanes .lt b{position:absolute;top:-2px;width:2px;height:13px;margin-left:-1px;background:var(--gold);box-shadow:0 0 6px var(--gold)}
+.lanes .lt u{position:absolute;top:-3px;height:15px;width:0;border-left:1.5px dashed #e86a5a}
+.lanes .ax2{grid-column:2;position:relative;height:12px;color:var(--muted);font-size:9.5px}
+.lanes .ax2 span{position:absolute;transform:translateX(-50%)}
+#scope{display:block;margin-top:7px;border-radius:8px;background:rgba(0,0,0,.3);width:280px;height:74px}
+#ctl .val{font:11px "JetBrains Mono",monospace;color:#d7cfc1;min-width:38px}
+#ctl input[type=range]{width:84px}
+@media (max-width:820px){.tl{width:230px}.lanes{grid-template-columns:auto 150px}#scope{width:230px;height:62px}#hudMid .lg{display:none}
+  body.panel-open #hudMid,body.panel-open #ctl,body.panel-open #capX{display:none}
+  #info.panel{max-height:min(calc(100% - var(--hudH,150px) - 170px),46vh)}
+  body.panel-open #markers .mk:not(.on):not(.q),body.panel-open #markers .tg{display:none!important}}
+body.quiz-on:has(.mk.q) .tg{display:none}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="atlas3d.js"></script>
+<script>
+const NARROW=innerWidth<700;
+// camerastanden van niveau 0: het overzicht en stand 3 (de landing bij de enkel)
+const VIEW0=NARROW?[[.4,6.2,12.5],[-2.4,4.4,.2]]:[[5.4,6.3,18.6],[-1.3,4.55,.6]];
+const V3=NARROW?[[4.6,2.8,8.0],[2.0,.15,.7]]:[[6.8,3.5,11.6],[1.8,1.3,.5]];
+const VIEW1=NARROW?[[5.8,10.5,12.5],[1.6,-.2,0]]:[[7.2,8.6,9.6],[1.6,-.2,0]];
+const V13=NARROW?[[12.6,5.6,-3.8],[5.0,-1.4,.4]]:[[12.4,4.6,-3.4],[5.3,-.75,.45]];
+Atlas3D({
+ id:'zenuw',halte:1,name:'Zenuwstelsel',docTitle:'Zenuwstelsel · Bewegingsatlas',
+ aria:'3D-zoomreis door de reflexboog: van de kniepeesreflex op de kast via het ruggenmerg en één zenuwvezel tot in de synaps',
+ loader:['De reflexboog wordt opgebouwd…','Van prikkel tot beweging'],
+ seed:1,
+ shadow:{left:-12,right:12,top:13,bottom:-6},
+ levels:[
+  {name:'Reflex',scale:'1 m',sc:'REFLEXBOOG',title:'Van prikkel tot beweging',sub:'<i>Arcus reflexus</i> · de kniepeesreflex op de kast',
+   view:VIEW0,zoomTo:[-5.9,7.3,-.7],s1:'Rust',s2:'Kniepeesreflex',s3:'Te laat',
+   bg:['#2b3844','#151e27','#0a0f14'],fog:0x151e27,hemi:.62,shadows:true},
+  {name:'Ruggenmerg',scale:'1 cm',sc:'RUGGENMERG',title:'Het ruggenmerg',sub:'<i>Medulla spinalis</i> · grijze en witte stof, wortels en ganglion',
+   view:VIEW1,zoomTo:[7.6,-.5,.3],s1:'Rust',s2:'Reflex',s3:'Bekneld',
+   bg:['#342a3d','#1a1421','#0b080f'],fog:0x1a1421,hemi:.7,drone:true},
+  {name:'Zenuwvezel',scale:'0,1 mm',sc:'ZENUWVEZEL',title:'Eén zenuwvezel',sub:'<i>Neurofibra myelinata</i> · myelineschede en knopen van Ranvier',
+   view:NARROW?[[-.4,4.0,9.4],[.6,-.9,0]]:[[-1.6,5.6,15.8],[1.1,-.5,0]],zoomTo:[9.5,.9,0],s1:'Rust',s2:'Geleiding',s3:'Klap',
+   bg:['#1c3442','#0e1b25','#05090e'],fog:0x0e1b25,hemi:.72,drone:true},
+  {name:'Synaps',scale:'1 µm',sc:'SYNAPS',title:'De synaps',sub:'<i>Synapsis</i> · van elektrisch naar chemisch en weer terug',
+   view:NARROW?[[0,6.2,13.5],[0,-.3,0]]:[[.8,6.2,12.6],[0,.8,0]],s1:'Rust',s2:'Prikkel en rem',s3:'Kramp',
+   bg:['#3b2731','#1e1218','#0c0609'],fog:0x1e1218,hemi:.75,drone:true}],
+ help:{title:'Zo werkt de zoomreis',
+  html:'<p>Je volgt één signaal door het zenuwstelsel, in drie stappen dieper: van een <b>sporter op de kast</b> bij wie de docent de kniepeesreflex test (1 m), via het <b>ruggenmerg</b> (1 cm) en <b>één zenuwvezel</b> (0,1 mm) tot in de <b>synaps</b> (1 µm). Zoom in met <b>+</b> en uit met <b>−</b>, of klik op de ladder links.</p><ul><li>Klik op een genummerd punt of direct op het model voor uitleg in vier tabjes.</li><li>Kleuren van de banen: <b style="color:#7cc6ff">blauw</b> is sensorisch (naar het ruggenmerg), <b style="color:#ff7a5c">rood</b> is motorisch (naar de spier), <b style="color:#7fe8a2">groen</b> is remmend en <b style="color:#d3a8ff">paars</b> is de piramidebaan uit de hersenen. Een lichtpuls is één actiepotentiaal.</li><li>Alles wat in milliseconden gebeurt, zie je in <b>tijdlupe</b>. De tijdlijn in de HUD loopt mee in echte milliseconden. Met <b>Slow motion</b> gaat het nog vier keer langzamer.</li></ul><h3>Drie standen</h3><p><b>1 Rust</b>: verkennen, met af en toe een signaal voor de spierspanning. <b>2 Belasting</b>: de kniepeesreflex, het signaal in ruggenmerg en vezel, of prikkelen en remmen in de synaps. <b>3 Extreem</b>: een enkel die kantelt voordat de reflex er is, een beknelde zenuwwortel, een klap op de zenuw en kramp. Bij de enkel en de wortel kies je de ernst met Graad 1–3.</p>',
+  states:'Rust · reflex of signaal · te laat, bekneld, klap of kramp',
+  keys:[['<kbd>S</kbd>','In stand 2: één tik, impuls of prikkel']],
+  note:'Vereenvoudigd didactisch model: banen, cellen en verhoudingen zijn vergroot en ingekort om ze zichtbaar te maken. Tijden zijn afgeronde waarden; in de literatuur verschillen ze per persoon, spier en meetmethode. Lees ze als ‘ongeveer’.'},
+ film:{brand:'ZENUWSTELSEL',blurb:'Van prikkel tot beweging · ca. 4,5 minuut · met stem en ondertitels',file:'zenuwstelsel-uitleg'},
+ quizEnd:'<p>Bespreek de slotvraag met je groep. Test daarna in de gymzaal in tweetallen de kniepeesreflex (zittend op de kast, ontspannen onderbeen). Doe een reactiespel met een start op geluid en op beeld, en land daarna op één been op een balanskussen. Wat merk je van vooraf aanspannen?</p>',
+ build(K){
+const {THREE,V,AX,AY,AZ,R,clamp,lerp,smooth,ease,bump,D2R,TAU,sunflower,mesh,std,glass,glow,add,BAND,UCYL,orient,segMatrix,placeMatrix,ZERO,inst,tube,lathe,boneGeo,BONE,ENV,canvasTex,groups,W,S,$}=K;
+const G0=groups[0],G1=groups[1],G2=groups[2],G3=groups[3];
+const SY=-.65,Vs=(x,y,z)=>V(x,y+SY,z);  // het schema op het bord ligt iets lager
+const COL={sens:0x58b8ff,mot:0xff5a3c,inh:0x5fe08a,pyr:0xc38cff,asc:0x8fd0ff};
+const _a=V(0,0,0),_b=V(0,0,0),_p=V(0,0,0),_q=V(0,0,0),_r=V(0,0,0),_c=new THREE.Color(),_c2=new THREE.Color(),_o2=new THREE.Object3D();
+const SQ=[];const sq=f=>{if(SQ.length<30)SQ.push(f);};
+function playSQ(api){while(SQ.length){const f=SQ.shift();try{f(api);}catch(e){}}}
+const ns=m=>{m.castShadow=false;m.receiveShadow=false;return m;};
+const prof=(t,up,down)=>t<0?0:t<up?t/up:Math.max(0,1-(t-up)/down);
+const cross=(a,b,T)=>a<T&&b>=T;
+// op een smal scherm bedekt het paneel de onderste helft: schuif het onderwerp naar het bovenste deel en kom iets dichterbij
+function PV(v,k){if(!NARROW)return v;k=k||.62;const p=V(...v[0]),t=V(...v[1]);const d=p.clone().sub(t);const D=d.length();d.normalize();
+  const up=V(0,1,0).addScaledVector(d,-d.y).normalize();const Deff=1.9*k*D;t.addScaledVector(up,-.143*Deff);return [t.clone().addScaledVector(d,D*k).toArray(),t.toArray()];}
+
+/* ================= gedeeld: banen en lichtpulsen ================= */
+// een baan is een reeks stukken, elk in een eigen groep (zodat hij meebeweegt met dijbeen, onderbeen of voet)
+function mkRoute(G,segs,col,rad,o){o=o||{};const b0=o.base===undefined?.24:o.base*.6;const mat=new THREE.MeshStandardMaterial({color:new THREE.Color(col).multiplyScalar(o.cm||.72),emissive:col,emissiveIntensity:b0,roughness:.6});
+  const r={segs:[],L:0,mat,act:0,base:b0,meshes:[]};
+  segs.forEach(sg=>{const par=sg[0],pts=sg[1].map(q=>q.isVector3?q.clone():V(q[0],q[1],q[2]));const c=new THREE.CatmullRomCurve3(pts,false,'centripetal');const L=c.getLength();r.segs.push({p:par,c,L,a:r.L});r.L+=L;
+    if(!o.noTube){const m=ns(new THREE.Mesh(new THREE.TubeGeometry(c,Math.max(18,Math.round(L*22)),sg[2]||rad,8),mat));(par||G).add(m);r.meshes.push(m);}});
+  return r;}
+function rpos(r,u,out){const d=clamp(u,0,1)*r.L;let s=r.segs[r.segs.length-1];for(let i=0;i<r.segs.length;i++){const q=r.segs[i];if(d<=q.a+q.L){s=q;break;}}
+  s.c.getPointAt(clamp((d-s.a)/(s.L||1),0,1),out);if(s.p)out.applyMatrix4(s.p.matrixWorld);return out;}
+function uNear(r,pt){let best=0,bd=1e9;for(let i=0;i<=300;i++){rpos(r,i/300,_p);const d=_p.distanceToSquared(pt);if(d<bd){bd=d;best=i/300;}}return best;}
+function Pulser(G,max,rad,opt){opt=opt||{};const TL=7,geo=new THREE.SphereGeometry(1,12,8);const NB=!!opt.normal;const WH=opt.white===undefined?.2:opt.white,HS=opt.haloSize||2.4,LIN=opt.linger||.32;
+  const core=new THREE.InstancedMesh(geo,NB?new THREE.MeshBasicMaterial({color:0xffffff}):add(0xffffff,1),max*TL),halo=new THREE.InstancedMesh(geo,add(0xffffff,opt.halo!==undefined?opt.halo:NB?.1:.15),max);
+  [core,halo].forEach(m=>{m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.frustumCulled=false;m.renderOrder=5;G.add(m);});
+  const blk=new THREE.Color(0,0,0);for(let i=0;i<max*TL;i++){core.setMatrixAt(i,ZERO);core.setColorAt(i,blk);}for(let i=0;i<max;i++){halo.setMatrixAt(i,ZERO);halo.setColorAt(i,blk);}
+  const list=[],p=V(0,0,0),h=V(0,0,0),col=new THREE.Color();
+  return {list,core,halo,
+    add(o){if(list.length>=max)list.shift();o.c=new THREE.Color(o.col);o.sz=o.sz||1;list.push(o);return o;},
+    clear(){list.length=0;},
+    count(){return list.length;},
+    update(clk){let k=0,hk=0;
+      for(let i=list.length-1;i>=0;i--){const o=list[i];const now=clk(o);const u=(now-o.t0)/o.dur;
+        const end=o.stop===undefined?1:o.stop;const LG=o.stop===undefined?LIN:.32;
+        if(u>end+LG){if(!o.done){o.done=true;if(o.cb&&o.stop===undefined)o.cb(o);if(o.cbStop&&o.stop!==undefined)o.cbStop(o);}list.splice(i,1);continue;}
+        if(!o.done&&u>=1&&o.stop===undefined){o.done=true;if(o.cb)o.cb(o);}
+        if(u<0)continue;
+        const uh=Math.min(u,end),f=u>end?Math.max(0,1-(u-end)/LG):1;const du=rad*o.sz*1.6/o.r.L;
+        o.r.act=Math.max(o.r.act,f*.9);
+        for(let j=0;j<TL&&k<max*TL;j++){const uj=uh-j*du;if(uj<0)break;rpos(o.r,uj,p);if(j===0)h.copy(p);const s=rad*o.sz*(1-j*.1)*(NB?Math.max(.15,f*Math.pow(1-j/TL,.8)):1);core.setMatrixAt(k,placeMatrix(p,null,s));
+          const it=f*Math.pow(1-j/TL,1.6)*(j===0?.95:.45)*(o.blk&&u>end-.02?1.4:1);col.copy(o.blk&&u>end-.05?_c2.setRGB(1,.3,.2):o.c);if(j===0&&WH>0)col.lerp(_c2.setRGB(1,1,1),WH);if(!NB)col.multiplyScalar(it);core.setColorAt(k,col);k++;}
+        if(hk<max){halo.setMatrixAt(hk,placeMatrix(h,null,rad*o.sz*HS));col.copy(o.c).multiplyScalar(.8*f);halo.setColorAt(hk,col);hk++;}}
+      for(;k<max*TL;k++){core.setMatrixAt(k,ZERO);}for(;hk<max;hk++)halo.setMatrixAt(hk,ZERO);
+      core.instanceMatrix.needsUpdate=true;core.instanceColor.needsUpdate=true;halo.instanceMatrix.needsUpdate=true;halo.instanceColor.needsUpdate=true;}};}
+function decayRoutes(list,dt,k){k=k===undefined?1.1:k;list.forEach(r=>{r.act=Math.max(0,r.act-dt*1.6);r.mat.emissiveIntensity=r.base+r.act*k;});}
+const cellMat=c=>new THREE.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:.3,roughness:.4});
+
+/* ================= vlinder en omtrek van het ruggenmerg ================= */
+const BF=[[0,.12],[.12,.16],[.22,.3],[.31,.52],[.38,.72],[.45,.8],[.52,.76],[.45,.52],[.37,.31],[.42,.16],[.52,.09],[.58,.02],[.53,-.06],[.61,-.2],[.67,-.38],[.62,-.56],[.47,-.65],[.3,-.61],[.18,-.43],[.1,-.23],[0,-.17]];
+const BFP=BF.concat(BF.slice(1,-1).reverse().map(p=>[-p[0],p[1]]));
+function inBF(x,y){let c=false;for(let i=0,j=BFP.length-1;i<BFP.length;j=i++){const a=BFP[i],b=BFP[j];if(((a[1]>y)!==(b[1]>y))&&(x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0]))c=!c;}return c;}
+function bfShape(s,hole){const sh=new THREE.Shape();BFP.forEach((p,i)=>i?sh.lineTo(p[0]*s,p[1]*s):sh.moveTo(p[0]*s,p[1]*s));sh.closePath();if(hole){const h=new THREE.Path();h.absarc(0,-.02*s,hole*s,0,TAU,true);sh.holes.push(h);}return sh;}
+function outlinePts(){const p=[];const N=88;let notch=false;for(let i=0;i<N;i++){const a=Math.PI/2-i/N*TAU;const x=Math.cos(a),y=Math.sin(a)*.8;
+  if(y<-.5&&Math.abs(x)<.08){if(!notch){notch=true;p.push([.06,-.795],[.025,-.52],[-.025,-.52],[-.06,-.795]);}continue;}if(y>0&&Math.abs(x)<.03){p.push([x,.765]);continue;}p.push([x,y]);}return p;}
+function cordShape(s,hole){const sh=new THREE.Shape();outlinePts().forEach((q,i)=>i?sh.lineTo(q[0]*s,q[1]*s):sh.moveTo(q[0]*s,q[1]*s));sh.closePath();
+  if(hole){const h=new THREE.Path();BFP.slice().reverse().forEach((q,i)=>i?h.lineTo(q[0]*s,q[1]*s):h.moveTo(q[0]*s,q[1]*s));h.closePath();sh.holes.push(h);}return sh;}
+function extr(shape,D){const g=new THREE.ExtrudeGeometry(shape,{depth:D,bevelEnabled:false,curveSegments:6});g.rotateX(-Math.PI/2);return g;}
+const greyTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#93606f';x.fillRect(0,0,w,h);for(let i=0;i<1100;i++){x.fillStyle=`rgba(${85+R()*40|0},${38+R()*30|0},${72+R()*40|0},${.22+R()*.4})`;x.beginPath();x.arc(R()*w,R()*h,.6+R()*1.9,0,TAU);x.fill();}});greyTex.repeat.set(.55,.55);
+
+/* =====================================================================
+   NIVEAU 0 · de kniepeesreflex op de kast, met het schema op een bord
+   ===================================================================== */
+K.base({parent:G0,floor:'gym',plaque:['ARCUS REFLEXUS','de kniepeesreflex · van prikkel tot beweging'],plaqueX:-2.4,plaqueW:6});
+// schemabord achter het model
+const BX0=-8.4,BX1=2.3,BY0=.5,BY1=10.95,BZ=-2.75;
+const boardTex=canvasTex(1024,1060,(x,w,h)=>{const g=x.createLinearGradient(0,0,0,h);g.addColorStop(0,'#1a2834');g.addColorStop(1,'#0e161d');x.fillStyle=g;x.fillRect(0,0,w,h);
+  x.strokeStyle='rgba(130,180,210,.07)';x.lineWidth=1;for(let i=0;i<w;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke();}for(let j=0;j<h;j+=32){x.beginPath();x.moveTo(0,j);x.lineTo(w,j);x.stroke();}
+  x.strokeStyle='rgba(230,182,94,.5)';x.lineWidth=3;x.strokeRect(14,14,w-28,h-28);
+  x.fillStyle='#e6b65e';x.font='700 50px Georgia,serif';x.textAlign='right';x.fillText('DE REFLEXBOOG',w-44,86);x.fillStyle='rgba(241,233,218,.6)';x.font='italic 26px Georgia,serif';x.fillText('schema · vergroot, niet op schaal',w-44,124);
+  const L=[['#58b8ff','sensorisch: van spier naar ruggenmerg'],['#ff5a3c','motorisch: van ruggenmerg naar spier'],['#5fe08a','remmend: schakelneuron'],['#c38cff','piramidebaan: uit de hersenen']];
+  x.textAlign='left';x.font='600 21px "Courier New",monospace';L.forEach((l,i)=>{const y=560+i*36;x.fillStyle=l[0];x.fillRect(46,y-9,50,7);x.fillStyle='rgba(241,233,218,.78)';x.fillText(l[1],108,y);});
+  x.fillStyle='rgba(241,233,218,.45)';x.font='600 22px "Courier New",monospace';x.fillText('HERSENEN',60,64);x.fillText('RUGGENMERG',60,470);x.fillText('SPIER EN ZENUW',640,430);});
+const board=mesh(new THREE.BoxGeometry(BX1-BX0,BY1-BY0,.16),[ENV.dark,ENV.dark,ENV.dark,ENV.dark,std(0xffffff,{map:boardTex,roughness:.85}),ENV.dark],[(BX0+BX1)/2,(BY0+BY1)/2,BZ],0,0,G0);board.userData.noDim=true;board.receiveShadow=false;
+[BX0+.7,BX1-.7].forEach(x=>{mesh(new THREE.CylinderGeometry(.07,.07,BY0+.1,12),ENV.metal,[x,BY0/2,BZ],0,0,G0).userData.noDim=true;mesh(new THREE.BoxGeometry(.7,.06,.5),ENV.dark,[x,.11,BZ],0,0,G0).userData.noDim=true;});
+mesh(new THREE.BoxGeometry(BX1-BX0+.2,.08,.26),ENV.metal,[(BX0+BX1)/2,BY1+.04,BZ],0,0,G0).userData.noDim=true;
+
+// --- het brein (klein en schematisch) ---
+const brain=new THREE.Group();brain.position.set(-5.85,10.1+SY,-1.45);brain.scale.setScalar(1.18);G0.add(brain);brain.updateMatrixWorld(true);
+function brainGeo(){const g=new THREE.SphereGeometry(1,72,44);const p=g.attributes.position;for(let i=0;i<p.count;i++){_a.fromBufferAttribute(p,i);const n=Math.sin(_a.x*9+_a.y*3)*Math.sin(_a.y*10-_a.z*2.5)*Math.sin(_a.z*8+_a.x*4);_a.multiplyScalar(1+.05*n+.022*Math.sin(_a.x*23+_a.z*5)*Math.sin(_a.y*21));p.setXYZ(i,_a.x,_a.y,_a.z);}g.computeVertexNormals();return g;}
+const BRG=brainGeo(),brainM=std(0xd7a09f,{roughness:.55});
+const hemis=[-1,1].map(s=>mesh(BRG,brainM,[0,0,s*.37],0,[.98,.68,.4],brain));
+const cereb=mesh(new THREE.SphereGeometry(1,40,24),std(0xc78b8d,{roughness:.6,map:canvasTex(64,256,(x,w,h)=>{for(let y=0;y<h;y+=6){x.fillStyle=(y/6)%2?'#d59a9c':'#b47678';x.fillRect(0,y,w,6);}})}),[-.66,-.46,0],0,[.36,.24,.6],brain);
+const stem=lathe([[.17,-1.3],[.15,-.9],[.17,-.55],[.22,-.32],[.001,-.2]],std(0xcf9a96,{roughness:.55}),brain,24,[-.28,0,0]);
+const motorStripM=glow(0xb98cff,0x9a5cff,.5),sensStripM=glow(0x8fc8ff,0x4aa8ff,.35);
+function strip(x,m){const t=mesh(new THREE.TorusGeometry(.7,.05,8,48,Math.PI),m,[x,.02,0],[0,Math.PI/2,0],[1,.98,1.16],brain);t.castShadow=false;return t;}
+const motorStrip=strip(.06,motorStripM),sensStrip=strip(-.14,sensStripM);
+// --- het ruggenmerg als kleine doorsnede op het bord ---
+const CG0=new THREE.Group();CG0.position.set(-5.95,6.95+SY,-1.25);CG0.rotation.order='YXZ';CG0.rotation.set(1.0,.42,0);G0.add(CG0);
+const s0=.9,D0=.5;
+const wm0=mesh(extr(cordShape(s0,true),D0),std(0xf6efe0,{roughness:.4,emissive:0x40382a,emissiveIntensity:.5}),[0,-D0/2,0],0,0,CG0);
+const gm0=mesh(extr(bfShape(s0,.05),D0),std(0xffffff,{map:greyTex,roughness:.6,emissive:0x3a1424,emissiveIntensity:.35}),[0,-D0/2,0],0,0,CG0);
+const pia0=ns(mesh(new THREE.CylinderGeometry(s0*1.03,s0*1.03,D0*1.02,48,1,true),glass(0xeab7ae,.07),[0,0,0],0,[1,1,.8],CG0));
+const c0=(sx,sy,dy)=>V(sx*s0,D0/2+(dy===undefined?.035:dy),-sy*s0);
+const cellMat0=c=>new THREE.MeshStandardMaterial({color:new THREE.Color(c).multiplyScalar(.55),emissive:c,emissiveIntensity:.3,roughness:.4});
+const MNq0M=cellMat0(COL.mot),MNh0M=cellMat0(COL.mot),IN0M=cellMat0(COL.inh),MNf0M=cellMat0(COL.mot);
+const cell0=(sx,sy,m,r)=>mesh(new THREE.SphereGeometry(r,16,12),m,c0(sx,sy,.03).toArray(),0,[1,.55,1],CG0);
+const MNq0=cell0(.36,-.46,MNq0M,.085),MNh0=cell0(.56,-.3,MNh0M,.072),IN0=cell0(.27,-.02,IN0M,.055),MNf0=cell0(.47,-.58,MNf0M,.065);
+CG0.updateMatrixWorld(true);
+const cw=(sx,sy,dy)=>CG0.localToWorld(c0(sx,sy,dy));
+const CN=V(0,1,0).applyQuaternion(CG0.quaternion);  // normaal van het snijvlak
+const P_DREZ=cw(.66,.6),P_DH=cw(.42,.52),P_DHc=cw(.36,.3),P_IN=cw(.27,-.02),P_MNq=cw(.36,-.46),P_MNh=cw(.56,-.3),P_MNf=cw(.47,-.58),P_VREZ=cw(.72,-.55),P_LCST=cw(.7,.12),P_DC=cw(.12,.5);
+const P_VREZ2=cw(.68,-.6);
+// ganglion, wortels en spinale zenuw (wereldcoördinaten)
+const DRG0=Vs(-4.35,7.75,-1.3),SN0=Vs(-3.6,6.9,-1.0),MID0=Vs(-2.65,6.4,-.86),H0=Vs(-1.6,5.9,-.7);
+const nerveM=std(0xeedcb3,{roughness:.45});
+mesh(new THREE.SphereGeometry(1,24,16),std(0xe6cf9f,{roughness:.4,transparent:true,opacity:.8}),DRG0.toArray(),[0,0,.5],[.34,.2,.22],G0);
+[[P_DREZ,Vs(-4.85,7.9,-1.15),DRG0,Vs(-3.85,7.35,-1.2),SN0],[P_VREZ,Vs(-4.75,6.95,-.55),Vs(-4.05,6.88,-.85),SN0]].forEach(p=>ns(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p),40,.085,10),glass(0xf1e3c0,.14),0,0,0,G0)));
+const cuff=mesh(new THREE.CylinderGeometry(.13,.13,.18,20),std(0xd8c49a,{roughness:.5}),H0.toArray(),[0,0,1.1],0,G0);
+mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([SN0,Vs(-3.1,6.6,-.92),MID0,Vs(-2.1,6.15,-.78),H0]),40,.12,12),glass(0xf1e3c0,.09),0,0,0,G0).castShadow=false;
+const off=(arr,o)=>arr.map((p,i)=>i===0||i===arr.length-1?p:p.clone().add(o));
+const WIN=o=>off([H0,Vs(-2.1,6.15,-.78),MID0,Vs(-3.1,6.6,-.92),SN0,Vs(-3.85,7.35,-1.2),DRG0,Vs(-4.85,7.9,-1.15)],o).concat([P_DREZ]);
+const WOUT=o=>[P_VREZ].concat(off([P_VREZ,Vs(-4.75,6.95,-.55),Vs(-4.05,6.88,-.85),SN0,Vs(-3.1,6.6,-.92),MID0,Vs(-2.1,6.15,-.78),H0],o).slice(1));
+// --- het been (rechterbeen, zijaanzicht): dijbeen, onderbeen en voet ---
+const LT=2.7,LS=2.5;
+const TH=new THREE.Group();TH.position.copy(H0);G0.add(TH);
+const SH=new THREE.Group();SH.position.set(LT,0,0);TH.add(SH);
+const FT=new THREE.Group();FT.position.set(0,-LS,0);SH.add(FT);
+const boneM=BONE(),tendM=std(0xf1ece0,{roughness:.35});
+mesh(boneGeo(LT+.04,.095,1.2,1.35),boneM,[-.02,0,0],[0,0,-Math.PI/2],0,TH);
+mesh(new THREE.SphereGeometry(.16,20,14),boneM,[-.05,.02,-.04],0,0,TH);
+[-.09,.09].forEach(z=>mesh(new THREE.SphereGeometry(.13,18,12),boneM,[LT-.03,-.03,z],0,0,TH));
+const patella=mesh(new THREE.SphereGeometry(.13,18,12),boneM,[LT+.1,.13,0],[0,0,-.5],[.55,1,.9],TH);
+orient(mesh(BAND,tendM,0,0,0,TH),V(LT-.62,.38,.02),V(LT+.06,.26,0),.075,.05);
+const pTend=mesh(BAND,tendM,0,0,0,G0);  // patellapees, wordt elk beeld gelegd
+// quadriceps en hamstrings als vezelbundels
+const QF={n:66,k:8,x0:.1,x1:2.15,cy:.37,cz:.03,ry:.32,rz:.3},HF={n:46,k:8,x0:.04,x1:2.2,cy:-.33,cz:0,ry:.25,rz:.26};
+const mkPts=n=>sunflower(n).map(p=>({u:p[0],v:p[1],c:.86+R()*.26}));
+const QP=mkPts(QF.n),HP=mkPts(HF.n);
+const QFM=inst(UCYL,std(0xffffff,{roughness:.5}),QF.n*QF.k),HFM=inst(UCYL,std(0xffffff,{roughness:.5}),HF.n*HF.k);TH.add(QFM);TH.add(HFM);
+function updMus(M,F,P,act,cool){let k=0;const bul=1+.08*act;
+  for(const f of P){for(let j=0;j<=F.k;j++){const t=j/F.k;const r=(.16+.84*Math.pow(Math.sin(Math.PI*t),.7))*bul;_b.set(lerp(F.x0,F.x1,t),F.cy+f.u*r*F.ry,F.cz+f.v*r*F.rz);
+    if(j>0){M.setMatrixAt(k,segMatrix(_a,_b,.034));_c.setRGB(.6*f.c+.4*act-.18*cool,.16*f.c+.1*act+.06*cool,.12*f.c+.05*act+.1*cool);M.setColorAt(k,_c);k++;}_a.copy(_b);}}
+  M.instanceMatrix.needsUpdate=true;M.instanceColor.needsUpdate=true;}
+function sheath(F,col){const p=[];for(let i=0;i<=24;i++){const t=i/24;p.push(new THREE.Vector2((.16+.84*Math.pow(Math.sin(Math.PI*t),.7))*F.ry*1.12+.012,t*(F.x1-F.x0)));}
+  const m=ns(mesh(new THREE.LatheGeometry(p,36),glass(col,.13),[F.x0,F.cy,F.cz],[0,0,-Math.PI/2],[1,1,F.rz/F.ry],TH));return m;}
+const qSheath=sheath(QF,0xf0c4b4),hSheath=sheath(HF,0xf0c4b4);
+updMus(QFM,QF,QP,.1,0);updMus(HFM,HF,HP,.1,0);
+// distale hamstringpezen (dynamisch) en het onderbeen
+const hTend=[mesh(BAND,tendM,0,0,0,G0),mesh(BAND,tendM,0,0,0,G0)];
+mesh(boneGeo(LS,.085,1.35,1.05),boneM,[0,0,0],[Math.PI,0,0],0,SH);
+mesh(boneGeo(LS-.12,.04,.9,1),boneM,[-.05,-.06,.17],[Math.PI,0,0],0,SH);
+mesh(new THREE.SphereGeometry(.075,14,10),boneM,[-.03,-LS+.03,.19],0,0,SH);
+mesh(new THREE.SphereGeometry(.07,14,10),boneM,[0,-LS+.04,-.11],0,0,SH);
+const perM=new THREE.MeshStandardMaterial({color:0xb8473a,emissive:0xff3a20,emissiveIntensity:0,roughness:.5});
+const peroneus=lathe([[.02,0],[.07,.15],[.11,.55],[.1,1],[.06,1.3],[.02,1.42]],perM,SH,24,[-.03,-.2,.29],[Math.PI,0,0]);
+orient(mesh(BAND,tendM,0,0,0,SH),V(-.03,-1.6,.28),V(-.07,-LS+.08,.24),.025);
+// de voet: talus, hielbeen en middenvoet
+mesh(new THREE.SphereGeometry(.13,16,12),boneM,[0,-.07,0],0,0,FT);
+mesh(new THREE.SphereGeometry(1,18,12),boneM,[-.13,-.2,0],0,[.24,.14,.13],FT);
+mesh(new THREE.BoxGeometry(.2,.12,.27),boneM,[.15,-.13,0],0,0,FT);
+for(let i=0;i<5;i++){const z=-.13+i*.065;mesh(boneGeo(.46,.024,1,.8),boneM,[.24,-.15,z],[0,0,-Math.PI/2-.1],0,FT);mesh(boneGeo(.14,.02,.6,.6),boneM,[.7,-.2,z],[0,0,-Math.PI/2-.2],0,FT);}
+const ligM=[std(0xd9d3c4,{roughness:.4}),std(0xd9d3c4,{roughness:.4})];
+const atfl=mesh(BAND,ligM[0],0,0,0,G0),cfl=mesh(BAND,ligM[1],0,0,0,G0);
+const swellM=std(0xb83a3a,{transparent:true,opacity:0,roughness:.3,depthWrite:false});
+const swell=ns(mesh(new THREE.SphereGeometry(1,20,14),swellM,[.02,-.06,.22],0,[.001,.001,.001],FT));
+// sensoren in de spier: spierspoel, Golgi-peeslichaampje en motorische eindplaten
+const SPp=V(1.25,.52,.37),GTOp=V(2.2,.44,.26);
+const spG=new THREE.Group();spG.position.copy(SPp);TH.add(spG);
+mesh(new THREE.CapsuleGeometry(.07,.42,6,14),glass(0xbfe4ff,.42),[0,0,0],[0,0,Math.PI/2],0,spG);
+mesh(new THREE.CylinderGeometry(.018,.018,.62,8),std(0xd7907f),[0,0,0],[0,0,Math.PI/2],0,spG);
+const spiralM=glow(COL.sens,COL.sens,.4);const hel=[];for(let i=0;i<=70;i++){const t=i/70,a=t*TAU*5.5;hel.push(V(-.15+.3*t,.06*Math.cos(a),.06*Math.sin(a)));}tube(hel,.012,spiralM,spG,140,6);
+const gtoG=new THREE.Group();gtoG.position.copy(GTOp);TH.add(gtoG);
+const gtoM=glow(0xf2cf6a,0xe0a52a,.3);mesh(new THREE.CapsuleGeometry(.05,.22,4,10),glass(0xffe7a8,.45),[0,0,0],[0,0,Math.PI/2],0,gtoG);
+[[-.08,.03],[0,-.03],[.08,.03]].forEach(q=>tube([V(q[0],q[1],0),V(q[0]-.04,q[1]*2+.06,.02),V(-.2,.18,.05)],.01,gtoM,gtoG,12,5));
+const EPq=[V(.8,.66,.27),V(1.45,.72,.31),V(1.98,.63,.27)],EPh=V(1.2,-.6,.27);
+const epM=glow(0xf0d060,0xffc43a,.25),epHM=glow(0xf0d060,0xffc43a,.25),epPM=glow(0xf0d060,0xffc43a,.25);
+EPq.forEach(p=>mesh(new THREE.SphereGeometry(.07,14,10),epM,p.toArray(),0,[1,.45,1],TH));
+mesh(new THREE.SphereGeometry(.065,14,10),epHM,EPh.toArray(),0,[1,.45,1],TH);
+const PERep=V(-.01,-.72,.4);mesh(new THREE.SphereGeometry(.055,14,10),epPM,PERep.toArray(),0,[1,1,.45],SH);
+// de banen
+const KP=[[0,0,0],[.4,-.08,.24],[1.4,-.2,.3],[2.4,-.1,.24],[LT,0,0]];
+const IA=mkRoute(G0,[[TH,[SPp,[.85,.38,.3],[.35,.12,.2],[0,0,0]]],[null,WIN(V(0,.05,.03)).concat([P_DH,cw(.33,.05),P_MNq]),.026]],COL.sens,.042);
+const MQ=EPq.map((ep,j)=>mkRoute(G0,[[null,[P_MNq,cw(.6,-.52)].concat(WOUT(V(0,-.05+j*.03,-.05)).slice(1))],[TH,[[0,0,0],[.35,.14,.22],[.55+j*.2,.42,.3],ep]]],COL.mot,.034));
+const MH=mkRoute(G0,[[null,[P_MNh,cw(.64,-.45),P_VREZ2].concat(WOUT(V(0,-.1,.02)).slice(2))],[TH,[[0,0,0],[.35,-.12,.22],[.75,-.48,.3],EPh]]],COL.mot,.026,{base:.18});
+const INr=mkRoute(G0,[[null,[P_DHc,cw(.3,.13),P_IN,cw(.43,-.15),P_MNh]]],COL.inh,.022);
+const PYR=mkRoute(G0,[[null,[brain.localToWorld(V(.06,.5,.2)),brain.localToWorld(V(-.05,.05,.18)),brain.localToWorld(V(-.28,-.6,.08)),brain.localToWorld(V(-.28,-1.25,.06)),Vs(-5.75,8.35,-1.0),P_LCST.clone().addScaledVector(CN,.35),P_LCST,cw(.55,-.2),P_MNq]]],COL.pyr,.03);
+const ASC=mkRoute(G0,[[null,[P_DH,P_DC,P_DC.clone().addScaledVector(CN,.35),Vs(-5.62,8.45,-1.15),brain.localToWorld(V(-.32,-1.25,-.06)),brain.localToWorld(V(-.32,-.6,-.06)),brain.localToWorld(V(-.18,.05,-.15)),brain.localToWorld(V(-.14,.55,-.2))]]],COL.asc,.026,{base:.2});
+const ANKS=mkRoute(G0,[[FT,[[.08,-.03,.17],[.03,0,.1],[0,0,0]]],[SH,[[0,-LS,0],[.03,-LS+.3,.22],[0,-1.4,.3],[0,-.45,.22],[0,0,0]]],[TH,KP.slice().reverse()],[null,WIN(V(0,.1,-.04)).concat([P_DH,cw(.42,-.1),P_MNf]),.024]],COL.sens,.026,{base:.2});
+const ANKM=mkRoute(G0,[[null,[P_MNf,cw(.62,-.62)].concat(WOUT(V(0,-.12,-.06)).slice(1))],[TH,KP.map(p=>[p[0],p[1]-.04,p[2]+.03])],[SH,[[0,0,0],[0,-.25,.24],[-.02,-.5,.36],PERep]]],COL.mot,.026,{base:.18});
+const ROUTES0=[IA,...MQ,MH,INr,PYR,ASC,ANKS,ANKM];
+const P0=Pulser(G0,48,.1,{normal:true,halo:.06,haloSize:2.0,white:0,linger:.06});
+// het grote schemahamertje bij de knie
+function hammer(scale,parent){const g=new THREE.Group();parent.add(g);const m=ENV.metal;
+  mesh(new THREE.CylinderGeometry(.04*scale,.035*scale,1,12),m,[0,.5,0],0,0,g).scale.y=1;
+  const hd=new THREE.Group();g.add(hd);mesh(new THREE.CylinderGeometry(.2*scale,.2*scale,.5*scale,3),std(0xc0392b,{roughness:.6}),[0,0,0],[Math.PI/2,0,0],0,hd);
+  mesh(new THREE.CylinderGeometry(.06*scale,.06*scale,.18*scale,12),m,[0,0,0],0,0,hd);return {g,hd,h:g.children[0]};}
+const BHm=hammer(1,G0);const TM0=V(0,0,0),BHpiv=V(0,0,0);
+const ringM=add(0xfff2b0,0);const tapRing=ns(new THREE.Mesh(new THREE.TorusGeometry(1,.05,8,48),ringM));G0.add(tapRing);
+// --- de kast met de zittende sporter en de docent ---
+const KX=-4.7,KZ=2.35,KR=.3,KH=1.3,KW=1.6,KD=.62;
+const kast=new THREE.Group();kast.position.set(KX,.08,KZ);kast.rotation.y=KR;G0.add(kast);
+const wood=std(0x9a6232,{roughness:.55}),woodD=std(0x4e3018,{roughness:.6}),leather=std(0xc9b48a,{roughness:.85});
+for(let i=0;i<4;i++){const h=(KH-.16)/4,w=KW+.16*(3-i)*.5,d=KD+.12*(3-i)*.5;mesh(new THREE.BoxGeometry(w,h-.025,d),wood,[0,i*h+h/2,0],0,0,kast);mesh(new THREE.BoxGeometry(w+.01,.022,d+.01),woodD,[0,i*h+h-.012,0],0,0,kast);if(i>0)mesh(new THREE.BoxGeometry(.36,.07,.02),woodD,[0,i*h+h/2,d/2+.002],0,0,kast);}
+mesh(new THREE.BoxGeometry(KW+.02,.16,KD+.04),leather,[0,KH-.08,0],0,0,kast);
+const sit=K.figure({parent:G0,pos:[KX,.08,KZ],rotY:KR,shirt:0x2f78c4,shorts:0x1d1f24,skin:0xc08a62,hair:0x3a2414});
+const SIT={py:KH+.03,pz:-.07,lean:.04,hipR:[-Math.PI/2+.02,0,.05],hipL:[-Math.PI/2+.02,0,-.05],kneeR:Math.PI/2,kneeL:Math.PI/2,ankR:.28,ankL:.22,shR:[.32,0,-.22],shL:[.32,0,.22],elbR:-.25,elbL:-.25,head:.1};
+sit.pose(SIT);
+const qGlowM=glow(0xff6a4a,0xff3a20,0),hGlowM=glow(0x6fe39a,0x3fd07a,0);
+ns(mesh(new THREE.CapsuleGeometry(.035,.3,4,8),qGlowM,[0,-.3,.068],0,0,sit.lR.hip));ns(mesh(new THREE.CapsuleGeometry(.032,.28,4,8),hGlowM,[0,-.3,-.068],0,0,sit.lR.hip));
+const doc=K.figure({parent:G0,pos:[KX,.08,KZ+1.2],shirt:0x3b4048,shorts:0x2a2d33,skin:0x8d5a3b,hair:0x111111,shoe:0x222222,sole:0x444444});
+const DOC={py:doc.standY-.03,lean:.22,hipR:-.1,hipL:.05,kneeR:.2,kneeL:.12,shR:[-.85,0,-.12],shL:[.1,0,.12],elbR:-.95,elbL:-.2,head:.35};
+const smH=hammer(.32,G0);
+// docent zo neerzetten dat zijn rechterhand vlak bij de knie van de sporter is
+sit.root.updateMatrixWorld(true);const sitTend=V(0,0,0);sit.lR.kn.localToWorld(sitTend.set(0,-.09,.07));
+{const dir=Math.atan2(sitTend.x-(KX-.3),sitTend.z-(KZ+1.2));doc.root.rotation.y=dir;doc.pose(DOC);doc.root.updateMatrixWorld(true);const wr=doc.aR.wr.getWorldPosition(V(0,0,0));
+ const want=sitTend.clone().add(V(Math.sin(dir)*-.28,0,Math.cos(dir)*-.28));doc.root.position.x+=want.x-wr.x;doc.root.position.z+=want.z-wr.z;}
+// --- stand 3: een landing op de voet van een tegenstander ---
+const LX=3.0,LZ=1.9;
+const lan=K.figure({parent:G0,pos:[LX,.08,LZ],rotY:Math.PI/2,shirt:0xd8642a,shorts:0x1d1f24,skin:0xb57a55});
+const opp=K.figure({parent:G0,pos:[LX+.9,.08,LZ],rotY:-Math.PI/2+.6,shirt:0x2e8b57,shorts:0xf1ede4,skin:0x6b4428,hair:0x0d0d0d});
+const SHOE=.075;  // de landende voet staat op de schoen van de tegenstander
+const lAnkGlow=ns(mesh(new THREE.SphereGeometry(.07,12,10),std(0xff4a30,{transparent:true,opacity:0,emissive:0xff2a10,emissiveIntensity:1,depthWrite:false}),[0,-.05,.0],0,0,lan.lR.an));
+const ball=mesh(new THREE.SphereGeometry(.13,24,16),std(0xd86a26,{roughness:.7,map:canvasTex(256,128,(x,w,h)=>{x.fillStyle='#d36a2a';x.fillRect(0,0,w,h);x.strokeStyle='#2a1408';x.lineWidth=5;x.beginPath();x.moveTo(0,h/2);x.lineTo(w,h/2);x.moveTo(w/2,0);x.lineTo(w/2,h);x.moveTo(w/4,0);x.bezierCurveTo(w*.35,h*.4,w*.35,h*.6,w/4,h);x.moveTo(w*.75,0);x.bezierCurveTo(w*.65,h*.4,w*.65,h*.6,w*.75,h);x.stroke();})}),[LX,2.8,LZ+.2],0,0,G0);
+const STAND3=[lan.root,opp.root,ball];
+// --- toestand niveau 0 ---
+const L0={ph:'idle',t:0,ms:0,pms:0,F:.7,vol:false,volNext:false,act:.12,actH:.12,inh:0,ext:0,wind:0,thA:0,inv:0,strain:0,per:0,sw:0,flashed:false,rest:0,ctx:0,sctx:0,spin:0,ep:0,epH:0,epP:0,mnq:0,mnh:0,mnf:0,inn:0,rate:12,knee3:26,lastSt:1,dmg:''};
+W.tap=V(0,0,0);W.spindle=V(0,0,0);W.gto=V(0,0,0);W.ep=V(0,0,0);W.ctx=brain.localToWorld(V(.06,.62,.15));W.per=V(0,0,0);W.msTag=Vs(-1.0,8.7,-.6);W.cord0=P_MNq.clone();W.sit=V(0,0,0);W.foot0=V(0,0,0);W.lan=V(LX,1.4,LZ);
+function rate2(ms){return lerp(6,95,smooth((ms-30)/12));}
+function rateV(ms){return ms<90?60:ms<175?20:70;}
+function rate3(ms){return lerp(14,70,smooth((ms-100)/20));}
+function sched2(){const n=1+Math.round(L0.F*3);P0.clear();
+  for(let i=0;i<n;i++){P0.add({r:IA,t0:.4+i*.9,dur:9.4,col:COL.sens,k:'ms',sz:1.1});EPq.forEach((e,j)=>P0.add({r:MQ[j],t0:11.1+i*.9+j*.3,dur:9.6,col:COL.mot,k:'ms'}));}
+  P0.add({r:INr,t0:10.6,dur:1.7,col:COL.inh,k:'ms'});P0.add({r:ASC,t0:10.4,dur:14,col:COL.asc,k:'ms',sz:.8});}
+function schedVol(){P0.clear();P0.add({r:PYR,t0:100,dur:20,col:COL.pyr,k:'ms',sz:1.2});P0.add({r:PYR,t0:102,dur:20,col:COL.pyr,k:'ms'});EPq.forEach((e,j)=>{P0.add({r:MQ[j],t0:121+j*.4,dur:9.6,col:COL.mot,k:'ms'});P0.add({r:MQ[j],t0:124+j*.4,dur:9.6,col:COL.mot,k:'ms'});});}
+function sched3(){P0.clear();for(let i=0;i<3;i++){P0.add({r:ANKS,t0:2+i*.9,dur:21,col:COL.sens,k:'ms',sz:1.1});P0.add({r:ANKM,t0:29+i*.9,dur:26,col:COL.mot,k:'ms',sz:1.1});}}
+function tonic0(dt){L0.rest+=dt;if(L0.rest<.25)return;L0.rest=0;const now=L0.pms;
+  if(R()<.34)P0.add({r:IA,t0:now,dur:9.4,col:COL.sens,k:'rt'});if(R()<.22)P0.add({r:MQ[R()*3|0],t0:now,dur:9.6,col:COL.mot,k:'rt',cb:()=>{L0.ep=Math.max(L0.ep,.5);}});
+  if(R()<.16)P0.add({r:MH,t0:now,dur:9.6,col:COL.mot,k:'rt'});if(R()<.07)P0.add({r:PYR,t0:now,dur:20,col:COL.pyr,k:'rt',sz:.9});if(R()<.08)P0.add({r:ASC,t0:now,dur:14,col:COL.asc,k:'rt',sz:.8});}
+const LANDp={py:1.33-.16,pz:.12,lean:.28,side:0,hipR:[-.72,0,0],kneeR:1.2,ankR:.25,hipL:[-.35,0,.05],kneeL:.55,ankL:-.05,shR:[-2.3,0,-.45],shL:[-2.4,0,.45],elbR:-.3,elbL:-.3,head:.15};
+const STANDp={py:1.33-.03,lean:.06,hipR:-.08,kneeR:.14,hipL:-.08,kneeL:.14,shR:[-.25,0,-.25],shL:[-.25,0,.25],elbR:-.9,elbL:-.9};
+const CROUCHp={py:1.33-.36,pz:0,lean:.5,hipR:-.85,kneeR:1.35,ankR:-.45,hipL:-.85,kneeL:1.35,ankL:-.45,shR:[.8,0,-.15],shL:[.8,0,.15],elbR:-.4,elbL:-.4,head:-.1};
+const AIRp={py:1.33+.12,pz:.12,lean:.05,hipR:-.25,kneeR:.35,ankR:.5,hipL:-.2,kneeL:.3,ankL:.5,shR:[-2.7,0,-.25],shL:[-2.75,0,.25],elbR:-.25,elbL:-.25,head:-.25};
+function oppPose(t){const b=.03*Math.sin(t*2.2);opp.pose({py:1.33-.1+b,lean:-.04,hipR:.12,kneeR:.3,ankR:.05,hipL:-.42,kneeL:.3,ankL:-.1,shR:[-2.55,0,-.3],shL:[-2.6,0,.3],elbR:-.35,elbL:-.35,head:-.15});}
+function lanPose(){const g=S.grade;
+  if(L0.ph==='pre'){const t=L0.t;let p;if(t<.45)p=K.mixPose(STANDp,CROUCHp,smooth(t/.45));else if(t<.62)p=K.mixPose(CROUCHp,AIRp,smooth((t-.45)/.17));else{const u=clamp((t-.62)/.9,0,1);p=K.mixPose(AIRp,LANDp,smooth(u*u));p.py=lerp(AIRp.py,LANDp.py+SHOE,u)+.75*Math.sin(Math.PI*u);}
+    lan.pose(p);ball.position.set(LX+.25,lan.standY+1.25+(t>.62?.75*Math.sin(Math.PI*clamp((t-.62)/.9,0,1)):0),LZ+.05);return;}
+  const m=L0.ms,ab=smooth(m/160);const p=K.mixPose(LANDp,{py:1.33-.3,pz:.12,lean:.4,side:.22,hipR:[-.9,0,0],kneeR:1.45,ankR:.25,hipL:[-.6,0,.12],kneeL:.95,ankL:-.1,shR:[-.6,0,-1.2],shL:[-.9,0,1.25],elbR:-.6,elbL:-.5,head:.35},ab);
+  p.py+=SHOE;p.ankR=[.25,0,L0.inv*D2R];p.side=(p.side||0)+L0.inv*D2R*.35;lan.pose(p);ball.position.set(LX+.3+m*.002,lan.standY+1.3-m*.003,LZ+.3+m*.003);}
+// de tegenstander zo neerzetten dat de landende rechtervoet op zijn linkervoet terechtkomt
+{const p=Object.assign({},LANDp);p.py+=SHOE;lan.pose(p);oppPose(0);lan.root.updateMatrixWorld(true);opp.root.updateMatrixWorld(true);
+ const fR=lan.lR.an.getWorldPosition(V(0,0,0)),fL=opp.lL.an.getWorldPosition(V(0,0,0));
+ opp.root.position.x+=fR.x+.17-fL.x;opp.root.position.z+=fR.z-fL.z;opp.root.updateMatrixWorld(true);W.oppFoot=opp.lL.an.getWorldPosition(V(0,0,0));W.lanFoot=fR.clone();}
+function poseLeg0(){// dijbeen: 0 = zitten (horizontaal), 1 = staan
+  const a=smooth(L0.thA);TH.rotation.z=lerp(0,-.87,a);
+  const flex=lerp(90-L0.ext,L0.knee3,a);SH.rotation.z=(90-flex)*D2R;FT.rotation.set(L0.inv*D2R,0,lerp(.12,-.05,a));
+  TH.updateMatrixWorld(true);
+  // pezen en banden in wereldcoördinaten
+  TH.localToWorld(_a.set(LT+.1,.03,0));SH.localToWorld(_b.set(.13,-.36,0));orient(pTend,_a,_b,.06,.04);TM0.lerpVectors(_a,_b,.5);
+  [[-.12,-.12],[.14,.16]].forEach((z,i)=>{TH.localToWorld(_a.set(2.15,-.42,z[0]));SH.localToWorld(_b.set(-.13,-.42,z[1]));orient(hTend[i],_a,_b,.035);});
+  SH.localToWorld(_a.set(.02,-LS+.02,.2));FT.localToWorld(_b.set(.14,-.05,.15));orient(atfl,_a,_b,.04,.025);
+  SH.localToWorld(_a.set(-.03,-LS-.03,.19));FT.localToWorld(_b.set(-.13,-.24,.13));orient(cfl,_a,_b,.035,.022);
+  const st=L0.strain;[0,1].forEach(i=>{const e=st*(i?.75:1);ligM[i].color.setRGB(lerp(.85,1,clamp(e,0,1)),lerp(.82,.25,clamp(e-.6,0,1)/.6),lerp(.77,.2,clamp(e-.6,0,1)/.6));ligM[i].emissive.setRGB(clamp(e-.7,0,1)*.6,0,0);});
+  if(NARROW){TH.localToWorld(W.spindle.set(1.25,1.0,.37));TH.localToWorld(W.gto.set(2.15,1.05,.26));TH.localToWorld(W.ep.set(.35,.8,.27));}
+  else{spG.getWorldPosition(W.spindle);gtoG.getWorldPosition(W.gto);TH.localToWorld(W.ep.copy(EPq[1]));}SH.localToWorld(W.per.set(-.03,-.85,.4));W.tap.copy(TM0).add(V(.08,0,.12));FT.localToWorld(W.foot0.set(.1,-.05,.25));}
+function bigHammer(){const vis=S.state<3&&L0.thA<.05;BHm.g.visible=vis;if(!vis)return;
+  // de grote hamer draait om een vast punt rechtsonder de knie
+  const head=_q.copy(TM0).add(_r.set(.2,.05,0));BHpiv.copy(head).add(_r.set(.95,-1.0,.05));const phi=-.75*L0.wind;
+  _a.subVectors(head,BHpiv).applyAxisAngle(AZ,phi);const L=_a.length();BHm.g.position.copy(BHpiv);BHm.g.quaternion.setFromUnitVectors(AY,_a.normalize());BHm.h.scale.y=L;BHm.h.position.y=L/2;BHm.hd.position.set(0,L,0);}
+function smallHammer(){doc.root.updateMatrixWorld(true);const wr=doc.aR.wr.getWorldPosition(_a);const v=_q;
+  if(S.state===2&&!L0.vol&&L0.ph!=='vwait'){sit.root.updateMatrixWorld(true);sit.lR.kn.localToWorld(sitTend.set(0,-.09,.085));v.subVectors(sitTend,wr);const ax=_r.crossVectors(v,AY).normalize();v.applyAxisAngle(ax,.95*L0.wind);}
+  else v.set(.02,-.28,.06);const L=v.length();smH.g.position.copy(wr);smH.g.quaternion.setFromUnitVectors(AY,v.normalize());smH.h.scale.y=L;smH.h.position.y=L/2;smH.hd.position.set(0,L,0);}
+function sitPose(){const p=Object.assign({},SIT);p.kneeR=(90-L0.ext)*D2R;p.kneeL=Math.PI/2+.04*Math.sin(S.clock*1.1);p.ankR=.28-L0.ext*.004;sit.pose(p);
+  qGlowM.emissiveIntensity=1.6*clamp(L0.act-.12,0,1);hGlowM.emissiveIntensity=1.2*L0.inh;
+  const w=L0.wind;doc.pose(Object.assign({},DOC,{elbR:DOC.elbR-.45*w*(S.state===2?1:0)-(S.state!==2?-.55:0),shR:S.state===2?[DOC.shR[0]-.2*w,0,DOC.shR[2]]:[-.25,0,-.15],lean:S.state===2?DOC.lean:.12}));
+  sit.lR.kn.getWorldPosition(W.sit);}
+function L0glow(dt){const k=Math.min(1,dt*7);
+  MNq0M.emissiveIntensity=.3+1.1*L0.mnq;MNh0M.emissiveIntensity=lerp(.3,.05,L0.inh)+1.0*L0.mnh;MNh0M.color.setHex(L0.inh>.3?0x3f8f70:COL.mot).multiplyScalar(.55);MNh0M.emissive.setHex(L0.inh>.3?0x2f9f70:COL.mot);
+  IN0M.emissiveIntensity=.3+1.1*L0.inn;MNf0M.emissiveIntensity=.3+1.1*L0.mnf;
+  spiralM.emissiveIntensity=.4+3*L0.spin;epM.emissiveIntensity=.25+2.6*L0.ep;epHM.emissiveIntensity=.25+1.5*L0.epH;epPM.emissiveIntensity=.25+2.6*L0.epP;
+  motorStripM.emissiveIntensity=.45+2*L0.ctx;sensStripM.emissiveIntensity=.3+2*L0.sctx;perM.emissiveIntensity=.9*L0.per;
+  updMus(QFM,QF,QP,L0.act,0);updMus(HFM,HF,HP,L0.actH,L0.inh);
+  qSheath.material.opacity=.13+.08*L0.act;}
+function L0decay(dt){['mnq','mnh','inn','mnf','spin','ep','epH','epP','ctx','sctx'].forEach(k=>{L0[k]=Math.max(0,L0[k]-dt*2.2);});}
+function arrive(k){return ()=>{L0[k]=1;};}
+// kom je via de zoomladder in stand 3 op dit niveau aan, ga dan alsnog naar het beeld van stand 3 (behalve als een punt of de speurtocht zelf een beeld kiest)
+function arrive3(L,v){if(!L.arr||S.zooming)return;L.arr=false;if(S.state===3&&!K.FILM.on&&!document.body.classList.contains('panel-open')&&window.__atlas)__atlas.flyTo(v[0],v[1]);}
+function step0(dt){SQ.length=0;const st=S.state;L0.t+=dt;arrive3(L0,V3);
+  L0.thA=clamp(L0.thA+(st===3?dt:-dt)*1.4,0,1);L0decay(dt);
+  if(st===1){L0.ph='idle';L0.pms+=dt*12;tonic0(dt);L0.act=lerp(L0.act,.14+.03*Math.sin(S.clock*.8),Math.min(1,dt*3));L0.actH=.13;L0.inh=Math.max(0,L0.inh-dt);L0.ext=lerp(L0.ext,0,Math.min(1,dt*4));L0.wind=0;L0.inv=lerp(L0.inv,0,Math.min(1,dt*4));L0.strain=0;
+    if(L0.t%3.2<dt)L0.spin=.4;}
+  else if(st===2){
+    if(L0.ph==='wind'){const t=L0.t;L0.wind=t<.5?ease(t/.5):Math.max(0,1-(t-.5)/.14);if(t>=.64){L0.ph=L0.vol?'vrun':'run';L0.ms=0;L0.wind=0;sched2();sq(a=>{a.thump(190,.07,.35);a.noise(.03,'bandpass',1800,2,.2,.001);});L0.spin=1;tapRing.userData.t=0;}}
+    else if(L0.ph==='vwait'){if(L0.t>.8){L0.ph='vrun';L0.ms=0;schedVol();sq(a=>{a.noise(.18,'highpass',900,.7,.6,.002);a.thump(90,.25,.5);});}}
+    else if(L0.ph==='run'||L0.ph==='vrun'){const vol=L0.ph==='vrun';const m0=L0.ms;L0.ms+=dt*(vol?rateV(L0.ms):rate2(L0.ms));const m=L0.ms;
+      if(!vol){L0.wind=Math.max(0,.32*Math.sin(Math.PI*clamp(m/70,0,1)));
+        if(cross(m0,m,10.4)){L0.mnq=1;sq(a=>a.tone(880,.05,.04));}if(cross(m0,m,12.3)){L0.inn=1;sq(a=>a.tone(620,.05,.03,'triangle'));}
+        if(cross(m0,m,21))sq(a=>a.tone(1100,.06,.05));if(m>21&&m<24)L0.ep=1;if(m>24&&m<40)L0.sctx=Math.max(L0.sctx,.8);
+        if(cross(m0,m,40))sq(a=>a.noise(.35,'bandpass',500,1.2,.12,.04,undefined,1400));
+        const amp=12+28*L0.F;L0.act=.12+.88*(.4+.6*L0.F)*smooth((m-21)/9)*(1-.9*smooth((m-70)/90));L0.inh=smooth((m-12.6)/2.5)*(1-smooth((m-115)/40));L0.actH=.13*(1-L0.inh);
+        L0.ext=amp*smooth((m-38)/95)*(1-smooth((m-150)/160));
+        if(m<5)L0.spin=1;
+        const u=clamp(m/8,0,1);tapRing.visible=m<8;tapRing.position.copy(TM0);tapRing.scale.setScalar(.08+.5*u);ringM.opacity=.9*(1-u);tapRing.lookAt(K.camera.position);
+        if(m>=330){L0.ph='hold';L0.t=0;}}
+      else{tapRing.visible=false;L0.ctx=Math.max(L0.ctx,m<100?.35+.35*Math.abs(Math.sin(m*.15)):0);if(cross(m0,m,121)){L0.mnq=1;sq(a=>a.tone(880,.05,.04));}if(m>131&&m<135)L0.ep=1;
+        L0.act=.12+.75*smooth((m-133)/12)*(1-.85*smooth((m-300)/100));L0.actH=.13;L0.inh=0;L0.ext=32*smooth((m-150)/110)*(1-smooth((m-300)/120));
+        if(m>=440){L0.ph='hold';L0.t=0;}}}
+    else if(L0.ph==='hold'){tapRing.visible=false;L0.ext=lerp(L0.ext,0,Math.min(1,dt*3));L0.act=lerp(L0.act,.13,Math.min(1,dt*3));L0.inh=Math.max(0,L0.inh-dt*2);L0.actH=.13;
+      if(L0.t>1.4){L0.t=0;const was=L0.vol;if(L0.volNext){L0.volNext=false;L0.vol=true;L0.ph='vwait';}else{L0.ph='wind';L0.vol=false;}if(was!==L0.vol)K.hudSet(levels[0].hud());}}
+    L0.pms=L0.ms;}
+  else{// stand 3
+    tapRing.visible=false;L0.ext=0;
+    if(L0.ph==='pre'){L0.inv=0;L0.strain=0;L0.per=0;L0.dmg='';L0.spk=0;L0.sw=Math.max(0,L0.sw-dt);if(L0.t>=1.52){L0.ph='run';L0.ms=0;L0.flashed=false;sched3();sq(a=>{a.thump(75,.22,.6);a.noise(.08,'lowpass',900,.7,.3,.002);});}}
+    else if(L0.ph==='run'){const m0=L0.ms;L0.ms+=dt*rate3(L0.ms);const m=L0.ms;const g=S.grade;const pk=[0,27,35,43][g];
+      L0.inv=m<80?pk*smooth(m/48):pk*(1-.55*smooth((m-80)/140));L0.strain=clamp(L0.inv/34,0,1.3);L0.spk=Math.max(L0.spk||0,L0.strain);
+      if(!L0.flashed&&m>=42){L0.flashed=true;L0.dmg=['','overrekt','deels gescheurd','gescheurd'][g];K.flash({big:g>=2,a:g===1?.45:1,shake:.12+g*.12,sound:true});}
+      if(cross(m0,m,24)){L0.mnf=1;sq(a=>a.tone(760,.05,.04));}if(m>55&&m<60)L0.epP=1;L0.per=smooth((m-60)/18)*(1-smooth((m-210)/90));
+      if(m>3&&m<8)L0.spin=0;
+      if(m>=330){L0.ph='hold';L0.t=0;}}
+    else if(L0.ph==='hold'){L0.sw=Math.min([0,.55,.85,1.15][S.grade],L0.sw+dt*.5);L0.inv=lerp(L0.inv,[0,4,7,10][S.grade],Math.min(1,dt*2));L0.strain=L0.inv/34;if(L0.t>3.2){L0.ph='pre';L0.t=0;P0.clear();}}
+    L0.pms=L0.ms;}
+  // houdingen en model
+  poseLeg0();sitPose();bigHammer();smallHammer();oppPose(S.clock);if(st===3)lanPose();
+  STAND3.forEach(o=>o.visible=st===3);
+  {const sOn=layers[0].on!==false;[sit.root,doc.root,smH.g,kast].forEach(o=>o.visible=sOn&&st!==3);}
+  swell.scale.setScalar(Math.max(.001,L0.sw*.32));swellM.opacity=.55*clamp(L0.sw*1.5,0,1);lAnkGlow.material.opacity=st===3?clamp(L0.strain-.5,0,1)*.9+.5*clamp(L0.sw,0,1):0;
+  P0.update(o=>o.k==='rt'?L0.pms:L0.ms);decayRoutes(ROUTES0,dt,.75);L0glow(dt);hud0();}
+function hud0(){const st=S.state;
+  if(st<3){const fl=Math.round(90-L0.ext);K.bar(1,L0.ext/40,`${fl}° gebogen`,L0.ext>3?'con':'');K.bar(2,L0.act,L0.act>.35?`${Math.round(L0.act*100)} % · schopt`:'rust',L0.act>.35?'con':'',  '#ff5a3c');
+    K.bar(3,L0.inh>.2?L0.inh:L0.actH,L0.inh>.2?'geremd':'rust',L0.inh>.2?'ok':'',L0.inh>.2?'#5fe08a':'#ff5a3c');}
+  else{K.bar(1,L0.inv/45,`${Math.round(L0.inv)}° inversie`,L0.inv>25?'bad':'');
+    const sf=Math.max(L0.strain,L0.dmg?L0.spk:0)/1.2;K.bar(2,sf,L0.dmg||`${Math.round(L0.strain*80)} % belast`,L0.dmg||L0.strain>.8?'bad':'',L0.dmg||L0.strain>.8?'#e86a5a':'#e6b65e');
+    K.bar(3,L0.per,L0.ph==='run'?(L0.ms<60?'nog stil':'actief · te laat'):L0.ph==='hold'&&L0.per>.1?'actief':'rust',L0.per>.1?'con':'','#ff5a3c');}
+  const ms=L0.ms;const run=L0.ph==='run'||L0.ph==='vrun';
+  if(st===2){const n=$('#tlNow');if(n){const max=L0.vol?440:320;const x=Math.sqrt(clamp(run?ms:L0.ph==='hold'?max:0,0,max)/max)*100;n.style.left=x+'%';$('#tlFill').style.width=x+'%';$('#tlMs').textContent=run?`${ms.toFixed(ms<40?1:0)} ms · tijdlupe ×${Math.round(1000/(L0.ph==='vrun'?rateV(ms):rate2(ms)))}`:L0.ph==='hold'?'klaar':L0.ph==='vwait'?'wacht op het schot…':'de hamer zwaait…';}}
+  if(st===3){const x=Math.sqrt(clamp(run?ms:L0.ph==='hold'?330:0,0,330)/330)*100;$$('.lanes .lt b').forEach(b=>b.style.left=x+'%');const lm=$('#lnMs');if(lm)lm.textContent=run?`${Math.round(ms)} ms na het neerkomen`:L0.ph==='pre'?'sprong…':'na de landing';}
+  cap0();}
+const $$=K.$$;
+function cap0(){const st=S.state,m=L0.ms,t=S.clock;
+  if(st===1){const i=Math.floor(t/7)%4;K.capSoft(K.stateText(),['Volg de banen van spier naar ruggenmerg en terug. Blauw is sensorisch, rood motorisch, groen remmend.','Ook in rust melden de <b>spierspoelen</b> af en toe hoe lang de spier is. Zit of sta je, dan houden een paar motorische eenheden je houding vast.','De <b>spierspoel</b> in de quadriceps meet de lengte van de spier en geeft die via de blauwe vezel door.','Druk op <b>2</b> voor de kniepeesreflex of op <b>3</b> voor de enkel die te snel kantelt.'][i],3);return;}
+  if(st===2){const ph=L0.ph;let x;
+    if(L0.vol||ph==='vwait'||ph==='vrun'){x=ph==='vwait'?'<b>Startschot.</b> Nu is er geen tik: het been moet bewust schoppen.':m<100?'De hersenen horen het schot en <b>beslissen</b>. Dat kost de meeste tijd.':m<125?'Het bevel loopt via de <b>piramidebaan</b> (paars) naar het ruggenmerg.':m<160?'De motorische vezel brengt het bevel naar de quadriceps. Na <b>ongeveer 130 ms</b> spant de spier aan, na <b>ongeveer 150 ms</b> beweegt het been.':'Een bewuste (willekeurige) beweging: de spier spant ongeveer vijf à zes keer zo laat aan als bij de reflex. Onder 0,100 s is bij een sprintstart een valse start.';}
+    else if(ph==='wind')x='De docent tikt met de reflexhamer op de <b>patellapees</b>, net onder de knieschijf.';
+    else if(ph==='hold')x='Druk op <b>Startschot</b> om de reflex te vergelijken met een bewuste reactie, of kijk nog een keer.';
+    else x=m<8?'<b>Tik.</b> De quadriceps wordt een klein beetje gerekt en de spierspoel vuurt. De impuls loopt via de <b>Ia-vezel</b> (blauw) naar het ruggenmerg: ongeveer 10 ms.':m<16?'<b>Eén synaps</b>: in het ruggenmerg schakelt de Ia-vezel direct over op de motorische voorhoorncel. Tegelijk remt een schakelneuron de hamstrings (groen).':m<34?'Terug via de <b>motorische vezel</b> (rood). Na <b>ongeveer 25 ms</b> spant de quadriceps aan. De hersenen horen nu pas van de tik.':'De knie strekt: het onderbeen schopt. De hamstrings werken niet tegen: <b>reciproke remming</b>.';
+    K.capSoft(K.stateText(),x,ph==='vwait'?0:ph==='vrun'?1.0:ph==='run'&&m<40?1.1:2.4);return;}
+  const ph=L0.ph;K.capSoft(K.stateText(),ph==='pre'?'Een rebound. De sporter landt met de rechtervoet op de voet van een tegenstander.':ph==='hold'?(S.grade===1?'Graad 1: de buitenband is overrekt. De reflex kwam, maar te laat om dat te voorkomen.':S.grade===2?'Graad 2: de buitenband is deels gescheurd. Er ontstaat zwelling aan de buitenkant van de enkel.':'Graad 3: de buitenband is gescheurd. De reflex kon de inversie niet meer tegenhouden.'):m<25?'De voet kantelt naar binnen (<b>inversie</b>). Sensoren in band en spier vuren meteen.':m<55?'<b>Binnen ongeveer 40–50 ms</b> staat de buitenband al maximaal onder spanning. De reflex is nog onderweg.':'Na <b>ongeveer 60–80 ms</b> worden de kuitbeenspieren actief, en echte kracht volgt pas tientallen ms later. Te laat: de band is al zwaar belast.',ph==='run'?1.8:2.6);}
+const TLX=(ms,max)=>Math.sqrt(clamp(ms,0,max)/max)*100;
+function tl2(){const max=L0.vol||L0.volNext?440:320;const ticks=max>400?[0,25,50,100,150,250,400]:[0,10,25,50,100,200,300];const ev=max>400?[[0,'schot','a'],[100,'besluit','b'],[133,'spier aan','a'],[150,'beweging','b']]:[[0,'tik','a'],[10,'synaps','b'],[22,'spier aan','a'],[45,'schop','b']];
+  return `<div class="tl"><div class="ax"></div><div class="fill" id="tlFill"></div>${ticks.map(t=>`<span class="tk" style="left:${TLX(t,max)}%">${t}</span>`).join('')}${ev.map(e=>`<span class="ev ${e[2]}" style="left:${TLX(e[0],max)}%">${e[1]}</span>`).join('')}<i class="now" id="tlNow"></i><span class="ms" id="tlMs"></span></div>`;}
+function lanes3(){const X=ms=>TLX(ms,330);const lane=(n,a,b,c,extra)=>`<span>${n}</span><span class="lt"><i style="left:${X(a)}%;width:${X(b)-X(a)}%;background:${c}"></i>${extra||''}<b></b></span>`;
+  return `<div class="lanes">${lane('Band belast',0,52,'linear-gradient(90deg,rgba(232,106,90,.25),#e86a5a)')}${lane('Kniepeesreflex',0,25,'#58b8ff')}${lane('Peroneusreflex',0,70,'linear-gradient(90deg,#ff5a3c 80%,rgba(255,90,60,.35))')}${lane('Startschot',0,150,'#c38cff',`<u style="left:${X(100)}%"></u>`)}<span class="ax2">${[0,25,50,100,150,250].map(t=>`<span style="left:${X(t)}%">${t}</span>`).join('')}</span><span></span><span class="ax2" style="color:var(--gold)" id="lnMs"></span></div>`;}
+const legend='<div class="lg"><span><i style="background:#58b8ff"></i>sensorisch</span><span><i style="background:#ff5a3c"></i>motorisch</span><span><i style="background:#5fe08a"></i>remmend</span><span><i style="background:#c38cff"></i>piramidebaan</span></div>';
+
+/* =====================================================================
+   NIVEAU 1 · het ruggenmerg
+   ===================================================================== */
+const RC=2.6,D1=4.2,TY=1.1,TY6=TY+.07;
+const cTop=(sx,sy,dy)=>V(sx*RC,TY+(dy===undefined?.07:dy),-sy*RC);
+const gm1=mesh(extr(bfShape(RC,.05),D1),std(0xffffff,{map:greyTex,roughness:.62}),[0,TY-D1,0],0,0,G1);
+const wmTex=canvasTex(512,128,(x,w,h)=>{x.fillStyle='#ece3d2';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=3){x.fillStyle=`rgba(${150+R()*40|0},${135+R()*30|0},${110+R()*30|0},${.08+R()*.14})`;x.fillRect(i,0,1+R()*2,h);}});wmTex.repeat.set(1.2,.25);
+const wm1=mesh(extr(cordShape(RC,true),D1-.004),std(0xffffff,{map:wmTex,roughness:.5}),[0,TY-D1,0],0,0,G1);
+mesh(new THREE.CylinderGeometry(.13,.13,D1,16),std(0x3a2a30),[0,TY-D1/2+.01,.05],0,0,G1);
+// witte stof: bundels vezels (instanced), met kleur per baan
+const WF=[];for(let gx=-1;gx<=1;gx+=.052)for(let gy=-.8;gy<=.8;gy+=.052){const x=gx+(R()-.5)*.03,y=gy+(R()-.5)*.03;if(x*x+(y/.8)*(y/.8)>.95)continue;if(Math.abs(x)<.06&&y<-.45)continue;if(inBF(x*1.06,y*1.06)||inBF(x,y))continue;if(Math.abs(x)<.03&&y>.6)continue;
+  let c=[.93,.89,.8];if(Math.abs(x)<.36&&y>.18)c=[.48,.68,.98];else if(Math.abs(x)>.52&&y>-.25&&y<.4)c=[.7,.5,.96];WF.push({x,y,c,j:R()});}
+// elke vezel eindigt gelijk met het snijvlak; de bovenkant toont een doorsnede: donker axon, lichte myelinering
+const axTex=canvasTex(64,64,(x,w,h)=>{x.fillStyle='#f4ede0';x.fillRect(0,0,w,h);const g=x.createRadialGradient(w/2,h/2,2,w/2,h/2,w/2);g.addColorStop(0,'#5a4a46');g.addColorStop(.32,'#7a6a62');g.addColorStop(.42,'#fbf6ec');g.addColorStop(.85,'#e6dccb');g.addColorStop(1,'#b9ab95');x.fillStyle=g;x.beginPath();x.arc(w/2,h/2,w/2,0,TAU);x.fill();});
+const WFM=inst(new THREE.CylinderGeometry(1,1,1,9,1).translate(0,.5,0),std(0xffffff,{roughness:.7,map:axTex}),WF.length);G1.add(WFM);WFM.castShadow=false;
+WF.forEach((f,i)=>{_a.set(f.x*RC,TY-.2,-f.y*RC);_b.set(f.x*RC,TY+.006,-f.y*RC);WFM.setMatrixAt(i,segMatrix(_a,_b,.036+.01*f.j));_c.setRGB(f.c[0]*(.92+.1*f.j),f.c[1]*(.92+.1*f.j),f.c[2]*(.92+.1*f.j));WFM.setColorAt(i,_c);});WFM.instanceMatrix.needsUpdate=true;WFM.instanceColor.needsUpdate=true;
+// vliezen: pia, arachnoidea en dura, aan de voorkant opengesneden
+// pia: dun en met haarvaatjes; arachnoidea: een spinnenweb; dura: stevig en vezelig
+const piaTex=canvasTex(512,256,(x,w,h)=>{x.fillStyle='#f0c6bc';x.fillRect(0,0,w,h);for(let i=0;i<26;i++){x.strokeStyle=`rgba(${170+R()*40|0},40,50,${.35+R()*.3})`;x.lineWidth=.8+R()*1.6;x.beginPath();let px=R()*w,py=0;x.moveTo(px,py);for(let k=0;k<8;k++){px+=(R()-.5)*50;py+=h/8;x.lineTo(px,py);}x.stroke();}});
+const webTex=canvasTex(512,512,(x,w,h)=>{x.fillStyle='rgba(0,0,0,0)';x.clearRect(0,0,w,h);x.strokeStyle='rgba(255,255,255,.9)';for(let i=0;i<220;i++){const a=R()*w,b=R()*h,l=20+R()*60,an=R()*TAU;x.lineWidth=.6+R()*1.2;x.beginPath();x.moveTo(a,b);x.quadraticCurveTo(a+Math.cos(an+.6)*l*.5,b+Math.sin(an+.6)*l*.5,a+Math.cos(an)*l,b+Math.sin(an)*l);x.stroke();}for(let i=0;i<120;i++){x.fillStyle='rgba(255,255,255,.8)';x.beginPath();x.arc(R()*w,R()*h,1.2+R()*1.5,0,TAU);x.fill();}});webTex.repeat.set(2,1.5);
+const duraTex=canvasTex(512,256,(x,w,h)=>{x.fillStyle='#e8d2a8';x.fillRect(0,0,w,h);for(let i=0;i<420;i++){const y=R()*h;x.strokeStyle=`rgba(${150+R()*60|0},${120+R()*50|0},${80+R()*40|0},${.15+R()*.3})`;x.lineWidth=.6+R()*1.8;x.beginPath();x.moveTo(R()*w,y);x.lineTo(R()*w,y+(R()-.5)*14);x.stroke();}});duraTex.repeat.set(1,2);
+const pia1=ns(mesh(new THREE.CylinderGeometry(RC*1.02,RC*1.02,D1,72,1,true),std(0xffffff,{map:piaTex,transparent:true,opacity:.22,depthWrite:false,roughness:.35,side:THREE.DoubleSide}),[0,TY-D1/2,0],0,[1,1,.81],G1));
+// arachnoidea en dura zijn aan de voorkant en aan de rechterkant (waar de wortels uittreden) opengeknipt
+const ARS=2.35,ARL=5.43-2.35,DUS=2.5,DUL=5.23-2.5;
+const arach=ns(mesh(new THREE.CylinderGeometry(RC*1.2,RC*1.2,D1-.45,72,1,true,ARS,ARL),std(0xf1e8fa,{alphaMap:webTex,transparent:true,opacity:.55,depthWrite:false,roughness:.4,side:THREE.DoubleSide}),[0,TY-D1/2-.22,0],0,[1,1,.88],G1));
+const dura=ns(mesh(new THREE.CylinderGeometry(RC*1.38,RC*1.38,D1-.95,72,1,true,DUS,DUL),std(0xffffff,{map:duraTex,transparent:true,opacity:.34,depthWrite:false,roughness:.55,side:THREE.DoubleSide}),[0,TY-D1/2-.47,0],0,[1,1,.92],G1));
+// snijranden van de vliezen, zodat je ziet hoe dik ze zijn
+const MENR=[[RC*1.2,ARS,ARL,TY-.445,.88,0xeee6f6,.02],[RC*1.38,DUS,DUL,TY-.945,.92,0xdcc293,.035]].map(q=>{const pts=[];for(let k=0;k<=60;k++){const th=q[1]+q[2]*k/60;pts.push(V(Math.sin(th)*q[0],q[3],Math.cos(th)*q[0]*q[4]));}const m=tube(pts,q[6],std(q[5],{roughness:.5}),G1,120,6);m.castShadow=false;return m;});
+const trab=[];for(let i=0;i<22;i++){const a=ARS+.1+R()*(ARL-.2),h=TY-.6-R()*(D1-1.2);const p1=V(Math.sin(a)*RC*1.02,h,Math.cos(a)*RC*.82),p2=V(Math.sin(a)*RC*1.2,h+(R()-.5)*.3,Math.cos(a)*RC*1.05);const m=ns(mesh(BAND,glass(0xf6effa,.45),0,0,0,G1));orient(m,p1,p2,.012);trab.push(m);}
+const MEN=[pia1,arach,dura,...MENR,...trab];
+// bloedvaten op het ruggenmerg
+tube([V(0,TY-D1,RC*.83),V(.05,TY-D1/2,RC*.84),V(0,TY-.05,RC*.83)],.09,std(0xc0392b,{roughness:.35}),G1,20);
+[-.42,.42].forEach(x=>tube([V(x*RC,TY-D1,-RC*.74),V(x*RC*1.05,TY-D1/2,-RC*.75),V(x*RC,TY-.05,-RC*.74)],.07,std(0x3b5bab,{roughness:.35}),G1,20));
+// wortels, spinaal ganglion en spinale zenuw (rechts actief, links in rust)
+const rootM=std(0xefdcb2,{roughness:.45});
+const DR0=V(3.05,TY-.8,-1.95),DRGc=V(4.05,TY-.9,-1.85),VR0=V(3.05,TY-1.25,1.2),SNc=V(4.95,TY-1.15,-.62),SNe=V(8.8,TY-1.65,.55);
+// wortels: aan de actieve kant doorschijnend met een vezelige textuur, zodat je de banen erin ziet lopen
+const rootTex=canvasTex(256,64,(x,w,h)=>{x.fillStyle='#efdcb2';x.fillRect(0,0,w,h);for(let i=0;i<90;i++){const y=R()*h;x.strokeStyle=`rgba(${170+R()*50|0},${140+R()*40|0},${95+R()*30|0},${.25+R()*.3})`;x.lineWidth=.8+R()*1.4;x.beginPath();x.moveTo(0,y);x.bezierCurveTo(w*.3,y+(R()-.5)*6,w*.7,y+(R()-.5)*6,w,y);x.stroke();}});rootTex.repeat.set(3,1);
+const rootGlass=std(0xf3e2bb,{map:rootTex,transparent:true,opacity:.2,depthWrite:false,roughness:.4,side:THREE.DoubleSide});
+const drgTex=canvasTex(256,128,(x,w,h)=>{x.fillStyle='#f2d48a';x.fillRect(0,0,w,h);for(let i=0;i<260;i++){x.fillStyle=`rgba(${190+R()*50|0},${140+R()*40|0},${60+R()*30|0},${.18+R()*.25})`;x.beginPath();x.arc(R()*w,R()*h,1.5+R()*4,0,TAU);x.fill();}for(let i=0;i<40;i++){x.strokeStyle='rgba(160,110,50,.25)';x.lineWidth=1;x.beginPath();const y=R()*h;x.moveTo(0,y);x.lineTo(w,y+(R()-.5)*20);x.stroke();}});
+function sideRoots(s,active){const X=v=>V(v.x*s,v.y,v.z);const g=new THREE.Group();G1.add(g);const rm=active?rootGlass:rootM;
+  for(let i=0;i<4;i++){const y=TY-.18-i*.36;tube([V(1.72*s,y,-1.56),V(2.3*s,y-.05,-1.75),X(DR0)],.065,rm,g,24);tube([V(1.84*s,y-.1,1.47),V(2.4*s,y-.2,1.42),X(VR0)],.065,rm,g,24);}
+  tube([X(DR0),X(V(3.5,TY-.86,-1.95)),X(DRGc),X(V(4.6,TY-1.0,-1.4)),X(SNc)],.15,rm,g,40).castShadow=false;
+  tube([X(VR0),X(V(4.1,TY-1.25,.55)),X(SNc)],.14,rm,g,40).castShadow=false;
+  const drg=mesh(new THREE.SphereGeometry(1,32,20),std(active?0xe8b860:0xe9d4a2,{map:active?drgTex:null,roughness:.35,transparent:true,opacity:active?.3:.55,depthWrite:false,emissive:0x6a4a10,emissiveIntensity:active?.25:0,side:active?THREE.DoubleSide:THREE.FrontSide}),X(DRGc).toArray(),[0,s*.3,0],[.62,.42,.45],g);drg.castShadow=false;
+  const sn=tube([X(SNc),X(V(6.4,TY-1.4,-.1)),X(V(7.6,TY-1.55,.3)),X(SNe)],.25,active?std(0xf0e2bf,{map:rootTex,transparent:true,opacity:.26,depthWrite:false,roughness:.4,side:THREE.DoubleSide}):glass(0xf0e2bf,.42),g,40);sn.castShadow=false;
+  // cellichamen in het ganglion: blauw, want het zijn sensorische cellen
+  const som=inst(new THREE.SphereGeometry(1,12,9),active?new THREE.MeshStandardMaterial({color:0x1d4f86,emissive:COL.sens,emissiveIntensity:.35,roughness:.4}):cellMat(0x7fb8e8),22);g.add(som);som.castShadow=false;for(let i=0;i<22;i++){const a=R()*TAU,r=Math.sqrt(R());som.setMatrixAt(i,placeMatrix(X(DRGc).add(V((R()-.5)*.8,r*.25*Math.cos(a),r*.3*Math.sin(a))),null,.07+R()*.04));}som.material.emissiveIntensity=active?.8:.15;
+  return {g,drg,sn,som};}
+const RootR=sideRoots(1,true),RootL=sideRoots(-1,false);
+// cellen op het snijvlak: twee voorhoorncellen, een schakelneuron en kleine neuronen
+const P1={DREZ:cTop(.6,.62),DH:cTop(.41,.52),BP:cTop(.37,.29),IN:cTop(.27,-.02),MNq:cTop(.4,-.43),MNh:cTop(.59,-.29),VREZ:cTop(.69,-.55),VREZ2:cTop(.72,-.5),LC:cTop(.74,.12),DC:cTop(.14,.55)};
+function neuron(p,r,m,nd,len,g){const c=new THREE.Group();c.position.copy(p);(g||G1).add(c);mesh(new THREE.SphereGeometry(r,22,16),m,[0,0,0],0,[1,.5,1],c);
+  for(let i=0;i<nd;i++){const a=i/nd*TAU+R()*.5,L=len*(.7+R()*.5);tube([V(0,0,0),V(Math.cos(a)*L*.45,.01,Math.sin(a)*L*.45+(R()-.5)*.1),V(Math.cos(a+.3)*L,-.005,Math.sin(a+.3)*L)],r*.18,m,c,14,6);}return c;}
+const MNqM=cellMat(COL.mot),MNhM=cellMat(COL.mot),INM=cellMat(COL.inh);
+const nMNq=neuron(P1.MNq,.3,MNqM,6,.75),nMNh=neuron(P1.MNh,.25,MNhM,5,.6),nIN=neuron(P1.IN,.16,INM,3,.4);
+const NISSL=inst(new THREE.SphereGeometry(1,10,8),cellMat(0x8f5a7c),34);G1.add(NISSL);NISSL.castShadow=false;{let k=0;while(k<34){const x=(R()-.5)*1.4,y=(R()-.5)*1.5;if(!inBF(x,y))continue;if(Math.hypot(x-.4,y+.43)<.18||Math.hypot(x-.59,y+.29)<.15||Math.hypot(x-.27,y+.02)<.1)continue;NISSL.setMatrixAt(k++,placeMatrix(cTop(x,y,.035),null,[.05+R()*.05,.025,.05+R()*.05]));}}NISSL.material.emissiveIntensity=.12;
+const boutonIa=mesh(new THREE.SphereGeometry(.08,12,10),glow(COL.sens,COL.sens,.8),P1.MNq.clone().add(V(-.28,0,-.12)).toArray(),0,0,G1);
+// de banen
+const R1={};const TYb=TY;
+R1.IA=mkRoute(G1,[[null,[SNe,V(7.6,TY-1.5,.25),V(6.4,TY-1.33,-.15),SNc.clone().add(V(0,.06,-.06)),V(4.6,TY-.9,-1.45),DRGc.clone().add(V(0,.18,0)),V(3.5,TY-.73,-1.98),DR0.clone().add(V(0,.05,0)),V(2.3,TY-.08,-1.8),V(1.72,TY+.02,-1.62),P1.DREZ,P1.DH,P1.BP,cTop(.3,-.22),P1.MNq.clone().add(V(-.28,0,-.12))]]],COL.sens,.07,{base:.6,cm:.45});
+R1.IAc=mkRoute(G1,[[null,[P1.BP,cTop(.31,.13),P1.IN]]],COL.sens,.05,{base:.6,cm:.45});
+R1.INH=mkRoute(G1,[[null,[P1.IN,cTop(.43,-.14),P1.MNh.clone().add(V(-.18,0,-.05))]]],COL.inh,.055,{base:.6,cm:.45});
+R1.MQ=mkRoute(G1,[[null,[P1.MNq,cTop(.6,-.56),P1.VREZ,V(1.92,TY-.3,1.5),V(2.5,TY-.95,1.42),VR0.clone().add(V(0,.05,.05)),V(4.1,TY-1.18,.6),SNc.clone().add(V(0,-.06,.06)),V(6.4,TY-1.47,-.04),V(7.6,TY-1.62,.36),SNe.clone().add(V(0,-.06,.05))]]],COL.mot,.065,{base:.6,cm:.45});
+R1.MH=mkRoute(G1,[[null,[P1.MNh,cTop(.7,-.42),P1.VREZ2,V(1.96,TY-.6,1.42),V(2.5,TY-1.1,1.3),VR0.clone().add(V(0,-.06,-.04)),V(4.1,TY-1.32,.5),SNc.clone().add(V(0,-.12,0)),V(6.4,TY-1.52,-.12),V(7.6,TY-1.7,.28),SNe.clone().add(V(0,-.12,0))]]],COL.mot,.055,{base:.5,cm:.4});
+R1.ASC=mkRoute(G1,[[null,[P1.DREZ,P1.DC,V(P1.DC.x,TY+.6,P1.DC.z),V(P1.DC.x,TY+1.6,P1.DC.z)]]],COL.asc,.055,{base:.6,cm:.4});
+R1.PYR=mkRoute(G1,[[null,[V(P1.LC.x,TY+1.6,P1.LC.z),V(P1.LC.x,TY+.5,P1.LC.z),P1.LC,cTop(.6,-.1),P1.MNq.clone().add(V(.15,0,-.2))]]],COL.pyr,.06,{base:.6,cm:.45});
+const ROUTES1=Object.values(R1);
+const P1s=Pulser(G1,40,.085,{normal:true,white:.05});
+// stand 3: een uitstulping van de tussenwervelschijf drukt op de spinale zenuw
+// twee wervellichamen met daartussen de tussenwervelschijf, vóór de zenuwwortel. De kern puilt naar achteren uit, tegen de wortel aan.
+const DGc=V(5.9,TY-1.42,1.55);
+const discG=new THREE.Group();discG.position.copy(DGc);discG.scale.set(1,1,.8);G1.add(discG);
+const annTex=canvasTex(512,128,(x,w,h)=>{x.fillStyle='#d9e6ea';x.fillRect(0,0,w,h);for(let k=0;k<6;k++){const y0=k*h/6;x.save();x.beginPath();x.rect(0,y0,w,h/6);x.clip();x.strokeStyle=k%2?'rgba(120,150,165,.55)':'rgba(150,175,185,.55)';x.lineWidth=2;for(let i=-h;i<w+h;i+=9){x.beginPath();x.moveTo(i,y0);x.lineTo(i+(k%2?h/6:-h/6)*1.4,y0+h/6);x.stroke();}x.restore();x.fillStyle='rgba(90,120,135,.35)';x.fillRect(0,y0,w,1.5);}});annTex.repeat.set(4,1);
+const ann=lathe([[1.17,-.25],[1.25,-.15],[1.29,0],[1.25,.15],[1.17,.25]],std(0xffffff,{map:annTex,roughness:.45,side:THREE.DoubleSide}),discG,64);ann.castShadow=false;
+// de anulus aan de achterkant is ingescheurd: een donkere spleet waar de kern doorheen komt
+const tearM=std(0x3a5a68,{roughness:.6,emissive:0x0,transparent:true,opacity:0,depthWrite:false});const tear=ns(mesh(new THREE.BoxGeometry(.5,.34,.12),tearM,[-.05,0,-1.27],0,0,discG));
+const vbTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#e9dcc0';x.fillRect(0,0,w,h);for(let i=0;i<700;i++){x.fillStyle=`rgba(${150+R()*50|0},${120+R()*40|0},${85+R()*30|0},${.2+R()*.35})`;x.beginPath();x.ellipse(R()*w,R()*h,1+R()*3.5,1+R()*2.5,R()*TAU,0,TAU);x.fill();}});vbTex.repeat.set(3,1);
+const vbM=std(0xffffff,{map:vbTex,roughness:.7,side:THREE.DoubleSide});
+const VBP=[[.001,.25],[1.15,.25],[1.27,.31],[1.31,.42],[1.17,.8],[1.27,1.18],[1.3,1.25],[1.22,1.32],[.001,1.32]];
+[1,-1].forEach(s=>{const m=lathe(VBP.map(q=>[q[0],q[1]*s]),vbM,discG,56);m.castShadow=false;});
+// de kern (nucleus pulposus): gelachtig, vervormd naar achteren
+const bulgeGeo=new THREE.SphereGeometry(1,32,20);{const p=bulgeGeo.attributes.position;for(let i=0;i<p.count;i++){_a.fromBufferAttribute(p,i);const back=Math.max(0,-_a.z);_a.z-=.35*back*back;_a.x*=1-.25*back;_a.y*=1-.2*back;_a.multiplyScalar(1+.06*Math.sin(_a.x*7+_a.y*5)*Math.sin(_a.z*6));p.setXYZ(i,_a.x,_a.y,_a.z);}bulgeGeo.computeVertexNormals();}
+const bulgeM=std(0x6fb6d2,{roughness:.12,transparent:true,opacity:.85,emissive:0x1a5a72,emissiveIntensity:.3,depthWrite:false});const bulge=ns(mesh(bulgeGeo,bulgeM,[0,0,0],0,[.001,.001,.001],G1));
+const nucM=std(0xbfe6f0,{roughness:.15,transparent:true,opacity:.55,emissive:0x2a6a80,emissiveIntensity:.3,depthWrite:false});ns(mesh(new THREE.SphereGeometry(1,24,16),nucM,[0,0,-.2],0,[.55,.2,.5],discG));
+const CP1=V(5.85,TY-1.33,-.3);const inflM=new THREE.MeshBasicMaterial({color:0xe0301c,transparent:true,opacity:0,depthWrite:false});const infl=ns(new THREE.Mesh(new THREE.SphereGeometry(.5,20,14),inflM));infl.position.copy(CP1);G1.add(infl);
+// de spinale zenuw deukt in waar de schijf drukt
+const snPos=RootR.sn.geometry.attributes.position,snOrig=Float32Array.from(snPos.array);let snDent=-1;
+function dentNerve(c){if(Math.abs(c-snDent)<.004)return;snDent=c;const a=snPos.array;for(let i=0;i<a.length;i+=3){const x=snOrig[i],y=snOrig[i+1],z=snOrig[i+2];const f=c*Math.exp(-Math.pow((x-CP1.x)/.42,2));a[i]=x;a[i+1]=y+(y-CP1.y)*.12*f;a[i+2]=z>CP1.z?z-(z-CP1.z)*.55*f:z+(CP1.z-z)*.1*f;}snPos.needsUpdate=true;}
+const uCP={IA:uNear(R1.IA,CP1),MQ:uNear(R1.MQ,CP1)};
+const uBP=uNear(R1.IA,P1.BP),uDREZ=uNear(R1.IA,P1.DREZ);
+const L1={t:0,cy:0,ia:0,mnq:0,mnh:0,inn:0,inh:0,comp:0,flashed:false,sent:0,got:0,lost:0,rest:0,pass:1,lastSt:1};
+W.drg=DRGc.clone().add(V(0,.45,0));W.dh1=P1.DH.clone();W.in1=P1.IN.clone();W.mnq1=P1.MNq.clone();W.gm1=cTop(-.45,-.4);W.wm1=cTop(-.85,.15);W.vr1=VR0.clone().add(V(.4,.2,0));W.sn1=V(7.2,TY-1.3,.3);W.cp1=CP1.clone().add(V(0,.45,0));W.disc1=DGc.clone().add(V(0,.1,-1.0));W.asc1=V(P1.DC.x,TY+1.3,P1.DC.z);W.pyr1=V(P1.LC.x,TY+1.3,P1.LC.z);
+function fireMNq(n){L1.mnq=1;sq(a=>a.noise(.025,'highpass',2600,.8,.16,.001));for(let i=0;i<n;i++){const blk=S.state===3&&R()<blockP();const o={r:R1.MQ,t0:L1.t+.05+i*.09,dur:1.5,col:COL.mot,k:'rt'};if(blk){o.stop=uCP.MQ;o.blk=true;}P1s.add(o);}}
+function blockP(){return [0,.3,.65,.92][S.grade]*clamp(L1.comp,0,1);}
+function volley1(n){let arrived=0;const t=L1.t;const blks=[];for(let i=0;i<n;i++)blks.push(S.state===3&&R()<blockP());const nOk=blks.filter(b=>!b).length;
+  for(let i=0;i<n;i++){const blk=blks[i];L1.sent++;const o={r:R1.IA,t0:t+i*.1,dur:1.7,col:COL.sens,k:'rt',sz:1.1,cb:()=>{arrived++;L1.got++;if(arrived===1)setTimeout0(()=>fireMNq(nOk),.03);}};
+    if(blk){o.stop=uCP.IA;o.blk=true;o.cbStop=()=>{L1.lost++;sq(a=>a.noise(.04,'lowpass',500,.7,.08,.002));};}P1s.add(o);
+    if(!blk){Q1.push({at:t+i*.1+1.7*uBP,fn:()=>P1s.add({r:R1.IAc,t0:L1.t,dur:.28,col:COL.sens,k:'rt',cb:()=>{L1.inn=1;sq(a=>a.tone(640,.04,.03,'triangle'));P1s.add({r:R1.INH,t0:L1.t,dur:.3,col:COL.inh,k:'rt',cb:()=>{L1.inh=Math.max(L1.inh,2.2);}});}})});
+      Q1.push({at:t+i*.1+1.7*uDREZ,fn:()=>P1s.add({r:R1.ASC,t0:L1.t,dur:.55,col:COL.asc,k:'rt',sz:.8})});}}}
+const Q1=[];function setTimeout0(fn,d){Q1.push({at:L1.t+d,fn});}
+function step1(dt){SQ.length=0;L1.t+=dt;const st=S.state,t=L1.t;arrive3(L1,V13);
+  for(let i=Q1.length-1;i>=0;i--){if(Q1[i].at<=t){const f=Q1[i].fn;Q1.splice(i,1);f();}}
+  L1.mnq=Math.max(0,L1.mnq-dt*2.5);L1.mnh=Math.max(0,L1.mnh-dt*2.5);L1.inn=Math.max(0,L1.inn-dt*2.5);L1.inh=Math.max(0,L1.inh-dt);L1.ia=Math.max(0,L1.ia-dt*1.5);
+  if(st===1){L1.rest+=dt;if(L1.rest>.3){L1.rest=0;if(R()<.28){P1s.add({r:R1.IA,t0:t,dur:1.7,col:COL.sens,k:'rt',cb:()=>{if(R()<.6)fireMNq(1);}});L1.ia=.5;}if(R()<.2&&L1.inh<=0)P1s.add({r:R1.MH,t0:t,dur:1.5,col:COL.mot,k:'rt',cb:()=>{}}),L1.mnh=.7,sq(a=>a.noise(.02,'highpass',2200,.8,.08,.001));if(R()<.07)P1s.add({r:R1.PYR,t0:t,dur:.8,col:COL.pyr,k:'rt',cb:()=>fireMNq(1)});}}
+  else{if(st===3){const target=clamp((t-.2)/1.0,0,1);L1.comp=smooth(target);if(!L1.flashed&&t>1.15){L1.flashed=true;K.flash({big:S.grade>=2,a:S.grade===1?.45:.9,shake:.1+.1*S.grade});}}
+    const T0=st===3?1.8:.3;if(t>=T0+L1.cy*4.4){L1.cy++;volley1(st===3?4:3);L1.ia=1;}
+    if(st===2&&L1.inh<=0&&R()<dt*.5){P1s.add({r:R1.MH,t0:t,dur:1.5,col:COL.mot,k:'rt'});L1.mnh=.6;}}
+  // schijf en ontsteking
+  const c=st===3?L1.comp:0;const ext=[0,.4,.47,.54][S.grade]*c;bulge.visible=c>.01;bulge.scale.set(Math.max(.001,ext*1.15),Math.max(.001,ext*.62),Math.max(.001,ext));bulge.position.set(DGc.x-.05,DGc.y+.02,.66-.5*ext);
+  inflM.opacity=st===3?.3*c*(.6+.4*Math.sin(S.clock*4))*(.4+.6*S.grade/3):0;discG.visible=st===3;tearM.opacity=.85*c;dentNerve(st===3?c*[0,.35,.6,.85][S.grade]:0);
+  // cellen kleuren mee
+  MNqM.emissiveIntensity=.3+2.6*L1.mnq;INM.emissiveIntensity=.3+2.4*L1.inn;
+  const inh=clamp(L1.inh,0,1);MNhM.color.setRGB(lerp(1,.38,inh),lerp(.35,.75,inh),lerp(.24,.6,inh));MNhM.emissive.copy(MNhM.color);MNhM.emissiveIntensity=lerp(.3,.08,inh)+2*L1.mnh;
+  RootR.som.material.emissiveIntensity=.6+1.2*L1.ia;
+  P1s.update(()=>L1.t);decayRoutes(ROUTES1,dt,.45);
+  if(st<3){K.bar(1,L1.ia,L1.ia>.6?'salvo':'rust','', '#58b8ff');K.bar(2,Math.max(L1.mnq,.12),L1.mnq>.5?'vuurt':'rust',L1.mnq>.5?'con':'','#ff5a3c');K.bar(3,inh>.1?inh:Math.max(L1.mnh,.12),inh>.1?'geremd':'rust',inh>.1?'ok':'',inh>.1?'#5fe08a':'#ff5a3c');}
+  else{const done=L1.got+L1.lost,pass=done?L1.got/done:1;L1.pass=lerp(L1.pass,pass,Math.min(1,dt*2));K.bar(1,L1.pass,`${Math.round(L1.pass*100)} % komt aan`,L1.pass<.5?'bad':'','#58b8ff');K.bar(2,Math.max(L1.mnq,.08),L1.mnq>.5?'vuurt':'stil',L1.mnq>.5?'con':'','#ff5a3c');K.bar(3,c*S.grade/3,['','licht','matig','sterk'][S.grade]+' bekneld',S.grade>1?'bad':'','#e6b65e');}
+  cap1();}
+function cap1(){const st=S.state,t=L1.t;
+  if(st===1){const i=Math.floor(S.clock/7)%4;K.capSoft(K.stateText(),['Het ruggenmerg is ongeveer zo dik als je pink. De <b>grijze stof</b> heeft de vorm van een vlinder.','In de grijze stof liggen cellichamen. De <b>witte stof</b> eromheen bestaat uit vezels die op en neer lopen.','Rechts komt de <b>achterwortel</b> binnen (sensorisch, met ganglion) en gaat de <b>voorwortel</b> naar buiten (motorisch).','Drie vliezen beschermen het ruggenmerg: pia mater, arachnoidea en dura mater. Tussen pia en arachnoidea zit hersenvocht (liquor).'][i],3);return;}
+  const ph=(t-(st===3?1.8:.3))%4.4;
+  if(st===2)K.capSoft(K.stateText(),ph<1.4?'Een salvo uit de spierspoel komt binnen via de <b>Ia-vezel</b> en de achterwortel. Het cellichaam ligt in het ganglion.':ph<2.7?'In de achterhoorn splitst de vezel. Eén tak gaat <b>direct</b> naar de voorhoorncel van de quadriceps. Een tweede tak prikkelt een <b>schakelneuron</b> dat de hamstrings remt.':'De voorhoorncel vuurt: het bevel gaat via de <b>voorwortel</b> naar de quadriceps. Een derde tak meldt de tik aan de hersenen.',1.2);
+  else K.capSoft(K.stateText(),t<1.2?'De gelachtige kern van de <b>tussenwervelschijf</b> puilt door een scheur in de vezelring naar achteren, tegen de zenuwwortel.':ph<1.6?'De beknelde zenuw laat niet alle impulsen door. Sommige pulsen <b>stoppen</b> bij de knelling.':'Minder signaal naar de voorhoorncel en minder bevel terug: de <b>kniepeesreflex wordt zwakker</b>. Vergelijk graad 1, 2 en 3.',2.4);}
+
+/* =====================================================================
+   NIVEAU 2 · één zenuwvezel met myeline en een vezel zonder myeline
+   ===================================================================== */
+const AY2=.95,AR=.26,MR=.7,NG=.34,PER=2.72,NN=7;const NX=[];for(let i=0;i<NN;i++)NX.push(-8.16+i*PER);
+const BY=-1.75,BR=.17;
+const axM=std(0xf2dfa6,{roughness:.35,emissive:0xffb040,emissiveIntensity:0});
+mesh(new THREE.CylinderGeometry(AR,AR,21,28),axM,[0,AY2,0],[0,0,Math.PI/2],0,G2);
+const myTex=canvasTex(512,128,(x,w,h)=>{x.fillStyle='#f3ece0';x.fillRect(0,0,w,h);for(let i=-h;i<w;i+=9){x.strokeStyle=`rgba(150,128,96,${.2+R()*.2})`;x.lineWidth=1.6;x.beginPath();x.moveTo(i,0);x.lineTo(i+h*.35,h);x.stroke();}for(let i=0;i<500;i++){x.fillStyle=`rgba(200,180,150,${R()*.15})`;x.fillRect(R()*w,R()*h,2,1);}});myTex.repeat.set(2,1);
+const myM=std(0xf2e4ca,{map:myTex,roughness:.3});
+function myelinGeo(len,phiS,phiL){const p=[];const N=26;for(let i=0;i<=N;i++){const t=i/N,y=t*len;const e=Math.min(y,len-y);p.push(new THREE.Vector2(AR+.015+(MR-AR)*smooth(e/.34),y));}return new THREE.LatheGeometry(p,56,phiS||0,phiL||TAU);}
+const CUT=2; // het opengesneden internodium tussen knoop 2 en 3
+const MY=[];
+for(let i=-1;i<NN;i++){const x0=(i<0?-10.6:NX[i])+NG/2,x1=(i===NN-1?10.6:NX[i+1])-NG/2;const len=x1-x0;const cut=i===CUT;
+  const g=new THREE.Group();g.position.set(x0,AY2,0);G2.add(g);
+  const m=mesh(cut?myelinGeo(len,.72,TAU-2.0):myelinGeo(len),myM,[0,0,0],[0,0,-Math.PI/2],0,g);
+  const nuc=mesh(new THREE.SphereGeometry(1,20,14),std(0x8a6fc0,{roughness:.45}),[len/2,MR-.02,-.18],0,[Math.min(.5,len*.18),.13,.26],g);
+  MY.push({g,m,nuc,x0,x1,len,cut,i});
+  if(cut){// lamellen in de snede
+    for(let k=0;k<7;k++){const r=AR+.05+k*.058;const c=mesh(new THREE.CylinderGeometry(r,r,len-.5,56,1,true,.72,TAU-2.0),std(k%2?0xd9c8a6:0xf3ead8,{roughness:.4,side:THREE.DoubleSide}),[len/2,0,0],[0,0,-Math.PI/2],0,g);c.castShadow=false;}
+    const lamTex=canvasTex(64,256,(x,w,h)=>{for(let y=0;y<h;y+=12){x.fillStyle=(y/12)%2?'#d3c09a':'#f4ecdc';x.fillRect(0,y,w,12);}});
+    [.72,.72+TAU-2.0].forEach(ph=>{const pl=mesh(new THREE.PlaneGeometry(len-.5,MR-AR-.02),std(0xffffff,{map:lamTex,roughness:.4,side:THREE.DoubleSide}),[0,0,0],0,0,g);
+      // vlak door de as onder hoek ph (lathe: x = r sin, z = r cos; na draaien: y = -r sin, z = r cos)
+      const ry=(AR+MR)/2;pl.position.set(len/2,-ry*Math.sin(ph),ry*Math.cos(ph));pl.rotation.x=ph+Math.PI/2;pl.castShadow=false;});
+    MY[MY.length-1].inner=mesh(new THREE.CylinderGeometry(AR*.72,AR*.72,len,20),add(0xffd070,0),[len/2,0,0],[0,0,Math.PI/2],0,g);}}
+// natriumkanalen bij de knopen, gloedringen en de sprongbogen
+const NAC=inst(new THREE.CapsuleGeometry(.035,.07,3,6),std(0xffffff,{roughness:.4}),NN*24);G2.add(NAC);NAC.castShadow=false;
+{let k=0;NX.forEach(x=>{for(let j=0;j<24;j++){const a=j/12*TAU,dx=(j<12?-.075:.075);const p=V(x+dx,AY2+Math.cos(a)*(AR+.03),Math.sin(a)*(AR+.03));const q=new THREE.Quaternion().setFromUnitVectors(AY,V(0,Math.cos(a),Math.sin(a)));NAC.setMatrixAt(k,placeMatrix(p,q,1));NAC.setColorAt(k,_c.setRGB(.62,.32,.2));k++;}});NAC.instanceMatrix.needsUpdate=true;NAC.instanceColor.needsUpdate=true;}
+const ringMs=[],arcMs=[];
+NX.forEach(x=>{const m=add(0xffd36a,0);const r=ns(new THREE.Mesh(new THREE.TorusGeometry(AR+.09,.07,10,40),m));r.position.set(x,AY2,0);r.rotation.y=Math.PI/2;G2.add(r);ringMs.push(m);});
+for(let i=0;i<NN-1;i++){const m=add(0xffe7a0,0);const a=NX[i],b=NX[i+1];const pts=[V(a,AY2+AR+.12,.1),V(a+.6,AY2+MR+.55,.32),V((a+b)/2,AY2+MR+.8,.4),V(b-.6,AY2+MR+.55,.32),V(b,AY2+AR+.12,.1)];const t=ns(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),40,.045,8),m));G2.add(t);arcMs.push(m);}
+// ionen bij de knopen: Na+ buiten, K+ binnen
+const NAI=[],KI=[];NX.forEach((x,n)=>{for(let j=0;j<12;j++){const a=R()*TAU;NAI.push({n,x:x+(R()-.5)*.26,a,r0:AR+.3+R()*.5,ph:R()*TAU});}for(let j=0;j<8;j++){const a=R()*TAU;KI.push({n,x:x+(R()-.5)*.22,a,r0:R()*AR*.7,ph:R()*TAU});}});
+const NAM=inst(new THREE.SphereGeometry(.06,10,8),glow(0xffc94a,0xffa820,.6),NAI.length),KM=inst(new THREE.SphereGeometry(.055,10,8),glow(0xb48cff,0x8a5cff,.6),KI.length);G2.add(NAM);G2.add(KM);NAM.castShadow=KM.castShadow=false;
+// vezel zonder myeline
+const bM=std(0xead7a2,{roughness:.4,emissive:0xffb040,emissiveIntensity:0});mesh(new THREE.CylinderGeometry(BR,BR,21,20),bM,[0,BY,0],[0,0,Math.PI/2],0,G2);
+const BCH=inst(new THREE.SphereGeometry(.03,6,5),std(0xe0a040,{roughness:.4}),140);G2.add(BCH);BCH.castShadow=false;for(let i=0;i<140;i++){const x=-10+20*i/140,a=R()*TAU;BCH.setMatrixAt(i,placeMatrix(V(x,BY+Math.cos(a)*BR,Math.sin(a)*BR),null,1));}
+const sleeveMs=[],sleeves=[];for(let i=0;i<4;i++){const m=add(0xffc860,0);const s=ns(new THREE.Mesh(new THREE.CylinderGeometry(BR+.12,BR+.12,1.2,20,1,true),m));s.rotation.z=Math.PI/2;G2.add(s);sleeveMs.push(m);sleeves.push(s);}
+const BNA=[];for(let i=0;i<54;i++){BNA.push({x:-10+R()*20,a:R()*TAU,r0:BR+.18+R()*.22});}const BNM=inst(new THREE.SphereGeometry(.05,8,6),glow(0xffc94a,0xffa820,.5),BNA.length);G2.add(BNM);BNM.castShadow=false;
+// achtergrond: een bundel met meer vezels in het perineurium, en een haarvat
+const FAS2=new THREE.Group();FAS2.position.set(0,1.4,-7.4);G2.add(FAS2);
+ns(mesh(new THREE.CylinderGeometry(2.5,2.5,23,48,1,true),glass(0xe8d6c0,.16),[0,0,0],[0,0,Math.PI/2],0,FAS2));
+const bgF=sunflower(18).map(p=>({y:p[0]*1.9,z:p[1]*1.9,r:.28+R()*.22,o:R()*2.4}));const BGM=inst(new THREE.CapsuleGeometry(1,2,4,14),std(0xe0d4c0,{roughness:.5,map:myTex,transparent:true,opacity:.28,depthWrite:false}),bgF.length*9);FAS2.add(BGM);BGM.castShadow=false;
+{let k=0;bgF.forEach(f=>{for(let j=0;j<9;j++){const len=2.3;const x=-11+f.o+j*2.62;_o2.position.set(x,f.y,f.z);_o2.rotation.set(0,0,Math.PI/2);_o2.scale.set(f.r,len/4,f.r);_o2.updateMatrix();BGM.setMatrixAt(k++,_o2.matrix);}});BGM.instanceMatrix.needsUpdate=true;}
+tube([V(-11,-5.0,-3.7),V(-6,-4.7,-3.2),V(-1,-5.2,-3.9),V(4,-4.8,-3.3),V(11,-5.1,-3.8)],.18,std(0xc0392b,{roughness:.35,transparent:true,opacity:.75}),G2,80).castShadow=false;
+const ery=inst(new THREE.CylinderGeometry(.13,.13,.06,14),std(0xd04040,{roughness:.4}),10);G2.add(ery);
+// endoneurium: dunne collageenvezels tussen de zenuwvezels
+const COLL=inst(UCYL,std(0x7d8f9a,{roughness:.7,transparent:true,opacity:.12,depthWrite:false}),64*8);G2.add(COLL);COLL.castShadow=false;
+{let k=0;for(let i=0;i<64;i++){const a=Math.PI*(1.05+.9*R()),rr=1.1+R()*1.6,yc=i%2?AY2:BY,ph=R()*TAU,amp=.12+R()*.15;let prev=null;for(let j=0;j<=8;j++){const x=-10.5+21*j/8;const p=V(x,yc+Math.cos(a)*rr+amp*Math.sin(j*1.3+ph),Math.sin(a)*rr*.8+amp*Math.cos(j*1.1+ph));if(prev){COLL.setMatrixAt(k++,segMatrix(prev,p,.008+R()*.006));}prev=p;}}COLL.instanceMatrix.needsUpdate=true;}
+const bruiseM=add(0xff4030,0);const bruise=ns(new THREE.Mesh(new THREE.SphereGeometry(1,24,16),bruiseM));bruise.position.set(NX[3]+1.36,AY2,0);bruise.scale.set(1.9,1.1,1.1);G2.add(bruise);
+// stand 3: het voorwerp van de klap
+const blowM=std(0x9aa3ab,{transparent:true,opacity:0,roughness:.3,depthWrite:false});const blow=ns(mesh(new THREE.SphereGeometry(1.6,32,20),blowM,[1.36,6,0],0,[1.3,1,1],G2));
+const L2={t:0,aps:[],waves:[],lf:NX.map(()=>-99),node:NX.map(()=>0),arc:new Array(NN-1).fill(0),T:37,next:0,comp:0,flashed:false,ect:0,V4:-70,lastWave:-99,blocked:false};
+function fVel(){return Math.pow(1.4,(L2.T-37)/10);}
+function dtNode(){return .2/fVel();}
+function fire2(i0){L2.aps.push({t0:L2.t,i0,dt:dtNode()});if(i0===0){L2.waves.push({t0:L2.t,v:PER/(dtNode()*100)});}}
+W.my2=V(NX[4]+1.36,AY2+MR+.1,.2);W.node2=V(NX[3],AY2+AR+.15,.25);W.cut2=V(NX[2]+1.36,AY2+.1,.55);W.bax=V(-3,BY+.3,.2);W.schw=V(NX[1]+1.36,AY2+MR+.15,-.1);W.ion2=V(NX[3],AY2-.5,.6);W.fas2=V(-4,3,-4);
+function step2(dt){SQ.length=0;L2.t+=dt;const st=S.state,t=L2.t;
+  if(st>=2&&t>=L2.next){L2.next=t+(st===2?3.2:2.8);fire2(0);}
+  if(st===1&&t>=L2.next){L2.next=t+4.5;}
+  // klap
+  if(st===3){const ti=t-1.0;if(ti>0&&!L2.flashed){L2.flashed=true;K.flash({big:true,a:.8,shake:.35});}
+    L2.comp=ti<0?0:ti<.25?smooth(ti/.25):ti<8?1:1-smooth((ti-8)/7);blow.position.y=lerp(6,AY2+MR+1.35,smooth(clamp((ti+.5)/.5,0,1)))+(ti>.3?lerp(0,4,smooth((ti-1)/1.5)):0);blowM.opacity=ti<-.5?0:ti<2?.4:Math.max(0,.4-(ti-2)*.3);
+    if(L2.comp>.2&&t>L2.ect){L2.ect=t+.7+R()*.8;L2.aps.push({t0:t,i0:4,dt:dtNode(),ect:true});sq(a=>a.noise(.03,'highpass',3200,.8,.08,.001));}}
+  else{L2.comp=0;blowM.opacity=0;}
+  const block=L2.comp>.35;L2.blocked=block;
+  // knopen
+  const dn=dtNode();L2.node.fill(0);L2.arc.fill(0);
+  for(let k=L2.aps.length-1;k>=0;k--){const ap=L2.aps[k];const tt=t-ap.t0;if(tt>NN*ap.dt+1.5){L2.aps.splice(k,1);continue;}
+    for(let i=ap.i0;i<NN;i++){if(block&&!ap.ect&&i>=4)break;const tf=(i-ap.i0)*ap.dt;const a=prof(tt-tf,.06,.45);if(tt-tf>=0&&tt-tf<dt*1.01+1e-4&&tt>=tf){L2.lf[i]=ap.t0+tf;if(S.state>1)sq(a=>a.tone(1300+i*70,.03,.025,'square'));}
+      L2.node[i]=Math.max(L2.node[i],a);
+      if(i<NN-1){const ta=tt-tf;if(block&&!ap.ect&&i===3){if(ta>0&&ta<ap.dt*1.5)L2.arc[i]=Math.max(L2.arc[i],.25*Math.abs(Math.sin(ta*40)));}else if(ta>0&&ta<ap.dt*1.3)L2.arc[i]=Math.max(L2.arc[i],1-ta/(ap.dt*1.3));}}}
+  ringMs.forEach((m,i)=>{m.opacity=.85*L2.node[i];});arcMs.forEach((m,i)=>{m.opacity=.9*L2.arc[i];});
+  {let k=0;const cc=_c;for(let n=0;n<NN;n++){const a=L2.node[n];const dim=(n===3||n===4)?L2.comp*.6:0;for(let j=0;j<24;j++){cc.setRGB(lerp(.62,1,a)*(1-dim),lerp(.32,.9,a)*(1-dim),lerp(.2,.5,a)*(1-dim));NAC.setColorAt(k++,cc);}}NAC.instanceColor.needsUpdate=true;}
+  MY.forEach(o=>{if(o.inner)o.inner.material.opacity=.7*L2.arc[CUT];
+    const squash=(o.i===3)?L2.comp:0;o.g.scale.set(1,1-.5*squash,1+.32*squash);});bruiseM.opacity=.16*L2.comp*(.75+.25*Math.sin(S.clock*5));
+  axM.emissiveIntensity=.0+.6*Math.max(...L2.node)*.4;
+  // ionen
+  NAI.forEach((p,i)=>{const tt=t-L2.lf[p.n];let r=p.r0;let vis=1;if(tt>=0&&tt<1.6){r=tt<.22?lerp(p.r0,AR*.4,smooth(tt/.22)):tt<.5?AR*.4:lerp(AR*.4,p.r0,smooth((tt-.5)/1.1));}
+    const jit=.03*Math.sin(S.clock*3+p.ph);_a.set(p.x+jit,AY2+Math.cos(p.a)*r,Math.sin(p.a)*r);NAM.setMatrixAt(i,placeMatrix(_a,null,vis));});NAM.instanceMatrix.needsUpdate=true;
+  KI.forEach((p,i)=>{const tt=t-L2.lf[p.n];let r=p.r0;if(tt>=.12&&tt<1.8){r=tt<.45?lerp(p.r0,AR+.45,smooth((tt-.12)/.33)):lerp(AR+.45,p.r0,smooth((tt-.45)/1.3));}
+    const jit=.02*Math.sin(S.clock*3.3+p.ph);_a.set(p.x+jit,AY2+Math.cos(p.a)*r,Math.sin(p.a)*r);KM.setMatrixAt(i,placeMatrix(_a,null,1));});KM.instanceMatrix.needsUpdate=true;
+  // vezel zonder myeline: een langzame golf
+  for(let k=L2.waves.length-1;k>=0;k--){const w=L2.waves[k];w.x=-10.5+w.v*(t-w.t0);if(block&&w.x>1.0)w.x=1.0,w.stuck=(w.stuck||0)+dt;if(w.x>10.5||(w.stuck||0)>3)L2.waves.splice(k,1);}
+  while(L2.waves.length>4)L2.waves.shift();
+  sleeves.forEach((s,i)=>{const w=L2.waves[i];if(!w){sleeveMs[i].opacity=0;return;}s.position.set(w.x-.4,BY,0);sleeveMs[i].opacity=w.stuck?.3*Math.max(0,1-w.stuck/3):.6;});
+  bM.emissiveIntensity=L2.waves.length?.15:0;
+  BNA.forEach((p,i)=>{let ina=0;L2.waves.forEach(w=>{const d=(w.x-p.x);if(d>0&&d<1.2)ina=Math.max(ina,d<.3?d/.3:1-(d-.3)/.9);});const r=lerp(p.r0,BR*.4,ina);_a.set(p.x,BY+Math.cos(p.a)*r,Math.sin(p.a)*r);BNM.setMatrixAt(i,placeMatrix(_a,null,1));});BNM.instanceMatrix.needsUpdate=true;
+  // rode bloedcellen in het haarvat
+  for(let i=0;i<10;i++){const u=((S.clock*.05+i/10)%1);_a.set(-11+22*u,-4.95+.2*Math.sin(u*9),-3.55+.3*Math.cos(u*7));ery.setMatrixAt(i,placeMatrix(_a,[Math.PI/2,u*6,0],1));}ery.instanceMatrix.needsUpdate=true;
+  // membraanpotentiaal bij knoop 4
+  const tt4=t-L2.lf[4];L2.V4=tt4<0||tt4>2?-70:tt4<.06?lerp(-70,30,tt4/.06):tt4<.35?lerp(30,-78,(tt4-.06)/.29):lerp(-78,-70,smooth((tt4-.35)/.8));
+  const f=fVel();K.bar(1,clamp(f,0,1.2)/1.2,block?'geblokkeerd':`≈ ${Math.round(80*f)} m/s`,block?'bad':'ok','#ffd36a');K.bar(2,Math.max(.02,f*.01),`≈ ${(1*f).toFixed(1)} m/s`,'','#e6b65e');K.bar(3,(L2.V4+80)/115,`${Math.round(L2.V4)} mV`,L2.V4>-55?'con':'','#ff9a5a');
+  cap2();}
+function cap2(){const st=S.state;
+  if(st===1){const i=Math.floor(S.clock/7)%4;K.capSoft(K.stateText(),['Boven: een vezel met <b>myeline</b>, zoals de Ia-vezel. Onder: een dunne vezel zonder myeline.','Rond het axon wikkelt een <b>Schwann-cel</b> zich tientallen keren. Zo ontstaat de myelineschede. Kijk in de snede.','Tussen twee stukken myeline ligt een <b>knoop van Ranvier</b>. Alleen daar liggen de natriumkanalen bloot.','In rust is de binnenkant ongeveer <b>−70 mV</b> negatief. Buiten zit veel Na⁺, binnen veel K⁺.'][i],3);return;}
+  if(st===2){const i=Math.floor(S.clock/6)%3;K.capSoft(K.stateText(),[`Bij een knoop stroomt <b>Na⁺</b> naar binnen: de spanning springt naar ongeveer +30 mV. Daarna stroomt K⁺ naar buiten.`,'De stroom springt onder de myeline door naar de volgende knoop: <b>saltatoire geleiding</b>. In het been van een mens ongeveer 60–80 m/s, in de snelste vezels tot 100 m/s.',`Onder kruipt de golf zonder myeline vooruit: ongeveer 1 m/s. ${L2.T<35?'<b>Koud:</b> beide vezels geleiden trager.':'Probeer de temperatuurschuif.'}`][i],2.6);return;}
+  const ti=L2.t-1;K.capSoft(K.stateText(),ti<0?'Een klap op de zenuw, zoals een stoot tegen het telefoonbotje bij de elleboog.':ti<6?'De vezel is ingedrukt. Impulsen komen <b>niet voorbij</b> de knelling, en de ingedrukte plek vuurt zelf: <b>tintelingen</b>.':L2.comp>.35?'Het gevoel komt terug zodra de druk verdwijnt. Bij een korte klap herstelt de geleiding meestal snel.':'De druk is weg: de impulsen springen weer van knoop naar knoop.',2.6);}
+
+/* =====================================================================
+   NIVEAU 3 · de synaps: prikkelend en remmend
+   ===================================================================== */
+const CAPR=22;const yS=(x,z)=>-CAPR+Math.sqrt(Math.max(0,CAPR*CAPR-x*x-z*z));
+// het membraan van de motorische cel: zachte lipidekopjes met hier en daar een eiwit, zonder harde stippen (geen moiré aan de horizon)
+const lipTex=canvasTex(512,512,(x,w,h)=>{x.fillStyle='#b25a68';x.fillRect(0,0,w,h);for(let j=0;j<h;j+=16)for(let i=0;i<w;i+=16){const o=(j/16%2)*8;const g=x.createRadialGradient(i+o+8,j+8,1,i+o+8,j+8,8);g.addColorStop(0,`rgba(${222+R()*20|0},${150+R()*25|0},${150+R()*20|0},.55)`);g.addColorStop(1,'rgba(178,90,104,0)');x.fillStyle=g;x.fillRect(i+o,j,16,16);}
+  for(let i=0;i<70;i++){x.fillStyle=`rgba(${120+R()*40|0},${50+R()*30|0},${80+R()*40|0},.55)`;x.beginPath();x.ellipse(R()*w,R()*h,4+R()*6,3+R()*5,R()*TAU,0,TAU);x.fill();}});lipTex.repeat.set(1,1);
+const capM=std(0xffffff,{map:lipTex,roughness:.55,emissive:0xff6040,emissiveIntensity:0});
+const capG=new THREE.SphereGeometry(CAPR,120,40,0,TAU,0,.43);{const pa=capG.attributes.position,ua=capG.attributes.uv;for(let i=0;i<pa.count;i++)ua.setXY(i,pa.getX(i)/7,pa.getZ(i)/7);}
+const capMesh=mesh(capG,capM,[0,-CAPR,0],0,0,G3);
+const BT=[{x:-2.65,z:.25,col:0x6fb4ff,tc:0xff8a4a,rc:0xd9783a,ion:0xffc94a,ax:[-6.5,8.5,-1.2]},{x:2.75,z:-.35,col:0x7fe8a8,tc:0x5fe08a,rc:0x3fbf8a,ion:0x4fd1c5,ax:[6.8,8.2,-1.5]}];
+const btTex=[['#3f78c8','#86b8f0'],['#2f9a68','#86e0b0']].map(c=>canvasTex(256,128,(x,w,h)=>{x.fillStyle=c[0];x.fillRect(0,0,w,h);for(let i=0;i<500;i++){x.fillStyle=c[1];x.globalAlpha=.15+R()*.3;x.beginPath();x.arc(R()*w,R()*h,1+R()*2.2,0,TAU);x.fill();}x.globalAlpha=1;for(let i=0;i<14;i++){x.strokeStyle='rgba(255,255,255,.12)';x.lineWidth=1;x.beginPath();x.moveTo(R()*w,0);x.bezierCurveTo(R()*w,h*.3,R()*w,h*.7,R()*w,h);x.stroke();}}));
+const btProf=[[0,0],[1.05,0],[1.4,.1],[1.58,.45],[1.56,1.05],[1.35,1.65],[.92,2.1],[.5,2.42],[.34,2.8],[.31,3.4]];
+BT.forEach((b,bi)=>{b.y=yS(b.x,b.z)+.3;const g=new THREE.Group();g.position.set(b.x,b.y,b.z);G3.add(g);b.g=g;
+  b.mat=std(0xffffff,{map:btTex[bi],transparent:true,opacity:.4,roughness:.3,depthWrite:false,side:THREE.DoubleSide,emissive:b.col,emissiveIntensity:0});
+  b.shell=lathe(btProf,b.mat,g,48);b.shell.castShadow=false;
+  // gloeiende rand van het membraan, zodat het eindknopje als een gekleurd zakje leest
+  const rim=lathe(btProf.map(q=>[q[0]*1.035+.01,q[1]]),add(b.col,.16),g,48);rim.material.side=THREE.BackSide;rim.castShadow=false;rim.renderOrder=2;
+  ns(mesh(new THREE.CircleGeometry(.95,32),std(0x3a3036,{transparent:true,opacity:.55,side:THREE.DoubleSide}),[0,.01,0],[Math.PI/2,0,0],0,g));
+  const psd=ns(mesh(new THREE.CircleGeometry(1.05,40),std(0x4a1822,{transparent:true,opacity:.7}),[b.x,yS(b.x,b.z)+.012,b.z],[-Math.PI/2,0,0],0,G3));
+  b.pspM=new THREE.MeshBasicMaterial({color:bi?0x10b070:0xff6010,transparent:true,opacity:0,depthWrite:false});b.psp=ns(mesh(new THREE.CircleGeometry(1.8,40),b.pspM,[b.x,yS(b.x,b.z)+.03,b.z],[-Math.PI/2,0,0],0,G3));
+  const axc=new THREE.CatmullRomCurve3([V(b.x,b.y+3.3,b.z),V(b.x+(bi?.6:-.6),b.y+4.6,b.z-.4),V(b.ax[0],b.ax[1],b.ax[2])]);b.axc=axc;
+  mesh(new THREE.TubeGeometry(axc,40,.31,16),std(b.col,{transparent:true,opacity:.35,roughness:.25,depthWrite:false,emissive:b.col,emissiveIntensity:.15}),0,0,0,G3).castShadow=false;
+  mesh(new THREE.TubeGeometry(axc,40,.12,8),glow(bi?COL.inh:COL.sens,bi?COL.inh:COL.sens,.4),0,0,0,G3).castShadow=false;
+  b.apM=add(0xffffff,0);b.ap=ns(new THREE.Mesh(new THREE.SphereGeometry(.42,16,12),b.apM));G3.add(b.ap);b.ap.material.color.setHex(bi?COL.inh:COL.sens);
+  // mitochondriën
+  const miTex=canvasTex(128,32,(x,w,h)=>{x.fillStyle='#c9783a';x.fillRect(0,0,w,h);x.strokeStyle='#7a3f18';x.lineWidth=3;for(let i=8;i<w;i+=14){x.beginPath();x.moveTo(i,4);x.lineTo(i+4,h-4);x.stroke();}});
+  [[-.55,1.6,.3,.5],[.5,1.25,-.35,-.6]].forEach(q=>mesh(new THREE.CapsuleGeometry(.17,.55,4,12),std(0xffffff,{map:miTex,roughness:.5}),[q[0],q[1],q[2]],[0,q[3],Math.PI/2.4],0,g));
+  // blaasjes in reserve en blaasjes die klaarliggen
+  b.res=[];for(let i=0;i<34;i++){let p;do{p=V((R()-.5)*2.4,.5+R()*1.6,(R()-.5)*2.4);}while(p.x*p.x/1.4+(p.y-1.1)*(p.y-1.1)/.55+p.z*p.z/1.4>1);b.res.push({p,ph:R()*TAU});}
+  b.slots=[];for(let i=0;i<6;i++){const a=i/6*TAU+.3,r=.38+(i%2)*.3;b.slots.push({p:V(Math.cos(a)*r,.24,Math.sin(a)*r),st:'ready',t:0,from:V(0,1,0)});}
+  // calciumkanalen
+  b.cach=[];for(let i=0;i<8;i++){const a=i/8*TAU;b.cach.push(V(Math.cos(a)*1.05,.06,Math.sin(a)*1.05));}
+  // receptoren op de membraan eronder
+  b.rec=[];sunflower(22).forEach(q=>{const x=b.x+q[0]*1.0,z=b.z+q[1]*1.0;b.rec.push({p:V(x,yS(x,z),z),open:0,bound:0});});});
+// de synaptische spleet: hechtingseiwitten overbruggen de smalle ruimte tussen de twee membranen
+{const ST=inst(UCYL,std(0xf1e6b8,{roughness:.5,emissive:0x5a4a20,emissiveIntensity:.4}),BT.length*30);G3.add(ST);ST.castShadow=false;let k=0;
+ BT.forEach(B=>{sunflower(30).forEach(q=>{const x=B.x+q[0]*.92,z=B.z+q[1]*.92;_a.set(x,yS(x,z)+.01,z);_b.set(x+(R()-.5)*.08,B.y+.005,z+(R()-.5)*.08);ST.setMatrixAt(k++,segMatrix(_a,_b,.011));});
+   // een dunne gloeiende rand rond de spleet
+   const pts=[];for(let i=0;i<=64;i++){const a=i/64*TAU;const x=B.x+Math.cos(a)*1.12,z=B.z+Math.sin(a)*1.12;pts.push(V(x,(yS(x,z)+B.y)/2,z));}const rr=tube(pts,.018,add(0xffe9a8,.35),G3,96,5);rr.castShadow=false;});
+ ST.instanceMatrix.needsUpdate=true;}
+const VS=inst(new THREE.SphereGeometry(.19,14,10),std(0xffffff,{transparent:true,opacity:.42,roughness:.15,depthWrite:false}),80),VC=inst(new THREE.SphereGeometry(.12,10,8),std(0xffffff,{roughness:.4}),80);G3.add(VS);G3.add(VC);VS.castShadow=VC.castShadow=false;
+const CAC=inst(new THREE.CylinderGeometry(.07,.08,.2,10),std(0xffffff,{roughness:.4,emissive:0x40e0ff,emissiveIntensity:0}),16);G3.add(CAC);CAC.castShadow=false;
+// receptoren als ionkanaal: vijf eiwitdelen in een ring met een porie in het midden
+const recGeo=new THREE.LatheGeometry([[.035,-.03],[.07,-.02],[.105,.04],[.118,.14],[.1,.22],[.122,.27],[.11,.31],[.06,.31],[.042,.22],[.05,.1],[.032,-.03]].map(q=>new THREE.Vector2(q[0],q[1])),15);
+{const p=recGeo.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i);const a=Math.atan2(z,x),k=1+.13*Math.cos(5*a);p.setX(i,x*k);p.setZ(i,z*k);}recGeo.computeVertexNormals();}
+const RECM=inst(recGeo,std(0xffffff,{roughness:.35,side:THREE.DoubleSide}),44);G3.add(RECM);RECM.castShadow=false;
+const TRP=[];for(let i=0;i<150;i++)TRP.push({on:false});const TRM=inst(new THREE.SphereGeometry(.055,8,6),new THREE.MeshBasicMaterial({color:0xffffff}),TRP.length);G3.add(TRM);TRM.castShadow=false;
+const CAP=[];for(let i=0;i<40;i++)CAP.push({on:false});const CAM3=inst(new THREE.SphereGeometry(.06,8,6),add(0xa8f0ff,1),CAP.length);G3.add(CAM3);
+const ION=[];for(let i=0;i<80;i++)ION.push({on:false});const IONM=inst(new THREE.SphereGeometry(.07,8,6),new THREE.MeshBasicMaterial({color:0xffffff}),ION.length);G3.add(IONM);IONM.castShadow=false;
+[TRM,CAM3,IONM].forEach(m=>{for(let i=0;i<m.count;i++){m.setMatrixAt(i,ZERO);m.setColorAt(i,_c.setRGB(1,1,1));}});
+// astrocyt rond de synaps en zwevende deeltjes
+// astrocyt: een steuncel met vertakte uitlopers rond de synaps (ruimt glutamaat op)
+const astTex=canvasTex(256,128,(x,w,h)=>{x.fillStyle='#8f74c8';x.fillRect(0,0,w,h);for(let i=0;i<380;i++){x.fillStyle=`rgba(${190+R()*50|0},${160+R()*50|0},${240},${.12+R()*.25})`;x.beginPath();x.arc(R()*w,R()*h,1+R()*4,0,TAU);x.fill();}for(let i=0;i<30;i++){x.strokeStyle='rgba(70,40,120,.25)';x.lineWidth=1.2;x.beginPath();x.moveTo(0,R()*h);x.bezierCurveTo(w*.3,R()*h,w*.6,R()*h,w,R()*h);x.stroke();}});astTex.repeat.set(3,1);
+const astM=std(0xffffff,{map:astTex,transparent:true,opacity:.34,roughness:.45,depthWrite:false,emissive:0x5a3a9a,emissiveIntensity:.25,side:THREE.DoubleSide});
+const ASTRO=[[V(-6,.6,-2.5),V(-3.5,1.5,-2.2),V(-1.2,3.4,-1.6),V(.4,2.8,-1.2),V(1.4,4.4,-1.8)],[V(6.5,.5,2.6),V(4.6,.95,2.5),V(1.2,1.1,2.6),V(-.6,.9,2.7),V(-2.6,1.3,3.1)]].map((p,i)=>{const m=tube(p,i?.22:.3,astM,G3,60,14);m.castShadow=false;return m;});
+// fijne zijtakjes van de astrocyt die tot vlak bij de spleet reiken
+[[V(-1.2,3.4,-1.6),V(-1.9,2.2,-1.9),V(-2.6,1.0,-1.85)],[V(.4,2.8,-1.2),V(1.2,1.8,-1.9),V(1.6,.8,-2.0)],[V(1.2,1.1,2.6),V(.3,.85,1.7),V(-.9,.6,1.4)],[V(-.6,.9,2.7),V(1.6,.75,2.2),V(2.6,.62,1.85)],[V(-3.5,1.5,-2.2),V(-4.0,.9,-1.4),V(-4.4,.6,-.6)]].forEach(p=>{const m=tube(p,.1,astM,G3,30,8);m.castShadow=false;ASTRO.push(m);});
+const DUST=inst(new THREE.SphereGeometry(.04,6,5),add(0xffd8e0,.35),90);G3.add(DUST);const dust=[];for(let i=0;i<90;i++)dust.push(V((R()-.5)*14,.2+R()*6,(R()-.5)*8));
+const L3={t:0,ev:[],seqs:[],Vm:-70,psp:[],spikeT:-9,ref:0,buf:new Float32Array(300),bi:0,stretch:false,kr:0,flashed:false,next:0,cyc:0,step:-1,lastE:-9,lastI:-9};
+W.ves3=V(BT[0].x-.7,BT[0].y+1.3,BT[0].z+.6);W.cleft3=V(BT[0].x+1.3,BT[0].y-.12,BT[0].z+.9);W.rec3=V(BT[1].x+.5,yS(BT[1].x,BT[1].z)+.2,BT[1].z+.9);W.recE=V(BT[0].x-.4,yS(BT[0].x,BT[0].z)+.2,BT[0].z+1.0);W.bE=V(BT[0].x,BT[0].y+2.4,BT[0].z);W.bI=V(BT[1].x,BT[1].y+2.4,BT[1].z);W.mito3=V(BT[0].x-.55,BT[0].y+1.6,BT[0].z+.3);W.cell3=V(0,.1,2.6);
+W.spikes3=[];  // testhaak: momenten waarop de motorische cel vuurt
+function spike3(b){L3.seqs.push({b,t0:L3.t});if(b===0)L3.lastE=L3.t;else L3.lastI=L3.t;}
+function emitTr(b,from,n){const B=BT[b];for(let i=0;i<n;i++){const o=TRP.find(q=>!q.on);if(!o)return;const r=B.rec[R()*B.rec.length|0];o.on=true;o.b=b;o.t=0;o.p0=from.clone().add(V((R()-.5)*.12,0,(R()-.5)*.12));o.p1=r.p.clone().add(V((R()-.5)*.08,.16,(R()-.5)*.08));o.r=r;o.d=.35+R()*.35;}}
+function emitIon(b,rec){const o=ION.find(q=>!q.on);if(!o)return;o.on=true;o.b=b;o.t=0;o.p0=rec.p.clone().add(V((R()-.5)*.5,.55,(R()-.5)*.5));o.p1=rec.p.clone().add(V(0,-.4,0));}
+function emitCa(b){const B=BT[b];for(let i=0;i<5;i++){const o=CAP.find(q=>!q.on);if(!o)return;const c=B.cach[R()*8|0];o.on=true;o.t=0;o.p0=V(B.x+c.x*1.25,B.y-.12,B.z+c.z*1.25);o.p1=V(B.x+c.x*.8,B.y+.4,B.z+c.z*.8);}}
+const g3=t=>t<=0?0:(t/.45)*Math.exp(1-t/.45);
+function step3(dt){SQ.length=0;L3.t+=dt;const st=S.state,t=L3.t;
+  // patroon van impulsen
+  if(st===1){if(t>=L3.next){L3.next=t+1.6+R()*1.6;const b=R()<.75?0:1;const B=BT[b];const s=B.slots.find(q=>q.st==='ready');if(s){s.st='fuse';s.t=0;s.mini=true;}L3.psp.push({t0:t+.3,a:b?-.7:.8});}}
+  else if(st===2){const c=t%8;const k=Math.floor(t/8);if(k!==L3.cyc){L3.cyc=k;L3.ev=[.3,.65,1.0].map(x=>({at:k*8+x,b:0})).concat([4.0,4.7,5.4].map(x=>({at:k*8+x,b:0}))).concat([3.85,4.55,5.25].map(x=>({at:k*8+x,b:1})));}}
+  else{if(!L3.flashed&&t>1.2){L3.flashed=true;K.flash({big:false,a:.7,shake:.2});}
+    if(t>=L3.next){L3.next=t+.26;if(t>.3)L3.ev.push({at:t,b:0});}
+    if((L3.stretch||(t>11&&!K.FILM.on))&&!L3.kr){L3.kr=t;}  // in de film rekt de spier pas als de stem het zegt
+    if(L3.kr&&t>=L3.nextI){L3.nextI=t+.3;L3.ev.push({at:t,b:1});}}
+  for(let i=L3.ev.length-1;i>=0;i--){if(L3.ev[i].at<=t){spike3(L3.ev[i].b);L3.ev.splice(i,1);}}
+  // presynaptische volgorde per impuls
+  let stepNow=-1;BT.forEach(B=>{B.apM.opacity=0;B.mat.emissiveIntensity=0;});CAC.material.emissiveIntensity=0;let caOpen=[0,0];
+  for(let i=L3.seqs.length-1;i>=0;i--){const q=L3.seqs[i];const tt=t-q.t0;const B=BT[q.b];if(tt>2.6){L3.seqs.splice(i,1);continue;}
+    if(tt<.4){B.axc.getPointAt(1-tt/.4,_a);B.ap.position.copy(_a);B.apM.opacity=.85;stepNow=Math.max(stepNow,0);}
+    if(tt>.32&&tt<.8){B.mat.emissiveIntensity=Math.max(B.mat.emissiveIntensity,.5*Math.sin(Math.PI*(tt-.32)/.48));caOpen[q.b]=1;stepNow=Math.max(stepNow,1);if(!q.ca){q.ca=true;emitCa(q.b);}}
+    if(tt>.62&&!q.fused){q.fused=true;let n=0;B.slots.forEach(s=>{if(s.st==='ready'&&n<2){s.st='fuse';s.t=0;n++;}});sq(a=>a.tone(q.b?440:560,.07,.04));stepNow=Math.max(stepNow,2);}
+    if(tt>.62&&tt<1.0)stepNow=Math.max(stepNow,2);
+    if(tt>.95&&tt<1.9)stepNow=Math.max(stepNow,3);
+    if(!q.psp&&tt>.9){q.psp=true;L3.psp.push({t0:q.t0+.9,a:q.b?-6.2:7.2});}}
+  L3.step=stepNow;
+  // blaasjes
+  let vi=0;const _qq=_q;
+  BT.forEach((B,bi)=>{B.res.forEach(r=>{_a.copy(r.p).add(_r.set(.04*Math.sin(S.clock*1.3+r.ph),.04*Math.cos(S.clock*1.1+r.ph),.03*Math.sin(S.clock*.9+r.ph*2))).add(B.g.position);VS.setMatrixAt(vi,placeMatrix(_a,null,1));VC.setMatrixAt(vi,placeMatrix(_a,null,1));VC.setColorAt(vi,_c.setHex(B.tc));vi++;});
+    B.slots.forEach(s=>{s.t+=dt;let sc=1;_a.copy(s.p);
+      if(s.st==='fuse'){const u=clamp(s.t/.28,0,1);_a.y=lerp(s.p.y,.0,u);sc=1-u*.9;if(u>=1){s.st='empty';s.t=0;_qq.copy(B.g.position).add(_r.set(s.p.x,-.02,s.p.z));emitTr(bi,_qq,s.mini?3:9);}}
+      else if(s.st==='empty'){sc=0;if(s.t>.9){s.st='refill';s.t=0;s.from.set((R()-.5)*1.6,1.3+R()*.5,(R()-.5)*1.6);}}
+      else if(s.st==='refill'){const u=smooth(s.t/.7);_a.lerpVectors(s.from,s.p,u);if(u>=1){s.st='ready';s.mini=false;}}
+      _a.add(B.g.position);VS.setMatrixAt(vi,sc>0?placeMatrix(_a,null,sc):ZERO);VC.setMatrixAt(vi,sc>0?placeMatrix(_a,null,sc):ZERO);VC.setColorAt(vi,_c.setHex(B.tc));vi++;});});
+  VS.instanceMatrix.needsUpdate=true;VC.instanceMatrix.needsUpdate=true;VC.instanceColor.needsUpdate=true;
+  // calciumkanalen en calcium
+  let ci=0;BT.forEach((B,bi)=>B.cach.forEach(c=>{_a.copy(c).add(B.g.position);CAC.setMatrixAt(ci,placeMatrix(_a,null,1));CAC.setColorAt(ci,_c.setRGB(caOpen[bi]?.7:.45,caOpen[bi]?1:.6,caOpen[bi]?1:.65));ci++;}));CAC.instanceMatrix.needsUpdate=true;CAC.instanceColor.needsUpdate=true;
+  CAP.forEach((o,i)=>{if(!o.on){CAM3.setMatrixAt(i,ZERO);return;}o.t+=dt;const u=o.t/.45;if(u>1.3){o.on=false;CAM3.setMatrixAt(i,ZERO);return;}_a.lerpVectors(o.p0,o.p1,smooth(u));CAM3.setMatrixAt(i,placeMatrix(_a,null,u>1?1.3-u:1));});CAM3.instanceMatrix.needsUpdate=true;
+  // neurotransmitter
+  TRP.forEach((o,i)=>{if(!o.on){TRM.setMatrixAt(i,ZERO);return;}o.t+=dt;const B=BT[o.b];let s=1;
+    if(o.t<o.d){const u=o.t/o.d;_a.lerpVectors(o.p0,o.p1,u);_a.x+=.18*Math.sin(u*9+i);_a.z+=.18*Math.cos(u*7+i);}else{_a.copy(o.p1);if(!o.hit){o.hit=true;o.r.bound=Math.min(3,o.r.bound+1);o.r.open=1;if(R()<.5)emitIon(o.b,o.r);}s=o.t<o.d+.8?1:Math.max(0,1-(o.t-o.d-.8)/.4);if(o.t>o.d+1.2){o.on=false;o.hit=false;o.r.bound=Math.max(0,o.r.bound-1);}}
+    TRM.setMatrixAt(i,s>0?placeMatrix(_a,null,s):ZERO);TRM.setColorAt(i,_c.setHex(B.tc));});TRM.instanceMatrix.needsUpdate=true;TRM.instanceColor.needsUpdate=true;
+  // receptoren
+  let ri=0;BT.forEach((B,bi)=>B.rec.forEach(r=>{r.open=Math.max(0,r.open-dt*1.4);const o=r.open;_a.copy(r.p).add(_r.set(0,-.01,0));RECM.setMatrixAt(ri,placeMatrix(_a,null,[1+.25*o,1+.15*o,1+.25*o]));_c.setHex(B.rc);_c.multiplyScalar(.75+.9*o);RECM.setColorAt(ri,_c);ri++;}));RECM.instanceMatrix.needsUpdate=true;RECM.instanceColor.needsUpdate=true;
+  ION.forEach((o,i)=>{if(!o.on){IONM.setMatrixAt(i,ZERO);return;}o.t+=dt;const u=o.t/.5;if(u>1){o.on=false;IONM.setMatrixAt(i,ZERO);return;}_a.lerpVectors(o.p0,o.p1,smooth(u));IONM.setMatrixAt(i,placeMatrix(_a,null,1-u*.5));IONM.setColorAt(i,_c.setHex(BT[o.b].ion));});IONM.instanceMatrix.needsUpdate=true;IONM.instanceColor.needsUpdate=true;
+  // membraanpotentiaal van de motorische cel
+  let ep=0,ip=0,ahp=0;for(let i=L3.psp.length-1;i>=0;i--){const p=L3.psp[i];const v=p.a*g3(t-p.t0);if(t-p.t0>4){L3.psp.splice(i,1);continue;}if(p.ahp)ahp+=v;else if(p.a>0)ep+=v;else ip+=v;}
+  let Vm=-70+ep+ip+ahp;const ts=t-L3.spikeT;
+  // na elke actiepotentiaal volgt een korte naschommeling onder de rustspanning: zo vuurt de cel één keer per salvo
+  if(Vm>-55&&ts>.5){L3.spikeT=t;L3.psp.push({t0:t+.15,a:-10,ahp:true});if(W.spikes3.length<60)W.spikes3.push(+(st===2?t%8:t).toFixed(2));sq(a=>{a.noise(.03,'highpass',2400,.8,.2,.001);a.tone(220,.08,.05,'sawtooth');});}
+  const tsp=t-L3.spikeT;let Vs=Vm;if(tsp<.05)Vs=lerp(Vm,30,tsp/.05);else if(tsp<.2)Vs=lerp(30,-78,(tsp-.05)/.15);else if(tsp<.5)Vs=lerp(-78,Vm,smooth((tsp-.2)/.3));
+  L3.Vm=Vs;capM.emissiveIntensity=tsp<.35?.35*(1-tsp/.35):0;
+  BT[0].pspM.opacity=clamp(ep/14,0,1)*.55;BT[1].pspM.opacity=clamp(-ip/12,0,1)*.55;
+  // stofjes
+  dust.forEach((d,i)=>{_a.copy(d).add(_r.set(.3*Math.sin(S.clock*.2+i),.2*Math.sin(S.clock*.17+i*2),.3*Math.cos(S.clock*.15+i)));DUST.setMatrixAt(i,placeMatrix(_a,null,1));});DUST.instanceMatrix.needsUpdate=true;
+  // oscilloscoop
+  L3.acc=(L3.acc||0)+dt;while(L3.acc>1/60){L3.acc-=1/60;L3.buf[L3.bi]=Vs;L3.bi=(L3.bi+1)%L3.buf.length;}
+  drawScope();if(stepNow>=0)K.stepOn(stepNow);else K.stepOn(-1);
+  cap3(ep,ip,tsp);}
+function drawScope(){const c=$('#scope');if(!c)return;const dpr=Math.min(devicePixelRatio||1,2),w=c.clientWidth||280,h=c.clientHeight||74;if(c.width!==w*dpr){c.width=w*dpr;c.height=h*dpr;}const x=c.getContext('2d');x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const Y=v=>h-6-(v+85)/120*(h-14);x.strokeStyle='rgba(255,255,255,.08)';x.lineWidth=1;[-70,-55,0,30].forEach(v=>{x.beginPath();x.moveTo(0,Y(v));x.lineTo(w,Y(v));x.stroke();});
+  x.setLineDash([4,3]);x.strokeStyle='rgba(232,106,90,.85)';x.beginPath();x.moveTo(0,Y(-55));x.lineTo(w,Y(-55));x.stroke();x.setLineDash([]);
+  x.fillStyle='rgba(232,106,90,.9)';x.font='600 9px "JetBrains Mono",monospace';x.fillText('drempel −55',w-74,Y(-55)-3);x.fillStyle='rgba(241,233,218,.55)';x.fillText('−70 mV',4,Y(-70)+11);x.fillText('+30',4,Y(30)+9);
+  x.strokeStyle='#e6b65e';x.lineWidth=1.6;x.beginPath();const N=L3.buf.length;for(let i=0;i<N;i++){const v=L3.buf[(L3.bi+i)%N]||-70;const px=i/(N-1)*w,py=Y(v);i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
+function cap3(ep,ip,tsp){const st=S.state;
+  if(st===1){const i=Math.floor(S.clock/7)%4;K.capSoft(K.stateText(),['Links eindigt een prikkelende vezel (blauw, zoals de <b>Ia-vezel</b>). Rechts eindigt een remmend <b>schakelneuron</b> (groen). Beide eindigen op dezelfde motorische zenuwcel.','In het eindknopje liggen blaasjes vol <b>neurotransmitter</b>. Een paar liggen klaar aan de rand.','Ook in rust komt er af en toe één blaasje vrij. Dat geeft een heel klein spanningsrimpeltje.','De <b>synaptische spleet</b> is ongeveer 20 nm breed. Hier is alles sterk vergroot.'][i],3);return;}
+  if(st===2){const c=L3.t%8;K.capSoft(K.stateText(),c<2.6?'Bij elke impuls stroomt <b>calcium</b> het eindknopje in en laten blaasjes <b>glutamaat</b> los. Drie stapjes kort na elkaar tellen op tot boven de <b>drempel</b>: de cel vuurt.':c<3.7?'Nu vuurt ook het schakelneuron. Het laat <b>glycine</b> los.':c<6.2?'Glycine opent kanalen voor <b>Cl⁻</b>. De spanning daalt: prikkelend en remmend heffen elkaar op. Geen actiepotentiaal.':'Zo telt elke motorische cel prikkels en remming bij elkaar op. Bij de kniepeesreflex krijgt de cel van de <b>hamstrings</b> deze remming. Daarom spannen de hamstrings niet aan terwijl de quadriceps schopt.',1.5);return;}
+  const t=L3.t;K.capSoft(K.stateText(),t<1.2?'Einde van een lange wedstrijd. De spier is vermoeid.':!L3.kr?'<b>Kramp.</b> Volgens de meest gebruikte verklaring prikkelt de spierspoel steeds door en valt de remming uit het Golgi-peeslichaampje weg. De cel blijft vuren. Druk op <b>Rek de spier</b>.':t-L3.kr<3?'Rekken laat het Golgi-peeslichaampje vuren. Via een schakelneuron komt er weer <b>remming</b>.':'De spanning zakt onder de drempel. De cel stopt met vuren en de kramp lost op.',2.6);}
+
+/* ================= handlers per niveau ================= */
+// bij een nieuw niveau meteen het eigen bijschrift tonen (anders blijft dat van het vorige niveau even staan: de standnaam is gelijk)
+function capClear(){K.capSet('','');}
+const levels=[
+ {step:step0,
+  reset(n,cur){L0.t=0;L0.ms=0;L0.flashed=false;L0.per=0;L0.dmg='';P0.clear();L0.ph=n===2?'wind':n===3?'pre':'idle';if(n!==2){L0.vol=false;L0.volNext=false;}if(n===2&&L0.vol){L0.ph='vwait';}if(n!==3)L0.sw=0;L0.wind=0;
+   // stand 3 speelt zich af bij de enkel: de camera gaat mee, en weer terug als je stand 3 verlaat
+   const was=L0.lastSt;L0.lastSt=n;if(cur&&!K.FILM.on&&!S.zooming&&window.__atlas){if(n===3&&was!==3)__atlas.flyTo(V3[0],V3[1]);else if(n!==3&&was===3){__atlas.flyTo(VIEW0[0],VIEW0[1]);}}},
+  hud(){return S.state===3?K.bars(['Inversie','Buitenband','Kuitbeenspieren'])+lanes3():K.bars(['Kniehoek','Quadriceps','Hamstrings'])+(S.state===2?tl2():legend);},
+  ctl(){return S.state===2?`<label>Tikkracht</label><input type="range" id="sF" min="0" max="1" step=".05" value="${L0.F}" aria-label="Tikkracht"><button id="bShot">🔫 Startschot</button><button id="bTap">Tik</button>`:'';},
+  bind(){const f=$('#sF');if(f)f.addEventListener('input',e=>{L0.F=+e.target.value;});const b=$('#bShot');if(b)b.addEventListener('click',()=>{L0.vol=true;L0.ph='vwait';L0.t=0;L0.ms=0;P0.clear();K.hudSet(levels[0].hud());});const tp=$('#bTap');if(tp)tp.addEventListener('click',()=>{L0.vol=false;L0.ph='wind';L0.t=0;L0.ms=0;P0.clear();K.hudSet(levels[0].hud());});},
+  stepOnce(){if(S.state!==2)K.setState(2);else{L0.vol=false;L0.ph='wind';L0.t=0;L0.ms=0;P0.clear();K.hudSet(levels[0].hud());}},
+  grades:true,onShow(){capClear();L0.arr=S.state===3;},
+  sound(api){playSQ(api);}},
+ {step:step1,
+  reset(n,cur){L1.t=0;L1.cy=0;L1.comp=0;L1.flashed=false;L1.sent=0;L1.got=0;L1.lost=0;L1.pass=1;L1.inh=0;P1s.clear();Q1.length=0;
+   const was=L1.lastSt;L1.lastSt=n;if(cur&&!K.FILM.on&&!S.zooming&&window.__atlas){if(n===3&&was!==3)__atlas.flyTo(V13[0],V13[1]);else if(n!==3&&was===3)__atlas.flyTo(VIEW1[0],VIEW1[1]);}},
+  hud(){return S.state===3?K.bars(['Doorgelaten','α-motoneuron quadriceps','Knelling']):K.bars(['Ia-vezel','α-motoneuron quadriceps','α-motoneuron hamstrings'])+legend;},
+  stepOnce(){volley1(S.state===3?4:3);L1.ia=1;},
+  grades:true,onShow(){capClear();L1.arr=S.state===3;},sound(api){playSQ(api);}},
+ {step:step2,
+  reset(n){L2.t=0;L2.aps.length=0;L2.waves.length=0;L2.lf=NX.map(()=>-99);L2.next=n===1?99:.4;L2.comp=0;L2.flashed=false;L2.ect=0;MY.forEach(o=>o.g.scale.set(1,1,1));blow.position.y=6;},
+  hud(){return K.bars(['Met myeline','Zonder myeline','Spanning knoop 5']);},
+  ctl(){return S.state===2?`<label>Temperatuur</label><input type="range" id="sT" min="25" max="39" step="1" value="${L2.T}" aria-label="Temperatuur"><span class="val" id="vT">${L2.T} °C</span>`:'';},
+  bind(){const s=$('#sT');if(s)s.addEventListener('input',e=>{L2.T=+e.target.value;$('#vT').textContent=L2.T+' °C';});},
+  stepOnce(){fire2(0);},
+  replay:true,onShow:capClear,sound(api){playSQ(api);}},
+ {step:step3,
+  reset(n){W.spikes3.length=0;L3.t=0;L3.ev.length=0;L3.seqs.length=0;L3.psp.length=0;L3.cyc=-1;L3.next=n===1?1:0;L3.kr=0;L3.nextI=0;L3.stretch=false;L3.flashed=false;L3.spikeT=-9;},
+  hud(){return K.stepsHTML(['Impuls komt aan','Ca²⁺ in','Blaasjes los','Receptoren open'])+'<canvas id="scope" aria-label="Membraanpotentiaal van de motorische zenuwcel"></canvas>';},
+  ctl(){return S.state===2?'<button id="bE">Prikkel</button><button id="bI">Rem</button>':S.state===3?'<button id="bRek">Rek de spier</button>':'';},
+  bind(){const e=$('#bE'),i=$('#bI'),r=$('#bRek');if(e)e.addEventListener('click',()=>spike3(0));if(i)i.addEventListener('click',()=>spike3(1));if(r)r.addEventListener('click',()=>{L3.stretch=true;r.classList.add('on');});},
+  stepOnce(){spike3(0);},onShow:capClear,
+  sound(api){playSQ(api);}}];
+
+/* ================= lagen ================= */
+const layers=[
+ {name:'Sporters',lv:0,objs:()=>[sit.root,doc.root,smH.g,kast],set(on){}},
+ {name:'Hersenen',lv:0,objs:()=>[brain,PYR.meshes[0],ASC.meshes[0]]},
+ {name:'Vliezen',lv:1,objs:()=>MEN},
+ {name:'Witte stof',lv:1,objs:()=>[WFM,wm1]},
+ {name:'Myeline',lv:2,objs:()=>MY.map(o=>o.g)},
+ {name:'Achtergrondbundel',lv:2,objs:()=>[FAS2],on:true},
+ {name:'Astrocyt',lv:3,objs:()=>ASTRO}];
+
+/* ================= punten ================= */
+const points=[
+ {lv:0,name:'Kniepeesreflex',lat:'Reflexus patellaris · ligamentum patellae',at:()=>W.tap,state:2,view:[[4.6,6.0,5.8],[.6,4.85,-.6]],focus:()=>[pTend,patella,QFM,BHm.g,SH],pick:()=>[pTend,patella,BHm.g],tabs:[
+  `<p>De docent tikt met een reflexhamer op de <b>patellapees</b>, net onder de knieschijf. De pees en de quadriceps worden daardoor heel even een paar millimeter gerekt.</p><p>Die rek is de <b>prikkel</b>. Ongeveer 25 ms later spant de quadriceps aan en schiet het onderbeen naar voren. Je hoeft er niets voor te doen en je kunt het nauwelijks tegenhouden.</p>`,
+  `<p>Test de reflex in tweetallen: zit op de rand van de kast, laat het onderbeen ontspannen hangen en tik met de zijkant van je hand onder de knieschijf. Lukt het niet? Laat de proefpersoon dan de handen in elkaar haken en hard trekken (de handgreep van Jendrassik). Dan reageert het ruggenmerg sterker.</p><p>Meer over de pees en de quadriceps vind je bij <a href="knie.html#5">halte 9, de knie</a>.</p>`,
+  `<p>De reflex wordt al sinds 1875 in de geneeskunde gebruikt (Erb en Westphal). Een arts test er de route via de ruggenmergsegmenten L2–L4 mee. Die segmenten liggen zelf hoger, ongeveer achter de onderste borstwervels.</p>`,
+  `<p class="think">Waarom schopt het been sterker als de proefpersoon ontspannen is en niet naar de hamer kijkt?</p>`]},
+ {lv:0,name:'Spierspoel',lat:'Fusus neuromuscularis',at:()=>W.spindle,state:1,view:[[1.6,6.65,4.2],[-.4,5.65,-.4]],focus:()=>[spG,IA.meshes[0],QFM],pick:()=>[spG],tabs:[
+  `<p>Tussen de gewone spiervezels liggen kleine, spoelvormige sensoren: de <b>spierspoelen</b>. Om de vezels in de spoel draait een sensorisch zenuwuiteinde als een veer.</p><p>Wordt de spier gerekt, dan rekt de veer mee en vuurt de <b>Ia-vezel</b>. Hoe sneller en verder de rek, hoe meer impulsen per seconde.</p>`,
+  `<p>De spierspoel is de basis van je <b>proprioceptie</b>: je voelt waar je ledematen zijn zonder te kijken. Bij een handstand of op de balk geeft hij elk moment door hoe lang je spieren zijn. Een warming-up met snelle rek (huppelen, skippen) maakt de spoel gevoeliger.</p>`,
+  `<p>Je lichaam heeft naar schatting enkele tienduizenden spierspoelen. In kleine spieren voor fijne bewegingen, zoals in de hand en de nek, liggen ze het dichtst bij elkaar.</p>`,
+  `<p class="think">Waarom zou de spierspoel juist reageren op snelle rek, en minder op langzaam rekken zoals bij statisch stretchen?</p>`]},
+ {lv:0,name:'Golgi-peeslichaampje',lat:'Organum tendineum (Golgi)',at:()=>W.gto,state:1,view:[[2.6,6.75,4.6],[.9,5.55,-.5]],focus:()=>[gtoG,QFM],pick:()=>[gtoG],tabs:[
+  `<p>Waar spier overgaat in pees, liggen de <b>Golgi-peeslichaampjes</b>. Ze meten geen lengte maar <b>spanning</b>: hoe hard de spier aan de pees trekt.</p><p>Hun vezels (Ib) prikkelen in het ruggenmerg een schakelneuron dat de eigen spier <b>remt</b>. Dat is een polysynaptische reflex.</p>`,
+  `<p>Bij een rekoefening voelt het alsof de spier na een tijdje ‘loslaat’. Lang dacht men dat dit door deze remming kwam. Onderzoek laat zien dat vooral je <b>rektolerantie</b> toeneemt: je verdraagt de rek beter. Bij kramp helpt rekken vaak wel: zie stand 3 op het niveau synaps.</p>`,
+  `<p>Een Golgi-peeslichaampje is ongeveer 1 mm lang en zit tussen zo’n tien tot twintig spiervezels en hun pees.</p>`,
+  `<p class="think">De spierspoel zegt ‘aanspannen’, het Golgi-peeslichaampje zegt ‘ontspannen’. Waarom heeft een spier allebei nodig?</p>`]},
+ {lv:0,name:'Motorische eindplaat',lat:'Junctio neuromuscularis',at:()=>W.ep,state:2,view:[[1.8,6.95,4.6],[-.2,5.85,-.4]],focus:()=>[QFM,...MQ.map(r=>r.meshes[1])],pick:()=>[QFM],tabs:[
+  `<p>De rode motorische vezel vertakt in de spier. Elke tak eindigt op één spiervezel in een <b>motorische eindplaat</b>. Daar geeft de zenuw het bevel door met de stof <b>acetylcholine</b>.</p><p>Eén motorische zenuwcel met al zijn spiervezels heet een <b>motorische eenheid</b>.</p>`,
+  `<p>Hoe meer motorische eenheden je inschakelt, hoe meer kracht. Bij een maximale sprong doen vrijwel alle eenheden mee. Bij rustig staan werken er maar een paar, vooral in de kuit: genoeg om je houding vast te houden.</p><p>Hoe de spiervezel daarna samentrekt, zie je bij <a href="spier.html#niveau=3">halte 8, de spier</a>.</p>`,
+  `<p>In grote beenspieren stuurt één motorische zenuwcel soms honderden tot meer dan duizend spiervezels aan. In de oogspieren zijn dat er maar een paar.</p>`,
+  `<p class="think">Waarom heeft een oogspier kleine motorische eenheden en de quadriceps grote?</p>`]},
+ {lv:0,name:'Motorische schors en piramidebaan',lat:'Gyrus precentralis · tractus corticospinalis',at:()=>W.ctx,state:1,view:[[-2.6,10.1,4.8],[-5.6,8.75,-1.2]],focus:()=>[brain,PYR.meshes[0]],pick:()=>[brain],tabs:[
+  `<p>Een bewuste beweging begint in de hersenschors. De paarse strook is de <b>motorische schors</b>. Van daaruit loopt de <b>piramidebaan</b> door de hersenstam naar het ruggenmerg en schakelt daar op dezelfde voorhoorncel als de reflex.</p><p>De blauwe strook ernaast is de gevoelsschors: daar komt de melding van de tik binnen.</p>`,
+  `<p>Op het startschot reageren kost ongeveer <b>150 ms</b>: horen, verwerken, beslissen en dan pas het bevel. Probeer in stand 2 de knop <b>Startschot</b>. Reageer je binnen 0,100 s, dan heb je niet gereageerd maar gegokt: een valse start.</p>`,
+  `<p>Sinds 2010 betekent bij World Athletics één valse start direct diskwalificatie. De startblokken meten de druk op de voeten: wie binnen 0,100 s na het schot afzet, krijgt een valse start.</p>`,
+  `<p class="think">Een reflex en een bewuste schop gebruiken dezelfde motorische vezel. Waar zit dan het verschil in tijd?</p>`]},
+ {lv:0,name:'Kuitbeenspieren',lat:'M. fibularis longus et brevis',at:()=>W.per,state:3,view:[[0.0,2.5,5.6],[1.4,1.05,-.4]],focus:()=>[SH,FT,atfl,cfl,lan.root,opp.root],pick:()=>[peroneus,atfl,cfl],tabs:[
+  `<p>De <b>kuitbeenspieren</b> lopen langs de buitenkant van het onderbeen en achter de buitenenkel langs naar de voet. Ze draaien de voetzool naar buiten (eversie) en beschermen zo de enkel tegen doorzwikken.</p><p>Kantelt de voet naar binnen, dan worden ze gerekt en volgt een reflex: de <b>peroneusreflex</b>. Die komt pas na ongeveer 60–80 ms op gang. Daarna heeft de spier nog tientallen milliseconden nodig om echt kracht te leveren.</p>`,
+  `<p>Bij een landing op de voet van een tegenstander (basketbal, volleybal) kantelt de enkel volgens videoanalyses van echte verstuikingen binnen ongeveer 40–50 ms al tot de buitenband maximaal gespannen is. De reflex is dan te laat.</p><p>Wat wel helpt: sterke kuitbeenspieren, balanstraining en <b>vooraf aanspannen</b> voordat je landt. Zie <a href="landing.html">het lab Landing</a> en <a href="enkel.html">halte 10, de enkel</a>.</p>`,
+  `<p>De enkelverstuiking hoort bij de meest voorkomende sportblessures. In een Nederlands onderzoek onder sporters met een eerdere verstuiking gaf een thuisprogramma met balansoefeningen ongeveer 35 % minder nieuwe verstuikingen (Hupperets e.a., 2009, BMJ).</p>`,
+  `<p class="think">Balanstraining maakt de reflex nauwelijks sneller. Waarom helpt het dan toch tegen verstuikingen?</p>`]},
+ {lv:1,name:'Grijze en witte stof',lat:'Substantia grisea et alba',at:()=>W.gm1,view:[[2.4,7.4,6.6],[-.6,.6,0]],focus:()=>[gm1,WFM,wm1],pick:()=>[gm1],tabs:[
+  `<p>In doorsnede lijkt de <b>grijze stof</b> op een vlinder. Daar liggen de cellichamen van zenuwcellen en hun synapsen. Boven zijn de achterhoorns (gevoel), onder de voorhoorns (beweging).</p><p>De <b>witte stof</b> eromheen bestaat uit vezels met myeline. Die lopen in bundels op en neer: blauw naar de hersenen, paars van de hersenen af.</p>`,
+  `<p>Bij een dwarslaesie zijn de vezels in de witte stof onderbroken. Bewuste bewegingen onder de laesie lukken dan niet meer, terwijl de kniepeesreflex vaak nog werkt of zelfs sterker is. De reflexboog heeft de hersenen niet nodig.</p>`,
+  `<p>Het ruggenmerg is ongeveer 45 cm lang en ongeveer 1 cm dik. Het eindigt al ter hoogte van de eerste of tweede lendenwervel; daaronder lopen alleen nog zenuwwortels.</p>`,
+  `<p class="think">Waarom kan iemand met een dwarslaesie wel een kniepeesreflex hebben, maar het been niet bewust strekken?</p>`]},
+ {lv:1,name:'Spinaal ganglion en achterwortel',lat:'Ganglion spinale · radix posterior · neuron afferens Ia',at:()=>W.drg,view:[[6.6,4.4,1.6],[3.6,-.1,-1.5]],focus:()=>[RootR.g,R1.IA.meshes[0]],pick:()=>[RootR.drg],tabs:[
+  `<p>De sensorische vezel komt binnen via de <b>achterwortel</b>. Halverwege zit een verdikking: het <b>spinaal ganglion</b>. Daar ligt het cellichaam van de sensorische zenuwcel, buiten het ruggenmerg.</p><p>Die cel heeft één lange uitloper die zich splitst: een tak naar de spier en een tak het ruggenmerg in.</p>`,
+  `<p>De Ia-vezel uit de spierspoel is een van de dikste en snelste vezels die je hebt: tot ongeveer 100 m/s. In het been van een mens meet je vaak 60–80 m/s. Daardoor kan de reflex zo snel zijn: de hele route van ruim een meter heen en terug duurt maar ongeveer 25 ms.</p>`,
+  `<p>Een sensorische zenuwcel voor de voet kan meer dan een meter lang zijn: van de voetzool tot in het ruggenmerg en dan nog verder omhoog.</p>`,
+  `<p class="think">Waarom zou het cellichaam van een sensorische zenuwcel buiten het ruggenmerg liggen, in een ganglion?</p>`]},
+ {lv:1,name:'Motorische voorhoorncel',lat:'Motoneuron α · cornu anterius · radix anterior',at:()=>W.mnq1,view:[[4.2,6.4,6.2],[1.2,.9,.6]],focus:()=>[nMNq,nMNh,R1.MQ.meshes[0]],pick:()=>[nMNq,nMNh],tabs:[
+  `<p>In de voorhoorn ligt het grote <b>α-motoneuron</b>. Hier eindigt de Ia-vezel met één synaps: de reflex is <b>monosynaptisch</b>. Vuurt deze cel, dan gaat de impuls via de <b>voorwortel</b> en de <b>dijbeenzenuw</b> (<i>n. femoralis</i>) naar de quadriceps.</p><p>Op deze cellen komen ook signalen uit de hersenen binnen (paars). De cel van de hamstrings krijgt bij de reflex bovendien remmende signalen (groen). Elke cel telt alles bij elkaar op.</p>`,
+  `<p>De voorhoorncel is het laatste station voor elke beweging, bewust of als reflex. Daarom heet hij de ‘laatste gemeenschappelijke weg’.</p>`,
+  `<p>Bij ALS, een ziekte van de motorische zenuwcellen, gaan voorhoorncellen en cellen in de motorische schors verloren. De spieren worden zwakker, terwijl ze zelf in het begin gezond zijn.</p>`,
+  `<p class="think">Vuurt de voorhoorncel bij elke impuls uit de Ia-vezel? Bekijk het niveau synaps en leg uit wat ervoor nodig is.</p>`]},
+ {lv:1,name:'Schakelneuron',lat:'Interneuron inhibitorium Ia · reciproke remming',at:()=>W.in1,view:[[3.2,6.2,5.2],[.8,.9,0]],focus:()=>[nIN,nMNh,R1.INH.meshes[0],R1.IAc.meshes[0]],pick:()=>[nIN],tabs:[
+  `<p>Een zijtak van de Ia-vezel prikkelt een klein <b>schakelneuron</b>. Dat remt de voorhoorncel van de tegenspeler, de hamstrings. Zo spannen de hamstrings niet aan terwijl de quadriceps schopt: <b>reciproke remming</b>.</p><p>Deze route heeft twee synapsen: hij is <b>polysynaptisch</b>.</p>`,
+  `<p>Reciproke remming maakt snelle, soepele bewegingen mogelijk, zoals bij sprinten: de buigers geven mee als de strekkers werken. Bij vermoeidheid of een slechte coördinatie werken spieren meer tegen elkaar in.</p>`,
+  `<p>Het grootste deel van alle zenuwcellen in het ruggenmerg is een schakelneuron. Ze maken van eenvoudige reflexen samenwerkende patronen, zoals de beenbewegingen bij lopen.</p>`,
+  `<p class="think">Waarom is de route via het schakelneuron iets trager dan de directe route naar de quadriceps?</p>`]},
+ {lv:2,name:'Myelineschede',lat:'Stratum myelini · neurolemmocytus',at:()=>W.cut2,view:[[-.2,2.6,5.6],[-1.4,.9,0]],focus:()=>MY.map(o=>o.g),pick:()=>MY.map(o=>o.m),tabs:[
+  `<p>Om een dikke zenuwvezel wikkelt een <b>Schwann-cel</b> zich tientallen keren. Die lagen vet en eiwit vormen samen de <b>myelineschede</b>: een isolatielaag, zoals de mantel om een elektriciteitsdraad. In de snede zie je de lagen.</p><p>De paarse bobbel is de celkern van de Schwann-cel.</p>`,
+  `<p>Hoe beter de isolatie, hoe sneller het signaal. Dat is belangrijk voor reflexen en voor snelle reacties in de sport. Myeline groeit nog tot in de jongvolwassenheid; ook daarom worden kinderen beter in coördinatie naarmate ze ouder worden.</p>`,
+  `<p>In het echt is een stuk myeline ongeveer honderd keer zo lang als de vezel dik is, rond 1 mm. In dit model zijn de stukken ingekort.</p>`,
+  `<p class="think">Waarom hebben de vezels voor pijn uit de huid vaak géén myeline, terwijl de vezels uit de spierspoel dat wel hebben?</p>`]},
+ {lv:2,name:'Knoop van Ranvier',lat:'Nodus neurofibrae',at:()=>W.node2,view:[[1.2,2.6,4.2],[0,.9,0]],focus:()=>[NAC,NAM,KM,...MY.map(o=>o.g)],pick:()=>[NAC],tabs:[
+  `<p>Tussen twee stukken myeline ligt een smalle onderbreking: de <b>knoop van Ranvier</b>. Alleen daar liggen veel natriumkanalen bloot. Komt de spanning boven de drempel, dan gaan ze open en stroomt <b>Na⁺</b> naar binnen. Daarna stroomt K⁺ naar buiten en herstelt de rustspanning.</p><p>De stroom springt onder de myeline door naar de volgende knoop: <b>saltatoire geleiding</b>.</p>`,
+  `<p>Met myeline gaat het signaal tot ongeveer 100 m/s (in het been van een mens vaak 60–80 m/s), zonder myeline ongeveer 1 m/s. Bij kou geleiden zenuwen langzamer: ongeveer 3% per graad. Na een koude start reageren je spieren dus trager. Probeer de temperatuurschuif in stand 2.</p>`,
+  `<p>De knoop is maar ongeveer 1 µm breed. Bij multiple sclerose (MS) raakt myeline in hersenen en ruggenmerg beschadigd, waardoor signalen vertragen of uitvallen.</p>`,
+  `<p class="think">Waarom is springen van knoop naar knoop niet alleen sneller, maar ook zuiniger met energie?</p>`]},
+ {lv:3,name:'Synaptische blaasjes en spleet',lat:'Vesiculae synapticae · fissura synaptica',at:()=>W.ves3,view:[[-4.4,3.6,6],[-2.6,1.1,0]],focus:()=>[BT[0].g,VS,VC,TRM,CAC,CAM3],pick:()=>[BT[0].shell],tabs:[
+  `<p>Aan het eind van de vezel zit een <b>eindknopje</b> vol blaasjes met <b>neurotransmitter</b>. Komt er een impuls aan, dan gaan calciumkanalen open. <b>Ca²⁺</b> stroomt naar binnen en laat blaasjes versmelten met de membraan.</p><p>De stof stroomt de <b>synaptische spleet</b> in en bindt aan receptoren op de volgende cel. Zo wordt een elektrisch signaal chemisch, en daarna weer elektrisch.</p>`,
+  `<p>Een synaps kost tijd: ongeveer 0,5–1 ms. Daarom is een reflex met één synaps sneller dan een route met veel synapsen. Een reactie via de hersenen gaat door tientallen synapsen achter elkaar, en tegelijk door heel veel cellen naast elkaar.</p>`,
+  `<p>Een blaasje is ongeveer 40 nm groot en bevat duizenden moleculen neurotransmitter. De spleet is ongeveer 20 nm breed. In het model is alles sterk vergroot.</p>`,
+  `<p class="think">Waarom zou er in het eindknopje zoveel mitochondriën liggen?</p>`]},
+ {lv:3,name:'Receptoren: prikkelend en remmend',lat:'Receptor glutamati · receptor glycini',at:()=>W.rec3,state:2,view:[[2.6,3.4,6.4],[.6,.2,0]],focus:()=>[RECM,IONM,BT[0].psp,BT[1].psp,TRM],pick:()=>[RECM],tabs:[
+  `<p>De Ia-vezel geeft <b>glutamaat</b> af. Dat opent kanalen voor <b>Na⁺</b>: de spanning in de motorische cel stijgt een beetje (prikkelend). Het schakelneuron geeft <b>glycine</b> af. Dat opent kanalen voor <b>Cl⁻</b>: de spanning daalt (remmend).</p><p>De cel telt alles bij elkaar op. Alleen boven de drempel van ongeveer −55 mV vuurt hij. Kijk naar de lijn in de HUD.</p>`,
+  `<p>Je zenuwstelsel kiest zo welke spieren werken en welke stil blijven. Bij een sprong vuren de strekkers, terwijl de buigers geremd worden. Bij kramp raakt de balans zoek: zie stand 3.</p>`,
+  `<p>Eén motorische zenuwcel in het ruggenmerg krijgt synapsen van duizenden andere cellen: uit spierspoelen, schakelneuronen en de hersenen.</p>`,
+  `<p class="think">Wat gebeurt er met de reflex als de remmende synapsen niet meer zouden werken?</p>`]}];
+// eigen camerastanden voor een smal scherm waar het onderwerp anders buiten het vrije deel valt
+const NV={2:[[2.6,7.0,4.6],[.9,5.85,-.5]],4:[[-2.6,10.8,4.8],[-5.6,9.7,-1.2]],5:[[0.2,3.2,5.8],[1.2,1.9,-.4]],13:[[3.6,3.2,6.6],[2.4,-.1,.2]]};
+points.forEach((p,i)=>{if(p.view)p.view=PV(NARROW&&NV[i]?NV[i]:p.view);});
+
+/* ================= labels ================= */
+const tags=[
+ {lv:0,cls:'ms',txt:()=>`${L0.ms<40?L0.ms.toFixed(1):Math.round(L0.ms)} ms`,at:()=>W.msTag,show:()=>S.state>1&&(L0.ph==='run'||L0.ph==='vrun')},
+ {lv:0,cls:'sens',txt:()=>'Ia-vezel',at:()=>Vs(-3.35,7.35,-.95),show:()=>S.state<3&&!NARROW},
+ {lv:0,cls:'mot',txt:()=>'α-motorisch',at:()=>Vs(-2.0,6.65,-.7),show:()=>S.state<3&&!NARROW},
+ {lv:0,cls:'inh',txt:()=>'remt hamstrings',at:()=>Vs(-.2,5.25,-.2),show:()=>S.state===2&&L0.inh>.4},
+ {lv:0,cls:'pyr',txt:()=>'piramidebaan',at:()=>Vs(-6.5,8.4,-1.1),show:()=>S.state===2&&L0.vol},
+ {lv:0,cls:'force',txt:()=>'buitenband',at:()=>W.foot0,show:()=>S.state===3&&L0.strain>.6},
+ {lv:1,cls:'sens',txt:()=>'achterwortel',at:()=>V(2.7,TY-.2,-2.2)},
+ {lv:1,cls:'mot',txt:()=>'voorwortel',at:()=>V(2.8,TY-1.75,1.55)},
+ {lv:1,cls:'sens',txt:()=>'↑ naar de hersenen',at:()=>W.asc1},
+ {lv:1,cls:'pyr',txt:()=>'↓ uit de hersenen',at:()=>W.pyr1},
+ {lv:1,cls:'nerve',txt:()=>'naar de quadriceps →',at:()=>V(7.2,TY-1.0,.6),show:()=>S.state<3},
+ {lv:1,cls:'band',txt:()=>'tussenwervelschijf',at:()=>DGc.clone().add(V(1.1,.1,-.6)),show:()=>S.state===3},
+ {lv:1,cls:'force',txt:()=>'kern puilt uit',at:()=>V(DGc.x+.75,DGc.y-.55,.15),show:()=>S.state===3&&L1.comp>.4},
+ {lv:1,cls:'nerve',txt:()=>'wortel bekneld',at:()=>CP1.clone().add(V(.15,.62,-.35)),show:()=>S.state===3&&L1.comp>.6},
+ {lv:1,cls:'band',txt:()=>'wervellichaam',at:()=>DGc.clone().add(V(.6,.95,-.7)),show:()=>S.state===3},
+ {lv:1,cls:'inh',txt:()=>'geremd',at:()=>P1.MNh.clone().add(V(.2,.35,0)),show:()=>L1.inh>.3},
+ {lv:2,cls:'ion',txt:()=>'Na⁺',at:()=>V(NX[3]+.1,AY2+AR+.85,.35)},
+ {lv:2,cls:'atp',txt:()=>'K⁺',at:()=>V(NX[5],AY2-.55,.45)},
+ {lv:2,cls:'nerve',txt:()=>'met myeline ≈ 60–100 m/s',at:()=>V(NARROW?-.9:1.5,AY2+1.55,.3)},
+ {lv:2,cls:'nerve',txt:()=>'zonder myeline ≈ 1 m/s',at:()=>V(NARROW?-.9:1.5,BY+.6,.3)},
+ {lv:2,cls:'force',txt:()=>'geblokkeerd',at:()=>V(NX[4],AY2+1.4,.4),show:()=>L2.blocked},
+ {lv:3,cls:'ca',txt:()=>'Ca²⁺',at:()=>V(BT[0].x+1.35,BT[0].y+.2,BT[0].z+.9),show:()=>L3.step===1||S.state===1},
+ {lv:3,cls:'o2',txt:()=>'glutamaat',at:()=>V(BT[0].x-1.4,BT[0].y-.05,BT[0].z+1.1)},
+ {lv:3,cls:'inh',txt:()=>'glycine',at:()=>V(BT[1].x+1.4,BT[1].y-.05,BT[1].z+1.1)},
+ {lv:3,cls:'sens',txt:()=>'Ia-vezel',at:()=>V(BT[0].x-1.5,BT[0].y+3.3,BT[0].z-.4)},
+ {lv:3,cls:'inh',txt:()=>'schakelneuron',at:()=>V(BT[1].x+1.6,BT[1].y+3.2,BT[1].z-.6)},
+ {lv:3,cls:'band',txt:()=>'spleet ≈ 20 nm',at:()=>V(0,.35,1.2)}];
+
+/* ================= speurtocht ================= */
+const quiz=[
+ {t:'R',type:'find',lv:0,state:1,view:PV([[1.8,7.0,6.2],[.2,5.55,-.5]]),q:'Klik op de <i>fusus neuromuscularis</i>: de sensor in de quadriceps die rek meet.',
+  opts:[()=>W.gto,()=>W.ep,()=>W.spindle,()=>W.tap],ok:2,fb:['Dat is het Golgi-peeslichaampje bij de pees. Het meet spanning, geen lengte.','Dat is een motorische eindplaat: daar geeft de zenuw het bevel aan de spier.','Goed! De <i>fusus neuromuscularis</i> is de spierspoel. Hij ligt tussen de spiervezels en meet hoe ver en hoe snel de spier gerekt wordt.','Dat is de patellapees: daar tikt de hamer. De sensor zit in de spier.']},
+ {t:'R',type:'find',lv:1,state:1,view:PV(NARROW?[[9.5,8.4,1.4],[2.2,.45,-.35]]:[[7.4,7.4,8.6],[3.4,-.2,-.6]]),q:'Klik op het <i>motoneuron α</i> in het <i>cornu anterius</i> (de voorhoorn) dat de quadriceps aanstuurt.',
+  opts:[()=>W.drg,()=>W.dh1,()=>W.in1,()=>W.mnq1],ok:3,fb:['Dat is het spinaal ganglion. Daar ligt het cellichaam van de sensorische cel.','Dat is de achterhoorn: hier komt de sensorische vezel binnen.','Dat is het schakelneuron. Het remt de hamstrings.','Goed! De grote cel in de voorhoorn. Zijn axon gaat via de voorwortel naar de quadriceps.']},
+ {t:'T1',type:'mc',lv:2,state:2,q:'Zet op het niveau zenuwvezel in stand 2 de <b>temperatuur</b> op 27 °C en kijk naar de knopen. Wat gebeurt er, en wat betekent dat na een koude start buiten?',
+  opts:['De impuls springt sneller, omdat kou de myeline beter laat isoleren','De impuls springt langzamer van knoop naar knoop, omdat de ionkanalen trager openen. Reflexen en reacties worden iets trager','De impuls stopt bij de eerste knoop: onder 30 °C geleidt een zenuw niet','Er verandert niets: alleen de vezel zonder myeline is gevoelig voor kou'],ok:1,
+  ex:'Bij kou openen de natriumkanalen bij de knopen trager. Elke sprong duurt dan langer: ongeveer 3 % trager per graad. Na een koude start reageren je spieren dus iets later. Ook daarom warm je op.',
+  why:['Kou verandert de myeline niet. De kanalen bij de knopen worden juist trager, dus de impuls ook.',null,'De geleiding wordt trager, maar stopt niet. Kijk naar de HUD: de snelheid zakt, maar blijft boven nul.','Beide vezels worden trager. In de HUD zakken beide balkjes.']},
+ {t:'T1',type:'mc',lv:3,state:2,q:'Kijk op het niveau synaps in stand 2 naar de lijn in de HUD. Eerst komen drie prikkels kort na elkaar en vuurt de cel. Daarna komen prikkels samen met remming en vuurt de cel niet. Wat laat dat zien?',
+  opts:['Dat de cel alleen vuurt als ook het schakelneuron vuurt','Dat één prikkelende impuls meestal genoeg is om de cel te laten vuren','Dat de cel prikkelende en remmende stapjes optelt en pas vuurt boven de drempel van ongeveer −55 mV','Dat glycine de blaasjes in het eindknopje leegmaakt'],ok:2,
+  ex:'Elke prikkel geeft een klein stapje omhoog, elke remming een stapje omlaag. Komen de prikkels kort na elkaar, dan tellen ze op tot boven de drempel. Komt er tegelijk remming, dan blijft de som eronder.',
+  why:['Het schakelneuron remt juist. Als het vuurt, blijft de cel stil.','Eén stapje is maar een paar millivolt. Pas meerdere stapjes kort na elkaar halen de drempel.',null,'Glycine wordt losgelaten door het schakelneuron en werkt op de receptoren van de volgende cel. Het maakt geen blaasjes leeg.']},
+ {t:'T2',type:'mc',lv:1,state:2,q:'Bekijk stand 2 op het niveau ruggenmerg. De quadriceps schopt, maar de hamstrings spannen niet aan. Hoe komt dat?',
+  opts:['De hamstrings krijgen tijdens de reflex geen bloed','Een schakelneuron remt de voorhoorncel van de hamstrings: reciproke remming, via een polysynaptische route','De hersenen zetten de hamstrings bewust uit','De Ia-vezel prikkelt de hamstrings ook, maar te zwak'],ok:1,
+  ex:'Een zijtak van de Ia-vezel prikkelt een remmend schakelneuron. Dat remt de motorische cel van de hamstrings, zodat de tegenspeler meegeeft. Deze route heeft twee synapsen (polysynaptisch), de route naar de quadriceps maar één (monosynaptisch).',
+  why:['De doorbloeding verandert in 25 ms niet. Het gaat om de zenuwsignalen.',null,'Daarvoor is de reflex te snel: de hersenen horen pas van de tik als de quadriceps al aanspant.','De Ia-vezel uit de quadriceps prikkelt de hamstrings niet. Via het schakelneuron worden ze juist geremd.']},
+ {t:'T2',type:'mc',lv:0,state:2,q:'Kijk in stand 2 naar de tijdlijn en druk daarna op <b>Startschot</b>. De kniepeesreflex duurt ongeveer 25 ms, een reactie op het startschot ongeveer 150 ms. Waardoor komt dat verschil vooral?',
+  opts:['De zenuwvezels naar het been zijn bij een start dunner','De spier is bij een start nog koud','Bij een reflex is er helemaal geen synaps nodig','Het signaal gaat via de hersenen: horen, verwerken en beslissen, en pas dan via de piramidebaan terug'],ok:3,
+  ex:'De motorische vezel is dezelfde. Het verschil zit in de route: bij een reactie gaat het signaal door de hersenen, met veel synapsen en een beslissing. Dat kost de meeste tijd.',
+  why:['Het bevel gaat in beide gevallen via dezelfde dikke motorische vezel naar de quadriceps.','Temperatuur maakt geleiding iets trager, maar verklaart nooit een verschil van zes keer.','Er is wel een synaps: precies één, in de voorhoorn. Daarom heet de reflex monosynaptisch.',null]},
+ {t:'T2',type:'mc',lv:0,state:3,q:'Bekijk stand 3. Waarom voorkomt de reflex van de kuitbeenspieren de enkelverstuiking niet?',
+  opts:['De reflex komt pas na ongeveer 60–80 ms, terwijl de buitenband binnen ongeveer 40–50 ms al zwaar belast is','De kuitbeenspieren liggen aan de binnenkant van de enkel','Een reflex werkt alleen als je stilstaat','De hersenen houden de reflex tegen om een val te voorkomen'],ok:0,
+  ex:'De voet kantelt sneller dan de reflex kan reageren, en na het aangaan van de spier duurt het nog tientallen milliseconden voordat er echte kracht is. Bescherming moet er daarom al zijn vóór de landing: sterke spieren, balans en vooraf aanspannen.',
+  why:[null,'De kuitbeenspieren lopen juist langs de buitenkant, achter de buitenenkel. Daarom kunnen ze inversie tegengaan.','Reflexen werken ook tijdens bewegen. Het probleem is dat deze reflex te laat komt.','De hersenen zijn niet nodig voor deze reflex en houden hem ook niet tegen. Hij is gewoon te traag voor deze snelle kanteling.']},
+ {t:'I',type:'open',q:'Je geeft een les LO met springen en landen. Leg uit waarom een reflex een enkelverstuiking niet altijd kan voorkomen. Ontwerp daarna twee oefeningen die wel helpen. Gebruik de begrippen reflexboog, reactietijd en vooraf aanspannen.',
+  model:'<p><b>Waarom niet</b>: bij een landing op een voet kantelt de enkel binnen ongeveer 40–50 ms. De reflexboog (sensoren in band en spier, sensorische vezel, ruggenmerg, motorische vezel, kuitbeenspieren) heeft ongeveer 60–80 ms nodig voordat de spieren actief worden, en daarna nog tientallen milliseconden voor echte kracht. Een bewuste reactie via de hersenen duurt nog langer, ongeveer 150 ms. Beide komen te laat.</p><p><b>Wat wel helpt</b>: bescherming die er al is vóór het contact. 1) <b>Landen op één been op een balanskussen</b>: de proprioceptie en de samenwerking van de spieren rond de enkel worden beter, zodat de enkel beter recht staat bij het neerkomen. 2) <b>Sprongen met een duidelijke landingsopdracht</b> (bijvoorbeeld een sprong over een lijn en landen ‘stil als een standbeeld’): de leerlingen leren de kuitbeenspieren <b>vooraf aan te spannen</b>, zodat de enkel al stevig staat. Een reactiespel (starten op geluid of beeld) laat het verschil tussen reflex en reactie zelf voelen.</p>'}];
+
+/* ================= film ================= */
+const CAM={wide:[[5.4,6.3,18.6],[-1.3,4.55,.6]],schema:[[3.2,7.8,11.8],[-3.2,5.95,-.8]],knee:[[4.4,6.0,6.4],[.6,4.75,-.6]],cord:[[-2.1,8.3,4.6],[-5.5,6.75,-.9]],sit:[[-.6,3.6,9.6],[-4.6,1.6,2.4]],lan:[[6.2,3.4,10.2],[2.2,1.45,.9]],brain:[[-2.4,9.9,5.2],[-5.6,8.75,-1.2]],foot:[[0.0,2.5,5.6],[1.0,1.05,-.4]],
+  cord1:[[7.2,8.6,9.6],[1.6,-.2,0]],top1:[[3.4,8.6,6.8],[.6,.6,0]],drg1:[[7.6,4.2,3.4],[3.8,-.2,-1.4]],fib:[[-1.6,5.6,15.8],[1.1,-.5,0]],node:[[1.2,2.8,5.6],[0,.6,0]],syn:[[.8,6.2,12.6],[0,.8,0]],synE:[[-3.6,3.4,7],[-2.4,1,0]]};
+const film={stop(){L0.vol=false;L0.volNext=false;L2.T=37;L3.stretch=false;S.grade=2;},scenes:[
+ {chap:'',lv:0,st:1,view:CAM.wide,title:['Van prikkel tot beweging','De reflexboog · drie keer inzoomen'],lines:[
+  {t:'Een tik onder de knie, en het been schiet vooruit. Je hoeft er niets voor te doen.'},
+  {t:'Hoe kan dat zo snel? En waarom is snel soms toch te laat?'},
+  {t:'We volgen één signaal: van de spier naar het ruggenmerg, en weer terug.',do:()=>{K.FILM.title=null;}}]},
+ {chap:'1 · De kniepeesreflex',lv:0,st:2,view:CAM.sit,lines:[
+  {t:'De docent tikt op de patellapees. Daardoor wordt de quadriceps een klein beetje gerekt.'},
+  {t:'In de spier zit een sensor, de spierspoel. Die meet rek en vuurt via de blauwe, sensorische vezel.',cam:CAM.schema},
+  {t:'In het ruggenmerg schakelt het signaal direct over op de motorische zenuwcel. Eén synaps: daarom heet dit monosynaptisch.',cam:CAM.cord},
+  {t:'De rode, motorische vezel brengt het bevel terug. Ongeveer vijfentwintig milliseconden na de tik spant de quadriceps aan.',cam:CAM.knee,min:5},
+  {t:'Tegelijk remt een schakelneuron de hamstrings. Groen is remmend. Zo werkt de tegenspeler niet tegen.',cam:CAM.schema}]},
+ {chap:'2 · Het ruggenmerg',lv:1,st:2,view:CAM.cord1,lines:[
+  {t:'We zoomen in op het ruggenmerg. Het is ongeveer zo dik als je pink.'},
+  {t:'De grijze stof heeft de vorm van een vlinder. Daar liggen de cellichamen van de zenuwcellen.',cam:CAM.top1},
+  {t:'Eromheen ligt de witte stof: bundels vezels die naar de hersenen en terug lopen.'},
+  {t:'Het signaal komt binnen via de achterwortel. In het ganglion ligt het cellichaam van de sensorische cel.',cam:CAM.drg1},
+  {t:'Het bevel gaat naar buiten via de voorwortel, en dan via de dijbeenzenuw naar de quadriceps.',cam:CAM.cord1}]},
+ {chap:'3 · De zenuwvezel',lv:2,st:2,view:CAM.fib,lines:[
+  {t:'Nog dieper: één zenuwvezel. Om het axon zit een isolatielaag, de myelineschede.'},
+  {t:'Alleen bij de knopen van Ranvier liggen de kanalen bloot. Daar stroomt natrium naar binnen.',cam:CAM.node},
+  {t:'Zo springt de impuls van knoop naar knoop. Dat heet saltatoire geleiding.',cam:CAM.fib},
+  {t:'Met myeline gaat dat in het been ongeveer zestig tot tachtig meter per seconde. Zonder myeline ongeveer één meter per seconde.'},
+  {t:'Een koude zenuw geleidt trager. Ook daarom warm je op voor je gaat sprinten.',do:()=>{L2.T=27;},end:()=>{L2.T=37;}}]},
+ {chap:'4 · De synaps',lv:3,st:2,view:CAM.syn,steps:{names:['Impuls komt aan','Ca²⁺ in','Blaasjes los','Receptoren open'],cur:()=>L3.step},lines:[
+  {t:'Aan het eind van de vezel zit de synaps: een smalle spleet tussen twee cellen.'},
+  {t:'De impuls opent calciumkanalen. Blaasjes laten hun neurotransmitter los in de spleet.',cam:CAM.synE},
+  {t:'Die stof bindt aan receptoren op de motorische cel. Natrium stroomt naar binnen en de spanning stijgt.',cam:CAM.syn},
+  {t:'Genoeg kleine stapjes samen bereiken de drempel. Dan vuurt de cel.',min:4},
+  {t:'Een remmende synaps laat chloride binnen. De spanning daalt, en de cel blijft stil.',min:4}]},
+ {chap:'5 · Kramp',lv:3,st:3,view:CAM.syn,lines:[
+  {t:'Bij vermoeidheid kan die balans zoekraken. Volgens de meest gebruikte verklaring winnen de prikkelende signalen, en blijft de cel vuren: kramp.',min:5},
+  {t:'Rekken laat het Golgi-peeslichaampje remmen. Dan zakt de cel weer onder de drempel.',do:()=>{L3.stretch=true;},min:5}]},
+ {chap:'6 · Reflex of reactie',lv:0,st:2,view:CAM.schema,lines:[
+  {t:'Terug naar de sporter. Een reflex is snel omdat de route kort is.',min:7},
+  // het startschot pas hier, zodat de paarse puls uit de hersenen loopt terwijl de stem erover vertelt; daarna nog een keer
+  {t:'Een reactie op het startschot gaat via de hersenen: horen, verwerken en beslissen. Pas dan gaat het bevel via de piramidebaan naar beneden.',cam:CAM.brain,min:6,do:()=>{L0.vol=true;L0.volNext=true;L0.ph='vwait';L0.t=0;L0.ms=0;P0.clear();K.hudSet(levels[0].hud());}},
+  {t:'Dat duurt ongeveer honderdvijftig milliseconden. Wie binnen een tiende seconde reageert, heeft gegokt: een valse start.',cam:CAM.schema,min:4}]},
+ {chap:'7 · Te laat',lv:0,st:3,view:CAM.lan,setup(){S.grade=2;},lines:[
+  {t:'Een rebound. De sporter landt op de voet van een tegenstander, en de enkel kantelt naar binnen.',min:4},
+  // dezelfde landing nog een keer van dichtbij, zodat de kanteling samenvalt met de tekst
+  {t:'Binnen ongeveer veertig tot vijftig milliseconden staat de buitenband al maximaal onder spanning.',cam:CAM.foot,min:5,do:()=>{K.setState(3);}},
+  {t:'De kuitbeenspieren worden pas na ongeveer zestig tot tachtig milliseconden actief, en echte kracht komt nog later. Te laat om de band te beschermen.',min:5},
+  {t:'Een reflex kan dus niet alles voorkomen.',cam:CAM.lan}]},
+ {chap:'Tot slot',lv:0,st:1,view:CAM.wide,lines:[
+  {t:'Wat helpt dan wel? Sterke kuitbeenspieren, balanstraining en de spieren vooraf aanspannen bij de landing.'},
+  {t:'Je zenuwstelsel leert voorspellen. Dan staat de spier al klaar voordat de voet de grond raakt.'},
+  {t:'',min:5,do:()=>{K.FILM.title=['Verken het zelf','De Bewegingsatlas · van kniepeesreflex tot synaps'];}}]}]};
+
+// beginstand van het been
+poseLeg0();
+return {levels,points,tags,quiz,layers,film};
+ }});
+</script>
+</body>
+</html>

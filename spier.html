@@ -37,10 +37,11 @@ body.lv4 #app{background:radial-gradient(110% 90% at 55% 45%,#14263d 0%,#0a1424 
 #filmOv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:11;display:none}
 body.film #filmOv{display:block}
 body.film #top,body.film #left,body.film #hud,body.film #hint,body.film #markers,body.film .panel,body.film #lens,body.film #lensTxt,body.film #flash{display:none!important}
-#filmBar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:12;display:flex;align-items:center;gap:6px;background:rgba(12,16,18,.82);border:1px solid var(--line);border-radius:14px;padding:6px;backdrop-filter:blur(10px);transition:opacity .5s}
+#filmBar{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:12;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;width:max-content;max-width:calc(100% - 24px);background:rgba(12,16,18,.82);border:1px solid var(--line);border-radius:14px;padding:6px;backdrop-filter:blur(10px);transition:opacity .5s}
 #filmBar[hidden]{display:none}
 #filmBar.idle{opacity:0}
-#filmBar:hover{opacity:1}
+#filmBar:hover,#filmBar:focus-within{opacity:1}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 #filmBar button{border:0;background:none;color:#e9e1d2;font:600 13.5px "Instrument Sans",sans-serif;padding:8px 12px;border-radius:9px;cursor:pointer;white-space:nowrap}
 #filmBar button:hover{background:rgba(255,255,255,.08)}
 #filmBar button.on{color:var(--gold)}
@@ -123,6 +124,10 @@ body.quiz-on .mk:not(.q){opacity:.25;pointer-events:none}
 .ph .lat{margin:3px 0 0;font:12px "JetBrains Mono",monospace;color:#c9b99a}
 .x{margin-left:auto;border:0;background:rgba(255,255,255,.06);width:30px;height:30px;border-radius:8px;cursor:pointer;flex:none;font-size:18px;line-height:1}
 .x:hover{background:rgba(255,255,255,.14)}
+.ph .mn{display:none;font-size:15px}
+.panel.min .tabs,.panel.min .pb,.panel.min .pf{display:none}
+.panel.min .ph{padding-bottom:16px}
+.pb a,.fb a{color:var(--gold)}
 .tabs{display:flex;gap:4px;padding:0 16px;border-bottom:1px solid var(--line)}
 .tabs button{border:0;background:none;padding:9px 8px 10px;cursor:pointer;font-weight:600;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
 .tabs button.on{color:var(--ink);border-color:var(--accent)}
@@ -207,20 +212,31 @@ body.present #cap{font-size:15px;width:340px}
   .tools{justify-content:flex-start}
   .btn .t{display:none}
   .seg button{padding:7px 9px;font-size:12.5px}
-  #left{top:auto;bottom:168px;left:16px;right:16px;flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:2px;align-items:center}
+  #left{top:auto;bottom:calc(var(--hudH,150px) + 26px);left:16px;right:16px;flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:2px;align-items:center}
   #left h4{display:none}
   #ladder{flex-direction:row;padding-left:0}
   #ladder::before{display:none}
   .rung{min-width:0;flex:none}.rung::before{display:none}.rung small{display:none}
   #left .btn{flex:none}
   .zrow{display:none}
-  .panel{left:16px;right:16px;width:auto;top:auto;bottom:16px;max-height:58%}
+  .panel{left:16px;right:16px;width:auto;top:auto;bottom:calc(var(--hudH,150px) + 26px);max-height:min(50%,calc(100% - var(--hudH,150px) - var(--topH,100px) - 50px))}
+  .ph .mn{display:grid;place-items:center;margin-left:auto}
+  .ph .mn+.x{margin-left:6px}
+  #filmBar{bottom:10px;gap:2px;padding:4px;max-width:calc(100% - 16px)}
+  #filmBar button{padding:9px 10px;font-size:12.5px}
+  #filmBar #fPos{padding:0 4px;font-size:10.5px}
+  #filmBar .sep{display:none}
   #hud{left:16px;right:16px;transform:none;flex-wrap:wrap;gap:8px 12px;padding:8px 12px}
   #bars{grid-template-columns:auto 70px auto}
   #bars .m{min-width:0}
   #cap{width:auto;flex:1 1 100%}
   #steps{flex-wrap:wrap}
   #hint{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .mk.q b{animation:none}
+  .panel.open{animation:none}
+  #flash{display:none}
 }
 </style>
 </head>
@@ -232,8 +248,9 @@ body.present #cap{font-size:15px;width:340px}
   <div id="markers"></div>
   <div id="lens"></div><div id="lensTxt"></div>
   <canvas id="filmOv" aria-hidden="true"></canvas>
-  <div id="filmBar" hidden><button id="fPrev" title="Vorig hoofdstuk (←)">⏮</button><button id="fPlay" title="Pauze / afspelen (spatie)">⏸</button><button id="fNext" title="Volgend hoofdstuk (→)">⏭</button><span id="fPos"></span><span class="sep"></span><button id="fVoice">Stem: aan</button><button id="fRec" title="Neemt de film in 1080p op en downloadt hem (ca. 4 minuten, ondertiteld)">⬇ Download als video</button><span class="sep"></span><button id="fClose" title="Film sluiten (Esc)">✕ Sluiten</button></div>
-  <div id="recNote" hidden>● Opname loopt. Laat dit tabblad open en zichtbaar tot de download start.</div>
+  <div id="filmCapSr" class="sr" aria-live="polite"></div>
+  <div id="filmBar" role="toolbar" aria-label="Filmbediening" hidden><button id="fPrev" title="Vorig hoofdstuk (←)" aria-label="Vorig hoofdstuk">⏮</button><button id="fPlay" title="Pauze / afspelen (spatie)" aria-label="Pauze of afspelen">⏸</button><button id="fNext" title="Volgend hoofdstuk (→)" aria-label="Volgend hoofdstuk">⏭</button><span id="fPos"></span><span class="sep"></span><button id="fVoice">Stem: aan</button><button id="fRec" title="Neemt de film in 1080p op en downloadt hem (ca. 4 minuten). De video heeft ondertitels, muziek en geluidseffecten, maar géén gesproken stem: die kan de browser niet opnemen.">⬇ Video (zonder stem)</button><span class="sep"></span><button id="fClose" title="Film sluiten (Esc)">✕ Sluiten</button></div>
+  <div id="recNote" hidden>● Opname loopt: ondertiteld, met muziek, zonder gesproken stem. Laat dit tabblad open en zichtbaar tot de download start.</div>
   <div id="filmStart" hidden><div><button id="filmStartBtn">▶ Bekijk de film</button><p>Hoe een spier kracht maakt · ca. 4 minuten · met stem en ondertitels</p></div></div>
 
   <header id="top">
@@ -248,9 +265,9 @@ body.present #cap{font-size:15px;width:340px}
         <button data-state="2"><kbd>2</kbd><span id="s2lbl">Sprint</span></button>
         <button data-state="3"><kbd>3</kbd><span id="s3lbl">Scheur</span></button>
       </div>
-      <button class="btn accent" id="bFilm" title="Uitlegfilm met stem en ondertitels"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg><span class="t">Film</span></button>
-      <button class="btn" id="bSound" title="Geluid (G)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
-      <button class="btn" id="bPresent" title="Presenteren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
+      <button class="btn accent" id="bFilm" title="Uitlegfilm met stem en ondertitels" aria-label="Uitlegfilm"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5v14l12-7z"/></svg><span class="t">Film</span></button>
+      <button class="btn" id="bSound" title="Geluid (G)" aria-label="Geluid aan of uit" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
+      <button class="btn" id="bPresent" title="Presenteren" aria-label="Presentatiestand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
     </div>
   </header>
 
@@ -266,14 +283,14 @@ body.present #cap{font-size:15px;width:340px}
   </nav>
 
   <aside class="panel" id="info" aria-live="polite">
-    <div class="ph"><div class="num" id="iNum">1</div><div><h2 id="iTitle"></h2><p class="lat" id="iLat"></p></div><button class="x" id="iClose" aria-label="Sluiten">×</button></div>
+    <div class="ph"><div class="num" id="iNum">1</div><div><h2 id="iTitle"></h2><p class="lat" id="iLat"></p></div><button class="x mn" aria-label="Paneel inklappen" aria-expanded="true">▾</button><button class="x" id="iClose" aria-label="Sluiten">×</button></div>
     <div class="tabs" id="iTabs"><button data-tab="0" class="on">Uitleg</button><button data-tab="1">In de sport</button><button data-tab="2">Weetje</button><button data-tab="3">Denkvraag</button></div>
     <div class="pb" id="iBody"></div>
     <div class="pf"><button id="iPrev">← Vorige</button><span id="iPos"></span><button id="iNext">Volgende →</button></div>
   </aside>
 
   <aside class="panel" id="quiz">
-    <div class="ph"><div class="num" style="background:var(--gold);color:#1c1a17">?</div><div><h2>Speurtocht</h2><p class="lat">8 opdrachten · van zoeken tot nadenken</p></div><button class="x" id="qClose" aria-label="Sluiten">×</button></div>
+    <div class="ph"><div class="num" style="background:var(--gold);color:#1c1a17">?</div><div><h2>Speurtocht</h2><p class="lat">8 opdrachten · van zoeken tot nadenken</p></div><button class="x mn" aria-label="Paneel inklappen" aria-expanded="true">▾</button><button class="x" id="qClose" aria-label="Sluiten">×</button></div>
     <div class="pb" id="qBody"></div>
     <div class="pf"><span id="qPos"></span><button id="qNext" disabled>Volgende →</button></div>
   </aside>
@@ -285,8 +302,8 @@ body.present #cap{font-size:15px;width:340px}
   </div>
   <div id="hint">Sleep om te draaien · scroll om te zoomen · <b>+</b> en <b>−</b> om een niveau in of uit te zoomen · klik op een genummerd punt</div>
 
-  <div class="modal" id="help"><div class="card">
-    <h2>Zo werkt de zoomreis</h2>
+  <div class="modal" id="help" role="dialog" aria-modal="true" aria-labelledby="helpT"><div class="card">
+    <h2 id="helpT">Zo werkt de zoomreis</h2>
     <p>Je begint bij een hele spier: de lange kop van de <b>biceps femoris</b> (een hamstring), ingespannen in een lab-opstelling naast een sprinter. De onderste klem beweegt mee met het been van de sprinter. Daarna zoom je in, steeds tien tot honderd keer dieper:</p>
     <ul>
       <li><b>Spier</b> (≈ 10 cm): de hele hamstring, met krachtmeter.</li>
@@ -301,11 +318,13 @@ body.present #cap{font-size:15px;width:340px}
     <table class="keys">
       <tr><td><kbd>+</kbd> <kbd>−</kbd></td><td>Inzoomen · uitzoomen</td></tr>
       <tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Rust · contractie · scheur</td></tr>
-      <tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Volgend / vorig tabje of punt (werkt met een clicker)</td></tr>
+      <tr><td><kbd>→</kbd> <kbd>←</kbd> · <kbd>PgDn</kbd> <kbd>PgUp</kbd></td><td>Volgend / vorig tabje of punt (werkt met een clicker)</td></tr>
       <tr><td><kbd>Spatie</kbd></td><td>Pauzeren of hervatten</td></tr>
       <tr><td><kbd>S</kbd></td><td>Kruisbrug: één stap verder</td></tr>
+      <tr><td><kbd>Home</kbd></td><td>Paneel sluiten en terug naar het beginbeeld van dit niveau</td></tr>
       <tr><td><kbd>C</kbd> · <kbd>G</kbd> · <kbd>L</kbd></td><td>Camerarit · geluid · labels</td></tr>
       <tr><td><kbd>Esc</kbd></td><td>Paneel sluiten of presentatie stoppen</td></tr>
+      <tr><td>In de film</td><td><kbd>Spatie</kbd> pauze · <kbd>→</kbd> <kbd>←</kbd> hoofdstuk verder of terug · <kbd>Esc</kbd> film sluiten</td></tr>
     </table>
     <p style="margin-top:16px"><button class="btn accent" id="helpClose">Aan de slag</button></p>
     <p class="hint">Vereenvoudigd didactisch model: aantallen, kleuren en verhoudingen zijn aangepast om het zichtbaar te maken.</p>
@@ -507,7 +526,13 @@ const FF=inst(new THREE.CylinderGeometry(1,1,1,10,1).translate(0,.5,0),fasFibMat
 const FFd=[];FAS.forEach((f,fi)=>FPTS.forEach(p=>FFd.push({fi,y:f.y+p[0],z:f.z+p[1],end:f.end+.1+R()*.4,col:.85+R()*.25,split:.2+(R()-.5)*.5,fr:R()})));
 const periMat=std(0xf3dccb,{transparent:true,opacity:.32,roughness:.3,side:THREE.DoubleSide,depthWrite:false});
 const periMeshes=FAS.map(f=>{const len=f.end-.35+4;const m=mesh(new THREE.CylinderGeometry(.52,.52,len,28,1,true),periMat,[-4+len/2,f.y,f.z],[0,0,Math.PI/2],0,G1);m.castShadow=false;return m;});
-const epi=mesh(new THREE.CylinderGeometry(2.78,2.78,5.6,56,1,true,.5,TAU-1.0),std(0xead7c4,{transparent:true,opacity:.42,roughness:.35,side:THREE.DoubleSide,depthWrite:false}),[-1.2,0,0],[0,0,Math.PI/2],0,G1);epi.castShadow=false;
+const epiMat=std(0xead7c4,{transparent:true,opacity:.42,roughness:.35,side:THREE.DoubleSide,depthWrite:false});
+const epi=mesh(new THREE.CylinderGeometry(2.78,2.78,5.6,56,1,true,.5,TAU-1.0),epiMat,[-1.2,0,0],[0,0,Math.PI/2],0,G1);epi.castShadow=false;
+// graad 3: het epimysium scheurt ook; twee helften die uit elkaar wijken (normaal verborgen)
+const EPIX=[-4,.12,.34,1.6];
+const epiL=mesh(new THREE.CylinderGeometry(2.78,2.78,EPIX[1]-EPIX[0],56,1,true,.5,TAU-1.0),epiMat,[(EPIX[0]+EPIX[1])/2,0,0],[0,0,Math.PI/2],0,G1);
+const epiR=mesh(new THREE.CylinderGeometry(2.78,2.78,EPIX[3]-EPIX[2],56,1,true,.5,TAU-1.0),epiMat,[(EPIX[2]+EPIX[3])/2,0,0],[0,0,Math.PI/2],0,G1);
+[epiL,epiR].forEach(m=>{m.castShadow=false;m.visible=false;});
 const fascia=mesh(new THREE.CylinderGeometry(2.95,2.95,4.2,56,1,true,.9,TAU-1.8),std(0xf5efe6,{transparent:true,opacity:.18,side:THREE.DoubleSide,depthWrite:false}),[-1.9,0,0],[0,0,Math.PI/2],0,G1);fascia.castShadow=false;
 function vessel(pts,r,col){const cv=new THREE.CatmullRomCurve3(pts.map(p=>V(...p)));return mesh(new THREE.TubeGeometry(cv,80,r,10),std(col,{roughness:.35}),0,0,0,G1);}
 vessel([[-4.2,1.62,.55],[-2,1.6,.62],[0,1.66,.5],[2,1.6,.6],[3.2,1.62,.55]],.11,0xc0392b);
@@ -515,17 +540,20 @@ vessel([[-4.2,1.62,-.7],[-2,1.58,-.62],[0,1.66,-.7],[2,1.6,-.62],[3.1,1.58,-.68]
 vessel([[-4.2,-.95,1.45],[-1.5,-.9,1.4],[1,-.98,1.5],[3,-.92,1.42]],.09,0xc0392b);
 [[.4,1.62,.55,.2,1.15,.3],[1.6,1.6,.6,1.5,1.3,1.1],[-1,1.62,.55,-1.1,1.1,1.05]].forEach(c=>vessel([[c[0],c[1],c[2]],[(c[0]+c[3])/2,(c[1]+c[4])/2+.05,(c[2]+c[5])/2],[c[3],c[4],c[5]]],.035,0xd65a5a));
 const hema1=[];for(let i=0;i<5;i++){const m=mesh(new THREE.SphereGeometry(1,18,12),std(0x6a1212,{transparent:true,opacity:0,depthWrite:false}),0,0,0,G1);m.userData.o=V(.2+(R()-.5)*.8,.6+R()*1.2,.6+R()*1.2);hema1.push(m);}
-const tornFas=new Set();FAS.forEach((f,i)=>{if(f.y+f.z*.6>.4)tornFas.add(i);});
+const tornFas=new Set(),tornFas3=new Set();FAS.forEach((f,i)=>{if(f.y+f.z*.6>.4)tornFas.add(i);if(f.y+f.z*.6>-1.8)tornFas3.add(i);});
 const F1={contract:0,tear:0,grade:2};
+const fasTorn=i=>(F1.grade===3?tornFas3:tornFas).has(i);
 function updateFas(){const c=F1.contract;G1.scale.set(1-.08*c,1+.04*c,1+.04*c);
-  let k=0;FFd.forEach(d=>{const r=.088*(1+.06*c);const torn=F1.tear>0&&tornFas.has(d.fi)&&(F1.grade>=2||d.fr<.25)&&(F1.grade===3||d.fr<.8);
+  let k=0;FFd.forEach(d=>{const r=.088*(1+.06*c);const torn=F1.tear>0&&fasTorn(d.fi)&&(F1.grade>=2||d.fr<.25)&&(F1.grade===3||d.fr<.8);
     const g=torn?F1.tear*(.25+.5*d.fr):0;
     if(g>0){FF.setMatrixAt(k++,segMatrix(V(-4,d.y,d.z),V(d.split-g*.6,d.y+.03*d.fr,d.z+.04),r));FF.setMatrixAt(k++,segMatrix(V(d.split+g,d.y-.03,d.z),V(d.end,d.y,d.z),r));}
     else{FF.setMatrixAt(k++,segMatrix(V(-4,d.y,d.z),V(d.end,d.y,d.z),r));FF.setMatrixAt(k++,ZERO);}
     _c.setRGB(.66*d.col+.3*c,.2*d.col,.16*d.col);if(torn)_c.setRGB(.42,.08,.07);FF.setColorAt(k-2,_c);FF.setColorAt(k-1,_c);});
   FF.instanceMatrix.needsUpdate=true;FF.instanceColor.needsUpdate=true;
   hema1.forEach(h=>{const s=F1.tear*(.35+.25*F1.grade)*(.6+h.userData.o.y*.2);h.scale.setScalar(Math.max(.001,s));h.position.copy(h.userData.o);h.material.opacity=.5*F1.tear;h.visible=F1.tear>.01;});
-  periMeshes.forEach((m,i)=>{m.visible=!(F1.tear>.3&&tornFas.has(i)&&F1.grade===3);});}
+  periMeshes.forEach((m,i)=>{m.visible=!(F1.tear>.3&&fasTorn(i)&&F1.grade===3);});
+  const rip3=F1.grade===3&&F1.tear>0;epi.visible=!rip3;epiL.visible=epiR.visible=rip3;
+  if(rip3){const g=F1.tear*.5;epiL.position.x=(EPIX[0]+EPIX[1])/2-g*.6;epiR.position.x=(EPIX[2]+EPIX[3])/2+g;epiL.rotation.x=-.05*F1.tear;epiR.rotation.x=.07*F1.tear;}}
 
 /* ================= LEVEL 2 · one fibre ================= */
 const G2=groups[2];
@@ -659,7 +687,6 @@ const caIons=[0,1,2,3].map(()=>mesh(new THREE.SphereGeometry(.13,12,10),caMat,0,
 const ripSpark=new THREE.Mesh(new THREE.SphereGeometry(.5,16,12),new THREE.MeshBasicMaterial({color:0xffe0a0,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));G4.add(ripSpark);
 const X5={off:0,a:L5.a0,bound:false,drop:.7,phase:'rust',t:0,ca:0,step:0,noATP:false,manual:false,count:0,ecc:{bound:false,rip:0}};
 function wrapOff(o){const S=L5.S;return ((o%S)+S)%S;}
-function siteNear(x){let best=1e9;SITES.forEach(s=>{const sx=s+X5.off;const per=[sx-L5.S*3,sx,sx+L5.S*3];});return best;}
 const motorBase=()=>V(anchor.x+L5.L*Math.sin(L5.a0*D2R),L5.Ya-.92,0);
 function placeHead(){
   const a=X5.a*D2R;const mc=V(anchor.x+L5.L*Math.sin(a)*(X5.bound?1:1),L5.Ya-.92-X5.drop,0);
@@ -685,7 +712,7 @@ function cycleStep(dt){
   const st=X5.step,u=clamp(X5.t/DUR[st],0,1);
   const mc=motorBase();
   if(st===0){X5.bound=false;X5.a=L5.a0;X5.drop=lerp(.7,0,smooth(u));setP(molA,2);molA.visible=true;molPi.visible=true;molB.visible=false;}
-  if(st===1){X5.bound=true;X5.drop=0;const e=smooth(u);const a=lerp(L5.a0,L5.a1,e);const prev=X5.a;X5.a=a;X5.off+=L5.L*(Math.sin(a*D2R)-Math.sin(prev*D2R))*-1*0+L5.L*(Math.sin(a*D2R)-Math.sin(prev*D2R));
+  if(st===1){X5.bound=true;X5.drop=0;const e=smooth(u);const a=lerp(L5.a0,L5.a1,e);const prev=X5.a;X5.a=a;X5.off+=L5.L*(Math.sin(a*D2R)-Math.sin(prev*D2R));
     molPi.visible=u<.95;molPi.position.copy(W.pocket).add(V(.78-u*2.2,-u*1.2,u*1.6));if(u>.6){setP(molA,2);molA.position.copy(W.pocket).add(V(-(u-.6)*3,-(u-.6)*2.5,(u-.6)*2.2));}
     hdMat.emissiveIntensity=.6*Math.sin(Math.PI*u);if(X5.t<dt*sp*1.5)SND.stroke();}
   if(st===2){if(X5.noATP){X5.bound=true;X5.drop=0;molB.visible=false;molA.visible=false;return;}
@@ -696,7 +723,7 @@ function cycleStep(dt){
   if(X5.t>=DUR[st]&&!X5.manual){nextStep();}
 }
 function nextStep(){X5.t=0;X5.step=(X5.step+1)%4;if(X5.step===0){X5.count++;// swap molecules: ADP+Pi bound head is molB now
-    const tmp=molA;molAref();}}
+    molAref();}}
 function molAref(){molA.visible=true;setP(molA,2);molB.visible=false;}
 function eccStep(dt){X5.ca=1;const v=.9*xSpeed;X5.off-=v*dt*-1;// actin pulled to the right
   const e=X5.ecc;const S=L5.S;
@@ -711,7 +738,8 @@ const M5ecc={rips:0};
 /* ================= global state ================= */
 const W={};let state=1,stT=0,paused=false,clock=0,xSpeed=1;
 function hudSet(html){$('#hudMid').innerHTML=html;}
-function capSet(t,x){$('#capT').textContent=t;$('#capX').innerHTML=x;}
+let capLast='',uiDirty=true;
+function capSet(t,x){const k=t+'|'+x;if(k===capLast)return;capLast=k;$('#capT').textContent=t;$('#capX').innerHTML=x;uiDirty=true;}
 function ctlSet(html){$('#ctl').innerHTML=html;}
 function stateText(){const n=LEVELS[lvl];return ['Stand 1 · Rust','Stand 2 · '+n.s2,'Stand 3 · '+n.s3][state-1];}
 function buildHUD(){
@@ -724,16 +752,19 @@ function buildHUD(){
   else if(lvl===2){hudSet(`<div id="steps"><span data-s="0">Zenuwimpuls</span><span data-s="1">Actiepotentiaal</span><span data-s="2">Ca²⁺ vrij</span><span data-s="3">Contractie</span></div>`);}
   else hudSet('');
   if(state===3&&(lvl===0||lvl===1)){ctlSet(`<label>Graad</label>${[1,2,3].map(g=>`<button data-g="${g}" class="${grade===g?'on':''}">${g}</button>`).join('')}<button id="bReplay">↻ Opnieuw</button>`);
-    $$('#ctl [data-g]').forEach(b=>b.addEventListener('click',()=>{grade=+b.dataset.g;setState(3);}));$('#bReplay').addEventListener('click',()=>setState(3));}
+    $$('#ctl [data-g]').forEach(b=>b.addEventListener('click',()=>{grade=+b.dataset.g;setState(3);}));}
   else if(state===3)ctlSet(`<button id="bReplay">↻ Opnieuw</button>`);
-  if(lvl===4&&state===2)ctlSet(`<button id="bPlay">${paused?'▶ Afspelen':'⏸ Pauze'}</button><button id="bStep">Stap →</button><label>Tempo</label><input type="range" id="sSpd" min="0.25" max="2" step="0.05" value="${xSpeed}"><button id="bAtp" class="${X5.noATP?'on':''}">Zonder ATP</button>`);
-  if(lvl===4&&state===3)ctlSet(`<label>Tempo</label><input type="range" id="sSpd" min="0.25" max="2" step="0.05" value="${xSpeed}">`);
+  if(lvl===4&&state===2)ctlSet(`<button id="bPlay">${paused?'▶ Afspelen':'⏸ Pauze'}</button><button id="bStep">Stap →</button><label for="sSpd">Tempo</label><input type="range" id="sSpd" aria-label="Tempo" min="0.25" max="2" step="0.05" value="${xSpeed}"><button id="bAtp" class="${X5.noATP?'on':''}" aria-pressed="${X5.noATP}">Zonder ATP</button>`);
+  if(lvl===4&&state===3)ctlSet(`<label for="sSpd">Tempo</label><input type="range" id="sSpd" aria-label="Tempo" min="0.25" max="2" step="0.05" value="${xSpeed}">`);
   const bp=$('#bPlay');if(bp)bp.addEventListener('click',()=>{paused=!paused;bp.textContent=paused?'▶ Afspelen':'⏸ Pauze';});
   const bs=$('#bStep');if(bs)bs.addEventListener('click',stepOnce);
   const ss=$('#sSpd');if(ss)ss.addEventListener('input',e=>xSpeed=+e.target.value);
-  const ba=$('#bAtp');if(ba)ba.addEventListener('click',()=>{X5.noATP=!X5.noATP;ba.classList.toggle('on',X5.noATP);if(!X5.noATP&&X5.step===2){X5.t=0;}});
+  const ba=$('#bAtp');if(ba)ba.addEventListener('click',()=>{X5.noATP=!X5.noATP;ba.classList.toggle('on',X5.noATP);ba.setAttribute('aria-pressed',X5.noATP);if(!X5.noATP&&X5.step===2){X5.t=0;}});
   $('#bReplay')&&$('#bReplay').addEventListener('click',()=>setState(3));
+  uiDirty=true;
 }
+// mobiel: HUD- en kopjeshoogte meten, zodat panelen en de zoomladder erboven passen
+function measureUI(){const rs=document.documentElement.style,h=$('#hud').offsetHeight,t=$('#top').offsetHeight;if(h)rs.setProperty('--hudH',h+'px');if(t)rs.setProperty('--topH',t+'px');}
 function stepOnce(){if(lvl!==4||state!==2)return;paused=true;const bp=$('#bPlay');if(bp)bp.textContent='▶ Afspelen';if(X5.phase==='ca'){X5.phase='cycle';X5.ca=1;X5.t=0;X5.step=0;caIons.forEach(c=>c.visible=false);}
   // finish current step instantly by simulating it
   const st=X5.step;let n=0;while(X5.step===st&&n<400){paused=false;X5.manual=false;cycleStep(1/60);paused=true;n++;}}
@@ -775,25 +806,25 @@ function step0(dt){
   updateMuscle0();
   const L=LEVELS[0];
   if(state===1)capSet(stateText(),'De spier hangt ontspannen tussen de klemmen. Klik op een punt, of zoom in met <b>+</b>.');
-  else if(state===2)capSet(stateText(),M0.mode==='excentrisch'?'Late zwaaifase: de hamstring wordt <b>langer</b> én spant aan om het onderbeen af te remmen (excentrisch).':M0.mode==='concentrisch'?'De hamstring trekt het been terug: hij wordt <b>korter</b> (concentrisch).':'Kijk naar de krachtmeter en de balkjes.');
+  else if(state===2)capSet(stateText(),'In de <b>late zwaaifase</b> wordt de hamstring <b>langer</b> én spant hij aan om het onderbeen af te remmen (excentrisch). Daarna trekt hij het been terug en wordt hij <b>korter</b> (concentrisch). Volg de balkjes.');
   else capSet(stateText(),!tearFired?'Volle snelheid… let op de late zwaaifase.':`<b>Graad ${grade}</b>: ${['','enkele vezels gescheurd, pijn maar weinig krachtverlies.','een deel van de bundels is doorgescheurd: duidelijk krachtverlies en een bloeding.','volledige scheur: de spier trekt zich terug (balvorming) en levert geen kracht meer.'][grade]}`);
   const b1=$('#b1');if(b1){b1.style.width=Math.round(clamp((M0.len-.8)/.45,0,1)*100)+'%';$('#m1').textContent=Math.round(M0.len*100)+'% van rust';
     $('#b2').style.width=Math.round(M0.act*100)+'%';const m2=$('#m2');m2.textContent=M0.mode;m2.className='m '+({excentrisch:'ecc',concentrisch:'con',isometrisch:'iso'}[M0.mode]||'');
     $('#b3').style.width=Math.round(clamp(M0.force,0,1)*100)+'%';$('#m3').textContent=Math.round(clamp(M0.force,0,1.2)*1800)+' N';}
 }
-function onTear(){const f=$('#flash');f.style.transition='none';f.style.opacity=1;requestAnimationFrame(()=>{f.style.transition='opacity 1.1s';f.style.opacity=0;});SND.rip(true);shake=.45;FILM.flashA=1;}
+function onTear(){SND.rip(true);if(reduced)return;const f=$('#flash');f.style.transition='none';f.style.opacity=1;requestAnimationFrame(()=>{f.style.transition='opacity 1.1s';f.style.opacity=0;});shake=.45;FILM.flashA=1;}
 let shake=0;
 function step1(dt){
   if(state===1){F1.contract=0;capSet(stateText(),'Elke bundel (fascikel) is een kabeltje van spiervezels in een eigen vlies. Zoom verder in op één vezel.');}
   else if(state===2){F1.contract=.5+.5*Math.sin(clock*2.2);capSet(stateText(),'Alle vezels in een motorische eenheid trekken tegelijk samen: de bundels worden korter en dikker.');}
   else{F1.contract=0;F1.tear=smooth(stT/1.2);F1.grade=grade;if(stT>.25&&!tearFired){tearFired=true;SND.rip(false);}
-    capSet(stateText(),grade===1?'Graad 1: verspreide vezels zijn gescheurd, de bundels zelf zijn heel.':grade===2?'Graad 2: hele bundels zijn doorgescheurd. Bloed loopt tussen de bundels.':'Graad 3: vrijwel alle bundels zijn kapot; ook het epimysium scheurt.');}
+    capSet(stateText(),grade===1?'Graad 1: verspreide vezels zijn gescheurd, de bundels zelf zijn heel.':grade===2?'Graad 2: hele bundels zijn doorgescheurd. Bloed loopt tussen de bundels.':'Graad 3: vrijwel alle bundels zijn kapot, hun vliezen (perimysium) zijn weg en ook het epimysium scheurt open.');}
   updateFas();}
 function step2(dt){
   if(state===2){const cyc=(clock%2.4)/2.4*2.4;F2.ap=cyc*1.6;F2.ca=clamp(1-Math.abs(cyc-1.55)/.6,0,1)*(cyc>1.1?1:0)+(cyc>1.6?clamp(1-(cyc-1.6)/.8,0,1)*.6:0);
     F2.contract=clamp(Math.sin(clamp((cyc-1.2)/1.2,0,1)*Math.PI),0,1);F2.tear=0;
     const s=cyc<.62?0:cyc<1.15?1:cyc<1.6?2:3;$$('#steps span').forEach(e=>e.classList.toggle('on',+e.dataset.s===s));
-    capSet(stateText(),['Een zenuwimpuls loopt naar de motorische eindplaat.','Acetylcholine: een actiepotentiaal loopt over de vezel en de T-buisjes in.','Het sarcoplasmatisch reticulum laat Ca²⁺ vrij: de vezel gloeit op.','De sarcomeren verkorten: het streeppatroon schuift in elkaar.'][s]);}
+    capSet(stateText(),'Een zenuwimpuls bereikt de motorische eindplaat. Acetylcholine start een actiepotentiaal over de vezel en de T-buisjes in. Het sarcoplasmatisch reticulum laat Ca²⁺ vrij (de vezel gloeit op) en de sarcomeren verkorten. Volg de gele stappen.');}
   else if(state===1){F2.ap=-1;F2.ca=0;F2.contract=0;F2.tear=0;$$('#steps span').forEach(e=>e.classList.remove('on'));capSet(stateText(),'Een spiervezel is één lange cel met honderden kernen (paars) en vol myofibrillen. Zoom in op het streeppatroon.');}
   else{F2.ap=-1;F2.ca=0;F2.contract=0;F2.tear=smooth(stT/1.0);F2.sat=smooth((stT-1.8)/1.5)*(.6+.4*Math.sin(clock*3));if(stT>.15&&!tearFired){tearFired=true;SND.rip(false);}
     capSet(stateText(),stT<1.8?'De vezel scheurt: de membraan breekt, myofibrillen rafelen uit en de celinhoud lekt weg.':'Herstel: de <b>satellietcellen</b> (groen) worden actief. Zij bouwen de vezel weer op.');}
@@ -818,9 +849,9 @@ function step4(dt){
   else if(state===2){if(!paused)cycleStep(dt);
     const lab=X5.phase==='ca'?'Ca²⁺ bindt aan troponine: tropomyosine schuift opzij en de bindingsplaatsen (rood) komen vrij.':
       X5.noATP&&X5.step===2?'<b>Geen ATP</b>: de kop kan niet loslaten en blijft vastzitten. Zo ontstaat <b>rigor mortis</b>.':
-      ['<b>1 · Binden</b>: de gespannen kop (met ADP + Pᵢ) hecht aan actine. Er is een kruisbrug.','<b>2 · Powerslag</b>: Pᵢ komt vrij, de hefboom kantelt en trekt de actine ongeveer 10 nm op. Daarna laat ADP los.','<b>3 · Loslaten</b>: een nieuw ATP bindt aan de kop. Daardoor laat de kop de actine los.','<b>4 · Opspannen</b>: ATP wordt gesplitst in ADP + Pᵢ. De energie spant de kop weer, klaar voor de volgende slag.'][X5.step];
+      ['<b>1 · Binden</b>: de gespannen kop (met ADP + Pᵢ) hecht aan actine. Er is een kruisbrug.','<b>2 · Powerslag</b>: Pᵢ komt vrij, de hefboom kantelt en trekt de actine 5 à 10 nm op (in het model vergroot). Daarna laat ADP los.','<b>3 · Loslaten</b>: een nieuw ATP bindt aan de kop. Daardoor laat de kop de actine los.','<b>4 · Opspannen</b>: ATP wordt gesplitst in ADP + Pᵢ. De energie spant de kop weer, klaar voor de volgende slag.'][X5.step];
     capSet(stateText(),lab);$$('#steps span').forEach(e=>e.classList.toggle('on',X5.phase==='cycle'&&+e.dataset.s===X5.step));}
-  else{if(!paused)eccStep(dt*xSpeed);molA.visible=true;setP(molA,2);molA.position.copy(W.pocket||V(0,0,0));
+  else{if(!paused)eccStep(dt);molA.visible=true;setP(molA,2);molA.position.copy(W.pocket||V(0,0,0));
     $$('#steps span').forEach(e=>e.classList.remove('on'));
     capSet(stateText(),'Een externe kracht trekt de actine de <b>andere kant</b> op. Gebonden koppen (nog met ADP + Pᵢ) worden uitgerekt en <b>losgetrokken</b> voordat ze hun slag afmaken. Ze binden opnieuw zonder nieuw ATP: meer kracht, minder ATP, en bij overbelasting schade.');}
   placeHead();
@@ -834,9 +865,9 @@ function step4(dt){
 /* ================= points ================= */
 const POINTS=[
  {lv:0,name:'Hamstring',lat:'M. biceps femoris, caput longum',at:()=>W.belly,view:[[2.5,7.5,8.5],[-4,5.4,0]],tabs:[
-  `<p>In het lab hangt de lange kop van de <b>biceps femoris</b> tussen twee klemmen. Bovenin meet een krachtmeter hoeveel kracht de spier levert. De onderste klem beweegt mee met het rechterbeen van de sprinter.</p><p>Een spier bestaat uit duizenden spiervezels (de rode strengen) die samen trekken. Spieren kunnen alleen <b>trekken</b>, nooit duwen.</p>`,
-  `<p>Bij sprinten werken de hamstrings het hardst aan het eind van de <b>zwaaifase</b>. Het been zwaait naar voren en de knie strekt, en de hamstrings moeten het onderbeen afremmen terwijl ze zelf langer worden (<b>excentrisch</b>). Juist dan ontstaan de meeste blessures.</p>`,
-  `<p>De hamstringblessure is de meest voorkomende blessure in het voetbal: ongeveer 12 tot 16% van alle blessures. Een flink deel keert binnen een jaar terug.</p>`,
+  `<p>In het lab hangt de lange kop van de <b>biceps femoris</b> tussen twee klemmen. Bovenin meet een krachtmeter hoeveel kracht de spier levert. De onderste klem beweegt mee met het rechterbeen van de sprinter.</p><p>Een spier bestaat uit honderdduizenden spiervezels (in het model een paar rode strengen) die samen trekken. Spieren kunnen alleen <b>trekken</b>, nooit duwen.</p>`,
+  `<p>Bij sprinten werken de hamstrings het hardst aan het eind van de <b>zwaaifase</b>. Het been zwaait naar voren en de knie strekt, en de hamstrings moeten het onderbeen afremmen terwijl ze zelf langer worden (<b>excentrisch</b>). Juist dan ontstaan de meeste blessures.</p><p>De hamstrings beschermen ook de knie: ze trekken het scheenbeen naar achteren en helpen zo de voorste kruisband. <a href="knie.html">Bekijk dat in halte 9, de knie →</a></p>`,
+  `<p>De hamstringblessure is de meest voorkomende blessure in het profvoetbal. Volgens de UEFA Elite Club Injury Study (Ekstrand e.a., 2023) gaat het inmiddels om ongeveer een kwart (24%) van alle blessures, en dat aandeel is in twintig seizoenen gestegen. Een flink deel keert binnen een jaar terug.</p>`,
   `<p class="think">Kijk in stand 2 naar de krachtmeter. Wanneer levert de spier de meeste kracht: als hij korter wordt of als hij langer wordt? Hoe zou je dat kunnen verklaren? (Op het laatste niveau vind je het antwoord.)</p>`]},
  {lv:0,name:'Spier-peesovergang',lat:'Junctio musculotendinea',at:()=>W.mtj,view:[[-1.2,8.6,5.5],[-4,7,0]],tabs:[
   `<p>Waar spiervezels overgaan in pees, grijpen ze met vingervormige instulpingen in het peesweefsel. Daar wordt de kracht doorgegeven. Het is een kwetsbare plek: rekbare spier en stugge pees komen samen.</p>`,
@@ -862,7 +893,7 @@ const POINTS=[
   `<p>Tussen de bundels lopen slagaders (rood) en aders (blauw). Ze vertakken tot <b>haarvaten</b> die tussen de vezels door lopen: elke spiervezel heeft er meerdere vlak naast zich.</p>`,
   `<p>Duurtraining laat het aantal haarvaten rond elke vezel toenemen. Zo kan er meer zuurstof naar de spier, en meer CO₂ en warmte weg.</p>`,
   `<p>Bij maximale inspanning kan de bloedstroom door een spier tot wel twintig keer zo groot worden als in rust.</p>`,
-  `<p class="think">Waarom geeft een spierscheuring altijd een bloeduitstorting, en waarom zie je die vaak pas na een paar dagen, en lager in het been?</p>`]},
+  `<p class="think">Waarom geeft een flinke spierscheuring (graad 2 of 3) een bloeduitstorting, en waarom zie je die vaak pas na een paar dagen, en lager in het been?</p>`]},
  {lv:2,name:'Myofibrillen',lat:'Myofibrillae · dwarsstreping',at:()=>V(4.9,.9,1),view:[[8.5,2.2,4.5],[3.6,0,0]],tabs:[
   `<p>Een spiervezel is één lange cel, soms tientallen centimeters lang. Hij zit vol <b>myofibrillen</b>: draden met een herhalend streeppatroon. Elke herhaling is een <b>sarcomeer</b>, de kleinste eenheid die kan samentrekken.</p>`,
   `<p>Krachttraining maakt vooral de vezels dikker: er komen myofibrillen bij (<b>hypertrofie</b>). Het aantal vezels verandert nauwelijks.</p>`,
@@ -881,7 +912,7 @@ const POINTS=[
  {lv:3,name:'Actine & myosine',lat:'Filamenta tenuia et crassa',at:()=>W.sThick,view:[[2.2,2.4,5.2],[.6,0,0]],tabs:[
   `<p>In een sarcomeer liggen dikke filamenten (<b>myosine</b>, oranje) en dunne filamenten (<b>actine</b>, blauw) in elkaar geschoven. Bij contractie trekken de myosinekoppen de actine naar het midden, de M-lijn. De filamenten worden zelf niet korter: ze <b>glijden</b> langs elkaar.</p>`,
   `<p>Kijk naar de balk <b>overlap</b>. Rond 2,0 tot 2,25 µm sarcomeerlengte kunnen de meeste koppen binden: dan levert de spier de meeste kracht. Korter of langer levert minder kracht: de <b>kracht-lengterelatie</b>.</p>`,
-  `<p>De A-band (de lengte van myosine) blijft gelijk; de I-band en H-zone worden korter. Zo ontdekten Hugh Huxley en Andrew Huxley in 1954 het glijdende-filamentenmodel.</p>`,
+  `<p>De A-band (de lengte van myosine) blijft gelijk; de I-band en H-zone worden korter. Die waarneming leidde in 1954 tot het glijdende-filamentenmodel. Twee duo's publiceerden het tegelijk en onafhankelijk van elkaar: Hugh Huxley met Jean Hanson, en Andrew Huxley met Rolf Niedergerke. De twee Huxleys zijn geen familie.</p>`,
   `<p class="think">Waarom kun je onderin een diepe squat minder kracht leveren dan halverwege?</p>`]},
  {lv:3,name:'Z-schijf & titine',lat:'Discus Z · titinum',at:()=>W.sTitin,view:[[-2.6,2.6,5],[-1.6,0,0]],tabs:[
   `<p>De <b>Z-schijven</b> (donker) begrenzen het sarcomeer en houden de actine vast. <b>Titine</b> (geelgroen) is een reusachtig veereiwit van de Z-schijf naar de M-lijn. Het houdt de myosine in het midden en geeft spanning als je de spier rekt.</p>`,
@@ -889,9 +920,9 @@ const POINTS=[
   `<p>Titine is het grootste eiwit in je lichaam: ruim 34.000 bouwstenen (aminozuren) lang.</p>`,
   `<p class="think">Door excentrische training (zoals de Nordic curl) komen er sarcomeren <b>in serie</b> bij. Hoe beschermt dat tegen ‘poppen’?</p>`]},
  {lv:4,name:'Myosinekop',lat:'Caput myosini · kruisbrug',at:()=>W.motor,view:[[3.5,1.2,6.5],[.6,.2,0]],tabs:[
-  `<p>De myosinekop bindt aan actine: een <b>kruisbrug</b>. Bij de <b>powerslag</b> kantelt de hefboomarm (geel) en trekt de actine 5 à 10 nanometer op. Daarna laat de kop los, spant zich opnieuw en pakt een volgende bindingsplaats. Dat gebeurt vele keren per seconde.</p>`,
+  `<p>De myosinekop bindt aan actine: een <b>kruisbrug</b>. Bij de <b>powerslag</b> kantelt de hefboomarm (geel) en trekt de actine 5 à 10 nanometer op. In het model is die stap vergroot, zodat je hem goed ziet. Daarna laat de kop los, spant zich opnieuw en pakt een volgende bindingsplaats. Dat gebeurt vele keren per seconde.</p>`,
   `<p>Bij excentrisch werk (stand 3) worden gebonden koppen losgetrokken voordat ze hun slag af hebben. De spier levert zo <b>meer kracht met minder ATP</b>, maar het weefsel raakt ook makkelijker beschadigd.</p>`,
-  `<p>Eén myosinekop levert maar een paar piconewton kracht. Een sprinter gebruikt er miljarden tegelijk.</p>`,
+  `<p>Eén myosinekop levert maar een paar piconewton kracht (een biljoenste newton). Voor de ruim 1000 N van een sprintende hamstring trekken er dus honderden biljoenen koppen tegelijk: in de orde van 10¹⁴.</p>`,
   `<p class="think">Waarom kost excentrisch werk minder ATP dan concentrisch werk, terwijl de spier meer kracht levert?</p>`]},
  {lv:4,name:'Tropomyosine & troponine',lat:'Tropomyosinum · troponinum',at:()=>W.tn.clone().add(V(0,.35,.25)),view:[[-1.5,4.2,6],[.5,1.4,0]],tabs:[
   `<p>In rust ligt <b>tropomyosine</b> (groen) over de bindingsplaatsen op de actine. Komt er <b>Ca²⁺</b> vrij, dan bindt dat aan <b>troponine</b> (geel-paars). Dat duwt tropomyosine opzij, en pas dan kan myosine binden. Zonder calcium geen contractie.</p>`,
@@ -905,7 +936,7 @@ const POINTS=[
   `<p class="think">Waarom wordt een spier zonder ATP juist stijf, terwijl je zou verwachten dat hij zonder brandstof slap wordt?</p>`]},
 ];
 const mkWrap=$('#markers');
-const MK=POINTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.name}</span>`;b.addEventListener('click',e=>{e.stopPropagation();openPoint(i);});mkWrap.appendChild(b);return b;});
+const MK=POINTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.name}</span>`;b.setAttribute('aria-label',`Punt ${i+1}: ${p.name}`);b.addEventListener('click',e=>{e.stopPropagation();openPoint(i);});mkWrap.appendChild(b);return b;});
 // floating tags (molecules, bands)
 const TAGS=[
  {lv:4,cls:'atp',txt:()=>molA.userData.n===3?'ATP':'ADP',at:()=>W.molA,show:()=>molA.visible},
@@ -915,7 +946,7 @@ const TAGS=[
  {lv:4,cls:'',txt:()=>'actine',at:()=>V(-5.5,L5.Ya+.75,0),show:()=>true},
  {lv:4,cls:'',txt:()=>'dik filament (myosine)',at:()=>V(-6,-1.7,.6),show:()=>true},
  {lv:3,cls:'band',txt:()=>'Z',at:()=>W.sZ,show:()=>true},{lv:3,cls:'band',txt:()=>'M',at:()=>W.sM,show:()=>true},
- {lv:3,cls:'band',txt:()=>'A-band',at:()=>W.sA,show:()=>true},{lv:3,cls:'band',txt:()=>'I-band',at:()=>W.sI,show:()=>true},{lv:3,cls:'band',txt:()=>'H-zone',at:()=>W.sH,show:()=>state!==3},
+ {lv:3,cls:'band',txt:()=>'A-band',at:()=>W.sA,show:()=>true},{lv:3,cls:'band',txt:()=>'I-band',at:()=>W.sI,show:()=>true},{lv:3,cls:'band',txt:()=>'H-zone',at:()=>W.sH,show:()=>state!==3&&S3.h[1]-1.0>.06},
  {lv:2,cls:'',txt:()=>'zenuw',at:()=>V(-3.4,5.3,2.7),show:()=>true},
  {lv:1,cls:'',txt:()=>'slagader',at:()=>V(3.3,1.85,.55),show:()=>true},{lv:1,cls:'',txt:()=>'ader',at:()=>V(3.2,1.85,-.7),show:()=>true},
 ];
@@ -929,8 +960,8 @@ function updateMarkers(){POINTS.forEach((p,i)=>{if(p.lv!==lvl||zooming){MK[i].st
 
 /* ================= info panel ================= */
 let curPoint=null,tab=0;
-function openPoint(i){closeQuiz();const p=POINTS[i];const go=()=>{curPoint=p;p.i=i;tab=0;$('#iNum').textContent=i+1;$('#iTitle').textContent=p.name;$('#iLat').textContent=p.lat;
-  const same=POINTS.filter(q=>q.lv===p.lv);$('#iPos').textContent=`${i+1} / ${POINTS.length}`;MK.forEach((m,j)=>m.classList.toggle('on',j===i));setTab(0);$('#info').classList.add('open');flyTo(p.view[0],p.view[1]);SND.click();};
+function openPoint(i,t0){closeQuiz();const p=POINTS[i];const go=()=>{curPoint=p;p.i=i;tab=0;$('#iNum').textContent=i+1;$('#iTitle').textContent=p.name;$('#iLat').textContent=p.lat;
+  $('#iPos').textContent=`${i+1} / ${POINTS.length}`;MK.forEach((m,j)=>m.classList.toggle('on',j===i));setTab(t0||0);panelMin($('#info'),false);$('#info').classList.add('open');flyTo(p.view[0],p.view[1]);SND.click();};
   if(p.lv!==lvl){goLevel(p.lv,go);}else go();}
 function setTab(n){tab=n;$$('#iTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.tab===n));$('#iBody').innerHTML=curPoint.tabs[n];}
 function closeInfo(){$('#info').classList.remove('open');curPoint=null;MK.forEach(m=>m.classList.remove('on'));}
@@ -939,7 +970,10 @@ $('#iClose').addEventListener('click',closeInfo);
 $('#iPrev').addEventListener('click',()=>{if(curPoint&&curPoint.i>0)openPoint(curPoint.i-1);});
 $('#iNext').addEventListener('click',()=>{if(curPoint&&curPoint.i<POINTS.length-1)openPoint(curPoint.i+1);});
 function next(){if(quizOpen)return;if(!curPoint){const i=POINTS.findIndex(p=>p.lv===lvl);openPoint(i);return;}if(tab<3)setTab(tab+1);else if(curPoint.i<POINTS.length-1)openPoint(curPoint.i+1);}
-function prev(){if(quizOpen||!curPoint)return;if(tab>0)setTab(tab-1);else if(curPoint.i>0){openPoint(curPoint.i-1);setTimeout(()=>setTab(3),0);}}
+function prev(){if(quizOpen||!curPoint)return;if(tab>0)setTab(tab-1);else if(curPoint.i>0)openPoint(curPoint.i-1,3);}
+// mobiel: paneel in- en uitklappen, zodat model en HUD bereikbaar blijven
+function panelMin(pn,on){pn.classList.toggle('min',on);const b=pn.querySelector('.mn');if(b){b.textContent=on?'▴':'▾';b.setAttribute('aria-expanded',!on);b.setAttribute('aria-label',on?'Paneel uitklappen':'Paneel inklappen');}}
+$$('.panel .mn').forEach(b=>b.addEventListener('click',()=>{const pn=b.closest('.panel');panelMin(pn,!pn.classList.contains('min'));}));
 
 /* ================= quiz ================= */
 const QUIZ=[
@@ -955,27 +989,29 @@ const QUIZ=[
  {t:'I',type:'open',q:'Een atleet heeft een graad 2-hamstringverrekking. Leg uit wat er kapot is, van sarcomeer tot hele spier. Leg daarna uit waarom de Nordic hamstring curl helpt om een nieuwe blessure te voorkomen.',
   model:'<p><b>Kapot</b>: in de late zwaaifase werd de hamstring excentrisch overbelast. De zwakste sarcomeren werden uitgerekt tot actine en myosine niet meer overlapten (‘popping’). Daarna scheurden titine, Z-schijven, vezelmembranen en uiteindelijk hele bundels bij de proximale spier-peesovergang, met een bloeding tussen de bundels.</p><p><b>Preventie</b>: excentrische training laat er sarcomeren <b>in serie</b> bijkomen (langere vezels). Bij dezelfde spierlengte is elk sarcomeer dan minder ver uitgerekt en blijft het dichter bij de optimale overlap, dus ‘poppen’ ze minder snel. Ook wordt de spier sterker in excentrisch werk en verschuift de optimale lengte naar een langere spierlengte.</p>'},
 ];
-let quizOpen=false,qi=0,qres=[],qDone=false;
-function openQuiz(){closeInfo();quizOpen=true;document.body.classList.add('quiz-on');$('#quiz').classList.add('open');qi=0;qres=QUIZ.map(()=>null);renderQ();}
+let quizOpen=false,qi=0,qres=[],qDone=false,qDraft='';
+// de voortgang blijft bewaard als je het paneel sluit; alleen 'Opnieuw beginnen' wist hem
+function openQuiz(){closeInfo();quizOpen=true;document.body.classList.add('quiz-on');panelMin($('#quiz'),false);$('#quiz').classList.add('open');if(!qres.length)qres=QUIZ.map(()=>null);renderQ();}
 function closeQuiz(){if(!quizOpen)return;quizOpen=false;document.body.classList.remove('quiz-on');$('#quiz').classList.remove('open');clearQMK();}
 function clearQMK(){QMK.forEach(q=>q.el.remove());QMK=[];}
 function dots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
 function renderQ(){clearQMK();qDone=false;$('#qNext').disabled=true;
   if(qi>=QUIZ.length){const ok=qres.filter(x=>x===true).length;$('#qBody').innerHTML=`<div class="dots">${dots()}</div><p class="qprompt">Klaar!</p><p>Je had <b>${ok} van de ${QUIZ.length-1}</b> gesloten vragen in één keer goed.</p><p>Bespreek de slotvraag met je groep of docent. Probeer daarna in de gymzaal een Nordic curl in tweetallen.</p><p><button class="btn" id="qAgain">Opnieuw beginnen</button></p>`;
-    $('#qAgain').addEventListener('click',()=>{qi=0;qres=QUIZ.map(()=>null);renderQ();});$('#qPos').textContent='';$('#qNext').style.display='none';return;}
+    $('#qAgain').addEventListener('click',()=>{qi=0;qres=QUIZ.map(()=>null);qDraft='';renderQ();});$('#qPos').textContent='';$('#qNext').style.display='none';return;}
   $('#qNext').style.display='';const q=QUIZ[qi];$('#qPos').textContent=`Opdracht ${qi+1} van ${QUIZ.length}`;
   const prep=()=>{if(q.state&&state!==q.state)setState(q.state);if(q.view)flyTo(q.view[0],q.view[1]);};
   if(q.lv!==undefined&&q.lv!==lvl)goLevel(q.lv,prep);else prep();
   let h=`<div class="dots">${dots()}</div><p class="qprompt"><span class="qtag">${q.t}</span>${q.q}</p>`;
-  if(q.type==='find'){h+='<p class="hint">Klik op een van de gele letters A–D in het beeld.</p><div id="qfb"></div>';$('#qBody').innerHTML=h;
-    q.opts.forEach((fn,j)=>{const el=document.createElement('button');el.className='mk q';el.innerHTML=`<b>${'ABCD'[j]}</b>`;mkWrap.appendChild(el);
+  if(q.type==='find'){h+='<p class="hint">Klik op een van de gele letters A–D in het beeld.</p><div id="qfb" role="status"></div>';$('#qBody').innerHTML=h;
+    q.opts.forEach((fn,j)=>{const el=document.createElement('button');el.className='mk q';el.innerHTML=`<b>${'ABCD'[j]}</b>`;el.setAttribute('aria-label',`Antwoord ${'ABCD'[j]} in het beeld`);mkWrap.appendChild(el);
       el.addEventListener('click',e=>{e.stopPropagation();if(qDone)return;if(qres[qi]===null)qres[qi]=j===q.ok;el.classList.add(j===q.ok?'right':'wrong');$('#qfb').innerHTML=`<div class="fb ${j===q.ok?'ok':'no'}">${q.fb[j]}</div>`;
         if(j===q.ok){qDone=true;$('#qNext').disabled=false;}SND.click(j===q.ok?1.5:.7);});QMK.push({el,fn});});}
-  else if(q.type==='mc'){h+='<div class="opts">'+q.opts.map((o,j)=>`<button data-j="${j}"><b>${'ABCD'[j]}</b>${o}</button>`).join('')+'</div><div id="qfb"></div>';$('#qBody').innerHTML=h;
+  else if(q.type==='mc'){h+='<div class="opts">'+q.opts.map((o,j)=>`<button data-j="${j}"><b>${'ABCD'[j]}</b>${o}</button>`).join('')+'</div><div id="qfb" role="status"></div>';$('#qBody').innerHTML=h;
     $$('#qBody .opts button').forEach(b=>b.addEventListener('click',()=>{if(qDone)return;const j=+b.dataset.j;if(qres[qi]===null)qres[qi]=j===q.ok;b.classList.add(j===q.ok?'right':'wrong');
       if(j===q.ok){qDone=true;$('#qNext').disabled=false;$$('#qBody .opts button').forEach(x=>x.disabled=true);}
       $('#qfb').innerHTML=`<div class="fb ${j===q.ok?'ok':'no'}">${j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Kijk nog eens goed en probeer opnieuw.'}</div>`;SND.click(j===q.ok?1.5:.7);}));}
-  else{h+='<textarea placeholder="Schrijf je antwoord hier. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p><div id="qfb"></div>';$('#qBody').innerHTML=h;
+  else{h+='<textarea placeholder="Schrijf je antwoord hier. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p><div id="qfb" role="status"></div>';$('#qBody').innerHTML=h;
+    const ta=$('#qBody textarea');ta.value=qDraft;ta.addEventListener('input',()=>{qDraft=ta.value;});
     $('#qShow').addEventListener('click',()=>{$('#qfb').innerHTML=`<div class="fb ok">${q.model}</div>`;qres[qi]='open';});$('#qNext').disabled=false;}
 }
 $('#qNext').addEventListener('click',()=>{qi++;renderQ();});$('#qClose').addEventListener('click',closeQuiz);$('#bQuiz').addEventListener('click',()=>quizOpen?closeQuiz():openQuiz());
@@ -1033,7 +1069,7 @@ const SND=(function(){let C=null,master,rev,noiseBuf,on=false,nextAmb=0,drone=nu
     tap(){init();if(!dest){dest=C.createMediaStreamDestination();master.connect(dest);}return dest.stream;},
   };})();
 
-function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
+function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#bSound').setAttribute('aria-pressed',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
 $('#bSound').addEventListener('click',()=>setSound(!SND.on));
 
 /* ================= UI wiring ================= */
@@ -1044,22 +1080,35 @@ $('#bLabels').addEventListener('click',cycleLabels);
 let quality='hi';
 function setQuality(q){quality=q;renderer.setPixelRatio(q==='hi'?Math.min(devicePixelRatio,2):1);renderer.shadowMap.enabled=q==='hi';key.castShadow=q==='hi'&&lvl===0;scene.traverse(o=>{if(o.material)[].concat(o.material).forEach(m=>m.needsUpdate=true);});$('#bQual').textContent='Beeld: '+(q==='hi'?'Mooi':'Snel');resize();}
 $('#bQual').addEventListener('click',()=>setQuality(quality==='hi'?'lo':'hi'));
-$('#bHelp').addEventListener('click',()=>$('#help').classList.add('open'));$('#helpClose').addEventListener('click',()=>$('#help').classList.remove('open'));
-$('#help').addEventListener('click',e=>{if(e.target.id==='help')$('#help').classList.remove('open');});
+let helpRet=null;
+function openHelp(){helpRet=document.activeElement&&document.activeElement!==document.body?document.activeElement:$('#bHelp');$('#help').classList.add('open');$('#helpClose').focus();}
+function closeHelp(){if(!$('#help').classList.contains('open'))return;$('#help').classList.remove('open');if(helpRet&&helpRet.focus)helpRet.focus();helpRet=null;}
+$('#bHelp').addEventListener('click',openHelp);$('#helpClose').addEventListener('click',closeHelp);
+$('#help').addEventListener('click',e=>{if(e.target.id==='help')closeHelp();});
+// focus binnen het uitlegvenster houden
+$('#help').addEventListener('keydown',e=>{if(e.key!=='Tab')return;const f=[...$('#help').querySelectorAll('button,a[href]')];if(!f.length)return;const a=f[0],z=f[f.length-1];if(e.shiftKey&&document.activeElement===a){z.focus();e.preventDefault();}else if(!e.shiftKey&&document.activeElement===z){a.focus();e.preventDefault();}});
 function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
 $('#bPresent').addEventListener('click',()=>setPresent(!document.body.classList.contains('present')));
 document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&document.body.classList.contains('present')){document.body.classList.remove('present');$('#bPresent').classList.remove('on');}});
-addEventListener('keydown',e=>{if(e.target.tagName==='TEXTAREA'||(e.target.tagName==='INPUT'&&e.target.type!=='range'))return;const k=e.key;
+addEventListener('keydown',e=>{const tg=e.target,tn=tg.tagName,k=e.key;
+  if(tn==='TEXTAREA'||tn==='SELECT'||tg.isContentEditable||(tn==='INPUT'&&tg.type!=='range'))return;
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  // een schuif beweegt zelf met pijltjes, Home en End; PageUp/PageDown blijven voor de clicker
+  if(tn==='INPUT'&&/^(Arrow|Home$|End$)/.test(k))return;
+  // een knop met focus reageert zelf op spatie en Enter
+  if((tn==='BUTTON'||tn==='A')&&(k===' '||k==='Enter'))return;
+  if($('#help').classList.contains('open')&&k!=='Escape')return;
   if(k==='ArrowRight'||k==='PageDown'){next();e.preventDefault();}else if(k==='ArrowLeft'||k==='PageUp'){prev();e.preventDefault();}
   else if(k==='+'||k==='='){goLevel(lvl+1);}else if(k==='-'||k==='_'){goLevel(lvl-1);}
   else if(k==='1'||k==='2'||k==='3')setState(+k);else if(k===' '){paused=!paused;const bp=$('#bPlay');if(bp)bp.textContent=paused?'▶ Afspelen':'⏸ Pauze';e.preventDefault();}
   else if(k==='s'||k==='S')stepOnce();else if(k==='Home'){closeInfo();const v=LEVELS[lvl].view;flyTo(v[0],v[1]);}
   else if(k==='c'||k==='C'){ride=!ride;fly=null;}else if(k==='g'||k==='G')setSound(!SND.on);else if(k==='l'||k==='L')cycleLabels();
-  else if(k==='Escape'){if($('#help').classList.contains('open'))$('#help').classList.remove('open');else if(document.body.classList.contains('present'))setPresent(false);else if(quizOpen)closeQuiz();else closeInfo();}});
+  else if(k==='Escape'){if($('#help').classList.contains('open'))closeHelp();else if(document.body.classList.contains('present'))setPresent(false);else if(quizOpen)closeQuiz();else closeInfo();}});
 
 /* ================= loop ================= */
-function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1?48:36;camera.updateProjectionMatrix();}
+function resize(){const w=innerWidth,h=innerHeight;renderer.setPixelRatio(quality==='hi'?Math.min(devicePixelRatio,2):1);renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1?48:36;camera.updateProjectionMatrix();}
 addEventListener('resize',resize);resize();
+addEventListener('resize',measureUI);if(window.ResizeObserver){const ro=new ResizeObserver(measureUI);ro.observe($('#hud'));ro.observe($('#top'));}
 let last=performance.now(),frames=0,fpsT=0,autoChecked=false,first=true;
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;frame(dt);}
 function frame(dt){
@@ -1071,7 +1120,7 @@ function frame(dt){
   else if(FILM.on&&!zooming)filmCam(dt);
   controls.update();
   if(shake>0){shake=Math.max(0,shake-dt);const s=shake*.12;camera.position.x+=(R()-.5)*s;camera.position.y+=(R()-.5)*s;}
-  renderer.render(scene,camera);filmDraw(dt);updateMarkers();SND.tick();
+  renderer.render(scene,camera);filmDraw(dt);updateMarkers();SND.tick();if(uiDirty){uiDirty=false;measureUI();}
   if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}
   frames++;fpsT+=dt;if(!autoChecked&&fpsT>4){autoChecked=true;if(frames/fpsT<28&&quality==='hi')setQuality('lo');}
 }
@@ -1080,9 +1129,9 @@ const v0=LEVELS[0].view;camera.position.set(...v0[0]).sub(V(...v0[1])).multiplyS
 // deep links: spier.html#niveau=3 or #5 (point)
 (function(){const h=location.hash.slice(1);const m=h.match(/niveau=(\d)/);if(m){const n=clamp(+m[1]-1,0,4);setTimeout(()=>goLevel(n),600);}else{const p=parseInt(h);if(p>=1&&p<=POINTS.length)setTimeout(()=>openPoint(p-1),900);}})();
 /* ================= FILM: zo werkt een spier ================= */
-const FILM={on:false,si:-1,li:-1,lt:0,ld:0,voice:true,vDone:true,playing:false,camT:0,view:null,bars:0,cap:'',capA:0,chap:'',chapA:0,title:null,titleA:0,flashA:0,lensT:9,lensName:'',steps:false,rec:null,end:false,waiting:false,idle:0};
+const FILM={on:false,si:-1,li:-1,lt:0,ld:0,voice:true,vDone:true,playing:false,camT:0,view:null,bars:0,cap:'',capA:0,chap:'',chapA:0,title:null,titleA:0,flashA:0,lensT:9,lensName:'',steps:false,rec:null,end:false,waiting:false,idle:0,token:0,lensDir:1};
 const CAM={wide:[[15.5,9.6,22],[.4,4.2,.6]],muscle:[[6,8.5,14],[-4,5.6,0]],sarc:[[2.4,3.8,10.8],[0,-.2,0]],cross:[[3,1.9,13.5],[.3,.45,0]],runner:[[9.5,3.4,9.5],[3.4,1.3,2.4]]};
-function filmSetView(v,dur){if(FILM.view===v)return;FILM.view=v;FILM.camT=0;const q=filmPose(v,0);fly={p0:camera.position.clone(),t0:controls.target.clone(),p1:q.p,t1:q.t,k:0,dur:dur||2.2};ride=false;}
+function filmSetView(v,dur){if(FILM.view===v)return;FILM.view=v;FILM.camT=0;const q=filmPose(v,0);fly={p0:camera.position.clone(),t0:controls.target.clone(),p1:q.p,t1:q.t,k:0,dur:reduced&&!FILM.rec?.01:(dur||2.2)};ride=false;}
 const SCENES=[
  {chap:'',lv:0,st:1,view:CAM.wide,title:['Hoe een spier kracht maakt','Van sprint tot powerslag · vijf keer inzoomen'],lines:[
   {t:'Elke sprint, elke sprong en elke landing begint met hetzelfde: een spier die korter wil worden.'},
@@ -1113,7 +1162,7 @@ const SCENES=[
   {t:'Stap 2, de powerslag: de kop kantelt en trekt de actine een stukje mee.',do:L=>{nextStep();X5.manual=true;xSpeed=clamp(DUR[1]/(L*.85),.15,2);}},
   {t:'Stap 3, loslaten: een nieuw ATP-molecuul maakt de kop weer los.',do:L=>{nextStep();X5.manual=true;xSpeed=clamp(DUR[2]/(L*.85),.15,2);}},
   {t:'Stap 4, opspannen: ATP wordt gesplitst en de kop spant zich op voor de volgende slag.',do:L=>{nextStep();X5.manual=true;xSpeed=clamp(DUR[3]/(L*.85),.15,2);}},
-  {t:'Zo trekken miljoenen koppen tegelijk, telkens opnieuw. Samen maken ze de kracht van de spier.',do:()=>{nextStep();X5.manual=false;xSpeed=1.1;}}]},
+  {t:'Zo trekken ontelbaar veel koppen tegelijk, telkens opnieuw: in een sprintende hamstring honderden biljoenen. Samen maken ze de kracht van de spier.',do:()=>{nextStep();X5.manual=false;xSpeed=1.1;}}]},
  {chap:'6 · Zonder ATP',lv:4,st:2,view:CAM.cross,steps:true,setup:()=>{X5.phase='cycle';X5.ca=1;X5.manual=false;xSpeed=.9;},lines:[
   {t:'En zonder ATP? Kijk: de kop bindt en maakt de slag, maar blijft daarna vastzitten.',do:()=>{X5.noATP=true;}},
   {t:'Er is geen ATP om hem los te maken. Dat gebeurt bij lijkstijfheid.'},
@@ -1133,25 +1182,32 @@ const SCENES=[
 const estDur=t=>t?Math.max(2.4,.7+t.length/13.2):3;
 let nlVoice=null;function pickVoice(){try{const vs=speechSynthesis.getVoices();const nl=vs.filter(v=>/^nl/i.test(v.lang));nlVoice=nl.find(v=>/natural|online|neural/i.test(v.name))||nl.find(v=>/google/i.test(v.name))||nl.find(v=>/nl-NL/i.test(v.lang))||nl[0]||null;}catch(e){}}
 if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice;}
-function speak(t){FILM.vDone=true;if(!FILM.voice||!t||!('speechSynthesis' in window)||FILM.rec)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='nl-NL';if(nlVoice)u.voice=nlVoice;u.rate=1;u.pitch=1;FILM.vDone=false;u.onend=u.onerror=()=>{FILM.vDone=true;};speechSynthesis.speak(u);}catch(e){FILM.vDone=true;}}
+function speak(t){FILM.vDone=true;if(!FILM.on||!FILM.voice||!t||!('speechSynthesis' in window)||FILM.rec)return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='nl-NL';if(nlVoice)u.voice=nlVoice;u.rate=1;u.pitch=1;FILM.vDone=false;u.onend=u.onerror=()=>{FILM.vDone=true;};speechSynthesis.speak(u);}catch(e){FILM.vDone=true;}}
 function filmScene(i){if(i>=SCENES.length){filmEnd();return;}const sc=SCENES[i],prev=SCENES[FILM.si];if(prev&&prev.lines[FILM.li]&&prev.lines[FILM.li].end)prev.lines[FILM.li].end();
   if(prev)prev.lines.forEach(l=>l.end&&l.end());
   FILM.si=i;FILM.li=-1;FILM.waiting=true;FILM.steps=!!sc.steps;FILM.chap=sc.chap;FILM.chapA=0;FILM.cap='';FILM.title=sc.title||null;
   try{speechSynthesis.cancel();}catch(e){}paused=false;X5.noATP=false;X5.manual=false;
-  const go=()=>{setState(sc.st);if(sc.setup)sc.setup();filmSetView(sc.view||LEVELS[lvl].view,1.8);FILM.waiting=false;filmLine(0);};
-  if(sc.lv!==lvl){FILM.lensT=0;FILM.lensName=LEVELS[sc.lv].name;FILM.camT=0;goLevel(sc.lv,()=>setTimeout(go,250));}else{go();}
+  // token: een uitgestelde start van een oudere scène (of na sluiten) doet niets meer
+  const tok=++FILM.token;
+  const go=()=>{if(!FILM.on||tok!==FILM.token)return;setState(sc.st);if(sc.setup)sc.setup();filmSetView(sc.view||LEVELS[lvl].view,1.8);FILM.waiting=false;filmLine(0);};
+  if(sc.lv!==lvl){FILM.lensT=0;FILM.lensDir=sc.lv>lvl?1:-1;FILM.lensName=LEVELS[sc.lv].name;FILM.camT=0;goLevel(sc.lv,()=>setTimeout(go,250));}else{go();}
   filmUI();}
-function filmLine(j){const sc=SCENES[FILM.si];if(j>=sc.lines.length){filmScene(FILM.si+1);return;}const L=sc.lines[j];FILM.li=j;FILM.lt=0;FILM.ld=Math.max(L.min||0,estDur(L.t));
-  if(L.cam)filmSetView(L.cam,2.4);if(L.do)L.do(FILM.ld);FILM.cap=L.t;FILM.capA=0;speak(L.t);filmUI();}
+function filmLine(j){const sc=SCENES[FILM.si];if(!FILM.on||!sc)return;if(j>=sc.lines.length){filmScene(FILM.si+1);return;}const L=sc.lines[j];FILM.li=j;FILM.lt=0;FILM.ld=Math.max(L.min||0,estDur(L.t));
+  if(L.cam)filmSetView(L.cam,2.4);if(L.do)L.do(FILM.ld);FILM.cap=L.t;FILM.capA=0;$('#filmCapSr').textContent=L.t;speak(L.t);filmUI();}
 function filmTick(dt){if(!FILM.on)return;FILM.bars=Math.min(1,FILM.bars+dt*1.5);FILM.chapA=Math.min(1,FILM.chapA+dt*1.2);FILM.capA=Math.min(1,FILM.capA+dt*3);
   FILM.titleA=lerp(FILM.titleA,FILM.title?1:0,Math.min(1,dt*2.2));FILM.lensT+=dt;FILM.flashA=Math.max(0,FILM.flashA-dt*.9);
   if(!FILM.playing||FILM.waiting||FILM.end)return;FILM.lt+=dt;const L=SCENES[FILM.si]&&SCENES[FILM.si].lines[FILM.li];if(!L)return;
   if(FILM.lt>=FILM.ld&&(FILM.vDone||FILM.lt>FILM.ld*2+2)){filmLine(FILM.li+1);}}
-function filmPose(v,ct){const T=V(...v[1]),off=V(...v[0]).sub(T);const asp=camera.aspect;if(asp<1)off.multiplyScalar(Math.min(1.9,1/Math.pow(asp,.85)));const a=(lvl===0?.3:.2)*Math.sin(ct*.16);off.applyAxisAngle(AY,a).multiplyScalar(1-.07*Math.sin(ct*.11));off.y+=(lvl===0?.5:.25)*Math.sin(ct*.13);return {p:T.clone().add(off),t:T};}
+function filmPose(v,ct){const T=V(...v[1]),off=V(...v[0]).sub(T);const asp=camera.aspect;if(asp<1)off.multiplyScalar(Math.min(1.9,1/Math.pow(asp,.85)));const dr=reduced&&!FILM.rec?0:1;const a=dr*(lvl===0?.3:.2)*Math.sin(ct*.16);off.applyAxisAngle(AY,a).multiplyScalar(1-dr*.07*Math.sin(ct*.11));off.y+=dr*(lvl===0?.5:.25)*Math.sin(ct*.13);return {p:T.clone().add(off),t:T};}
 function filmCam(dt){if(!FILM.view||fly)return;FILM.camT+=dt;const q=filmPose(FILM.view,FILM.camT);camera.position.copy(q.p);controls.target.copy(q.t);}
-function filmStart(fromRec){closeInfo();closeQuiz();FILM.on=true;FILM.end=false;FILM.playing=true;FILM.bars=0;FILM.title=null;FILM.titleA=0;FILM.camT=0;ride=false;document.body.classList.add('film');$('#help').classList.remove('open');
+function filmStart(){closeInfo();closeQuiz();closeHelp();FILM.on=true;FILM.end=false;FILM.playing=true;FILM.bars=0;FILM.title=null;FILM.titleA=0;FILM.camT=0;ride=false;document.body.classList.add('film');$('#help').classList.remove('open');
   if(!SND.on)setSound(true);SND.music(true);filmResize();filmScene(0);}
-function filmStop(){FILM.on=false;FILM.playing=false;FILM.si=-1;try{speechSynthesis.cancel();}catch(e){}SND.music(false);X5.noATP=false;X5.manual=false;xSpeed=1;document.body.classList.remove('film');const v=LEVELS[lvl].view;flyTo(v[0],v[1]);filmUI();if(FILM.rec)recStop(false);}
+function filmStop(){if(!FILM.on)return;const sc=SCENES[FILM.si];if(sc)sc.lines.forEach(l=>l.end&&l.end());
+  FILM.on=false;FILM.playing=false;FILM.waiting=false;FILM.end=false;FILM.si=-1;FILM.li=-1;FILM.token++;FILM.view=null;FILM.cap='';FILM.title=null;FILM.flashA=0;FILM.lensT=9;
+  try{speechSynthesis.cancel();}catch(e){}SND.music(false);$('#filmCapSr').textContent='';
+  // diorama netjes terugzetten: geen pauze, X5 los van de film, gewoon tempo
+  paused=false;X5.noATP=false;X5.manual=false;xSpeed=1;document.body.classList.remove('film');
+  if(!zooming)setState(state);const v=LEVELS[lvl].view;flyTo(v[0],v[1]);filmUI();if(FILM.rec)recStop(false);}
 function filmEnd(){FILM.end=true;FILM.playing=false;filmUI();if(FILM.rec)setTimeout(()=>recStop(true),2500);}
 function filmPause(){if(!FILM.on)return;if(FILM.end){filmStart();return;}FILM.playing=!FILM.playing;paused=!FILM.playing&&!(lvl===4&&state===2);try{FILM.playing?speechSynthesis.resume():speechSynthesis.pause();}catch(e){}filmUI();}
 function filmJump(d){if(!FILM.on||zooming)return;const i=clamp(FILM.si+d,0,SCENES.length-1);FILM.end=false;FILM.playing=true;filmScene(i);}
@@ -1159,13 +1215,15 @@ function filmJump(d){if(!FILM.on||zooming)return;const i=clamp(FILM.si+d,0,SCENE
 const BGS=[['#2c3a42','#18232a','#0d1316'],['#3a2f2a','#1d1715','#0c0908'],['#2d2533','#17121c','#09070c'],['#1d3036','#0f1b1f','#060b0d'],['#14263d','#0a1424','#03070d']];
 function wrapText(ctx,t,maxW){const words=t.split(' ');const lines=[];let cur='';for(const w of words){const test=cur?cur+' '+w:w;if(ctx.measureText(test).width>maxW&&cur){lines.push(cur);cur=w;}else cur=test;}if(cur)lines.push(cur);return lines;}
 function drawOverlay(ctx,w,h,rec){const s=Math.min(h/1080,w/1500);ctx.save();
+  // op een klein scherm: ondertitel minstens ~15 CSS-px, hoofdstuk minstens ~11 CSS-px
+  const dp=rec?1:w/Math.max(1,innerWidth),sC=rec?s:Math.max(s,15*dp/38),sH=rec?s:Math.max(s,11*dp/20);
   if(rec){const g=ctx.createRadialGradient(w*.55,h*.4,0,w*.55,h*.4,w*.75);const b=BGS[lvl];g.addColorStop(0,b[0]);g.addColorStop(.55,b[1]);g.addColorStop(1,b[2]);ctx.globalCompositeOperation='destination-over';ctx.fillStyle=g;ctx.fillRect(0,0,w,h);ctx.globalCompositeOperation='source-over';
     const vg=ctx.createRadialGradient(w/2,h*.45,h*.35,w/2,h*.45,w*.75);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=vg;ctx.fillRect(0,0,w,h);}
   // scheurflits
   if(FILM.flashA>0){const fg=ctx.createRadialGradient(w/2,h/2,h*.2,w/2,h/2,w*.7);fg.addColorStop(0,'rgba(214,60,40,0)');fg.addColorStop(1,`rgba(214,60,40,${.5*FILM.flashA})`);ctx.fillStyle=fg;ctx.fillRect(0,0,w,h);}
   // zoomlens
   const lt=FILM.lensT;const la=lt<.75?lt/.75:lt<1.1?1:Math.max(0,1-(lt-1.1)/.6);if(la>0){const lg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*.6);lg.addColorStop(0,`rgba(255,255,255,0)`);lg.addColorStop(.45,`rgba(225,236,245,${.65*la})`);lg.addColorStop(1,`rgba(240,246,250,${la})`);ctx.fillStyle=lg;ctx.fillRect(0,0,w,h);
-    if(la>.5){ctx.globalAlpha=(la-.5)*2;ctx.fillStyle='#1d2a33';ctx.textAlign='center';ctx.font=`700 ${56*s}px Fraunces, serif`;ctx.fillText(FILM.lensName,w/2,h/2);ctx.font=`600 ${20*s}px "JetBrains Mono", monospace`;ctx.fillStyle='#4b5b66';ctx.fillText('INZOOMEN · '+(LEVELS.find(L=>L.name===FILM.lensName)||{scale:''}).scale,w/2,h/2+44*s);ctx.globalAlpha=1;}}
+    if(la>.5){ctx.globalAlpha=(la-.5)*2;ctx.fillStyle='#1d2a33';ctx.textAlign='center';ctx.font=`700 ${56*s}px Fraunces, serif`;ctx.fillText(FILM.lensName,w/2,h/2);ctx.font=`600 ${20*s}px "JetBrains Mono", monospace`;ctx.fillStyle='#4b5b66';ctx.fillText((FILM.lensDir<0?'UITZOOMEN':'INZOOMEN')+' · '+(LEVELS.find(L=>L.name===FILM.lensName)||{scale:''}).scale,w/2,h/2+44*s);ctx.globalAlpha=1;}}
   // titelkaart
   if(FILM.titleA>.01&&FILM.title){ctx.globalAlpha=FILM.titleA;const tg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w*.6);tg.addColorStop(0,'rgba(8,12,14,.55)');tg.addColorStop(1,'rgba(8,12,14,.15)');ctx.fillStyle=tg;ctx.fillRect(0,0,w,h);
     ctx.textAlign='center';ctx.fillStyle='#e6b65e';ctx.font=`600 ${22*s}px "JetBrains Mono", monospace`;ctx.fillText('DE BEWEGINGSATLAS · SPIERWEEFSEL',w/2,h*.4);
@@ -1173,14 +1231,14 @@ function drawOverlay(ctx,w,h,rec){const s=Math.min(h/1080,w/1500);ctx.save();
   // filmbalken
   const bh=74*s*FILM.bars;ctx.fillStyle='#000';ctx.fillRect(0,0,w,bh);ctx.fillRect(0,h-bh,w,bh);
   // hoofdstuk
-  if(FILM.chap){ctx.globalAlpha=FILM.chapA;ctx.textAlign='left';ctx.fillStyle='#e6b65e';ctx.font=`600 ${22*s}px "JetBrains Mono", monospace`;ctx.fillText(FILM.chap.toUpperCase(),70*s,bh+52*s);
-    ctx.fillStyle='rgba(241,233,218,.75)';ctx.font=`500 ${20*s}px "JetBrains Mono", monospace`;ctx.fillText('≈ '+LEVELS[lvl].scale,70*s,bh+82*s);ctx.globalAlpha=1;}
+  if(FILM.chap){ctx.globalAlpha=FILM.chapA;ctx.textAlign='left';ctx.fillStyle='#e6b65e';ctx.font=`600 ${22*sH}px "JetBrains Mono", monospace`;ctx.fillText(FILM.chap.toUpperCase(),70*s,bh+52*sH);
+    ctx.fillStyle='rgba(241,233,218,.75)';ctx.font=`500 ${20*sH}px "JetBrains Mono", monospace`;ctx.fillText('≈ '+LEVELS[lvl].scale,70*s,bh+82*sH);ctx.globalAlpha=1;}
   // stappen van de kruisbrugcyclus
   if(FILM.steps&&lvl===4){const names=STEPS;const cw=230*s,gap=14*s,x0=w/2-(names.length*cw+(names.length-1)*gap)/2,y=bh+(w/h<1.6?112:30)*s;names.forEach((n,i)=>{const on=X5.phase==='cycle'&&X5.step===i;ctx.fillStyle=on?'rgba(230,182,94,.95)':'rgba(15,20,23,.7)';roundRect(ctx,x0+i*(cw+gap),y,cw,46*s,12*s);ctx.fill();
     ctx.fillStyle=on?'#1c1a17':'rgba(241,233,218,.8)';ctx.textAlign='center';ctx.font=`600 ${21*s}px "Instrument Sans", sans-serif`;ctx.fillText((i+1)+' · '+n,x0+i*(cw+gap)+cw/2,y+31*s);});}
   // ondertitel
-  if(FILM.cap){ctx.font=`600 ${38*s}px "Instrument Sans", sans-serif`;const lines=wrapText(ctx,FILM.cap,Math.min(1380*s,w-120*s));const lh=50*s,boxH=lines.length*lh+36*s;let maxW=0;lines.forEach(l=>maxW=Math.max(maxW,ctx.measureText(l).width));const bw=maxW+64*s,bx=w/2-bw/2,by=h-bh-boxH-34*s;
-    ctx.globalAlpha=FILM.capA;ctx.fillStyle='rgba(10,14,16,.78)';roundRect(ctx,bx,by,bw,boxH,16*s);ctx.fill();ctx.fillStyle='#f1e9da';ctx.textAlign='center';lines.forEach((l,i)=>ctx.fillText(l,w/2,by+18*s+lh*(i+.78)));ctx.globalAlpha=1;}
+  if(FILM.cap){ctx.font=`600 ${38*sC}px "Instrument Sans", sans-serif`;const lines=wrapText(ctx,FILM.cap,Math.min(1380*sC,w-(sC>s?48:120)*sC));const lh=50*sC,boxH=lines.length*lh+36*sC;let maxW=0;lines.forEach(l=>maxW=Math.max(maxW,ctx.measureText(l).width));const bw=Math.min(w-8*dp,maxW+64*sC),bx=w/2-bw/2,by=h-bh-boxH-34*s-(sC>s?(FILM.barH||0)*dp:0);
+    ctx.globalAlpha=FILM.capA;ctx.fillStyle='rgba(10,14,16,.78)';roundRect(ctx,bx,by,bw,boxH,16*sC);ctx.fill();ctx.fillStyle='#f1e9da';ctx.textAlign='center';lines.forEach((l,i)=>ctx.fillText(l,w/2,by+18*sC+lh*(i+.78)));ctx.globalAlpha=1;}
   // merk
   ctx.textAlign='right';ctx.fillStyle='rgba(241,233,218,.55)';ctx.font=`600 ${18*s}px "JetBrains Mono", monospace`;ctx.fillText('DE BEWEGINGSATLAS',w-60*s,h-bh/2+6*s);
   ctx.restore();}
@@ -1196,12 +1254,12 @@ function filmDraw(dt){filmTick(dt);if(!FILM.on){if(ov.width&&ov.dataset.clear!==
   FILM.idle+=dt;$('#filmBar').classList.toggle('idle',FILM.idle>2.6&&FILM.playing);}
 // ---- bediening ----
 function filmUI(){const bar=$('#filmBar');bar.hidden=!FILM.on;if(!FILM.on)return;$('#fPlay').textContent=FILM.end?'↻ Opnieuw':FILM.playing?'⏸':'▶';$('#fPos').textContent=FILM.end?'Einde':`Hoofdstuk ${Math.max(0,FILM.si)} van ${SCENES.length-1}`;$('#fVoice').classList.toggle('on',FILM.voice);$('#fVoice').textContent=FILM.voice?'Stem: aan':'Stem: uit';
-  $('#fRec').textContent=FILM.rec?'● Opnemen…':'⬇ Download als video';$('#fRec').classList.toggle('rec',!!FILM.rec);}
+  $('#fRec').textContent=FILM.rec?'● Opnemen…':'⬇ Video (zonder stem)';$('#fRec').classList.toggle('rec',!!FILM.rec);FILM.barH=bar.offsetHeight;}
 $('#bFilm').addEventListener('click',()=>filmStart());
 $('#fPlay').addEventListener('click',filmPause);$('#fPrev').addEventListener('click',()=>filmJump(-1));$('#fNext').addEventListener('click',()=>filmJump(1));
 $('#fVoice').addEventListener('click',()=>{FILM.voice=!FILM.voice;if(!FILM.voice){try{speechSynthesis.cancel();}catch(e){}FILM.vDone=true;}filmUI();});
 $('#fClose').addEventListener('click',filmStop);
-addEventListener('mousemove',()=>{FILM.idle=0;});
+addEventListener('mousemove',()=>{FILM.idle=0;});addEventListener('pointerdown',()=>{FILM.idle=0;});addEventListener('resize',()=>{if(FILM.on)FILM.barH=$('#filmBar').offsetHeight;});
 // ---- opnemen als video ----
 function recMime(){const c=['video/mp4;codecs=avc1.42E01E,mp4a.40.2','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];return c.find(m=>window.MediaRecorder&&MediaRecorder.isTypeSupported(m))||'';}
 function recStart(){if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){alert('Deze browser kan geen video opnemen. Gebruik Chrome of Edge.');return;}
@@ -1210,13 +1268,17 @@ function recStart(){if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captu
   const chunks=[];let mr;try{mr=new MediaRecorder(vs,{mimeType:mime,videoBitsPerSecond:12e6});}catch(e){mr=new MediaRecorder(vs);}
   mr.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data);};
   mr.onstop=()=>{const type=(mr.mimeType||mime||'video/webm').split(';')[0];const blob=new Blob(chunks,{type});if(FILM.recOk){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='spier-uitleg-bewegingsatlas.'+(type.includes('mp4')?'mp4':'webm');document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}};
-  FILM.rec={mr,ctx,cv};FILM.recOk=false;autoChecked=true;document.body.classList.add('rec');cv.id='recView';$('#app').appendChild(cv);FILM.voice=false;try{speechSynthesis.cancel();}catch(e){}if(quality!=='hi')setQuality('hi');
-  recSize();$('#recNote').hidden=false;filmStart(true);setTimeout(()=>mr.start(500),400);filmUI();}
+  FILM.rec={mr,ctx,cv,voice:FILM.voice,quality};FILM.recOk=false;autoChecked=true;document.body.classList.add('rec');cv.id='recView';$('#app').appendChild(cv);FILM.voice=false;try{speechSynthesis.cancel();}catch(e){}if(quality!=='hi')setQuality('hi');
+  recSize();$('#recNote').hidden=false;try{mr.start(500);}catch(e){}filmStart();filmUI();}
 function recSize(){if(!FILM.rec)return;renderer.setPixelRatio(1);renderer.setSize(1920,1080,false);camera.aspect=16/9;camera.fov=36;camera.updateProjectionMatrix();}
 addEventListener('resize',recSize);
-function recStop(ok){const R2=FILM.rec;if(!R2)return;FILM.recOk=ok;FILM.rec=null;try{R2.mr.stop();}catch(e){}$('#recNote').hidden=true;document.body.classList.remove('rec');R2.cv.remove();setQuality(quality);FILM.voice=true;filmUI();}
+function recStop(ok){const R2=FILM.rec;if(!R2)return;FILM.recOk=ok;FILM.rec=null;try{R2.mr.stop();}catch(e){}$('#recNote').hidden=true;document.body.classList.remove('rec');R2.cv.remove();setQuality(R2.quality);FILM.voice=R2.voice;filmUI();}
 $('#fRec').addEventListener('click',()=>{if(FILM.rec){recStop(false);return;}recStart();});
-addEventListener('keydown',e=>{if(!FILM.on)return;if(e.key===' '){e.stopImmediatePropagation();e.preventDefault();filmPause();}else if(e.key==='ArrowRight'){e.stopImmediatePropagation();e.preventDefault();filmJump(1);}else if(e.key==='ArrowLeft'){e.stopImmediatePropagation();e.preventDefault();filmJump(-1);}else if(e.key==='Escape'){e.stopImmediatePropagation();filmStop();}},true);
+// tijdens de film: alleen de filmtoetsen; de gewone sneltoetsen (+ − 1 2 3 C S G L Home …) zijn geblokkeerd
+addEventListener('keydown',e=>{if(!FILM.on)return;const k=e.key,tn=e.target.tagName;e.stopImmediatePropagation();
+  if(e.ctrlKey||e.metaKey||e.altKey||k==='Tab')return;
+  if((tn==='BUTTON'||tn==='A')&&(k===' '||k==='Enter'))return;// knop met focus doet zelf zijn werk
+  if(k===' '){e.preventDefault();filmPause();}else if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();filmJump(1);}else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();filmJump(-1);}else if(k==='Escape'){filmStop();}},true);
 if(/film/.test(location.hash))setTimeout(()=>{$('#filmStart').hidden=false;},900);
 $('#filmStartBtn').addEventListener('click',()=>{$('#filmStart').hidden=true;filmStart();});
 

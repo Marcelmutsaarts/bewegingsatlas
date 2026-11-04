@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hart en bloedsomloop · Bewegingsatlas</title>
+<meta name="description" content="3D-zoomreis door het hart voor de propedeuse ALO: van de bloedsomloop tijdens de bleeptest via kamers, kleppen en prikkelgeleiding tot de hartspiercel, met flauwvallen na abrupt stoppen en een hartstilstand met reanimatie en AED.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="atlas3d.css">
+<style>
+.hh{display:flex;gap:14px;align-items:center}
+.trap{text-align:center;min-width:66px;flex:none}
+.trap b{display:block;font:700 22px Fraunces,serif;line-height:1.1}
+.trap small{display:block;font:600 10.5px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
+.trap small.bad{color:var(--bad)}
+canvas.ecg{width:210px;height:56px;border-radius:8px;display:block;flex:none}
+.hcol{display:flex;flex-direction:column;gap:6px}
+.vchips{display:flex;gap:5px;flex-wrap:wrap}
+.vchips span{font:600 10.5px "JetBrains Mono",monospace;padding:3px 7px;border-radius:6px;background:rgba(255,255,255,.06);color:var(--muted);border:1px solid transparent;white-space:nowrap}
+.vchips span.open{color:#9fe0b8;border-color:rgba(127,200,160,.5);background:rgba(127,200,160,.1)}
+#ctl button.alt{border-color:rgba(230,182,94,.5)}
+#shock{position:absolute;inset:0;pointer-events:none;z-index:8;opacity:0;background:radial-gradient(80% 70% at 50% 50%,rgba(210,235,255,0) 25%,rgba(210,235,255,.75) 100%)}
+.tg.ecgt{color:#9ff0c0;border-color:rgba(120,230,160,.5)}
+#capX .cyc{display:block;font:600 11px "JetBrains Mono",monospace;color:var(--muted);margin-bottom:3px}
+#capX .cyc b{color:var(--gold)}
+/* ECG en hartslag in de film (de HUD is dan verborgen) */
+#filmEcg{position:absolute;right:28px;top:70px;z-index:7;display:none;pointer-events:none;background:rgba(6,18,14,.74);border:1px solid rgba(120,220,160,.35);border-radius:10px;padding:6px 8px 8px}
+body.film #filmEcg.on{display:block}
+#filmEcg b{display:block;font:700 17px "JetBrains Mono",monospace;color:#9ff0c0;margin:0 0 4px 2px;white-space:nowrap}
+#filmEcg b.bad{color:#ff8a6a}
+#filmEcg canvas{display:block;width:250px;height:64px;border-radius:6px}
+@media (max-width:820px){
+  #filmEcg{right:12px;padding:4px 6px 6px}#filmEcg canvas{width:150px;height:40px}#filmEcg b{font-size:13px}
+  .hh.s3 #bars>:nth-child(n+4):nth-child(-n+9){display:none}
+  .hh.s3 #steps{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+  .hh.s3 #steps::-webkit-scrollbar{display:none}
+  .hh.s3 #steps span{padding:4px 6px;font-size:10px}
+  .hh.s3 canvas.ecg{height:28px}
+  #capX .cyc{display:none}
+  .hh{flex-wrap:wrap;gap:6px 10px;width:100%}
+  .hh .hcol{flex:1 1 220px;min-width:0}
+  canvas.ecg{width:100%;height:34px;flex:1 1 100%}
+  .trap b{font-size:17px}.trap{min-width:52px}
+  /* niveau 0: trap en snelheid als één smalle regel, zodat de balkjes de volle breedte krijgen */
+  #hudMid{min-width:0;max-width:100%}
+  .hh .trap{flex:1 1 100%;display:flex;align-items:baseline;gap:8px;text-align:left;min-width:0}
+  .hh .trap b,.hh .trap small{display:inline}
+  .hh .trap~.hcol{flex-basis:100%}
+  .tg.band{display:none}
+  .vchips{display:none}
+  body.panel-open #hudMid,body.panel-open #scale,body.panel-open #capX{display:none}
+  body.panel-open .panel{max-height:46vh}
+}
+@media (prefers-reduced-motion:reduce){#shock{display:none}}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="atlas3d.js"></script>
+<script>
+// staand scherm: de HUD bedekt de onderkant, dus mik iets lager
+const PORT=innerWidth<innerHeight*.85;
+const pv=(v,dy)=>PORT?[[v[0][0],v[0][1]+dy,v[0][2]],[v[1][0],v[1][1]+dy,v[1][2]]]:v;
+// overzicht van niveau 0; met het menu links (breed scherm) iets naar links gemikt, zodat de leerling bij de startlijn niet achter het menu valt
+const V0=innerWidth>820&&!PORT?[[1.9,12.5,21.5],[-.6,2.6,.6]]:pv([[2.5,12.5,21.5],[0,2.6,.6]],-1.6);
+Atlas3D({
+ id:'hart',halte:4,name:'Hart en bloedsomloop',
+ docTitle:'Hart en bloedsomloop · Bewegingsatlas',
+ aria:'3D-zoomreis door het hart en de bloedsomloop tijdens de bleeptest',
+ loader:['Het hart wordt opgebouwd…','Van bleeptest tot hartspiercel'],
+ seed:4,
+ maxDist:PORT?82:60,fogNear:PORT?60:40,fogFar:PORT?150:100,
+ shadow:{left:-11,right:11,top:10,bottom:-8},
+ levels:[
+  {name:'Bloedsomloop',scale:'1 m',sc:'BLOEDSOMLOOP',title:'Hart en bloedsomloop',sub:'<i>Cor · systema cardiovasculare</i> · tijdens de bleeptest',
+   view:V0,zoomTo:[0,4.3,-1.6],s1:'Rust',s2:'Bleeptest',s3:'Noodgeval',
+   bg:['#2c3a42','#18232a','#0d1316'],fog:0x17222a,hemi:.62,shadows:true},
+  {name:'Kamers en kleppen',scale:'12 cm',sc:'HART',title:'Kamers en kleppen',sub:'Opengesneden hart · <i>atria, ventriculi en valvae</i>',
+   view:PORT?[[1.6,.4,13.2],[0,-2.2,0]]:[[2.2,.9,18.5],[0,-.4,0]],zoomTo:[-1.6,2.5,0],s1:'Rust',s2:'Inspanning',s3:'Fibrilleren',
+   bg:['#3a2a2c','#1d1416','#0c0809'],fog:0x1d1416,hemi:.82,shadows:false,drone:true},
+  {name:'Prikkelgeleiding',scale:'8 cm',sc:'GELEIDING',title:'De prikkelgeleiding',sub:'<i>Systema conducens cordis</i> · van sinusknoop tot Purkinjevezel',
+   view:pv([[4.2,1.8,25.5],[0,-.5,0]],-1.8),zoomTo:[1.4,-1.6,.6],s1:'Rust',s2:'Inspanning',s3:'Fibrilleren',
+   bg:['#1d2436','#10131f','#06070d'],fog:0x10131f,hemi:.7,shadows:false,drone:true},
+  {name:'Hartspiercel',scale:'0,1 mm',sc:'HARTSPIERCEL',title:'De hartspiercel',sub:'<i>Myocytus cardiacus</i> · vertakt, gekoppeld en onvermoeibaar',
+   view:pv([[4.0,3.4,15.2],[.2,-.45,-.9]],-3.8),s1:'Rust',s2:'Inspanning',s3:'Fibrilleren',
+   bg:['#2a1e2c','#160f18','#08060a'],fog:0x160f18,hemi:.8,shadows:false,drone:true}],
+ help:{title:'Zo werkt de zoomreis',
+  html:`<p>Op de sokkel staat een vergroot <b>hart</b> tussen een <b>longblok</b> (links) en een <b>lichaamsblok</b> met een kuitspier en de buikorganen (rechts). Rode en blauwe bloedcellen stromen door de <b>kleine</b> en de <b>grote bloedsomloop</b>. Op de gymvloer loopt een leerling de <b>bleeptest</b> tussen twee lijnen op 20 m. Het hart klopt synchroon. Daarna zoom je drie keer in:</p>
+  <ul><li><b>Bloedsomloop</b> (≈ 1 m): trap, hartslag, slagvolume, hartminuutvolume en een ECG.</li>
+  <li><b>Kamers en kleppen</b> (≈ 12 cm): een opengesneden hart met vier holtes en vier kleppen die openen en sluiten.</li>
+  <li><b>Prikkelgeleiding</b> (≈ 8 cm): de elektrische golf van sinusknoop tot Purkinjevezel, gekoppeld aan het ECG.</li>
+  <li><b>Hartspiercel</b> (≈ 0,1 mm): vertakte cellen, intercalaire schijven en gap junctions.</li></ul>
+  <h3>Drie standen, op elk niveau</h3>
+  <p><b>1 · Rust</b> om te verkennen. <b>2 · Bleeptest of inspanning</b>: met een schuif voor de trap of automatisch. <b>3 · Noodgeval</b>: kies <b>Flauwvallen</b> (na abrupt stoppen valt de spierpomp weg; eerst controleren, dan de benen omhoog) of <b>Hartstilstand</b> (ventrikelfibrilleren, met het stappenplan herkennen, bellen, reanimeren, AED en doorgaan na de schok). De camera rijdt mee naar het noodgeval. Op de diepere niveaus zie je wat er bij fibrilleren misgaat en wat de schok van een AED doet.</p>
+  <h3>Tempo</h3>
+  <p>Het hart slaat snel. Met de knop <b>Tempo</b> (kamers, prikkelgeleiding en hartspiercel) of <b>Slow motion</b> volg je elke fase; het bijschrift loopt dan per fase mee met de stappenbalk.</p>
+  <h3>Kleuren</h3>
+  <p>Rood is zuurstofrijk bloed, blauw is zuurstofarm bloed. Op het niveau Prikkelgeleiding licht geel-wit op waar de spier net elektrisch geprikkeld wordt. Groen in de cel is calcium.</p>
+  <p class="hint">De hartstilstand is zakelijk in beeld gebracht als oefenscenario. Volg in de les altijd de BHV- en reanimatieafspraken van je school en de richtlijn van de Nederlandse Reanimatie Raad.</p>`,
+  states:'Rust · bleeptest · noodgeval',keys:[['<kbd>S</kbd>','Eén hartslag verder (als gepauzeerd)']],
+  note:'Vereenvoudigd didactisch model: aantallen, kleuren, tempo en verhoudingen zijn aangepast om het zichtbaar te maken. Hartslag en slagvolume per trap zijn vuistregels voor een getrainde student van ongeveer 19 jaar.'},
+ film:{brand:'HART EN BLOEDSOMLOOP',blurb:'Hoe je hart de bleeptest volhoudt · ca. 6 minuten · met stem en ondertitels',file:'hart-uitleg'},
+ quizEnd:'<p>Bespreek de slotvraag met je groep. Zoek daarna in je eigen sporthal op waar de AED hangt, en spreek af wie belt en wie reanimeert als het ooit misgaat tijdens een test.</p>',
+ build(K){
+ const {THREE,V,AX,AY,AZ,R,clamp,sunflower,lerp,smooth,ease,bump,D2R,TAU,mesh,std,glass,glow,add,BAND,UCYL,orient,segMatrix,placeMatrix,ZERO,inst,tube,lathe,canvasTex,groups,W,S}=K;
+ const $=K.$;
+ const _c=new THREE.Color(),_v=V(0,0,0),_v2=V(0,0,0),_q=new THREE.Quaternion();
+ const G0=groups[0],G1=groups[1],G2=groups[2],G3=groups[3];
+ const RED=new THREE.Color(0xd8352c),BLUE=new THREE.Color(0x3f5fc4);
+ // schokflits (wit-blauw) naast de rode blessureflits van de motor
+ const shockEl=document.createElement('div');shockEl.id='shock';$('#app').appendChild(shockEl);
+ function shockFlash(){if(K.reduced){K.FILM.flashA=.4;return;}shockEl.style.transition='none';shockEl.style.opacity=1;requestAnimationFrame(()=>{shockEl.style.transition='opacity 1s';shockEl.style.opacity=0;});K.shake(.25);K.FILM.flashA=.6;}
+ // in de film is de HUD verborgen: een eigen ECG met hartslag rechtsboven
+ const fEcg=document.createElement('div');fEcg.id='filmEcg';fEcg.setAttribute('aria-hidden','true');fEcg.innerHTML='<b id="fEcgT">♥</b><canvas id="ecgF" width="500" height="128"></canvas>';$('#app').appendChild(fEcg);
+ function filmEcg(strip,col,txt,bad){const on=K.FILM.on&&!K.FILM.title;fEcg.classList.toggle('on',on);if(!on)return;
+   const s=Math.max(Math.min(innerHeight/1080,innerWidth/1500),.4),bh=74*s,wide=innerWidth/innerHeight>=1.6;
+   fEcg.style.top=Math.round(bh+(K.FILM.steps?(wide?76:158)*s+12:(innerWidth<820?64:16)))+'px';
+   const t=$('#fEcgT');if(t.textContent!==txt)t.textContent=txt;t.className=bad?'bad':'';drawStrip('ecgF',strip,col,'');}
+ // mist per niveau: dichtbij op het celniveau, ver weg op de andere niveaus
+ const FOGN=PORT?60:40,FOGF=PORT?150:100;function fogSet(n,f){K.scene.fog.near=n;K.scene.fog.far=f;}
+ // film: een zin kan de klok van het scenario vasthouden tot de stem klaar is (FH.t), zodat beeld en stem gelijk lopen
+ const FH={lv:-1,t:null};const hold=(lv,t)=>()=>{FH.lv=lv;FH.t=t;};
+ function filmHold(lv){if(K.FILM.on&&FH.t!=null&&FH.lv===lv&&S.stT>FH.t)S.stT=FH.t;}
+ const jump=(lv,t,h)=>()=>{if(S.stT<t)S.stT=t;FH.lv=lv;FH.t=h===undefined?null:h;};
+
+ /* ================= gedeelde hartcyclus en ECG ================= */
+ // tijd tau loopt van 0 (begin QRS) tot T (duur van één slag). Systole en PQ-tijd worden korter bij een hogere hartslag.
+ function cyc(hr){const x=clamp((hr-60)/130,0,1);const T=60/hr;return {hr,T,x,PR:lerp(.16,.11,x),sys:lerp(.32,.18,x),ivr:lerp(.06,.03,x)};}
+ function phase(tau,c){const s0=.03,s1=s0+c.sys;const pOn=c.T-c.PR;
+   const vc=tau>s0&&tau<s1?Math.pow(Math.sin(Math.PI*(tau-s0)/c.sys),.7):0;
+   let ac=Math.exp(-Math.pow((tau-(pOn+.07))/.045,2));
+   const av=!(tau>=s0-.004&&tau<s1+c.ivr);const sl=tau>=s0+.045&&tau<s1;
+   let stage=tau<s0+.045?2:tau<s1?3:tau<s1+c.ivr?4:tau>pOn+.03?1:0; // 0 vullen, 1 boezems, 2 aanspannen, 3 uitdrijven, 4 ontspannen
+   return {vc,ac,av,sl,stage,s0,s1,pOn};}
+ function ecgV(tau,c){const T=c.T,g=(m,w,a)=>a*Math.exp(-Math.pow((tau-m)/w,2));const pOn=T-c.PR;const qt=.40*Math.sqrt(T);
+   return g(pOn+.045,.022,.14)+g(pOn+.045-T,.022,.14)+g(.012,.008,-.12)+g(.035,.0105,1)+g(.058,.011,-.26)+g(qt-.085,.048,.28);}
+ function vfV(t){return .38*Math.sin(t*33+1.6*Math.sin(t*2.3))+.22*Math.sin(t*51.7+.7*Math.sin(t*5.1))+.14*Math.sin(t*21.3);}
+ // een rollende monitorstrook
+ function Strip(n,lo,hi){this.b=new Float32Array(n);this.n=n;this.i=0;this.lo=lo;this.hi=hi;this.acc=0;this.b.fill(lo+(hi-lo)*.33);}
+ Strip.prototype.feed=function(dt,rate,fn){this.acc+=dt;const st=1/rate;let k=0;while(this.acc>=st&&k<400){this.acc-=st;this.b[this.i]=fn(k*st);this.i=(this.i+1)%this.n;k++;}};
+ Strip.prototype.fill=function(v){this.b.fill(v);};
+ function drawStrip(id,s,col,lbl,zero){const c=document.getElementById(id);if(!c)return;const x=c.getContext('2d'),w=c.width,h=c.height;
+   x.clearRect(0,0,w,h);x.fillStyle='rgba(6,18,14,.82)';x.fillRect(0,0,w,h);x.strokeStyle='rgba(120,220,160,.11)';x.lineWidth=1;
+   for(let i=0;i<=20;i++){x.beginPath();x.moveTo(i*w/20,0);x.lineTo(i*w/20,h);x.stroke();}for(let j=0;j<=5;j++){x.beginPath();x.moveTo(0,j*h/5);x.lineTo(w,j*h/5);x.stroke();}
+   if(zero!==undefined){const zy=h-(zero-s.lo)/(s.hi-s.lo)*h;x.strokeStyle='rgba(241,233,218,.18)';x.setLineDash([4,4]);x.beginPath();x.moveTo(0,zy);x.lineTo(w,zy);x.stroke();x.setLineDash([]);}
+   x.strokeStyle=col;x.lineWidth=2.4;x.lineJoin='round';x.shadowColor=col;x.shadowBlur=6;x.beginPath();let py=0;
+   for(let k=0;k<s.n;k++){const v=s.b[(s.i+k)%s.n];const px=k/(s.n-1)*w;py=h-clamp((v-s.lo)/(s.hi-s.lo),-.05,1.05)*h;k?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();x.shadowBlur=0;
+   x.fillStyle='#ffffff';x.beginPath();x.arc(w-3,py,3.2,0,TAU);x.fill();
+   if(lbl){x.font='600 17px "JetBrains Mono",monospace';x.fillStyle='rgba(180,240,200,.8)';x.fillText(lbl,8,20);}}
+ // rode bloedcel: biconcaaf schijfje
+ const rbcGeo=new THREE.LatheGeometry([[.001,-.1],[.35,-.17],[.75,-.24],[.97,-.14],[1,0],[.97,.14],[.75,.24],[.35,.17],[.001,.1]].map(p=>new THREE.Vector2(p[0],p[1])),18);
+ const rbcMat=()=>std(0xffffff,{roughness:.32});
+ // spierweefseltextuur voor het hart (vochtig, gevlekt, met vezelrichting)
+ const heartTex=canvasTex(512,512,(x,w,h)=>{x.fillStyle='#7e2924';x.fillRect(0,0,w,h);for(let i=0;i<2600;i++){const a=R();x.fillStyle=`rgba(${105+a*70|0},${26+a*26|0},${26+a*18|0},.35)`;x.beginPath();x.ellipse(R()*w,R()*h,2+R()*9,1+R()*3,.6,0,TAU);x.fill();}
+   x.strokeStyle='rgba(255,200,180,.07)';x.lineWidth=1.2;for(let i=0;i<260;i++){const y=R()*h;x.beginPath();x.moveTo(0,y);x.bezierCurveTo(w*.3,y+30*(R()-.5),w*.7,y+30*(R()-.5),w,y+20*(R()-.5));x.stroke();}},[2,2]);
+
+ /* ================= het hartmodel (solide op niveau 0, van glas op niveau 2) ================= */
+ // lokale maat: ongeveer 2,4 hoog; de voorkant kijkt naar +z; links in beeld is de rechterharthelft
+ const CH=[{n:'RA',c:[-.62,.42,.05],s:[.5,.52,.45],rz:0},{n:'RV',c:[-.22,-.2,.18],s:[.62,.78,.5],rz:.3},{n:'LA',c:[.3,.5,-.35],s:[.45,.38,.42],rz:0},{n:'LV',c:[.28,-.25,-.1],s:[.62,.95,.62],rz:.45}];
+ const AUR=[{c:[-.33,.72,.36],s:[.26,.12,.17],rz:-.5},{c:[.56,.62,.2],s:[.22,.1,.15],rz:.6}];
+ function heartModel(parent,o){const g=new THREE.Group();parent.add(g);if(o.pos)g.position.copy(o.pos);g.scale.setScalar(o.scale||1);
+   const vent=new THREE.Group();vent.position.set(0,.22,0);g.add(vent);const atr=new THREE.Group();atr.position.set(-.1,.45,-.1);g.add(atr);
+   const sph=new THREE.SphereGeometry(1,48,32);const P={};
+   CH.forEach(c=>{const par=c.n[1]==='V'?vent:atr;P[c.n]=mesh(sph,o.mat,[c.c[0]-par.position.x,c.c[1]-par.position.y,c.c[2]-par.position.z],[0,0,c.rz],c.s,par);});
+   P.aur=AUR.map(a=>mesh(sph,o.mat,[a.c[0]-atr.position.x,a.c[1]-atr.position.y,a.c[2]-atr.position.z],[0,0,a.rz],a.s,atr));
+   const T=(pts,r,m)=>tube(pts.map(p=>V(...p)),r,m,g,48,14);
+   const ves={};
+   ves.ao=T([[.06,.3,0],[.06,.9,.02],[.1,1.3,-.05],[.3,1.5,-.3],[.52,1.36,-.62],[.58,.9,-.8],[.58,.3,-.82]],.17,o.art);
+   ves.br=[[-.0,1.45,-.18],[.18,1.53,-.28],[.36,1.52,-.42]].map((p,i)=>T([p,[p[0]-.04,p[1]+.42-.06*i,p[2]-.02]],.065-.008*i,o.art));
+   ves.pt=T([[-.12,.3,.36],[-.05,.75,.4],[.02,1.0,.28],[-.3,1.12,.06],[-.75,1.08,-.08]],.15,o.ven);
+   ves.lpa=T([[.02,1.0,.28],[.35,1.06,.05],[.75,1.02,-.12]],.11,o.ven);
+   ves.svc=T([[-.62,.78,0],[-.62,1.2,-.02],[-.6,1.62,-.05]],.13,o.ven);
+   ves.ivc=T([[-.58,.05,-.12],[-.56,-.4,-.16],[-.54,-.85,-.18]],.14,o.ven);
+   ves.pv=[[-.05,.55,-.58,-.55],[.05,.38,-.62,-.5],[.6,.58,-.55,.55],[.6,.4,-.6,.5]].map(p=>T([[p[0],p[1],p[2]],[p[0]+p[3]*.6,p[1]+.02,p[2]-.12],[p[0]+p[3],p[1]+.05,p[2]-.2]],.075,o.art));
+   return {g,vent,atr,P,ves};}
+ // punten op het oppervlak vinden door te schieten op het model
+ const _ray=new THREE.Raycaster();
+ function wrapOn(objs,pts,dir,off){const out=[];pts.forEach(p=>{const o=(p.isVector3?p.clone():V(p[0],p[1],p[2])).sub(dir.clone().multiplyScalar(4));_ray.set(o,dir);const h=_ray.intersectObjects(objs,false)[0];
+   if(h){const n=h.face.normal.clone().transformDirection(h.object.matrixWorld);out.push(h.point.clone().add(n.multiplyScalar(off)));}});return out;}
+
+ // een klep: n bladen aan een ring; set(0) is dicht, set(1) is open. dir is de stroomrichting.
+ function valve(o){const g=new THREE.Group();g.position.copy(o.pos);g.quaternion.setFromUnitVectors(AY,o.dir.clone().normalize());o.parent.add(g);
+   const geo=new THREE.PlaneGeometry(o.w,o.len,8,5);geo.translate(0,o.len/2,0);const pa=geo.attributes.position;
+   for(let i=0;i<pa.count;i++){const x=pa.getX(i),y=pa.getY(i);pa.setZ(i,-(o.cup||.1)*(1-Math.pow(2*x/o.w,2))*Math.sin(Math.PI*.5*y/o.len));pa.setX(i,x*(1-(o.taper===undefined?.45:o.taper)*y/o.len));}geo.computeVertexNormals();
+   const flaps=[];for(let i=0;i<o.n;i++){const a=i/o.n*TAU+(o.a0||0);const h=new THREE.Group();h.position.set(o.r*Math.cos(a),0,o.r*Math.sin(a));g.add(h);const m=mesh(geo,o.mat,0,0,0,h);m.castShadow=false;
+     if(o.mat2){const m2=mesh(geo,o.mat2,[0,0,o.thick||-.022],0,0,h);m2.castShadow=false;}flaps.push({h,m,a,j:R()*TAU});}
+   const ring=mesh(new THREE.TorusGeometry(o.r,o.ring||.03,8,48),o.ringMat||o.mat,0,[Math.PI/2,0,0],0,g);ring.castShadow=false;
+   const t=V(0,0,0),d=V(0,0,0),n=V(0,0,0),dc=V(0,0,0),dp=V(0,0,0),M=new THREE.Matrix4();
+   function set(f,jit){flaps.forEach(F=>{const ca=Math.cos(F.a),sa=Math.sin(F.a);t.set(-sa,0,ca);
+     dc.set(-ca*Math.cos(o.tilt),Math.sin(o.tilt),-sa*Math.cos(o.tilt));dp.set(ca*(o.flare||0),1,sa*(o.flare||0)).normalize();
+     const ff=clamp(f+(jit?jit*Math.sin(S.clock*23+F.j):0),0,1);d.copy(dc).lerp(dp,ff).normalize();n.crossVectors(t,d).normalize();t.crossVectors(d,n);M.makeBasis(t,d,n);F.h.quaternion.setFromRotationMatrix(M);});}
+   set(0);return {g,set,flaps,ring,f:0};}
+ // een bloedbaan: een reeks bochten met een duur per stuk (in seconden bij rust)
+ function path(segs){let T=0;segs.forEach(s=>{s.cv=new THREE.CatmullRomCurve3(s.pts);s.len=s.cv.getLength();s.d=s.len/(s.v||3);s.t0=T;T+=s.d;});return {segs,T};}
+ function onPath(P,t,out){let s=P.segs[P.segs.length-1];for(let i=0;i<P.segs.length;i++){if(t<P.segs[i].t0+P.segs[i].d){s=P.segs[i];break;}}const u=clamp((t-s.t0)/s.d,0,1);s.cv.getPointAt(u,out);return {s,u};}
+
+ /* ================= NIVEAU 0 · de bloedsomloop in de gymzaal ================= */
+ const ux=X=>(X+8.8)/17.6*1024,vz=Z=>(Z+5.8)/11.6*672;
+ const floorT=canvasTex(1024,672,(x,w,h)=>{x.fillStyle='#c9965c';x.fillRect(0,0,w,h);
+   for(let j=0;j<h;j+=28){const sh=(R()-.5)*18;x.fillStyle=`rgb(${201+sh|0},${150+sh|0},${92+sh*.6|0})`;x.fillRect(0,j,w,27);x.fillStyle='rgba(70,40,15,.25)';x.fillRect(0,j+27,w,1);for(let k=0;k<6;k++)x.fillRect(R()*w,j,1,27);}
+   for(let i=0;i<2600;i++){x.fillStyle=`rgba(90,55,20,${R()*.08})`;x.fillRect(R()*w,R()*h,R()*40,1);}
+   x.lineWidth=5;x.strokeStyle='rgba(61,127,194,.75)';x.strokeRect(30,26,w-60,vz(1.6)-26);x.beginPath();x.arc(w/2,26,120,0,Math.PI);x.stroke();
+   x.strokeStyle='rgba(224,178,58,.8)';x.beginPath();x.moveTo(30,vz(2.2));x.lineTo(w-30,vz(2.2));x.stroke();
+   // bleeptest: twee lijnen op 20 m afstand en een looplaan
+   x.fillStyle='#f6f3ec';[-7,7].forEach(X=>x.fillRect(ux(X)-6,vz(2.7),12,vz(5.7)-vz(2.7)));
+   x.fillStyle='rgba(246,243,236,.35)';x.fillRect(ux(-7),vz(3.35)-1.5,ux(7)-ux(-7),3);x.fillRect(ux(-7),vz(5.05)-1.5,ux(7)-ux(-7),3);
+   x.fillStyle='rgba(40,25,10,.7)';x.font='700 30px "Instrument Sans",sans-serif';x.textAlign='center';x.fillText('◄  20 m  ►',w/2,vz(5.45)+10);});
+ K.base({parent:G0,floor:floorT,plaque:['COR · SYSTEMA CARDIOVASCULARE','het hart tijdens de bleeptest'],plaqueW:6.6});
+ const H0=V(0,4.3,-1.6),HS=1.15,HL=(x,y,z)=>V(x,y,z).multiplyScalar(HS).add(H0);
+ // standaards met een klein draagvorkje
+ function cradle(x,z,h,y1,r){const st=K.stand({parent:G0,x,z,h,foot:1.0});const top=.28+h;for(let i=0;i<3;i++){const a=i/3*TAU+.4;const m=mesh(UCYL,K.ENV.metal,0,0,0,G0);orient(m,V(x,top,z),V(x+r*Math.cos(a),y1,z+r*Math.sin(a)),.035);}
+   mesh(new THREE.TorusGeometry(r,.035,8,32),K.ENV.metal,[x,y1,z],[Math.PI/2,0,0],0,G0);return st;}
+ cradle(0,-1.6,2.45,3.1,.5);cradle(-5.6,-2.2,2.3,2.95,.6);cradle(5.0,-2.4,.9,1.3,.42);cradle(7.15,-.3,1.15,1.62,.5);
+ // het hart
+ const heartMat=std(0xffffff,{map:heartTex,roughness:.36});
+ const artMat=std(0xc8372e,{roughness:.3}),venMat=std(0x3b57a8,{roughness:.34});
+ const HM=heartModel(G0,{pos:H0,scale:HS,mat:heartMat,art:artMat,ven:venMat});
+ HM.ves.lpa.visible=false;
+ G0.updateMatrixWorld(true);
+ // kransslagaders op het oppervlak, met vet in de groeven
+ const fatMat=std(0xd6a23c,{roughness:.6}),corMat=std(0xd8402f,{roughness:.3}),cvMat=std(0x4a5fae,{roughness:.35});
+ const hObjs=[HM.P.LV,HM.P.RV,HM.P.RA,HM.P.LA];const FRONT=V(0,0,-1);
+ const toW=a=>a.map(p=>HL(p[0],p[1],2));
+ function surfTube(lp,r,mat,par,off,dx){const pts=wrapOn(hObjs,toW(lp.map(p=>[p[0]+(dx||0),p[1]])),FRONT,off);if(pts.length<2)return null;const loc=pts.map(p=>par.worldToLocal(p.clone()));return tube(loc,r,mat,par,40,8);}
+ const LADp=[[.04,.5],[.1,.18],[.2,-.18],[.32,-.52],[.47,-.9]],RCAp=[[-.12,.42],[-.42,.24],[-.66,.02],[-.82,-.28]],LCXp=[[.2,.48],[.46,.4],[.72,.18]];
+ const corL=[surfTube(LADp,.055,fatMat,HM.vent,-.005),surfTube(LADp,.032,corMat,HM.vent,.05),surfTube(LADp,.026,cvMat,HM.vent,.04,.08),
+   surfTube(RCAp,.055,fatMat,HM.g,-.005),surfTube(RCAp,.032,corMat,HM.g,.05),surfTube(LCXp,.05,fatMat,HM.g,-.005),surfTube(LCXp,.03,corMat,HM.g,.05)].filter(Boolean);
+ // takjes van de LAD naar de linkerkamer
+ [[.12,.05,.4,-.05],[.24,-.3,.55,-.35],[.36,-.62,.62,-.72]].forEach(b=>{const t=surfTube([[b[0],b[1]],[(b[0]+b[2])/2,(b[1]+b[3])/2],[b[2],b[3]]],.02,corMat,HM.vent,.05);if(t)corL.push(t);});
+ W.cor=HL(.38,.42,.72);W.heart=HL(-.62,-.42,.5);W.ao=HL(.12,1.35,.1);W.ra=HL(-.75,.45,.4);
+
+ // de longen
+ function lungGeo(side){const g=new THREE.SphereGeometry(1,40,28);const p=g.attributes.position;for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);
+   if(x*side<0)x*=.5;if(y<-.4)y=-.4+(y+.4)*.55;x*=1-.18*Math.max(0,y);if(side<0&&x<0&&y<0&&y>-.75&&z>-.1)x*=.7;p.setXYZ(i,x,y,z);}g.computeVertexNormals();return g;}
+ const lungTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#eaa7a4';x.fillRect(0,0,w,h);for(let i=0;i<1100;i++){x.strokeStyle=`rgba(150,55,70,${.12+R()*.22})`;x.lineWidth=1;x.beginPath();x.arc(R()*w,R()*h,2+R()*5,0,TAU);x.stroke();}for(let i=0;i<60;i++){x.fillStyle='rgba(70,40,50,.25)';x.fillRect(R()*w,R()*h,2,2);}},[3,3]);
+ const lungMat=std(0xffffff,{map:lungTex,roughness:.75,transparent:true,opacity:.42,depthWrite:false,side:THREE.DoubleSide});
+ const LUNG=new THREE.Group();LUNG.position.set(-5.6,4.25,-2.2);G0.add(LUNG);
+ const lobes=[mesh(lungGeo(1),lungMat,[-.95,0,0],[0,0,.06],[.95,1.38,.85],LUNG),mesh(lungGeo(-1),lungMat,[.9,0,0],[0,0,-.06],[.82,1.3,.8],LUNG)];lobes.forEach(l=>l.castShadow=false);
+ const cartMat=std(0xe9dfcc,{roughness:.45});
+ tube([V(0,2.5,0),V(0,1.95,0),V(0,1.55,0)],.15,cartMat,LUNG,12,12);
+ const ringsT=inst(new THREE.TorusGeometry(.16,.035,6,20),cartMat,7);for(let i=0;i<7;i++)ringsT.setMatrixAt(i,placeMatrix(V(0,2.42-i*.13,0),[Math.PI/2,0,0],1));LUNG.add(ringsT);
+ // bronchiën en vaatboom: één InstancedMesh per soort
+ const brD=[],vaD=[];function tree(p,d,l,dep,arr,j){const e=p.clone().add(d.clone().multiplyScalar(l));arr.push([p.clone(),e,.075*Math.pow(.66,4-dep)+.012]);if(dep<=0)return;
+   for(const s of [-1,1]){const nd=d.clone().applyAxisAngle(AZ,s*(.42+R()*.3)).applyAxisAngle(AY,(R()-.5)*1.2).normalize();tree(e,nd,l*.7,dep-1,arr,j);}}
+ [[-1,-.95],[1,.9]].forEach(([s,cx])=>{const st=V(s*.28,1.5,0);tree(st,V(cx-st.x,-.6,0).normalize(),.55,4,brD);tree(st.clone().add(V(0,-.05,.18)),V(cx-st.x,-.7,.15).normalize(),.5,4,vaD);});
+ const BR=inst(UCYL,cartMat,brD.length);brD.forEach((b,i)=>BR.setMatrixAt(i,segMatrix(b[0],b[1],b[2])));LUNG.add(BR);
+ const VA=inst(UCYL,std(0xffffff,{roughness:.4}),vaD.length*2);vaD.forEach((b,i)=>{VA.setMatrixAt(i*2,segMatrix(b[0],b[1],b[2]*.8));VA.setColorAt(i*2,BLUE);const o=V(.05,.04,-.12);VA.setMatrixAt(i*2+1,segMatrix(b[0].clone().add(o),b[1].clone().add(o),b[2]*.8));VA.setColorAt(i*2+1,RED);});LUNG.add(VA);
+ W.lung=V(-6.4,5.2,-1.4);
+
+ // het lichaamsblok: een kuitspier met haarvaten en een diepe ader met kleppen, en de buikorganen
+ const fibT=canvasTex(128,256,(x,w,h)=>{x.fillStyle='#b8473a';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=5){x.fillStyle=`rgba(${80+R()*60|0},20,18,.35)`;x.fillRect(i,0,2,h);}});
+ const MUS=lathe(Array.from({length:25},(_,i)=>{const t=i/24;return [.12+.7*Math.pow(Math.sin(Math.PI*t),.8),1.35+t*3.4];}),std(0xffffff,{map:fibT,roughness:.45,transparent:true,opacity:.55,depthWrite:false,side:THREE.DoubleSide}),G0,40,[5.0,0,-2.4]);MUS.castShadow=false;
+ const MUSmat=MUS.material;
+ const tendM=K.TEND();mesh(BAND,tendM,[5.0,1.0,-2.4],0,[.12,.42,.08],G0);mesh(BAND,tendM,[5.0,4.6,-2.4],0,[.1,.35,.07],G0);
+ const capD=[];for(let k=0;k<9;k++){const a=k/9*TAU,rr=.35+.15*(k%2);let p=V(5.0+rr*Math.cos(a),4.5,-2.4+rr*Math.sin(a));for(let j=0;j<10;j++){const q=V(5.0+(rr+.1*Math.sin(j*1.7+k))*Math.cos(a+.25*Math.sin(j+k)),4.5-(j+1)*.3,-2.4+(rr+.1*Math.sin(j*1.7+k))*Math.sin(a+.25*Math.sin(j+k)));capD.push([p,q,j/9]);p=q;}}
+ const CAPM=inst(UCYL,std(0xffffff,{roughness:.4}),capD.length);capD.forEach((c,i)=>{CAPM.setMatrixAt(i,segMatrix(c[0],c[1],.025));_c.copy(RED).lerp(BLUE,c[2]);CAPM.setColorAt(i,_c);});G0.add(CAPM);CAPM.castShadow=false;
+ const veinGlass=glass(0x4a68c8,.32),artGlass=glass(0xd84a3c,.32);
+ const VX=5.0,VZ=-1.85;
+ const deepGlass=glass(0x4a68c8,.5);
+ const deepV=tube([V(VX,1.5,VZ),V(VX,3.0,VZ),V(VX,4.75,VZ)],.2,deepGlass,G0,30,16);deepV.castShadow=false;
+ const flapM=std(0xeef2fb,{roughness:.35,side:THREE.DoubleSide,transparent:true,opacity:.95,emissive:0x8090c0,emissiveIntensity:.12});
+ const VVAL=[2.05,2.75,3.45,4.15].map(y=>valve({parent:G0,pos:V(VX,y,VZ),dir:AY,r:.17,n:2,w:.32,len:.26,mat:flapM,ringMat:deepGlass,ring:.014,tilt:.55,cup:.16,flare:-.1}));
+ W.vein=V(VX+.25,3.1,VZ+.15);W.musc=V(5.65,3.7,-2.3);
+ const orgG=new THREE.Group();orgG.position.set(7.15,2.4,-.3);G0.add(orgG);
+ const gutM=std(0xd9a08f,{roughness:.45,transparent:true,opacity:.62,depthWrite:false}),livM=std(0x7a2e26,{roughness:.4,transparent:true,opacity:.62,depthWrite:false});
+ mesh(new THREE.TorusKnotGeometry(.42,.13,140,12,2,3),gutM,[0,-.15,0],[.3,0,0],0,orgG).castShadow=false;
+ mesh(new THREE.SphereGeometry(1,32,20),livM,[-.05,.72,-.05],[0,0,.15],[.78,.34,.55],orgG).castShadow=false;
+ mesh(new THREE.SphereGeometry(1,24,16),std(0x8c3a30,{roughness:.4}),[.48,.3,-.3],[0,0,.4],[.16,.28,.12],orgG);
+ W.org=V(7.6,2.9,0);
+
+ // de bloedbaan van niveau 0: één lus van rechterboezem via de longen en de linkerkamer naar het lichaam en terug
+ const A=(x,y,z)=>V(x,y,z);
+ const segA=[
+  {k:'hart',pts:[HL(-.6,.45,.05),HL(-.45,.05,.15),HL(-.3,-.45,.25),HL(-.12,.1,.38),HL(-.05,.75,.4),HL(.02,1.0,.28),HL(-.3,1.12,.06),HL(-.75,1.08,-.08)],v:2},
+  {k:'pa',tube:venMat,pts:[HL(-.75,1.08,-.08),A(-2.2,5.75,-1.9),A(-3.6,5.45,-2.1),A(-4.55,4.95,-2.2)],v:3},
+  {k:'lcap',cap:1,pts:[A(-4.55,4.95,-2.2),A(-5.0,5.4,-2.0),A(-5.9,4.9,-2.35),A(-6.6,5.2,-2.0),A(-6.9,4.3,-2.3),A(-6.2,3.7,-2.0),A(-5.3,4.1,-2.4),A(-4.7,3.85,-2.3),A(-4.45,3.9,-2.5)],v:1},
+  {k:'pv',tube:artMat,pts:[A(-4.45,3.9,-2.5),A(-3.4,4.0,-2.75),A(-1.9,4.6,-2.75),HL(-.6,.6,-.78)],v:3},
+  {k:'hart',pts:[HL(-.6,.6,-.78),HL(-.05,.55,-.58),HL(.3,.5,-.35),HL(.32,.1,-.2),HL(.45,-.55,-.1),HL(.15,.1,0),HL(.06,.9,.02),HL(.1,1.3,-.05),HL(.3,1.5,-.3),HL(.52,1.36,-.62),HL(.58,.9,-.8),HL(.58,.3,-.82)],v:2},
+  {k:'ao',tube:artMat,pts:[HL(.58,.3,-.82),A(1.8,4.25,-2.6),A(3.3,4.55,-2.5)],v:3}];
+ const segM=[{k:'ao',tube:artMat,pts:[A(3.3,4.55,-2.5),A(4.2,5.1,-2.5),A(4.85,4.95,-2.45)],v:3},
+  {k:'mcap',cap:2,pts:[A(4.85,4.95,-2.45),A(5.1,4.5,-2.3),A(4.75,4.0,-2.55),A(5.3,3.5,-2.3),A(4.7,3.0,-2.55),A(5.25,2.5,-2.3),A(4.8,2.0,-2.5),A(5.0,1.55,-2.3)],v:1},
+  {k:'dv',tube:null,pts:[A(5.0,1.55,-2.3),A(VX,1.5,VZ),A(VX,2.6,VZ),A(VX,3.8,VZ),A(VX,4.75,VZ),A(4.6,4.95,-1.2),A(3.7,3.6,-1.0)],v:3}];
+ const segO=[{k:'ao',tube:artMat,pts:[A(3.3,4.55,-2.5),A(5.0,5.6,-1.9),A(6.6,4.2,-.9),A(7.0,3.55,-.5)],v:3},
+  {k:'ocap',cap:3,pts:[A(7.0,3.55,-.5),A(7.35,3.1,-.15),A(6.8,2.75,-.4),A(7.45,2.35,-.1),A(6.85,1.95,-.3),A(6.6,2.2,-.05)],v:1},
+  {k:'ov',tube:venMat,pts:[A(6.6,2.2,-.05),A(5.6,2.6,-.4),A(4.5,3.2,-.9),A(3.7,3.6,-1.0)],v:3}];
+ const segC=[{k:'ivc',tube:venMat,pts:[A(3.7,3.6,-1.0),A(2.2,3.0,-1.05),A(.9,2.95,-1.05),A(-.3,3.05,-1.45),HL(-.54,-.85,-.18)],v:3},
+  {k:'hart',pts:[HL(-.54,-.85,-.18),HL(-.56,-.3,-.14),HL(-.6,.45,.05)],v:2}];
+ const PA_=path(segA),PM_=path(segM),PO_=path(segO),PC_=path(segC);
+ const DBR=(PM_.T+PO_.T)/2,LOOP=PA_.T+DBR+PC_.T;
+ // de vaten zelf: glazen buizen waarin je de cellen ziet stromen
+ const VES0=[];[segA,segM,segO,segC].forEach(L=>L.forEach(s=>{if(!s.tube)return;const m=tube(s.pts,s.k==='ao'||s.k==='pa'?.2:.17,s.tube===artMat?artGlass:veinGlass,G0,64,14);m.castShadow=false;VES0.push(m);}));
+ W.pa=A(-2.4,5.95,-1.9);W.pv=A(-2.6,4.45,-2.6);W.aoD=A(2.4,4.55,-2.55);W.ivc=A(1.4,3.15,-1.0);
+ const NC=340;const CELLS=[];for(let i=0;i<NC;i++){CELLS.push({t:i/NC*LOOP,br:R()<.2?0:1,o:R()<.5?1:.2,ax:V(R()-.5,R()-.5,R()-.5).normalize(),sp:1+R()*2,off:V(R()-.5,R()-.5,R()-.5).multiplyScalar(.2),ph:R()*TAU});}
+ const RBC0=inst(rbcGeo,rbcMat(),NC);RBC0.castShadow=false;G0.add(RBC0);CELLS.forEach((c,i)=>RBC0.setColorAt(i,RED));
+
+ // bleeptest: pionnen, een geluidsbox en de AED-kast
+ const coneM=std(0xff7a1c,{roughness:.5});[-7,7].forEach(X=>[2.75,5.65].forEach(Z=>{lathe([[.2,0],[.17,.04],[.04,.42],[.012,.44]],coneM,G0,20,[X,.08,Z]);mesh(new THREE.BoxGeometry(.42,.03,.42),coneM,[X,.095,Z],0,0,G0);}));
+ const spk=new THREE.Group();spk.position.set(-8.25,.08,4.2);spk.rotation.y=Math.PI/2;G0.add(spk);
+ mesh(new THREE.BoxGeometry(.6,.62,.42),std(0x22262b,{roughness:.5}),[0,.31,0],0,0,spk);
+ const spkCone=mesh(new THREE.CylinderGeometry(.17,.12,.04,24),std(0x111316,{roughness:.7}),[0,.36,.215],[Math.PI/2,0,0],0,spk);
+ const spkLed=mesh(new THREE.SphereGeometry(.035,10,8),glow(0x33ff88,0x33ff88,0),[.21,.56,.215],0,0,spk);
+ const aedTex=canvasTex(128,128,(x,w,h)=>{x.fillStyle='#1d9a4a';x.fillRect(0,0,w,h);x.fillStyle='#fff';x.beginPath();x.moveTo(64,104);x.bezierCurveTo(8,64,22,18,64,40);x.bezierCurveTo(106,18,120,64,64,104);x.fill();x.fillStyle='#1d9a4a';x.beginPath();x.moveTo(70,40);x.lineTo(52,72);x.lineTo(66,72);x.lineTo(58,96);x.lineTo(80,60);x.lineTo(66,60);x.lineTo(74,40);x.fill();x.font='700 22px sans-serif';x.fillStyle='#fff';x.textAlign='center';x.fillText('AED',64,124);});
+ const aedPost=mesh(new THREE.BoxGeometry(.14,1.35,.14),K.ENV.dark,[8.35,.75,1.9],0,0,G0);
+ const aedBox=mesh(new THREE.BoxGeometry(.62,.62,.26),[std(0x1d9a4a),std(0x1d9a4a),std(0x1d9a4a),std(0x1d9a4a),std(0xffffff,{map:aedTex,roughness:.4}),std(0x1d9a4a)],[8.35,1.7,1.9],[0,-Math.PI/2,0],0,G0);
+ const aedLamp=mesh(new THREE.SphereGeometry(.05,10,8),glow(0xff3020,0xff3020,0),[8.35,2.08,1.9],0,0,G0);
+ W.aed=V(8.2,1.75,1.9);
+ // de leerling en de docent
+ const FS=.68;const RUN=K.figure({parent:G0,pos:[-7,.08,4.2],rotY:Math.PI/2,scale:FS,shirt:0xd8642a});RUN.root.rotation.order='YXZ';
+ const TEA=K.figure({parent:G0,pos:[8,.08,3.0],rotY:-Math.PI/2,scale:FS,shirt:0x2f7377,shorts:0x23324a,hair:0x5a3a22,skin:0xd0a080});TEA.root.rotation.order='YXZ';TEA.root.visible=false;
+ const phone=mesh(new THREE.BoxGeometry(.05,.13,.025),std(0x15181c,{roughness:.3}),[0,-.07,.04],0,0,TEA.aR.wr);phone.visible=false;
+ const aedDev=new THREE.Group();G0.add(aedDev);aedDev.visible=false;aedDev.scale.setScalar(.75);
+ mesh(new THREE.BoxGeometry(.3,.1,.24),std(0x1d9a4a,{roughness:.45}),[0,.05,0],0,0,aedDev);mesh(new THREE.BoxGeometry(.2,.012,.12),std(0xf2d23a,{roughness:.4}),[0,.105,.02],0,0,aedDev);
+ const aedDevLed=mesh(new THREE.SphereGeometry(.025,8,6),glow(0x7dff9a,0x7dff9a,0),[.1,.11,-.07],0,0,aedDev);
+ const padM=std(0xf4f1ea,{roughness:.6});const pads=[[-.07,.5,.13],[.08,.38,.13]].map(p=>{const m=mesh(new THREE.BoxGeometry(.09,.12,.015),padM,p,0,0,RUN.torso);m.visible=false;return m;});
+ const runGlow=mesh(new THREE.SphereGeometry(.07,12,10),add(0xff4a3c,0),[0,.5,.1],0,0,RUN.torso);runGlow.castShadow=false;
+ W.run=V(0,1.4,4.2);W.tea=V(8,1.4,3);
+
+ /* ---------- niveau 0: fysiologie, bleeptest en noodgeval ---------- */
+ const VO2MAX=55,HRREST=65,HRMAX=200;
+ const kmh=n=>8+.5*n;
+ function physio(trap){if(trap<=0)return {f:0,hr:HRREST,sv:72,mus:.2,bp:120};const vo2=-24.4+6*kmh(trap);const f=clamp((vo2-3.5)/(VO2MAX-3.5),0,1);
+   return {f,hr:HRREST+(HRMAX-HRREST)*f,sv:72+48*smooth(f/.55),mus:.2+.62*Math.pow(f,1.1),bp:120+60*f};}
+ const P0={trap:1,auto:true,tt:0,hr:HRREST,sv:72,q:4.7,mus:.2,bp:120,brain:1,tau:0,c:cyc(HRREST),scen:'vf',x:-7,dir:1,head:Math.PI/2,ph:0,
+   mode:'sinus',vfT:0,comp:0,flow:1,ev:{},lastStep:0,over:0,fallU:0,stepI:-1,msg:''};
+ const ECG0=new Strip(240,-.45,1.15);
+ function runPose(ph,amp){const hp=f=>(20+44*Math.sin(TAU*f))*D2R*amp,kn=f=>((55+50*Math.sin(TAU*f-3.456))*amp+6)*D2R;
+   return {py:RUN.standY-.08*amp+.05*Math.sin(2*TAU*ph)*amp,lean:.2*amp,hipR:-hp(ph),kneeR:kn(ph),ankR:-.15*amp,hipL:-hp(ph+.5),kneeL:kn(ph+.5),ankL:-.15*amp,
+     shR:[1.0*Math.sin(TAU*ph)*amp,0,-.1],shL:[-1.0*Math.sin(TAU*ph)*amp,0,.1],elbR:-.3-1.1*amp,elbL:-.3-1.1*amp,head:-.1*amp};}
+ function walkPose(ph){const s=Math.sin(TAU*ph);return {py:RUN.standY+.015*Math.cos(2*TAU*ph),hipR:-.42*s,hipL:.42*s,kneeR:.15+.45*Math.max(0,-Math.sin(TAU*ph-.6)),kneeL:.15+.45*Math.max(0,Math.sin(TAU*ph-.6)),shR:[.35*s,0,-.08],shL:[-.35*s,0,.08],elbR:-.35,elbL:-.35,lean:.05};}
+ const STANDP={py:RUN.standY,shR:[.05,0,-.1],shL:[.05,0,.1],elbR:-.15,elbL:-.15};
+ const KNEEL={py:.7,lean:.32,hipR:-.12,hipL:-.12,kneeR:1.5,kneeL:1.5,ankR:.85,ankL:.85,shR:[-.5,0,-.1],shL:[-.5,0,.1],elbR:-.4,elbL:-.4,head:.25};
+ const LIE={py:RUN.standY,shR:[0,0,-.35],shL:[0,0,.35],elbR:-.1,elbL:-.1,hipR:0,hipL:0,kneeR:.05,kneeL:.05};
+ const SINK={py:RUN.standY-.42,lean:.35,hipR:-.75,hipL:-.75,kneeR:1.3,kneeL:1.3,ankR:-.35,ankL:-.35,shR:[-.4,0,-.25],shL:[-.4,0,.25],elbR:-.4,elbL:-.4,head:.3};
+ let vict={x:0,dir:1};
+ function setRunnerAt(x,dir,heading){RUN.root.position.set(x,.08,4.2);RUN.root.rotation.set(0,heading,0);}
+ // camerarit naar het noodgeval in stand 3 (de motor heeft geen eigen volgcamera)
+ let camGo=null;K.controls.addEventListener('start',()=>{camGo=null;});
+ function resetL0(n,cur){P0.tt=0;P0.tau=0;P0.mode='sinus';P0.vfT=0;P0.comp=0;P0.compA=0;P0.over=0;P0.fallU=0;P0.stepI=-1;P0.msg='';
+   TEA.root.visible=false;phone.visible=false;aedDev.visible=false;pads.forEach(p=>p.visible=false);aedLamp.material.emissiveIntensity=0;
+   if(n===1){P0.x=-7;P0.dir=1;P0.head=Math.PI/2;}else if(n===2){P0.x=-7;P0.dir=1;P0.head=Math.PI/2;if(P0.auto)P0.trap=1;}
+   else{P0.x=-7;P0.dir=1;P0.head=Math.PI/2;P0.trap=P0.scen==='vf'?10:11;const ph=physio(P0.trap);P0.hr=ph.hr-6;P0.sv=ph.sv;}
+   if(n===1){P0.hr=HRREST;P0.sv=72;P0.mus=.2;P0.bp=120;}
+   P0.brain=1;setRunnerAt(P0.x,P0.dir,P0.head);
+   const was=P0.lastSt;P0.lastSt=n;
+   camGo=(n===3&&cur&&!K.FILM.on&&!K.reduced)?{k:0,p0:K.camera.position.clone(),t0:K.controls.target.clone(),P:V(0,0,0),T:V(0,0,0)}:null;
+   // terug uit het noodgeval: de camera rijdt mee terug naar het overzicht (niet als een punt, de speurtocht of de film de camera stuurt)
+   if(was===3&&n!==3&&cur&&!K.FILM.on&&!$('#info').classList.contains('open')&&!document.body.classList.contains('quiz-on')){const T=V(...V0[1]),P=V(...V0[0]),asp=K.camera.aspect;
+     if(asp<1)P.sub(T).multiplyScalar(Math.min(1.9,1/Math.pow(asp,.85))).add(T);camGo={back:true,k:K.reduced?1:0,p0:K.camera.position.clone(),t0:K.controls.target.clone(),P,T};}}
+ // tijdlijn van het noodgeval (seconden in stand 3)
+ const VF={collapse:3.2,teaIn:4.6,call:7.8,cpr:9.8,aed:13.5,ana:16,shock:17.6,resume:18.2,life:25,stop:26.5};
+ const FT={stop:5.38,sink:9.4,lie:10.8,arrive:13.0,check:13.6,move:16.2,legs:17.8,sit:22.5};
+ function teaWalk(t0,t1,from,to,t){const u=clamp((t-t0)/(t1-t0),0,1);_v.copy(from).lerp(to,smooth(u));TEA.root.position.set(_v.x,.08,_v.z);
+   const dx=to.x-from.x,dz=to.z-from.z;return {u,head:Math.atan2(dx,dz)};}
+ const CPRP=c=>Object.assign({},KNEEL,{lean:1.0+.05*c,py:.72-.05*c,hipR:-.05,hipL:-.05,shR:[-1.22,0,-.07],shL:[-1.22,0,.07],elbR:0,elbL:0,head:.2});
+ const CHECKP=Object.assign({},KNEEL,{lean:.78,head:.55,shR:[-1.0,0,-.1],shL:[-.85,0,.25],elbR:-.3,elbL:-.6});
+ function step0(dt){filmHold(0);const st=S.state,t=S.stT;const ev=P0.ev;ev.lub=ev.dub=ev.beep=ev.trip=ev.foot=ev.shock=ev.comp=ev.ana=0;
+   let tgt=physio(st===1?0:P0.trap),runV=0,pose=null,walk=false;let hrT=tgt.hr,svT=tgt.sv,musT=tgt.mus,bpT=tgt.bp,brainT=1;P0.mode='sinus';let compA=0;
+   if(st===2){if(P0.auto&&dt>0){P0.tt+=dt;if(P0.over>0){P0.over+=dt;if(P0.over>7.5){P0.over=0;P0.trap=1;P0.tt=0;ev.trip=1;}}
+       else if(P0.tt>8){P0.tt=0;P0.trap++;ev.trip=1;if(P0.trap>10){P0.over=.01;}}}
+     if(P0.over>0){// de test is voorbij: rustig uitlopen, de spierpomp blijft werken
+       walk=true;runV=4/3.6*.7;const u=smooth(P0.over/7);hrT=lerp(186,128,u);svT=lerp(118,104,u);musT=lerp(.8,.55,u);bpT=lerp(176,142,u);}
+     else{runV=kmh(P0.trap)/3.6*.7;tgt=physio(P0.trap);hrT=tgt.hr;svT=tgt.sv;musT=tgt.mus;bpT=tgt.bp;}}
+   if(st===3){const sc=P0.scen;
+     if(sc==='vf'){if(t<VF.collapse){runV=kmh(10)/3.6*.7;}
+       else{if(P0.vfT===0){P0.vfT=t;K.flash({a:.5,shake:.3,sound:false});vict={x:P0.x,dir:P0.dir};}P0.mode='vf';hrT=0;svT=0;bpT=0;brainT=0;
+         if((t>=VF.cpr&&t<VF.ana)||(t>=VF.resume&&t<VF.stop))compA=1;
+         if(t>=VF.shock&&P0.stepI<4){P0.stepI=4;ev.shock=1;shockFlash();}
+         if(t>=VF.shock+.6){P0.mode='rosc';const u=smooth((t-VF.shock-.6)/7);hrT=lerp(70,104,u);svT=lerp(25,62,u);bpT=lerp(55,102,u);brainT=lerp(.3,.85,u);}}}
+     else{if(t<FT.stop){runV=kmh(11)/3.6*.7;tgt=physio(11);hrT=tgt.hr;svT=tgt.sv;bpT=tgt.bp;musT=tgt.mus;}
+       else{const u=t-FT.stop;hrT=t<FT.lie?lerp(196,170,smooth(u/4)):lerp(165,115,smooth((t-FT.lie)/7));
+         const drop=smooth(u/3.4);
+         svT=t<FT.lie?lerp(118,52,drop):t<FT.legs?lerp(55,76,smooth((t-FT.lie)/3)):lerp(76,92,smooth((t-FT.legs)/3));
+         bpT=t<FT.lie?lerp(175,82,drop):t<FT.legs?lerp(84,100,smooth((t-FT.lie)/4)):lerp(100,114,smooth((t-FT.legs)/3));
+         brainT=t<FT.lie?lerp(1,.42,smooth((u-1)/3.5)):t<FT.legs?lerp(.45,.72,smooth((t-FT.lie)/3)):lerp(.72,.97,smooth((t-FT.legs)/3));musT=lerp(.8,.55,smooth(u/5));
+         if(t>FT.sink&&P0.fallU===0){P0.fallU=.001;K.flash({a:.3,shake:.12,sound:false});vict={x:P0.x,dir:P0.dir};}}}}
+   // hartslag en volumes volgen hun doel met wat traagheid
+   const k=1-Math.exp(-dt*(st===3?1.6:.7));P0.hr=lerp(P0.hr,hrT,k);P0.sv=lerp(P0.sv,svT,k);P0.mus=lerp(P0.mus,musT,k);P0.brain=lerp(P0.brain,brainT,1-Math.exp(-dt*1.2));
+   if(P0.mode==='vf'){P0.hr=lerp(P0.hr,0,clamp(dt*6,0,1));}
+   // borstcompressies: 110 per minuut
+   if(compA){P0.comp=(P0.comp+dt*110/60)%1;}const cmp=compA?Math.pow(Math.max(0,Math.sin(P0.comp*TAU)),2):0;if(compA&&cmp>.98&&!P0._cp){ev.comp=1;P0._cp=1;}if(cmp<.5)P0._cp=0;
+   if(P0.mode==='vf'&&compA)P0.bp=lerp(P0.bp,6+54*cmp,clamp(dt*14,0,1));else P0.bp=lerp(P0.bp,bpT,1-Math.exp(-dt*1.4));
+   P0.compA=compA;
+   P0.q=P0.mode==='vf'?(compA?1.3:0):P0.hr*P0.sv/1000;
+   // hartcyclus
+   let vc=0,ac=0;
+   if(P0.mode!=='vf'&&P0.hr>20){const tp=P0.tau;P0.tau+=dt;if(P0.tau>=P0.c.T){P0.tau-=P0.c.T;P0.c=cyc(clamp(P0.hr,40,200));}
+     const ph=phase(P0.tau,P0.c);vc=ph.vc;ac=ph.ac;if(tp<ph.s0&&P0.tau>=ph.s0)ev.lub=1;if(tp<ph.s1&&P0.tau>=ph.s1)ev.dub=1;}
+   const quiv=P0.mode==='vf'?.03*Math.sin(S.clock*41)+.02*Math.sin(S.clock*57)+.012*Math.sin(S.clock*23):0;
+   HM.vent.scale.set(1-.075*vc-.1*cmp+quiv,1-.05*vc-.06*cmp-quiv,1-.075*vc-.1*cmp+quiv);HM.atr.scale.setScalar(1-.07*ac+quiv*.6);
+   // ECG
+   ECG0.feed(dt,80,o=>P0.mode==='vf'?vfV(S.clock+o)*(st===3&&S.stT<VF.collapse+1.5?clamp((S.stT-VF.collapse)/.4,0,1):1)*.9+(compA?.5*cmp:0)+(S.stT>=VF.shock&&S.stT<VF.shock+.15?1.1:0):P0.hr>20?ecgV(P0.tau,P0.c)+(compA?.35*cmp:0):0);
+   // bloedcellen
+   const vcMean=P0.c.sys*.64/P0.c.T;const pulse=P0.mode==='vf'?(compA?(.25+1.6*cmp):0):(.6+.8*vc)/(.6+.8*vcMean);
+   P0.flow=(P0.q/4.7)*pulse*1.5;
+   const ext=lerp(.6,.88,P0.mus);
+   for(let i=0;i<NC;i++){const c=CELLS[i];c.t+=dt*P0.flow;if(c.t>=LOOP){c.t-=LOOP;c.br=R()<P0.mus?0:1;}
+     let r;if(c.t<PA_.T)r=onPath(PA_,c.t,_v);else if(c.t<PA_.T+DBR){const B=c.br===0?PM_:PO_;r=onPath(B,(c.t-PA_.T)/DBR*B.T,_v);}else r=onPath(PC_,c.t-PA_.T-DBR,_v);
+     const s=r.s;if(s.cap===1)c.o=Math.max(c.o,r.u);else if(s.cap===2)c.o=Math.min(c.o,1-ext*r.u);else if(s.cap===3)c.o=Math.min(c.o,1-.35*r.u);
+     _v.addScaledVector(c.off,s.cap?.25:.55);if(P0.mode==='vf'&&!compA)_v.x+=.01*Math.sin(S.clock*30+i);
+     _q.setFromAxisAngle(c.ax,S.clock*c.sp*(.3+P0.flow*.4)+c.ph);RBC0.setMatrixAt(i,placeMatrix(_v,_q,.075));_c.copy(BLUE).lerp(RED,c.o);RBC0.setColorAt(i,_c);}
+   RBC0.instanceMatrix.needsUpdate=true;RBC0.instanceColor.needsUpdate=true;
+   // loper; spierpomp: de kuitspier knijpt de diepe ader bij elke pas
+   let pump=0;
+   if(runV>0){const L=7;P0.x+=P0.dir*runV*dt;if((P0.dir>0&&P0.x>=L)||(P0.dir<0&&P0.x<=-L)){P0.x=clamp(P0.x,-L,L);if(st===3&&P0.scen==='faint'&&t>FT.stop-.3){runV=0;}else{P0.dir*=-1;if(!walk)ev.beep=1;}}
+     const cad=walk?1.8:2.75+.09*(kmh(P0.trap)-8.5);const p0=P0.ph;P0.ph=(P0.ph+dt*cad/2)%1;if((p0<.25&&P0.ph>=.25)||(p0<.75&&P0.ph>=.75))ev.foot=1;
+     pump=Math.pow(Math.max(0,Math.sin(TAU*P0.ph*2)),2)*(walk?.5:1);}
+   const hd=P0.dir>0?Math.PI/2:-Math.PI/2;P0.head+=(hd-P0.head)*clamp(dt*(walk?5:9),0,1);
+   if(st===1){pose=Object.assign({},STANDP,{py:RUN.standY+.008*Math.sin(S.clock*1.6)});setRunnerAt(P0.x,P0.dir,P0.head);}
+   else if(st===2){pose=walk?walkPose(P0.ph):runPose(P0.ph,1);setRunnerAt(P0.x,P0.dir,P0.head);}
+   else if(P0.scen==='vf'){if(t<VF.collapse){pose=runPose(P0.ph,1);setRunnerAt(P0.x,P0.dir,P0.head);}
+     else{const u=clamp((t-VF.collapse)/1.3,0,1);const a=smooth(u/.45),b=smooth((u-.35)/.65);pose=K.mixPose(K.mixPose(runPose(P0.ph,.4),SINK,a),LIE,b);
+       if(t>=VF.shock&&t<VF.shock+.35)pose.shR=[-.3,0,-.6],pose.shL=[-.3,0,.6];
+       // tekenen van leven: de leerling beweegt en ademt weer normaal
+       if(t>VF.life){const m=smooth((t-VF.life)/1.4);pose.headY=.5*m*Math.sin(S.clock*.9);pose.head=-.25*m;pose.shL=[-.7*m,0,.35-.1*m];pose.elbL=-.1-.9*m;pose.lean=-.025*m*(1+Math.sin(S.clock*1.7));}
+       RUN.root.position.set(vict.x,.08+.06*b,4.2);RUN.root.rotation.set(-Math.PI/2*b,vict.dir>0?Math.PI/2:-Math.PI/2,0);}}
+   else{if(t<FT.stop){pose=runPose(P0.ph,1);setRunnerAt(P0.x,P0.dir,P0.head);}
+     else if(t<FT.sink){const u=t-FT.stop;pose=K.mixPose(runPose(P0.ph,.2),Object.assign({},STANDP,{lean:.15,shR:[-.4,0,-.15],shL:[-.4,0,.15]}),smooth(u/.6));RUN.root.position.set(P0.x,.08,4.2);RUN.root.rotation.set(0,P0.head,.05*Math.sin(u*2.2)*smooth((u-1.5)/2));}
+     else{const u=clamp((t-FT.sink)/1.4,0,1);const a=smooth(u/.5),b=smooth((u-.4)/.6);pose=K.mixPose(K.mixPose(STANDP,SINK,a),LIE,b);let rx=-Math.PI/2*b;
+       if(t>FT.check+1.3){const m=smooth((t-FT.check-1.3)/.6);pose.headY=.45*m;pose.shL=[-.3*m,0,.35];}
+       if(t>FT.legs){const l=smooth((t-FT.legs)/1)*(1-smooth((t-FT.sit)/1.2));pose.hipR=pose.hipL=-.75*l;pose.kneeR=pose.kneeL=.05+.15*l;}
+       if(t>FT.sit){const s=smooth((t-FT.sit)/1.6);rx=lerp(rx,-.42,s);pose.hipR=pose.hipL=lerp(pose.hipR,-1.1,s);pose.kneeR=pose.kneeL=lerp(pose.kneeR,1.4,s);pose.shR=[-.6*s,0,-.2];pose.shL=[-.6*s,0,.2];pose.headY=0;}
+       RUN.root.position.set(vict.x,.08+.06*b,4.2);RUN.root.rotation.set(rx,vict.dir>0?Math.PI/2:-Math.PI/2,0);}}
+   RUN.pose(pose);runGlow.material.opacity=st===3&&P0.mode==='vf'?.0:clamp((P0.hr-70)/130,0,1)*(.35+.65*vc);
+   // docent en AED
+   if(st===3&&((P0.scen==='vf'&&t>VF.teaIn)||(P0.scen==='faint'&&t>FT.lie))){TEA.root.visible=true;const vf=P0.scen==='vf';
+     const chestX=vict.x-vict.dir*1.42*FS;let tp;
+     if(vf){const w=teaWalk(VF.teaIn,VF.teaIn+2.6,V(8.0,0,3.0),V(chestX,0,4.2+.44),t);
+       if(w.u<1){tp=walkPose(t*.95);TEA.root.rotation.set(0,w.head,0);}
+       else{TEA.root.rotation.set(0,Math.PI,0);const kn=smooth((t-VF.teaIn-2.6)/.6);tp=K.mixPose(STANDP,KNEEL,kn);
+         if(t>VF.call&&t<VF.cpr){phone.visible=true;tp.shR=[-.6,0,-.55];tp.elbR=-2.4;}else phone.visible=false;
+         if(compA)tp=CPRP(cmp);
+         if(t>=VF.ana&&t<VF.resume)tp=Object.assign({},KNEEL,{lean:.15,py:.72,shR:[-.2,0,-.25],shL:[-.2,0,.25]});
+         if(t>=VF.stop){const s=smooth((t-VF.stop)/.8);tp=K.mixPose(CPRP(0),Object.assign({},KNEEL,{lean:.35,head:.45,shR:[-.5,0,-.15],shL:[-.4,0,.2]}),s);}}}
+     else{// flauwvallen: eerst bij het hoofd controleren (reageert hij, ademt hij normaal?), dan pas de benen omhoog
+       const headP=V(vict.x-vict.dir*1.3,0,4.2+.46),feetP=V(vict.x+vict.dir*.45,0,4.2);
+       if(t<FT.arrive){const w=teaWalk(FT.lie,FT.arrive,V(8.0,0,3.0),headP,t);tp=walkPose(t*.95);TEA.root.rotation.set(0,w.head,0);}
+       else if(t<FT.move){TEA.root.position.set(headP.x,.08,headP.z);TEA.root.rotation.set(0,Math.PI,0);tp=K.mixPose(STANDP,KNEEL,smooth((t-FT.arrive)/.6));
+         if(t>FT.check){tp=K.mixPose(tp,CHECKP,smooth((t-FT.check)/.5));tp.shR=[-1.0+.06*Math.sin(S.clock*9)*(t<FT.check+1.4?1:0),0,-.1];}}
+       else if(t<FT.legs-.5){const w=teaWalk(FT.move,FT.legs-.5,headP,feetP,t);tp=K.mixPose(KNEEL,walkPose(t*.95),smooth((t-FT.move)/.4));TEA.root.rotation.set(0,w.head,0);}
+       else{TEA.root.position.set(feetP.x,.08,feetP.z);TEA.root.rotation.set(0,vict.dir>0?-Math.PI/2:Math.PI/2,0);tp=K.mixPose(STANDP,KNEEL,smooth((t-FT.legs+.5)/.5));
+         if(t>FT.legs&&t<FT.sit)tp=Object.assign({},KNEEL,{lean:.2,shR:[-1.2,0,-.1],shL:[-1.2,0,.1],elbR:-.3,elbL:-.3});}}
+     TEA.pose(tp);
+     if(vf&&t>VF.aed){aedDev.visible=true;aedDev.position.set(chestX-vict.dir*.8,.08,4.2+.5);pads.forEach(p=>p.visible=true);aedDevLed.material.emissiveIntensity=(t>VF.ana&&t<VF.shock)?(Math.sin(S.clock*12)>0?2:0):.6;if(t>VF.ana&&t<VF.shock&&Math.sin(S.clock*6)>.95&&!P0._an){ev.ana=1;P0._an=1;}if(Math.sin(S.clock*6)<0)P0._an=0;}
+     aedLamp.material.emissiveIntensity=vf&&t>VF.teaIn&&t<VF.aed?(Math.sin(S.clock*8)>0?2.5:0):0;}
+   // stappen
+   if(st===3){const si=P0.scen==='vf'?(t<VF.collapse?-1:t<VF.call?0:t<VF.cpr?1:t<VF.aed?2:t<VF.shock?3:t<VF.shock+1.5?4:5):(t<FT.stop?-1:t<FT.stop+1.5?0:t<FT.sink?1:t<FT.arrive?2:t<FT.legs?3:t<FT.sit?4:5);K.stepOn(si);if(PORT){const on=$('#steps .on');if(on&&on.dataset.s!==P0.chip){P0.chip=on.dataset.s;on.parentNode.scrollLeft=Math.max(0,on.offsetLeft-on.parentNode.offsetLeft-40);}}}
+   // spierpomp in beeld
+   const sq=pump*((st===2)||(st===3&&runV>0)?1:0);MUS.scale.set(1+.09*sq,1-.03*sq,1+.09*sq);MUSmat.emissive.setRGB(.25*sq,.03*sq,.02*sq);
+   deepV.scale.set(1-.3*sq,1,1-.3*sq);deepV.position.set(VX*.3*sq,0,VZ*.3*sq);
+   VVAL.forEach((vv,i)=>{const open=st===1?.35+.1*Math.sin(S.clock*1.3+i):(st===3&&runV===0)?.12:clamp(sq*1.4+.1,0,1);vv.f=lerp(vv.f,open,clamp(dt*14,0,1));vv.set(vv.f);});
+   spkLed.material.emissiveIntensity=lerp(spkLed.material.emissiveIntensity,0,clamp(dt*6,0,1));if(ev.beep||ev.trip)spkLed.material.emissiveIntensity=3;
+   W.run=RUN.head.getWorldPosition(W.run||V(0,0,0)).add(V(0,.35,0));W.runC=RUN.torso.getWorldPosition(W.runC||V(0,0,0));
+   // camera volgt het noodgeval
+   if(camGo&&$('#info').classList.contains('open'))camGo=null;// een geopend punt heeft zijn eigen camerastand
+   if(camGo&&camGo.back){if(st===3||S.lvl!==0||K.FILM.on)camGo=null;else{const rdt=dt>0?dt/(S.slow?.25:1):0;camGo.k=Math.min(1,camGo.k+rdt/1.4);const e=ease(camGo.k);
+     K.camera.position.lerpVectors(camGo.p0,camGo.P,e);K.controls.target.lerpVectors(camGo.t0,camGo.T,e);if(camGo.k>=1)camGo=null;}}
+   if(camGo&&st===3&&S.lvl===0){const rdt=dt>0?dt/(S.slow?.25:1):0;const vf=P0.scen==='vf';
+     let x=vf?(t<VF.collapse?P0.x:vict.x-vict.dir*.8):(t<FT.sink?P0.x-.9:vict.x-vict.dir*.6);x=clamp(x,-5.6,6.2);
+     camGo.T.set(x,PORT?-.7:.15,4.2);camGo.P.set(x+2.4,PORT?2.6:3.7,10.9);
+     if(PORT){const asp=K.camera.aspect;camGo.P.sub(camGo.T).multiplyScalar(Math.min(1.35,1/Math.pow(asp,.6))).add(camGo.T);}
+     camGo.k+=rdt/1.8;if(camGo.k<1){const e=ease(camGo.k);K.camera.position.lerpVectors(camGo.p0,camGo.P,e);K.controls.target.lerpVectors(camGo.t0,camGo.T,e);}
+     else{const a=1-Math.exp(-rdt*2.5);K.camera.position.lerp(camGo.P,a);K.controls.target.lerp(camGo.T,a);}}
+   hud0();}
+ function bpm(v){return Math.round(v);}
+ const kmT=n=>kmh(n).toFixed(1).replace('.',',')+' km/u';
+ function hud0(){const st=S.state;const tr=$('#hTrap');if(!tr)return;const vf=P0.mode==='vf',cA=P0.compA,sp=$('#hSpd');
+   if(st===1){tr.textContent='Rust';sp.textContent='staat klaar';sp.className='';}
+   else if(st===2){tr.textContent=P0.over>0?'Einde':'Trap '+P0.trap;sp.textContent=P0.over>0?'uitlopen':kmT(P0.trap);sp.className='';}
+   else{tr.textContent=vf?'VF':P0.mode==='rosc'?'Ritme':P0.scen==='vf'?'Trap 10':(S.stT<FT.stop?'Trap 11':'Gestopt');
+     sp.textContent=vf?(cA?'reanimatie':'geen pompfunctie'):P0.mode==='rosc'?'na de schok':P0.scen==='faint'&&S.stT>=FT.stop?'geen uitlopen':kmT(P0.scen==='vf'?10:11);sp.className=vf?'bad':'';}
+   K.bar(1,vf?(cA?110/HRMAX:0):P0.hr/HRMAX,vf?(cA?'110 /min':'— (fibrilleren)'):bpm(P0.hr)+' /min',vf?'bad':P0.hr>185?'con':'');
+   K.bar(2,vf?(cA?12/130:0):P0.sv/130,vf?(cA?'≈ 12 ml per keer':'0 ml'):Math.round(P0.sv)+' ml',vf||(P0.sv<60&&st===3)?'bad':'');
+   K.bar(3,P0.q/25,P0.q.toFixed(1).replace('.',',')+' L/min',P0.q<2?'bad':P0.q>18?'ok':'');
+   if(st===3)K.bar(4,P0.bp/190,Math.round(P0.bp)+' mmHg',P0.bp<95?'bad':'',P0.bp<95?'var(--bad)':'');
+   else K.bar(4,P0.mus,Math.round(P0.mus*100)+(innerWidth<360?'%':'% van de stroom'),'',P0.mus>.6?'var(--ok)':'');
+   const col=vf?'#ff8a6a':'#7dffa8';drawStrip('ecg0',ECG0,col,'ECG');
+   filmEcg(ECG0,col,vf?(cA?'♥ drukken 110/min':'♥ VF · geen pols'):'♥ '+bpm(P0.hr)+' /min',vf);
+   const t=S.stT;let cap;
+   if(st===1)cap='De leerling staat klaar bij de lijn. Rust: ongeveer <b>65 slagen per minuut</b> × <b>70 ml</b> per slag is zo’n <b>5 liter per minuut</b>. Rood is zuurstofrijk, blauw zuurstofarm. Volg één cel rond.';
+   else if(st===2)cap=P0.over>0?'Trap 11 haalt deze leerling niet meer: de test stopt. Hij <b>loopt rustig uit</b>, zodat de kuitspier het bloed blijft terugpompen. De hartslag zakt geleidelijk.':P0.trap<=2?'De bleeptest begint rustig. De hartslag schiet omhoog en het <b>slagvolume</b> stijgt mee.':P0.trap<=6?'Elke trap is 0,5 km/u sneller. Het slagvolume vlakt nu af; vanaf hier stijgt het hartminuutvolume vooral door de <b>hartslag</b>.':'Zware inspanning: ongeveer <b>'+bpm(P0.hr)+' × '+Math.round(P0.sv)+' ml ≈ '+P0.q.toFixed(0)+' L/min</b>. Al <b>'+Math.round(P0.mus*100)+'%</b> van het bloed gaat naar de werkende spieren.';
+   else if(P0.scen==='vf')cap=t<VF.collapse?'Trap 10. Een zeldzame situatie, als oefenscenario: kijk naar het ECG.':t<VF.call?'<b>Ventrikelfibrilleren</b>: de kamers trillen in plaats van te pompen, de bloedstroom staat stil. <b>Herkennen</b>: reageert niet en ademt niet normaal. Gaspen of snurkend ademen is géén normale ademhaling.':t<VF.cpr?'<b>Bel 112</b> (of laat bellen) en laat iemand de <b>AED</b> halen.':t<VF.aed?'<b>Reanimeren</b>: 30 borstcompressies (100–120 per minuut, 5–6 cm diep) en 2 beademingen. Zo stroomt er toch een beetje bloed, ongeveer een kwart van normaal.':t<VF.ana?'De <b>AED</b> is er: elektroden op de blote borst. Ga door met reanimeren tot de AED zegt dat hij analyseert.':t<VF.shock?'De AED <b>analyseert</b> het ritme. Niemand raakt de leerling aan.':t<VF.life?'<b>Schok</b> gegeven. Ga direct door met reanimeren: 30 keer drukken, 2 keer beademen. Na 2 minuten analyseert de AED opnieuw. Het ritme op deze monitor zie je als hulpverlener niet.':'De leerling <b>beweegt en ademt weer normaal</b>. Pas nu stop je met drukken. Laat de AED aangesloten en volg de aanwijzingen tot het ambulanceteam het overneemt. In het echt is vaak meer dan één schok nodig, en het lukt niet altijd.';
+   else cap=t<FT.stop?'Laatste trap, volle inspanning. De kuitspier pompt bij elke pas het bloed terug naar het hart.':t<FT.sink?'De leerling stopt abrupt en blijft staan. De <b>spierpomp</b> valt weg: bloed zakt in de benen, het slagvolume en de bloeddruk dalen.':t<FT.arrive?'Te weinig bloed naar de hersenen: de leerling wordt duizelig en zakt in elkaar.':t<FT.legs?'Controleer altijd eerst: <b>reageert</b> hij en <b>ademt</b> hij normaal? Zo niet, dan is het een hartstilstand: bel 112, reanimeer en laat de AED halen.':t<FT.sit?'Hij reageert en ademt normaal: hij is <b>flauwgevallen</b>. Plat liggen met de benen omhoog: het bloed stroomt terug naar hart en hersenen. Komt hij niet binnen ongeveer een minuut bij, bel dan 112.':'Weer bij. Laat hem rustig zitten en niet meteen opstaan. Voorkom het met een <b>cooling-down</b>: na de test rustig uitlopen.';
+   if(st===3)K.capSet(K.stateText(),cap);else K.capSoft(K.stateText(),cap,2.6);}
+ const L0H={step:step0,reset(n,cur){resetL0(n,cur);},onShow(){fogSet(FOGN,FOGF);},
+   hud(){const st=S.state;return `<div class="hh${st===3?' s3':''}"><div class="trap"><b id="hTrap">Rust</b><small id="hSpd"></small></div><div class="hcol">${K.bars(['Hartslag','Slagvolume','Hartminuutvolume',st===3?'Bloeddruk':'Naar de spieren'])}${st===3?K.stepsHTML(P0.scen==='vf'?['Herkennen','112 bellen','Reanimeren','AED','Schok','Doorgaan']:['Stoppen','Bloed zakt','Flauw','Controleren','Benen omhoog','Herstel']):''}</div><canvas class="ecg" id="ecg0" width="420" height="112" aria-label="ECG"></canvas></div>`;},
+   ctl(){const st=S.state;if(st===2)return `<label>Trap</label><input type="range" id="sTrap" min="1" max="12" step="1" value="${P0.trap}" aria-label="Trap"><button id="bAuto" class="${P0.auto?'on':''}">Automatisch</button>`;
+     if(st===3)return `<button id="bVF" class="${P0.scen==='vf'?'on':''}">Hartstilstand</button><button id="bFaint" class="${P0.scen==='faint'?'on':''}">Flauwvallen</button>`;return '';},
+   bind(){const s=$('#sTrap');if(s)s.addEventListener('input',()=>{P0.trap=+s.value;P0.auto=false;P0.over=0;const b=$('#bAuto');if(b)b.classList.remove('on');});
+     const a=$('#bAuto');if(a)a.addEventListener('click',()=>{P0.auto=!P0.auto;a.classList.toggle('on',P0.auto);if(P0.auto){P0.tt=0;}});
+     const v=$('#bVF'),f=$('#bFaint');if(v)v.addEventListener('click',()=>{P0.scen='vf';K.setState(3);});if(f)f.addEventListener('click',()=>{P0.scen='faint';K.setState(3);});},
+   stepOnce(){if(!S.paused)return;S.paused=false;const T=P0.c.T;for(let i=0;i<Math.ceil(T*60);i++)step0(1/60);S.paused=true;},
+   sound(a){const ev=P0.ev;if(ev.lub)a.thump(52,.15,.3);if(ev.dub)a.thump(70,.1,.2);
+     if(ev.beep)a.tone(1046,.17,.08,'sine');if(ev.trip){[0,.2,.4].forEach(d=>a.tone(1046,.12,.08,'sine',a.now+d));}
+     if(ev.foot)a.noise(.035,'lowpass',420,1,.05,.002);if(ev.comp)a.thump(95,.06,.1);if(ev.ana)a.tone(1320,.07,.05,'sine');
+     if(ev.shock){a.thump(36,.55,.6);a.noise(.25,'bandpass',900,1,.22,.004);}}};
+
+ /* ================= NIVEAU 1 · kamers en kleppen (opengesneden hart) ================= */
+ const capTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#c25a4b';x.fillRect(0,0,w,h);for(let i=0;i<180;i++){const y=R()*h;x.strokeStyle=`rgba(${90+R()*50|0},25,22,${.2+R()*.25})`;x.lineWidth=1+R()*1.5;x.beginPath();x.moveTo(0,y);for(let k=1;k<=8;k++)x.lineTo(k*w/8,y+6*Math.sin(k+i));x.stroke();}
+   for(let i=0;i<900;i++){x.fillStyle=`rgba(255,210,190,${R()*.12})`;x.fillRect(R()*w,R()*h,2,1);}},[3,3]);
+ const wallMat=std(0xffffff,{map:heartTex,roughness:.42,side:THREE.DoubleSide});
+ const cutMat=std(0xffffff,{map:capTex,roughness:.6,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+ function ellProf(R0,H,w,t0,t1,n){const o=[],ii=[];for(let i=0;i<=n;i++){const t=lerp(t0,t1,i/n);o.push([R0*Math.sin(t),-H*Math.cos(t)]);ii.push([(R0-w)*Math.sin(t),-(H-w)*Math.cos(t)]);}return o.concat(ii.reverse());}
+ const CHB={};
+ function chamber(name,prof,pos,rz,zo){const tilt=new THREE.Group();tilt.position.set(pos[0],pos[1],0);tilt.rotation.z=rz;G1.add(tilt);const g=new THREE.Group();g.rotation.y=Math.PI/2;tilt.add(g);
+   const wall=mesh(new THREE.LatheGeometry(prof.map(p=>new THREE.Vector2(Math.max(.0005,p[0]),p[1])),56,0,Math.PI),wallMat,0,0,0,g);wall.castShadow=false;
+   const sg=new THREE.ShapeGeometry(new THREE.Shape(prof.map(p=>new THREE.Vector2(p[0],p[1]))),2);
+   const c1=mesh(sg,cutMat,[-zo,0,0],[0,-Math.PI/2,0],0,g),c2=mesh(sg,cutMat,[-zo,0,0],[0,Math.PI/2,0],0,g);c1.castShadow=c2.castShadow=false;
+   CHB[name]={tilt,g,wall,caps:[c1,c2],pos:V(pos[0],pos[1],0)};return CHB[name];}
+ // de vier holtes: straal, hoogte, wanddikte, profielhoek van t0 tot t1, plaats en kanteling
+ const CHP={LV:{R:1.45,H:2.5,w:.45,t0:0,t1:.6*Math.PI,p:[1.0,-1.0],rz:.35,n:22,zo:.004},RV:{R:1.25,H:2.0,w:.17,t0:0,t1:.62*Math.PI,p:[-1.45,-.7],rz:.15,n:22,zo:.008},
+   LA:{R:.92,H:.92,w:.12,t0:.3*Math.PI,t1:Math.PI,p:[1.25,.82],rz:-.1,n:18,zo:.012},RA:{R:1.05,H:1.05,w:.12,t0:.3*Math.PI,t1:Math.PI,p:[-1.5,.98],rz:.08,n:18,zo:.016}};
+ Object.entries(CHP).forEach(([n,c])=>chamber(n,ellProf(c.R,c.H,c.w,c.t0,c.t1,c.n),c.p,c.rz,c.zo));
+ // punten in het snijvlak (z = 0) van een holte: zijde +1 of −1, buiten- of binnenwand
+ function cutPt(c,r,y){const cs=Math.cos(c.rz),sn=Math.sin(c.rz);return new THREE.Vector2(r*cs-y*sn+c.p[0],r*sn+y*cs+c.p[1]);}
+ function arc(c,inner,side,ta,tb,n){const a=[],Rr=inner?c.R-c.w:c.R,Hh=inner?c.H-c.w:c.H;for(let i=0;i<=n;i++){const t=lerp(ta,tb,i/n);a.push(cutPt(c,side*Rr*Math.sin(t),-Hh*Math.cos(t)));}return a;}
+ // tussenschotten: tussen de kamers (septum interventriculare) en tussen de boezems (septum interatriale)
+ const ivsPts=arc(CHP.RV,true,1,CHP.RV.t1,.2*Math.PI,16).concat(arc(CHP.LV,true,-1,.25*Math.PI,CHP.LV.t1,16));
+ const iasPts=arc(CHP.RA,true,1,.3*Math.PI,.8*Math.PI,12).concat(arc(CHP.LA,true,-1,.8*Math.PI,.3*Math.PI,12));
+ // de buitenkant van het hart: een doorlopende schil (epicard) achter alle vier holtes
+ const C1c=new THREE.Vector2(.05,-.5),NB=120,rB=new Array(NB).fill(0);
+ function addSil(p){const dx=p.x-C1c.x,dy=p.y-C1c.y;const b=((Math.round(Math.atan2(dy,dx)/TAU*NB)%NB)+NB)%NB;rB[b]=Math.max(rB[b],Math.hypot(dx,dy));}
+ Object.values(CHP).forEach(c=>[1,-1].forEach(s=>arc(c,false,s,c.t0,c.t1,80).forEach(addSil)));ivsPts.concat(iasPts).forEach(addSil);
+ for(let pass=0;pass<NB;pass++){let any=false;for(let i=0;i<NB;i++)if(!rB[i]){const a=rB[(i+NB-1)%NB],b=rB[(i+1)%NB];if(a||b){rB[i]=Math.max(a,b);any=true;}}if(!any)break;}
+ let rr=rB.slice();for(let it=0;it<2;it++)rr=rr.map((v,i)=>Math.max(v,rr[(i+1)%NB],rr[(i+NB-1)%NB],rr[(i+2)%NB],rr[(i+NB-2)%NB]));
+ for(let it=0;it<7;it++)rr=rr.map((v,i)=>(rr[(i+NB-1)%NB]+2*v+rr[(i+1)%NB])/4);
+ const RIM=rr.map(v=>v+.1),DZ=1.85,NV=14;
+ const rimAt=a=>{const f=((a/TAU*NB)%NB+NB)%NB,i=Math.floor(f),u=f-i;return lerp(RIM[i],RIM[(i+1)%NB],u);};
+ const SHELL=new THREE.Group();SHELL.position.set(C1c.x,C1c.y,0);G1.add(SHELL);
+ const domeGeo=(function(){const P=[],U=[],I=[];for(let j=0;j<=NV;j++){const v=j/NV*Math.PI/2,k=Math.cos(v);for(let i=0;i<=NB;i++){const a=i/NB*TAU,r=RIM[i%NB];P.push(Math.cos(a)*r*k,Math.sin(a)*r*k,-DZ*Math.sin(v));U.push(i/NB*5,j/NV*2.5);}}
+   for(let j=0;j<NV;j++)for(let i=0;i<NB;i++){const a=j*(NB+1)+i,b=a+1,c=a+NB+1,d=c+1;I.push(a,b,c,b,d,c);}
+   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setIndex(I);g.computeVertexNormals();return g;})();
+ const domeMat=std(0xe8d2cc,{map:heartTex,roughness:.48,side:THREE.DoubleSide});
+ const DOME=mesh(domeGeo,domeMat,0,0,0,SHELL);DOME.castShadow=false;
+ const loc=p=>new THREE.Vector2(p.x-C1c.x,p.y-C1c.y);
+ // de snijrand van de schil
+ const rimShape=new THREE.Shape(RIM.map((r,i)=>{const a=i/NB*TAU;return new THREE.Vector2(Math.cos(a)*r,Math.sin(a)*r);}));
+ rimShape.holes.push(new THREE.Path(RIM.map((r,i)=>{const a=i/NB*TAU;return new THREE.Vector2(Math.cos(a)*(r-.22),Math.sin(a)*(r-.22));}).reverse()));
+ const RIMM=mesh(new THREE.ShapeGeometry(rimShape),cutMat,[0,0,.026],0,0,SHELL);RIMM.castShadow=false;
+ const IVS=mesh(new THREE.ShapeGeometry(new THREE.Shape(ivsPts.map(loc))),cutMat,[0,0,.022],0,0,SHELL),IAS=mesh(new THREE.ShapeGeometry(new THREE.Shape(iasPts.map(loc))),cutMat,[0,0,.02],0,0,SHELL);IVS.castShadow=IAS.castShadow=false;
+ // de AV-groef: een vetring met kransvaten om de achterkant, met doorsneden op het snijvlak
+ const fatM1=std(0xe0ae4a,{roughness:.55}),corA1=std(0xd23a2c,{roughness:.3}),corV1=std(0x40589e,{roughness:.35});
+ const mid=(a,b)=>new THREE.Vector2((a.x+b.x)/2,(a.y+b.y)/2);
+ const grvL=mid(arc(CHP.RA,false,-1,CHP.RA.t0,CHP.RA.t0,1)[0],arc(CHP.RV,false,-1,CHP.RV.t1,CHP.RV.t1,1)[0]),grvR=mid(arc(CHP.LA,false,1,CHP.LA.t0,CHP.LA.t0,1)[0],arc(CHP.LV,false,1,CHP.LV.t1,CHP.LV.t1,1)[0]);
+ function domePt(x,y,off){const dx=x-C1c.x,dy=y-C1c.y,a=Math.atan2(dy,dx),r=rimAt(a),d=Math.hypot(dx,dy),k=Math.min(.999,d/r),s=Math.sqrt(1-k*k);
+   const n=V(Math.cos(a)*k/r,Math.sin(a)*k/r,-s/DZ).normalize();return V(dx,dy,-DZ*s).addScaledVector(n,off);}
+ const aL=Math.atan2(grvL.y-C1c.y,grvL.x-C1c.x),aR=Math.atan2(grvR.y-C1c.y,grvR.x-C1c.x);
+ const eL=new THREE.Vector2(C1c.x+Math.cos(aL)*rimAt(aL)*.985,C1c.y+Math.sin(aL)*rimAt(aL)*.985),eR=new THREE.Vector2(C1c.x+Math.cos(aR)*rimAt(aR)*.985,C1c.y+Math.sin(aR)*rimAt(aR)*.985);
+ const belt=(off,dy)=>{const a=[];for(let i=0;i<=24;i++){const u=i/24;a.push(domePt(lerp(eL.x,eR.x,u),lerp(eL.y,eR.y,u)+dy*Math.sin(Math.PI*u),off));}return a;};
+ [[belt(.17,0),.14,fatM1],[belt(.27,.07),.045,corA1],[belt(.26,-.08),.05,corV1]].forEach(([pts,r,m])=>{const t=tube(pts,r,m,SHELL,48,10);t.castShadow=false;});
+ [[aL,1],[aR,-1]].forEach(([a,s])=>{const r=rimAt(a)+.02,cx=Math.cos(a)*r,cy=Math.sin(a)*r;
+   mesh(new THREE.CircleGeometry(.22,24),fatM1,[cx,cy,.03],0,[1,.85,1],SHELL).castShadow=false;
+   mesh(new THREE.CircleGeometry(.065,16),corA1,[cx+.05*s,cy+.08,.034],0,0,SHELL).castShadow=false;mesh(new THREE.CircleGeometry(.07,16),corV1,[cx-.06*s,cy-.07,.034],0,0,SHELL).castShadow=false;});
+ // trabekels en papillairspieren in de kamers
+ const trabD=[];[['LV',1.0,-1.0,.35,1.0,2.05],['RV',-1.45,-.7,.15,1.08,1.83]].forEach(([n,cx,cy,rz,Rr,Hh])=>{for(let i=0;i<34;i++){const t=.12+R()*.95,ph=Math.PI*(.12+R()*.76);
+   const lx=Rr*.97*Math.sin(t)*Math.cos(ph),ly=-Hh*.97*Math.cos(t),lz=-Rr*.97*Math.sin(t)*Math.sin(ph);const x=lx*Math.cos(rz)-ly*Math.sin(rz),y=lx*Math.sin(rz)+ly*Math.cos(rz);trabD.push([V(cx+x,cy+y,lz),rz+(R()-.5)*.6,n]);}});
+ const TRAB=inst(new THREE.CapsuleGeometry(.035,.5,3,8),std(0xffffff,{map:heartTex,roughness:.45}),trabD.length);trabD.forEach((d,i)=>TRAB.setMatrixAt(i,placeMatrix(d[0],[(R()-.5)*.5,0,d[1]],1)));G1.add(TRAB);TRAB.castShadow=false;
+ const papM=std(0xffffff,{map:heartTex,roughness:.45});
+ const PAP={RV:[V(-1.75,-1.45,-.55),V(-1.05,-1.35,-.45)],LV:[V(.75,-1.55,-.5),V(1.6,-1.3,-.6)]};
+ Object.values(PAP).flat().forEach(p=>lathe([[.16,-.25],[.14,0],[.08,.25],[.03,.33]],papM,G1,16,[p.x,p.y-.3,p.z]));
+ W.sept=V(-.15,-1.1,0);
+ // grote vaten van glas, zodat je de stroom ziet
+ const aoG=glass(0xe0503f,.26),vG=glass(0x5070d0,.26);
+ const gT=(pts,r,m)=>{const t=tube(pts.map(p=>V(...p)),r,m,G1,64,18);t.castShadow=false;return t;};
+ const AO1=gT([[.15,-.05,.35],[.15,1.2,.42],[.25,2.6,.3],[.9,3.45,-.3],[1.8,3.15,-1.0],[2.3,1.5,-1.3],[2.4,-.5,-1.4]],.34,aoG);
+ const PT1=[gT([[-.6,.15,.55],[-.6,1.4,.7],[-.45,2.35,.55],[-1.6,2.75,.05],[-2.9,2.6,-.4]],.31,vG),gT([[-.45,2.35,.55],[.5,2.55,.25],[1.9,2.3,-.15],[3.0,2.15,-.5]],.22,vG)];
+ const SVC1=gT([[-1.75,3.9,-.3],[-1.7,2.7,-.25],[-1.6,1.85,-.25]],.3,vG),IVC1=gT([[-1.95,-2.6,-.55],[-1.9,-.6,-.5],[-1.75,.2,-.4]],.32,vG);
+ const PV1=[gT([[3.3,1.45,-.8],[2.4,1.05,-.55],[1.95,.95,-.35]],.19,aoG),gT([[3.2,.35,-.9],[2.4,.55,-.55],[1.95,.62,-.35]],.19,aoG)];
+ // de vier kleppen: crèmekleurige bladen met dikte (twee lagen)
+ const leafM=std(0xf0dcc8,{roughness:.42,side:THREE.DoubleSide,emissive:0xf0dcc8,emissiveIntensity:.06}),leafB=std(0xd8bea6,{roughness:.5,side:THREE.DoubleSide}),annM=std(0xd9b896,{roughness:.55});
+ const VL={tri:valve({parent:G1,pos:V(-1.45,.14,-.18),dir:V(.05,-1,0),r:.62,n:3,w:1.3,len:.68,mat:leafM,mat2:leafB,ringMat:annM,ring:.036,tilt:.28,cup:.45,flare:-.3}),
+  mit:valve({parent:G1,pos:V(1.08,-.06,-.18),dir:V(-.18,-1,0),r:.56,n:2,w:1.7,len:.62,mat:leafM,mat2:leafB,ringMat:annM,ring:.036,tilt:.28,cup:.45,flare:-.3,a0:.3}),
+  aov:valve({parent:G1,pos:V(.15,.12,.37),dir:V(0,1,.06),r:.31,n:3,w:.68,len:.34,mat:leafM,mat2:leafB,thick:-.016,ringMat:annM,ring:.035,tilt:.5,cup:.26,flare:-.05,a0:.5,taper:.15}),
+  pul:valve({parent:G1,pos:V(-.6,.3,.56),dir:V(0,1,.12),r:.29,n:3,w:.64,len:.32,mat:leafM,mat2:leafB,thick:-.016,ringMat:annM,ring:.035,tilt:.5,cup:.26,flare:-.05,taper:.15})};
+ // peesdraden: van de klepranden naar de papillairspieren
+ const chD=[];VL.tri.flaps.forEach((F,i)=>{for(let k=-1;k<=1;k++)chD.push([F,k,PAP.RV[i%2]]);});VL.mit.flaps.forEach((F,i)=>{for(let k=-1;k<=1;k++)chD.push([F,k,PAP.LV[i%2]]);});
+ const chPos=new Float32Array(chD.length*6),chGeo=new THREE.BufferGeometry();chGeo.setAttribute('position',new THREE.BufferAttribute(chPos,3));
+ const CHORD=new THREE.LineSegments(chGeo,new THREE.LineBasicMaterial({color:0xf6eee0,transparent:true,opacity:.85}));CHORD.frustumCulled=false;G1.add(CHORD);
+ function updChord(){const tv=V(0,0,0);chD.forEach((c,i)=>{const F=c[0];tv.set(c[1]*.28*(F.m.geometry.parameters.width/1.36),F.m.geometry.parameters.height*.95,0);F.m.localToWorld(tv);chPos.set([tv.x,tv.y,tv.z,c[2].x,c[2].y+.05,c[2].z],i*6);});chGeo.attributes.position.needsUpdate=true;}
+ // fibrilleren: oranje vlekken die over de wand flikkeren (eigen textuur, zodat hij los kan verschuiven)
+ const vfTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#000';x.fillRect(0,0,w,h);for(let i=0;i<80;i++){const cx=R()*w,cy=R()*h,r=6+R()*24;const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,'rgba(255,236,170,1)');g.addColorStop(.45,'rgba(255,150,50,.6)');g.addColorStop(1,'rgba(255,90,30,0)');x.fillStyle=g;x.fillRect(cx-r,cy-r,2*r,2*r);}},[2,2]);
+ const vfM=add(0xffffff,0);vfM.map=vfTex;vfM.side=THREE.DoubleSide;vfM.visible=false;
+ ['LV','RV'].forEach(n=>{const c=CHB[n];const m=new THREE.Mesh(c.wall.geometry,vfM);m.scale.setScalar(.992);m.renderOrder=2;c.g.add(m);
+   c.caps.forEach(cp=>{const o=new THREE.Mesh(cp.geometry,vfM);o.position.copy(cp.position);o.rotation.copy(cp.rotation);o.position.x-=.004;o.renderOrder=2;c.g.add(o);});});
+ [IVS].forEach(cp=>{const o=new THREE.Mesh(cp.geometry,vfM);o.position.copy(cp.position);o.position.z+=.004;o.renderOrder=2;SHELL.add(o);});
+ // bloedstroom: deeltjes per baan, met poorten bij de kleppen
+ const BP=(a)=>a.map(p=>V(...p));
+ const ROUTES=[
+  {col:BLUE,av:'tri',sl:'pul',n:70,pcs:[{k:'in',w:.25,p:BP([[-1.72,3.6,-.28],[-1.68,2.4,-.25],[-1.55,1.4,-.4],[-1.45,.6,-.35]])},{k:'av',w:.38,p:BP([[-1.45,.6,-.35],[-1.45,-.15,-.35],[-1.55,-1.0,-.5],[-1.35,-1.75,-.4]])},{k:'ej',w:.35,p:BP([[-1.35,-1.75,-.4],[-.95,-1.0,-.35],[-.7,-.35,-.1],[-.62,.1,.45],[-.6,.75,.62]])},{k:'out',w:.15,p:BP([[-.6,.75,.62],[-.6,1.4,.7],[-.45,2.35,.55],[-1.6,2.75,.05],[-2.9,2.6,-.4]])}]},
+  {col:BLUE,av:'tri',sl:'pul',n:60,pcs:[{k:'in',w:.25,p:BP([[-1.95,-2.6,-.55],[-1.9,-1.0,-.5],[-1.75,.0,-.42],[-1.55,.75,-.4],[-1.45,.6,-.35]])},null,null,null]},
+  {col:RED,av:'mit',sl:'aov',n:70,pcs:[{k:'in',w:.25,p:BP([[3.3,1.45,-.8],[2.4,1.05,-.55],[1.8,.95,-.4],[1.25,.75,-.4],[1.1,.4,-.35]])},{k:'av',w:.4,p:BP([[1.1,.4,-.35],[1.05,-.3,-.4],[1.1,-1.2,-.5],[1.35,-2.1,-.45]])},{k:'ej',w:.35,p:BP([[1.35,-2.1,-.45],[.95,-1.4,-.4],[.45,-.6,-.2],[.17,.0,.3],[.15,.6,.42]])},{k:'out',w:.17,p:BP([[.15,.6,.42],[.15,1.2,.42],[.25,2.6,.3],[.9,3.45,-.3],[1.8,3.15,-1.0],[2.3,1.5,-1.3],[2.4,-.5,-1.4]])}]},
+  {col:RED,av:'mit',sl:'aov',n:55,pcs:[{k:'in',w:.25,p:BP([[3.2,.35,-.9],[2.4,.55,-.55],[1.8,.62,-.4],[1.25,.55,-.4],[1.1,.4,-.35]])},null,null,null]}];
+ ROUTES[1].pcs=[ROUTES[1].pcs[0]].concat(ROUTES[0].pcs.slice(1));ROUTES[3].pcs=[ROUTES[3].pcs[0]].concat(ROUTES[2].pcs.slice(1));
+ ROUTES.forEach(r=>r.pcs.forEach(p=>{if(!p.cv){p.cv=new THREE.CatmullRomCurve3(p.p);p.len=p.cv.getLength();}}));
+ const PART=[];ROUTES.forEach((r,ri)=>{for(let i=0;i<r.n;i++){const pi=i%4;PART.push({r:ri,pi,u:R(),q:R(),off:V(R()-.5,R()-.5,R()-.5).multiplyScalar(2),ax:V(R()-.5,R()-.5,R()-.5).normalize(),ph:R()*TAU});}});
+ const RBC1=inst(rbcGeo,rbcMat(),PART.length);RBC1.castShadow=false;G1.add(RBC1);PART.forEach((p,i)=>RBC1.setColorAt(i,ROUTES[p.r].col));
+ const P1={hr:62,setHR:170,ts:1,tau:0,c:cyc(62),av:1,sl:0,vc:0,ac:0,vol:120,pr:6,stage:0,mode:'sinus',vfT:0,comp:0,ev:{},stepI:-1,fl:-1};
+ const ECG1=new Strip(200,-.45,1.15);
+ function step1(dt){filmHold(1);const st=S.state,t=S.stT,ev=P1.ev;ev.lub=ev.dub=ev.shock=0;P1.mode='sinus';let comp=0;
+   const sdt=st===3?dt:dt/P1.ts;// tempo: alleen in stand 1 en 2
+   let hrT=st===1?62:st===2?P1.setHR:170;
+   if(st===3){if(t>2.5&&t<12.5){P1.mode='vf';if(P1.vfT===0){P1.vfT=1;K.flash({a:.45,shake:.25,sound:false});}}if(t>=6.5&&t<12.2)comp=1;
+     if(t>=12.5&&P1.stepI<3){P1.stepI=3;ev.shock=1;shockFlash();}if(t>=12.5){P1.mode=t<13.3?'stil':'sinus';hrT=lerp(80,100,smooth((t-13.3)/4));}}
+   P1.hr=st===3&&t>=12.5?hrT:lerp(P1.hr,hrT,1-Math.exp(-dt*3));
+   let vc=0,ac=0,av=1,sl=0,stage=0;const c=P1.c;const EDV=lerp(120,150,c.x),ESV=lerp(50,30,c.x),SV=EDV-ESV;
+   if(P1.mode==='sinus'){const tp=P1.tau;P1.tau+=sdt;if(P1.tau>=c.T){P1.tau-=c.T;P1.c=cyc(clamp(P1.hr,40,200));}const ph=phase(P1.tau,P1.c);vc=ph.vc;ac=ph.ac;av=ph.av?1:0;sl=ph.sl?1:0;stage=ph.stage;
+     if(tp<ph.s0&&P1.tau>=ph.s0)ev.lub=1;if(tp<ph.s1&&P1.tau>=ph.s1)ev.dub=1;
+     const ta=P1.tau,fs=ph.s1+P1.c.ivr;let V_;if(ta<ph.s0+.045)V_=EDV;else if(ta<ph.s1)V_=EDV-SV*smooth((ta-ph.s0-.045)/(ph.s1-ph.s0-.045));else if(ta<fs)V_=ESV;else{const f=1-Math.exp(-(ta-fs)/.07);V_=ESV+.75*SV*f+.25*SV*smooth((ta-ph.pOn)/(P1.c.T-ph.pOn));}
+     P1.vol=lerp(P1.vol,V_,clamp(sdt*30,0,1));const pk=lerp(120,175,P1.c.x),pd=lerp(80,85,P1.c.x);let p;if(ta<ph.s0)p=6+4*ac;else if(ta<ph.s0+.045)p=lerp(8,pd,(ta-ph.s0)/.045);else if(ta<ph.s1){const u=(ta-ph.s0-.045)/(ph.s1-ph.s0-.045);p=pd+(pk-pd)*Math.sin(Math.PI*Math.min(1,u*1.1))+(u>.9?-(u-.9)*200:0);}else if(ta<fs)p=lerp(95,6,(ta-ph.s1)/P1.c.ivr);else p=6+4*ac;P1.pr=p;}
+   else if(P1.mode==='vf'){av=.35;sl=.3;P1.pr=lerp(P1.pr,comp?6+50*Math.pow(Math.max(0,Math.sin(P1.comp*TAU)),2):6,clamp(dt*12,0,1));}
+   else{P1.pr=lerp(P1.pr,6,clamp(dt*5,0,1));}
+   if(comp){P1.comp=(P1.comp+dt*110/60)%1;}const cmp=comp?Math.pow(Math.max(0,Math.sin(P1.comp*TAU)),2):0;
+   if(comp){av=cmp>.25?0:1;sl=cmp>.35?.55:0;}
+   P1.vc=vc;P1.ac=ac;P1.av=av;P1.sl=sl;P1.stage=stage;
+   const vf=P1.mode==='vf',quiv=vf?1:0;
+   [['LV',vc,1.3],['RV',vc,2.1]].forEach(([n,v,o])=>{const s=CHB[n].tilt;const q=quiv*(.03*Math.sin(S.clock*43+o)+.017*Math.sin(S.clock*61+2*o)+.012*Math.sin(S.clock*27+o));const q2=quiv*(.025*Math.sin(S.clock*37+3*o)+.015*Math.sin(S.clock*53));s.scale.set(1-.1*v-.1*cmp+q,1-.05*v-.05*cmp-q2,1-.1*v-.1*cmp+q2);});
+   ['LA','RA'].forEach(n=>{CHB[n].tilt.scale.setScalar(1-.08*ac+quiv*.012*Math.sin(S.clock*37));});
+   SHELL.scale.set(1-.045*vc-.05*cmp+quiv*.012*Math.sin(S.clock*47),1-.025*vc-.03*cmp+quiv*.01*Math.sin(S.clock*39),1-.04*vc);
+   // fibrilleren: flikkerende vlekken op de kamerwand
+   vfM.visible=vf;if(vf){vfM.opacity=.8+.12*Math.sin(S.clock*13)+.08*Math.sin(S.clock*29);const f=Math.floor(S.clock*15);if(f!==P1.fl){P1.fl=f;vfTex.offset.set(R(),R());}}
+   const jit=vf?.35:0;['tri','mit'].forEach(k=>{const v=VL[k];v.f=lerp(v.f,av,clamp(sdt*(av?16:30),0,1));v.set(v.f,jit);});['aov','pul'].forEach(k=>{const v=VL[k];v.f=lerp(v.f,sl,clamp(sdt*(sl?22:30),0,1));v.set(v.f,jit);});
+   updChord();
+   ECG1.feed(sdt,80,o=>vf?vfV(S.clock+o)*.9+(comp?.5*cmp:0):P1.mode==='stil'?(t<12.6?1.1:0):ecgV(P1.tau,P1.c));
+   // deeltjes
+   for(let i=0;i<PART.length;i++){const p=PART[i],r=ROUTES[p.r],pc=r.pcs[p.pi];let v=0,gate=1;
+     if(pc.k==='in'){v=.9;gate=VL[r.av].f>.5?1:0;}else if(pc.k==='av'){const aO=VL[r.av].f>.4,sO=VL[r.sl].f>.4;v=aO||(sO&&p.u>.5)?3.2:0;gate=sO?1:0;}else if(pc.k==='ej'){v=VL[r.sl].f>.4?(comp?2:4.2):0;}else{v=.9+(VL[r.sl].f>.4?2.8:0);}
+     if(vf&&!comp)v*=.05;
+     let du=v*sdt/pc.len;if(pc.k==='in'||pc.k==='av'){const stop=1-p.q*(pc.k==='in'?.3:.45);if(!gate&&p.u<stop)p.u=Math.min(stop,p.u+du);else if(!gate){}else p.u+=du;}else p.u+=du;
+     if(p.u>=1){p.u-=1;p.pi++;if(p.pi>3){p.pi=0;p.u=0;}}
+     const pp=r.pcs[p.pi];pp.cv.getPointAt(clamp(p.u,0,1),_v);_v.addScaledVector(p.off,pp.w*(pp.k==='out'||pp.k==='in'?.5:.6));
+     if(vf)_v.x+=.03*Math.sin(S.clock*29+i);
+     _q.setFromAxisAngle(p.ax,S.clock*1.5+p.ph);RBC1.setMatrixAt(i,placeMatrix(_v,_q,.085));}
+   RBC1.instanceMatrix.needsUpdate=true;
+   if(st===3){K.stepOn(t<2.5?0:t<6.5?1:t<12.5?2:t<13.5?3:4);}else K.stepOn(stage);
+   hud1();}
+ const PH1=['<b>Vullen</b>: de zeilkleppen staan open en bloed stroomt uit de boezems de kamers in.','<b>Boezems knijpen</b>: de laatste scheut bloed gaat de kamers in.','<b>Lub</b>: de kamers spannen aan, de zeilkleppen slaan dicht. De peesdraden voorkomen dat ze doorslaan.','<b>Uitdrijven</b>: de halvemaanvormige kleppen gaan open. Rechts naar de longen, links naar het lichaam.','<b>Dub</b>: de halvemaanvormige kleppen slaan dicht. De kamers ontspannen.'];
+ const PN1=['Vullen','Boezems','Lub','Uitdrijven','Dub'];
+ const cycLine=(names,i)=>'<span class="cyc">'+names.map((n,j)=>j===i?'<b>'+n+'</b>':n).join(' → ')+'</span>';
+ function hud1(){if(!$('#b1'))return;const st=S.state,vf=P1.mode==='vf';
+   K.bar(1,vf?0:P1.hr/200,vf?'— fibrilleren':P1.mode==='stil'?'0 /min':Math.round(P1.hr)+' /min',vf?'bad':'');
+   K.bar(2,P1.pr/190,Math.round(P1.pr)+' mmHg',P1.mode==='sinus'&&P1.sl>.5?'con':'');
+   K.bar(3,P1.vol/160,P1.mode==='sinus'?Math.round(P1.vol)+' ml':'onregelmatig',P1.mode==='sinus'?'':'bad');
+   const ch=$('#vch');if(ch){const s=[VL.tri.f>.5,VL.pul.f>.5,VL.mit.f>.5,VL.aov.f>.5];[...ch.children].forEach((e,i)=>e.classList.toggle('open',s[i]));}
+   const col=vf?'#ff8a6a':'#7dffa8';drawStrip('ecg1',ECG1,col,'ECG'+(st<3&&P1.ts>1?' · '+P1.ts+'× trager':''));
+   filmEcg(ECG1,col,vf?'♥ fibrilleren':P1.mode==='stil'?'♥ 0 /min':'♥ '+Math.round(P1.hr)+' /min',vf);
+   const t=S.stT;let cap;
+   if(st===3)cap=t<2.5?'Het hart werkt hard, zoals aan het eind van de bleeptest.':t<6.5?'<b>Fibrilleren</b>: elke vezel trekt op een eigen moment. De kamerwand flikkert en trilt, de kleppen fladderen en er gaat geen bloed meer naar buiten.':t<12.5?'<b>Borstcompressies</b> knijpen het hart van buitenaf samen. De kleppen sturen het bloed de goede kant op: zo houd je een beetje stroom op gang.':t<13.5?'<b>AED-schok</b>: alle cellen tegelijk geprikkeld, dan even stilte.':'De sinusknoop neemt het ritme weer over en de kamers pompen weer. Als hulpverlener zie je dat niet: je gaat na de schok gewoon door met reanimeren.';
+   else if(P1.ts*(S.slow?4:1)>=8)cap=cycLine(PN1,P1.stage)+PH1[P1.stage];
+   else if(st===1)cap='<b>Eén hartslag</b> in vijf stappen: <b>vullen</b>, de <b>boezems</b> knijpen na, <b>lub</b> (de zeilkleppen slaan dicht), <b>uitdrijven</b> en <b>dub</b> (de halvemaanvormige kleppen slaan dicht). Kies <b>8× trager</b> om elke stap te volgen.';
+   else{const h=Math.round(P1.hr/5)*5;cap='Bij <b>'+h+' slagen per minuut</b> duurt één slag maar '+(60/h).toFixed(2).replace('.',',')+' s. Vooral het <b>vullen</b> wordt korter; het uitpompen maar een beetje. Kies <b>8× trager</b> om elke stap te volgen.';}
+   K.capSet(K.stateText(),cap);}
+ const L1H={step:step1,reset(n){P1.mode='sinus';P1.vfT=0;P1.stepI=-1;P1.comp=0;if(n===1)P1.hr=62;},onShow(){fogSet(FOGN,FOGF);},
+   hud(){return `<div class="hh${S.state===3?' s3':''}"><div class="hcol">${K.stepsHTML(S.state===3?['Normaal','Fibrilleren','Reanimeren','Schok','Herstel']:PN1)}${K.bars(['Hartslag','Druk linkerkamer','Volume linkerkamer'])}<div class="vchips" id="vch"><span>Tricuspidalis</span><span>Pulmonalis</span><span>Mitralis</span><span>Aortaklep</span></div></div><canvas class="ecg" id="ecg1" width="420" height="112" aria-label="ECG"></canvas></div>`;},
+   ctl(){if(S.state===3)return '';const tb=`<label>Tempo</label>${[[1,'Echt'],[4,'4× trager'],[8,'8× trager']].map(o=>`<button data-ts1="${o[0]}" class="${P1.ts===o[0]?'on':''}">${o[1]}</button>`).join('')}`;
+     return (S.state===2?`<label>Hartslag</label><input type="range" id="sHR1" min="60" max="200" step="5" value="${P1.setHR}" aria-label="Hartslag"><span id="vHR1" style="font:12px 'JetBrains Mono',monospace">${P1.setHR}</span>`:'')+tb;},
+   bind(){const s=$('#sHR1');if(s)s.addEventListener('input',()=>{P1.setHR=+s.value;$('#vHR1').textContent=s.value;});
+     K.$$('#ctl [data-ts1]').forEach(b=>b.addEventListener('click',()=>{P1.ts=+b.dataset.ts1;K.$$('#ctl [data-ts1]').forEach(x=>x.classList.toggle('on',x===b));}));},
+   stepOnce(){if(!S.paused)return;S.paused=false;for(let i=0;i<Math.ceil(P1.c.T*60*(S.state===3?1:P1.ts));i++)step1(1/60);S.paused=true;},
+   sound(a){const ev=P1.ev;if(ev.lub){a.thump(50,.16,.36);a.noise(.04,'bandpass',300,2,.08,.002);}if(ev.dub){a.thump(72,.1,.26);a.noise(.03,'bandpass',600,2,.07,.002);}if(ev.shock){a.thump(36,.55,.6);a.noise(.25,'bandpass',900,1,.22,.004);}}};
+ W.RA=V(-1.75,1.25,0);W.RV=V(-1.5,-1.0,0);W.LA=V(1.45,.95,0);W.LV=V(1.2,-1.3,0);W.LVw=V(2.28,-1.25,0);W.RVw=V(-2.62,-.85,0);W.tri=V(-1.45,.15,.2);W.mit=V(1.08,-.06,.2);W.aov=V(.15,.35,.7);W.pul=V(-.6,.5,.9);
+
+ /* ================= NIVEAU 2 · de prikkelgeleiding in een glazen hart ================= */
+ const HS2=3.2,H2c=V(0,-.2,0);const L2=(x,y,z)=>V(x,y,z).multiplyScalar(HS2).add(H2c);
+ const glassH=std(0xc8584e,{transparent:true,opacity:.13,roughness:.25,depthWrite:false,side:THREE.DoubleSide});
+ const HM2=heartModel(G2,{pos:H2c,scale:HS2,mat:glassH,art:glass(0xd04a3c,.18),ven:glass(0x4a62c0,.18)});
+ HM2.ves.lpa.visible=true;const glV=glassH.clone(),glA=glassH.clone();HM2.P.LV.material=HM2.P.RV.material=glV;HM2.P.LA.material=HM2.P.RA.material=glA;HM2.P.aur.forEach(m=>m.material=glA);
+ [].concat(Object.values(HM2.P)).flat().forEach(m=>{m.castShadow=false;});
+ // geleidingssysteem (lokale hartmaten)
+ const LOC={SA:V(-.55,.83,.2),AV:V(-.18,.12,.02),HisE:V(0,-.12,.06),apexL:V(.6,-1.0,-.08),apexR:V(.04,-.92,.22)};
+ const condM=std(0xe8a22a,{emissive:0xffa010,emissiveIntensity:.35,roughness:.35}),nodeM=std(0xffe08a,{emissive:0xffc040,emissiveIntensity:.4,roughness:.3});
+ const SAm=mesh(new THREE.SphereGeometry(1,20,14),nodeM,[LOC.SA.x,LOC.SA.y,LOC.SA.z],[0,0,-.6],[.09,.045,.06],HM2.g),AVm=mesh(new THREE.SphereGeometry(1,20,14),nodeM.clone(),[LOC.AV.x,LOC.AV.y,LOC.AV.z],[0,0,.4],[.075,.04,.05],HM2.g);
+ const CT=[];function cTube(pts,r,kind){const vs=pts.map(p=>p.isVector3?p:V(...p));const m=tube(vs,r,condM,HM2.g,40,8);m.castShadow=false;const o={m,cv:m.userData.curve,kind,len:m.userData.curve.getLength()};CT.push(o);return o;}
+ const tracts=[cTube([LOC.SA,[-.3,.55,.3],LOC.AV],.006,'at'),cTube([LOC.SA,[-.44,.45,.12],LOC.AV],.006,'at'),cTube([LOC.SA,[-.62,.38,-.12],[-.35,.2,-.06],LOC.AV],.006,'at'),cTube([[-.45,.8,.18],[-.05,.86,0],[.38,.74,-.16]],.007,'bach')];
+ const his=cTube([LOC.AV,[-.08,-.01,.05],LOC.HisE],.015,'his');
+ const lbb=cTube([LOC.HisE,[.12,-.38,-.04],[.32,-.72,-.08],LOC.apexL],.011,'lbb'),rbb=cTube([LOC.HisE,[.04,-.4,.17],[.08,-.72,.24],LOC.apexR],.01,'rbb');
+ // Purkinjevezels: vertakte paden langs de binnenkant van de kamers
+ const chE=n=>CH.find(c=>c.n===n);
+ function toEll(p,c,k){const cz=Math.cos(-c.rz),sz=Math.sin(-c.rz);let x=p.x-c.c[0],y=p.y-c.c[1],z=p.z-c.c[2];const rx=x*cz-y*sz,ry=x*sz+y*cz;let q=V(rx/c.s[0],ry/c.s[1],z/c.s[2]).normalize();q.set(q.x*c.s[0]*k,q.y*c.s[1]*k,q.z*c.s[2]*k);
+   const c2=Math.cos(c.rz),s2=Math.sin(c.rz);return V(q.x*c2-q.y*s2+c.c[0],q.x*s2+q.y*c2+c.c[1],q.z+c.c[2]);}
+ function inEll(p,c,k){const cz=Math.cos(-c.rz),sz=Math.sin(-c.rz);const x=p.x-c.c[0],y=p.y-c.c[1],z=p.z-c.c[2];const rx=x*cz-y*sz,ry=x*sz+y*cz;return (rx*rx/(c.s[0]*c.s[0])+ry*ry/(c.s[1]*c.s[1])+z*z/(c.s[2]*c.s[2]))<k*k;}
+ const VP=1/40,VM=1/6;// s per lokale eenheid in Purkinje en spier
+ const pkV=[],pkS=[];// vertices {p,t(rel. His)} en segmenten [i,j]
+ function pkWalk(br,ell,n){for(let w=0;w<n;w++){const u=.35+R()*.65;const st=br.cv.getPointAt(u);let p=toEll(st,ell,.88);let t=u*br.len*VP+st.distanceTo(p)*VP;pkV.push({p,t});let last=pkV.length-1;
+   let dir=V(R()-.5,.6+R()*.6,R()-.5).normalize();for(let s=0;s<7;s++){dir.add(V((R()-.5)*.9,(R()-.3)*.5,(R()-.5)*.9)).normalize();const q=toEll(p.clone().addScaledVector(dir,.17),ell,.88);t+=q.distanceTo(p)*VP;const qi=pkV.length;pkV.push({p:q,t});pkS.push([last,qi]);
+     if(R()<.35){const d2=dir.clone().applyAxisAngle(AY,(R()-.5)*2.4);const q2=toEll(q.clone().addScaledVector(d2,.15),ell,.88);pkV.push({p:q2,t:t+.15*VP});pkS.push([qi,pkV.length-1]);}
+     last=qi;p=q;}}}
+ pkWalk(lbb,chE('LV'),18);pkWalk(rbb,chE('RV'),12);
+ // als dunne gloeiende buisjes (lijnen zijn altijd 1 px breed)
+ const PKL=inst(UCYL,add(0xfff0b0,.95),pkS.length);PKL.castShadow=PKL.receiveShadow=false;pkS.forEach((s,i)=>{PKL.setMatrixAt(i,segMatrix(pkV[s[0]].p,pkV[s[1]].p,.009));PKL.setColorAt(i,_c.setRGB(.1,.09,.04));});HM2.g.add(PKL);
+ // het hartspierweefsel als een wolk van punten met elk een eigen activatietijd
+ const dotTex=canvasTex(64,64,(x,w,h)=>{const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(.35,'rgba(255,255,255,.55)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,w,h);});
+ dotTex.wrapS=dotTex.wrapT=THREE.ClampToEdgeWrapping;
+ const MY=[];const ellAll=CH.concat(AUR.map((a,i)=>({n:i?'LAa':'RAa',c:a.c,s:a.s,rz:a.rz})));
+ // gelijkmatig verdeeld (Fibonacci-bol per ellipsoïde), zodat golven en spiralen als vorm leesbaar zijn
+ ellAll.forEach(c=>{const isV=c.n[1]==='V';const nn=isV?(c.n==='LV'?1500:1100):c.n.length>2?80:560;const cz=Math.cos(c.rz),sz=Math.sin(c.rz);
+   for(let i=0;i<nn;i++){const y=1-2*(i+.5)/nn,r=Math.sqrt(1-y*y),ph=i*2.39996;const ux=r*Math.cos(ph)*c.s[0]*.99,uy=y*c.s[1]*.99,uz=r*Math.sin(ph)*c.s[2]*.99;
+     const p=V(ux*cz-uy*sz+c.c[0],ux*sz+uy*cz+c.c[1],uz+c.c[2]);if(ellAll.some(o=>o!==c&&inEll(p,o,.97)))continue;MY.push({p,v:isV,ch:c.n});}});
+ const SAl=LOC.SA,VA_=1/14;
+ MY.forEach(m=>{if(!m.v){m.t=m.p.distanceTo(SAl)*VA_;}else{let best=9;for(let i=0;i<pkV.length;i+=1){const d=pkV[i].t+pkV[i].p.distanceTo(m.p)*VM;if(d<best)best=d;}m.t=best;}});
+ const myPos=new Float32Array(MY.length*3),myCol=new Float32Array(MY.length*3);MY.forEach((m,i)=>myPos.set([m.p.x,m.p.y,m.p.z],i*3));
+ const myGeo=new THREE.BufferGeometry();myGeo.setAttribute('position',new THREE.BufferAttribute(myPos,3));myGeo.setAttribute('color',new THREE.BufferAttribute(myCol,3));
+ const MYP=new THREE.Points(myGeo,new THREE.PointsMaterial({size:.32,map:dotTex,vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));MYP.frustumCulled=false;HM2.g.add(MYP);
+ // rotoren voor ventrikelfibrilleren: spiraalgolven rond een paar middelpunten
+ const ROT=[V(.55,-.55,.45),V(-.25,-.5,.6),V(.55,-.2,-.65),V(.2,-.9,-.3)].map(p=>{const c=chE(p.z>0&&p.x<.1?'RV':'LV');const q=toEll(p,c,.99);const n=q.clone().sub(V(...c.c)).normalize();const t1=V(0,1,0).sub(n.clone().multiplyScalar(n.y)).normalize();const t2=n.clone().cross(t1);return {q,t1,t2,w:(R()<.5?1:-1)};});
+ MY.forEach(m=>{if(!m.v)return;let bj=0,bd=9;ROT.forEach((r,j)=>{const d=m.p.distanceTo(r.q);if(d<bd){bd=d;bj=j;}});const r=ROT[bj];_v.copy(m.p).sub(r.q);m.ra=Math.atan2(_v.dot(r.t2),_v.dot(r.t1))*r.w;m.rd=bd;m.rj=bj;});
+ const tMaxV=MY.reduce((a,m)=>m.v?Math.max(a,m.t):a,0);
+ // impulsen die over de geleidingsbanen lopen
+ const IMP=inst(new THREE.SphereGeometry(.035,10,8),add(0xfff4b0,.95),CT.length);HM2.g.add(IMP);IMP.castShadow=false;
+ // autonome zenuwen naar de sinusknoop
+ const symM=std(0xffe27a,{emissive:0xffc020,emissiveIntensity:0,roughness:.4}),vagM=std(0x9fe0a8,{emissive:0x40c060,emissiveIntensity:0,roughness:.4});
+ const SYM=tube([V(-.9,2.2,.5),V(-.75,1.5,.4),V(-.62,1.05,.3),LOC.SA.clone().add(V(0,.03,.02))],.009,symM,HM2.g,40,8),VAG=tube([V(-1.3,2.1,-.2),V(-1.0,1.4,-.05),V(-.7,1.0,.1),LOC.SA.clone().add(V(-.02,.02,0))],.009,vagM,HM2.g,40,8);
+ const NIMP=inst(new THREE.SphereGeometry(.03,8,6),add(0xfff0a0,.9),6);HM2.g.add(NIMP);NIMP.castShadow=false;
+ const P2={vt:0,sig:0,hr:62,c:cyc(62),av:.09,ts:8,mode:'sinus',vfT:0,shockT:-1,flashA:0,ev:{},beatN:0,stage:0,qrs:.08};
+ const ECG2=new Strip(220,-.45,1.15);
+ function tH2(){return tracts[0].len*VA_+P2.av;}
+ function step2(dt){filmHold(2);const st=S.state,t=S.stT,ev=P2.ev;ev.sa=ev.r=ev.shock=0;const sdt=dt/P2.ts;
+   let hrT=st===2?170:st===3?165:62;P2.av=st===2||st===3?.05:.09;P2.mode='sinus';
+   if(st===3){if(t>2.2&&t<9){P2.mode='vf';if(!P2.vfT){P2.vfT=1;K.flash({a:.4,shake:.2,sound:false});}}if(t>=9&&P2.shockT<0){P2.shockT=P2.sig;ev.shock=1;shockFlash();}if(t>=9){hrT=90;P2.mode=t<10.3?'stil':'sinus';}}
+   P2.hr=lerp(P2.hr,hrT,1-Math.exp(-dt*2));const T=60/P2.hr;
+   P2.vt+=sdt;const s0=P2.sig;P2.sig+=sdt;if(P2.mode==='stil'){P2.sig=Math.min(P2.sig,.0001);}
+   if(P2.sig>=T&&P2.mode!=='stil'){P2.sig-=T;P2.c=cyc(P2.hr);ev.sa=1;P2.beatN++;}
+   if(s0<.0001&&P2.sig>=.0001)ev.sa=1;
+   const sig=P2.sig,TH=tH2(),APDv=.28*Math.sqrt(T),APDa=.15;if(s0<TH+.03&&sig>=TH+.03)ev.r=1;
+   const vf=P2.mode==='vf';const shockA=P2.shockT>=0?Math.max(0,1-(S.stT-9)*1.4):0;
+   // kleuren van het spierweefsel
+   let nA=0,nV=0,aA=0,aV=0;for(let i=0;i<MY.length;i++){const m=MY[i];let e,apd;let r=.018,g=.014,b=.05;
+     if(m.v&&vf){// spiraalgolf rond de dichtstbijzijnde rotor: fase = hoek − 3·afstand − ωt
+       const ph=((m.ra-m.rd*3.5-P2.vt*TAU*6)%TAU+TAU)%TAU/TAU;const a=ph<.07?1.25:ph<.4?.9*(1-(ph-.07)/.33):0;r+=a*.95;g+=a*(ph<.07?.95:.3);b+=a*(ph<.07?.6:-.1);}
+     else{apd=m.v?APDv:APDa;e=sig-(m.v?TH+m.t:m.t);if(e<0)e+=T;if(P2.mode==='stil')e=9;
+       if(e>=0&&e<apd){let a=e<.014?1.2:e<apd*.8?.85-.4*(e/apd):(.53*(1-(e-apd*.8)/(apd*.2)));if(vf)a*=.3;r+=a*.95;g+=a*(e<.014?.95:.3);b+=a*(e<.014?.6:-.1);}}
+     const act=r>.45?1:0;if(m.v){nV++;aV+=act;}else{nA++;aA+=act;}if(shockA>0){r=lerp(r,1,shockA);g=lerp(g,1,shockA);b=lerp(b,1,shockA);}
+     myCol[i*3]=r;myCol[i*3+1]=g;myCol[i*3+2]=b;}
+   myGeo.attributes.color.needsUpdate=true;const fA=aA/Math.max(1,nA),fV=aV/Math.max(1,nV);glA.emissive.setRGB(.9*fA,.32*fA,.04*fA);glA.opacity=.12+.16*fA;glV.emissive.setRGB(.9*fV,.32*fV,.04*fV);glV.opacity=.12+.16*fV;
+   P2.fA=fA;P2.fV=fV;
+   pkS.forEach((s,i)=>{const vi=s[0];let e=sig-(TH+pkV[vi].t);if(e<0)e+=T;let a=vf?.012+.01*Math.sin(S.clock*17+vi):e<.035?1:e<.12?1-(e-.035)*11:.02;a=Math.max(a,vf?.006:.02);if(P2.mode==='stil')a=.01;a=Math.max(a,shockA);PKL.setColorAt(i,_c.setRGB(a,a*.9,a*.3+.04));});PKL.instanceColor.needsUpdate=true;
+   // impulsen
+   CT.forEach((c,i)=>{let t0,t1;if(c.kind==='at'||c.kind==='bach'){t0=0;t1=c.len*VA_;}else if(c.kind==='his'){t0=TH-.012;t1=TH;}else{t0=TH;t1=TH+c.len*VP;}
+     const u=(sig-t0)/(t1-t0);if(u>=0&&u<=1&&!(vf&&c.kind!=='at'&&c.kind!=='bach')&&P2.mode!=='stil'){c.cv.getPointAt(u,_v);IMP.setMatrixAt(i,placeMatrix(_v,null,1.6));}else IMP.setMatrixAt(i,ZERO);});IMP.instanceMatrix.needsUpdate=true;
+   const sa=sig<.04&&P2.mode!=='stil'?1:0;SAm.material.emissiveIntensity=.4+2.4*sa;AVm.material.emissiveIntensity=.4+1.8*(sig>.05&&sig<TH?.6+.4*Math.sin(S.clock*20):0);
+   symM.emissiveIntensity=st>=2?.8:.05;vagM.emissiveIntensity=st===1?.8:.05;
+   for(let k=0;k<6;k++){const nerve=st===1?VAG:SYM;const u=((S.clock*.5+k/6)%1);nerve.userData.curve.getPointAt(u,_v);NIMP.setMatrixAt(k,placeMatrix(_v,null,1));}NIMP.instanceMatrix.needsUpdate=true;
+   // ECG en fasen
+   const PR=TH+.03;const tau=((sig-PR)%T+T)%T;P2.c.PR=PR;P2.c.T=T;P2.qrs=Math.min(.095,tMaxV*.8+.02);
+   ECG2.feed(sdt,88,o=>vf?vfV(P2.vt+o)*.9:P2.mode==='stil'?(S.stT<9.15?1.1:0):ecgV(tau,P2.c));
+   P2.stage=vf||P2.mode==='stil'?-1:sig<.09?0:sig<PR?1:sig<PR+P2.qrs?2:sig<PR+.4*Math.sqrt(T)-.17?3:sig<PR+.4*Math.sqrt(T)?4:-1;
+   if(st===3)K.stepOn(t<2.2?-1:t<9?1:t<10.3?2:3);else K.stepOn(P2.stage);
+   hud2();}
+ const PN2=['P-top','PQ-tijd','QRS','ST','T-top'];
+ function hud2(){if(!$('#b1'))return;const st=S.state,vf=P2.mode==='vf',stil=P2.mode==='stil';const PQ=Math.round((tH2()+.03)*1000),AV=Math.round(P2.av*1000);
+   K.bar(1,vf||stil?0:P2.hr/200,vf?'— chaos':stil?'0 /min':Math.round(P2.hr)+' /min',vf?'bad':'');
+   K.bar(2,P2.fA||0,Math.round((P2.fA||0)*100)+'%','',vf?'var(--bad)':'#ffc861');
+   K.bar(3,P2.fV||0,Math.round((P2.fV||0)*100)+'%',vf?'bad':'',vf?'var(--bad)':'#ffc861');
+   const col=vf?'#ff8a6a':'#7dffa8';drawStrip('ecg2',ECG2,col,'ECG · '+(P2.ts>1?P2.ts+'× trager':'echt tempo')+(vf||stil?'':' · PQ '+PQ+' ms'));
+   filmEcg(ECG2,col,vf?'♥ VF · chaos':stil?'♥ 0 /min':'♥ '+Math.round(P2.hr)+' /min · '+P2.ts+'× trager',vf);
+   const t=S.stT;let cap;
+   if(st===3)cap=t<2.2?'Normaal ritme, flink versneld.':t<9?'<b>Ventrikelfibrilleren</b>: cirkelende golven (re-entry) draaien als spiralen rond over de kamers, 300 tot 400 keer per minuut. Geen enkele golf trekt de kamer als geheel samen.':t<10.3?'<b>De AED-schok</b> prikkelt alle cellen tegelijk. Daarna zijn ze allemaal even onprikkelbaar: de chaos dooft uit.':'De <b>sinusknoop</b> vuurt als eerste weer: het normale ritme is terug.';
+   else if(P2.ts*(S.slow?4:1)>=8){const PH=[`<b>P-top</b>: de sinusknoop vuurt en een golf loopt over beide boezems.`,`<b>PQ-tijd</b> (${PQ} ms): de AV-knoop houdt de prikkel ongeveer ${AV} ms vast, zodat de boezems eerst de kamers kunnen vullen.`,'<b>QRS</b>: via de bundel van His en de Purkinjevezels wordt de hele kamerwand bijna tegelijk geprikkeld, van de punt naar de basis.','<b>ST</b>: de kamercellen zitten in hun plateau en trekken samen.','<b>T-top</b>: de kamers herstellen elektrisch (repolarisatie).'];
+     if(P2.stage>=0)cap=cycLine(PN2,P2.stage)+PH[P2.stage];
+     else cap=cycLine(PN2,-1)+(st===2?'<b>Inspanning</b>: de <i>sympathicus</i> (geel) versnelt de sinusknoop en verkort de AV-vertraging tot ongeveer '+AV+' ms.':'<b>Rust tussen twee slagen</b>: de <i>nervus vagus</i> (groen) remt de sinusknoop. Zonder zenuwen zou het hart ongeveer 100 keer per minuut slaan.');}
+   else cap='<b>Echt tempo</b>: één slag duurt '+(60/P2.hr).toFixed(1).replace('.',',')+' s. De prikkel loopt van de <b>sinusknoop</b> over de boezems naar de <b>AV-knoop</b>, wacht daar ongeveer '+AV+' ms en jaagt dan via <b>His</b> en de <b>Purkinjevezels</b> door de kamers. Kies 8× trager om elke stap te volgen.';
+   K.capSet(K.stateText(),cap);}
+ const L2H={step:step2,reset(n){P2.mode='sinus';P2.vfT=0;P2.shockT=-1;P2.sig=0;},onShow(){fogSet(FOGN,FOGF);},
+   hud(){return `<div class="hh${S.state===3?' s3':''}"><div class="hcol">${K.stepsHTML(S.state===3?['Normaal','Fibrilleren','AED-schok','Herstel']:PN2)}${K.bars(['Hartslag','Boezems geprikkeld','Kamers geprikkeld'])}</div><canvas class="ecg" id="ecg2" width="420" height="112" aria-label="ECG"></canvas></div>`;},
+   ctl(){return `<label>Tempo</label>${[[16,'16× trager'],[8,'8× trager'],[1,'Echt']].map(o=>`<button data-ts="${o[0]}" class="${P2.ts===o[0]?'on':''}">${o[1]}</button>`).join('')}`;},
+   bind(){K.$$('#ctl [data-ts]').forEach(b=>b.addEventListener('click',()=>{P2.ts=+b.dataset.ts;K.$$('#ctl [data-ts]').forEach(x=>x.classList.toggle('on',x===b));}));},
+   sound(a){const ev=P2.ev;if(ev.sa)a.tone(1760,.04,.035,'sine');if(ev.r)a.tone(880,.09,.06,'sine');if(ev.shock){a.thump(36,.55,.6);a.noise(.25,'bandpass',900,1,.22,.004);}if(P2.mode==='vf'&&Math.random()<.08)a.noise(.03,'highpass',3000,1,.025,.002);}};
+ HM2.g.updateMatrixWorld(true);
+ W.SA=LOC.SA.clone().applyMatrix4(HM2.g.matrixWorld);W.AV=LOC.AV.clone().applyMatrix4(HM2.g.matrixWorld);W.His=V(-.05,-.05,.06).applyMatrix4(HM2.g.matrixWorld);W.Pk=V(.62,-.65,.1).applyMatrix4(HM2.g.matrixWorld);W.LBB=V(.32,-.72,-.08).applyMatrix4(HM2.g.matrixWorld);W.LBBt=W.LBB.clone().add(V(.7,-.5,0));W.SAm=W.SA.clone().add(V(-.4,.35,.25));
+
+ /* ================= NIVEAU 3 · hartspiercellen ================= */
+ const striT=canvasTex(16,256,(x,w,h)=>{const band=(a,b,c)=>{x.fillStyle=c;x.fillRect(0,a*h,w,(b-a)*h);};band(0,1,'#d9a092');band(.2,.8,'#a9493c');band(.42,.58,'#b9604f');band(.48,.52,'#8a352a');band(0,.03,'#6a241c');band(.97,1,'#6a241c');});
+ striT.repeat.set(1,28);
+ // het celniveau loopt standaard 3× trager (instelbaar)
+ const CHN=[{y:0,z:0,r:.85},{y:2.05,z:-.55,r:.78},{y:-2.0,z:-.45,r:.8},{y:1.0,z:-2.6,r:.75},{y:-1.1,z:-2.7,r:.75}];
+ const CELL3=[];const cylG=(function(){const g=new THREE.CylinderGeometry(1,1,1,40,24,true);const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),a=Math.atan2(z,x);const k=1+.06*Math.sin(3*a+y*5)+.04*Math.sin(7*y+a)-.05*Math.pow(Math.abs(2*y),6);p.setX(i,x*k);p.setZ(i,z*k);}g.computeVertexNormals();return g;})();
+ const discG=(function(){const g=new THREE.CylinderGeometry(1.03,1.03,.12,48,1);const p=g.attributes.position;for(let i=0;i<p.count;i++){const a=Math.atan2(p.getZ(i),p.getX(i)),rr=Math.hypot(p.getX(i),p.getZ(i));p.setY(i,p.getY(i)+.1*Math.tanh(4*Math.sin(5*a))*Math.min(1,rr*1.2));}g.computeVertexNormals();return g;})();
+ const discM=std(0x3e2232,{roughness:.5});
+ CHN.forEach((ch,ci)=>{let x=-7.6+(ci%2)*1.1;let k=0;while(x<7.9){let L=4.2+R()*1.3;const rest=8-x;if(rest<6.4)L=rest>5.4?rest/2:rest;const feat=ci===0&&x<0&&x+L>0;const mat=std(0xffffff,{map:striT,roughness:.45,emissive:0x000000});
+   const c={ci,k,L0:L,x,len:L,feat,mat,e:9,act:-9,per:.2,Vm:-90,ca:0,F:0};
+   if(!feat){c.m=mesh(cylG,mat,0,0,0,G3);c.m.rotation.order='ZYX';c.m.rotation.set(0,R()*TAU,-Math.PI/2);c.m.castShadow=false;}
+   c.disc=mesh(discG,discM,0,[0,0,-Math.PI/2],[ch.r,1,ch.r],G3);c.disc.castShadow=false;CELL3.push(c);x+=L;k++;}});
+ // de uitgelichte cel: opengesneden, met myofibrillen, mitochondriën en een kern in het midden
+ const FC=CELL3.find(c=>c.feat);const FG=new THREE.Group();G3.add(FG);
+ const sarcM=std(0xe7a99b,{transparent:true,opacity:.3,roughness:.3,side:THREE.DoubleSide,depthWrite:false});
+ const fShell=mesh(new THREE.CylinderGeometry(1,1,1,48,1,true,.42*Math.PI,1.16*Math.PI),sarcM,[.5,0,0],[0,0,-Math.PI/2],[.85,1,.85],FG);fShell.castShadow=false;
+ const fibM=std(0xffffff,{map:striT,roughness:.45,emissive:0x000000});
+ const MF=sunflower(30).map(p=>[p[0]*.64,p[1]*.64]).filter(p=>p[1]<.25);
+ const MFI=inst(new THREE.CylinderGeometry(1,1,1,10,1).rotateZ(-Math.PI/2).translate(.5,0,0),fibM,MF.length);MF.forEach((p,i)=>MFI.setMatrixAt(i,placeMatrix(V(.03,p[0],p[1]),null,[.94,.085,.085])));FG.add(MFI);MFI.castShadow=false;
+ const MITO3=inst(new THREE.CapsuleGeometry(.05,.22,3,8).rotateZ(Math.PI/2),std(0xc9783a,{roughness:.5}),90);for(let i=0;i<90;i++){const a=Math.PI*(.15+R()*.9)+Math.PI*.5,r=.2+R()*.55;MITO3.setMatrixAt(i,placeMatrix(V(.06+R()*.88,r*Math.cos(a)*.98,Math.min(.2,r*Math.sin(a))),null,[1.6/FC.L0,1,1]));}FG.add(MITO3);MITO3.castShadow=false;
+ const nuc3=mesh(new THREE.SphereGeometry(1,28,18),std(0x6a4c9c,{roughness:.4}),[.5,0,-.05],0,[.13,.3,.28],FG);
+ // calcium in de uitgelichte cel: een groene wolk die opkomt in het plateau
+ const NCA=170,caD=[];for(let i=0;i<NCA;i++){const a=R()*TAU,r=Math.sqrt(R())*.7;caD.push({u:.04+R()*.92,y:r*Math.cos(a),z:Math.min(.28,r*Math.sin(a)),s:.6+R()*.8,ph:R()*TAU});}
+ const CA3=inst(new THREE.SphereGeometry(.045,8,6),add(0x7ee08c,.6),NCA);CA3.castShadow=CA3.receiveShadow=false;G3.add(CA3);
+ const TT=inst(new THREE.TorusGeometry(.835,.012,6,48),std(0x8fd0e8,{roughness:.3}),6);for(let i=0;i<6;i++)TT.setMatrixAt(i,placeMatrix(V(.1+i*.16,0,0),[0,Math.PI/2,0],1));FG.add(TT);TT.castShadow=false;
+ // gap junctions en ionen bij elke schijf
+ const discsCount=CELL3.length;const GJ=inst(new THREE.CylinderGeometry(.045,.045,.2,8).rotateZ(Math.PI/2),std(0xffffff,{roughness:.3,emissive:0x40e0ff,emissiveIntensity:.0}),discsCount*10);G3.add(GJ);GJ.castShadow=false;
+ const gjOff=[];for(let i=0;i<10;i++){const a=R()*TAU,r=Math.sqrt(R())*.75;gjOff.push([r*Math.cos(a),r*Math.sin(a)]);}
+ const ION=inst(new THREE.SphereGeometry(.05,8,6),add(0xfff2a0,.95),discsCount*6);G3.add(ION);ION.castShadow=false;
+ // vertakkingen tussen de rijen
+ const brG=new THREE.CylinderGeometry(1,1,1,24,1,true);brG.translate(0,.5,0);
+ const BRN=[];[[0,1,.3],[0,2,.6],[0,1,.75],[1,3,.4],[2,4,.5],[0,2,.15]].forEach(([a,b,f])=>{const ca=CELL3.filter(c=>c.ci===a);const cell=ca[Math.floor(f*ca.length)];const m=mesh(brG,cell.mat,0,0,0,G3);m.castShadow=false;BRN.push({m,cell,b,f:.35+R()*.3});});
+ // haarvaten met rode bloedcellen
+ const capPath=[[1.05,.95],[-1.05,.9],[3.05,-1.7],[-3.0,-1.6]];const capGl=glass(0xe07a6a,.22);
+ const CAP3=[];capPath.forEach(c=>{const t=tube([V(-9,c[0],c[1]),V(-3,c[0]+.12,c[1]+.05),V(3,c[0]-.1,c[1]),V(9,c[0],c[1])],.3,capGl,G3,40,14);t.castShadow=false;CAP3.push(t);});
+ const NR3=capPath.length*22;const RBC3=inst(rbcGeo,rbcMat(),NR3);RBC3.castShadow=false;G3.add(RBC3);const r3d=[];for(let i=0;i<NR3;i++){r3d.push({c:i%capPath.length,x:-9+R()*18,ax:V(R()-.5,R()-.5,R()-.5).normalize(),ph:R()*TAU});RBC3.setColorAt(i,RED);}
+ // bindweefsel (endomysium): dunne collageendraadjes
+ const colPos=[];for(let i=0;i<70;i++){let x=-8+R()*16,y=-3+R()*6,z=-3.2+R()*3.6;for(let k=0;k<5;k++){const nx=x+.4+R()*.4,ny=y+(R()-.5)*.4,nz=z+(R()-.5)*.3;colPos.push(x,y,z,nx,ny,nz);x=nx;y=ny;z=nz;}}
+ const colG=new THREE.BufferGeometry();colG.setAttribute('position',new THREE.Float32BufferAttribute(colPos,3));G3.add(new THREE.LineSegments(colG,new THREE.LineBasicMaterial({color:0xf2e4c8,transparent:true,opacity:.28})));
+ const P3={ts:3,sig:0,hr:60,mode:'sinus',s0:0,shockS:-1,vfT:0,ev:{},stage:0,caAmp:1};
+ const AP3=new Strip(220,-100,40);
+ function apV(e,apd){if(e<0||e>=apd)return -90;if(e<.002)return -90+115*e/.002;if(e<.015)return lerp(25,5,(e-.002)/.013);if(e<.75*apd)return lerp(5,-10,(e-.015)/(.75*apd-.015));return lerp(-10,-90,smooth((e-.75*apd)/(.25*apd)));}
+ function caF(e,apd){if(e<.01)return 0;if(e<.07)return smooth((e-.01)/.06);return Math.exp(-(e-.07)/(apd*.35));}
+ function step3(dt){filmHold(3);const st=S.state,t=S.stT,ev=P3.ev;ev.beat=ev.shock=ev.gj=0;const sdt=dt/P3.ts;P3.sig+=sdt;const sig=P3.sig;
+   let hrT=st===2?160:st===3?150:60;P3.caAmp=st===1?1:1.35;if(st===3&&t>=8)hrT=90;
+   P3.mode='sinus';if(st===3&&t>2.5&&t<8){P3.mode='vf';if(!P3.vfT){P3.vfT=1;K.flash({a:.35,shake:.15,sound:false});CELL3.forEach(c=>{c.act=sig-R()*.2;c.per=.16+R()*.08;});}}
+   if(st===3&&t>=8&&P3.shockS<0){P3.shockS=sig;ev.shock=1;shockFlash();P3.s0=sig+.35;}
+   P3.hr=lerp(P3.hr,hrT,1-Math.exp(-dt*2));const T=60/P3.hr,apd=.28*Math.sqrt(T),WAVE=.2;
+   const wasF=FC.e;
+   CHN.forEach((ch,ci)=>{const cs=CELL3.filter(c=>c.ci===ci);let tot=0;
+     cs.forEach(c=>{const xc=c.x+c.len/2,delay=(xc+7.6)/15.6*WAVE+ci*.012;let e;
+       if(P3.mode==='vf'){if(sig-c.act>c.per){c.act=sig;c.per=.15+R()*.1;}e=sig-c.act;}
+       else if(P3.shockS>=0&&sig<P3.s0+delay){e=sig-P3.shockS;}
+       else{e=((sig-P3.s0-delay)%T+T)%T;}
+       c.e=e;c.Vm=apV(e,apd);const ca=caF(e,apd)*P3.caAmp;c.ca=ca;c.F=lerp(c.F,ca,1-Math.exp(-sdt/.035));c.len=c.L0*(1-.1*Math.min(1.3,c.F));tot+=c.len;});
+     const tot0=cs.reduce((a,c)=>a+c.L0,0);let x=cs[0].x0===undefined?(cs.forEach(c=>c.x0=c.x),cs[0].x0):cs[0].x0;x+= (tot0-tot)/2;
+     cs.forEach((c,j)=>{c.x=x;x+=c.len;const glowW=c.e<.012?1:0;c.mat.emissive.setRGB(.02*c.ca+.35*glowW,.16*c.ca+.3*glowW,.07*c.ca+.15*glowW);
+       const cxp=c.x+c.len/2;if(c.m){c.m.position.set(cxp,ch.y,ch.z);c.m.scale.set(ch.r,c.len,ch.r);}
+       c.disc.position.set(c.x+c.len,ch.y,ch.z);c.disc.visible=j<cs.length-1;
+       // gap junctions en ionen op deze schijf
+       const nx=cs[j+1];const di=CELL3.indexOf(c);const eR=nx?nx.e:9;const cross=nx&&eR<.03?1-eR/.03:0;if(cross>.9&&ci===0)ev.gj=1;
+       for(let g=0;g<10;g++){const o=gjOff[g];GJ.setMatrixAt(di*10+g,c.disc.visible?placeMatrix(V(c.x+c.len,ch.y+o[0]*ch.r,ch.z+o[1]*ch.r),null,1):ZERO);_c.setRGB(.25+.75*cross,.55+.45*cross,.7+.3*cross);GJ.setColorAt(di*10+g,_c);}
+       for(let g=0;g<6;g++){const o=gjOff[g];const u=nx?clamp((eR+.012)/.03,0,1):0;const vis=c.disc.visible&&u>0&&u<1&&P3.mode!=='vf';ION.setMatrixAt(di*6+g,vis?placeMatrix(V(c.x+c.len-.35+.7*u,ch.y+o[0]*ch.r,ch.z+o[1]*ch.r),null,1):ZERO);}});});
+   GJ.instanceMatrix.needsUpdate=true;GJ.instanceColor.needsUpdate=true;ION.instanceMatrix.needsUpdate=true;
+   FG.position.set(FC.x,0,0);FG.scale.set(FC.len,1,1);fibM.emissive.copy(FC.mat.emissive);if(wasF>.05&&FC.e<.05)ev.beat=1;
+   nuc3.scale.set(.13*FC.L0/FC.len*1,.3,.28);
+   const caV=P3.mode==='vf'?FC.ca*.6:FC.ca;for(let i=0;i<NCA;i++){const d=caD[i];const s=caV>.04?clamp(caV,0,1.3)*d.s*(.8+.2*Math.sin(S.clock*3+d.ph)):0;CA3.setMatrixAt(i,s>0?placeMatrix(_v.set(FC.x+d.u*FC.len,d.y+.03*Math.sin(S.clock*2+d.ph),d.z),null,s):ZERO);}CA3.instanceMatrix.needsUpdate=true;
+   BRN.forEach(b=>{const c=b.cell,ch=CHN[c.ci],cb=CHN[b.b];const a=V(c.x+c.len*b.f,ch.y,ch.z),e=V(c.x+c.len*b.f+1.9,cb.y,cb.z);_v.subVectors(e,a).normalize();orient(b.m,a.addScaledVector(_v,.2),e.addScaledVector(_v,-.3),.48);});
+   for(let i=0;i<NR3;i++){const r=r3d[i],cp=capPath[r.c];r.x+=dt*(st===1?.9:1.6)*(P3.mode==='vf'?.1:1);if(r.x>9)r.x-=18;_q.setFromAxisAngle(r.ax,S.clock*.8+r.ph);RBC3.setMatrixAt(i,placeMatrix(V(r.x,cp[0]+.08*Math.sin(r.x+i),cp[1]+.06*Math.cos(r.x*1.3+i)),_q,.2));}RBC3.instanceMatrix.needsUpdate=true;
+   AP3.feed(sdt,70,()=>FC.Vm);
+   const e=FC.e;P3.stage=P3.mode==='vf'?-1:e<.02?1:e<.75*apd?2:e<apd?3:0;
+   if(st===3)K.stepOn(t<2.5?0:t<8?1:t<8.8?2:3);else K.stepOn(P3.stage);
+   W.FC=V(FC.x+FC.len*.5,.5,.35);W.disc=V(FC.x+FC.len,0,.9);W.mito=V(FC.x+FC.len*.3,-.35,.2);W.gj=V(FC.x+FC.len,.45,.7);
+   hud3(apd);}
+ const PN3=['Rust','Depolarisatie','Plateau','Repolarisatie'];
+ function hud3(apd){if(!$('#b1'))return;const st=S.state,vf=P3.mode==='vf';
+   K.bar(1,(FC.Vm+90)/115,Math.round(FC.Vm)+' mV',FC.Vm>-60?'con':'');K.bar(2,FC.ca/1.4,vf?'chaotisch':Math.round(FC.ca*100)+'%','',FC.ca>.3?'#7ee08c':'');K.bar(3,FC.F/1.4,vf?'ongecoördineerd':Math.round(FC.F*100)+'%',vf?'bad':'');
+   const col=vf?'#ff8a6a':'#9ff0c0';drawStrip('ecg3',AP3,col,'AP · '+P3.ts+'× trager',-90);
+   filmEcg(AP3,col,'Hartspiercel · '+Math.round(FC.Vm)+' mV',vf);
+   const t=S.stT;let cap;
+   if(st===3)cap=t<2.5?'Een golf loopt van cel naar cel. Alle cellen trekken kort na elkaar samen.':t<8?'<b>Fibrilleren</b>: elke cel vuurt op een eigen moment. De cellen werken elkaar tegen; er is geen gezamenlijke slag.':t<8.8?'<b>Schok</b>: alle cellen tegelijk gedepolariseerd, en dus allemaal tegelijk onprikkelbaar.':'Daarna komt één nette golf binnen: de cellen werken weer samen.';
+   else if(P3.ts*(S.slow?4:1)>=12){const PH=['<b>Rust</b>: binnen in de cel −90 mV. De vertakte cellen zitten kop aan kop vast via de <b>intercalaire schijven</b>.','<b>Depolarisatie</b>: ionen glippen via de <b>gap junctions</b> naar de buurcel. Zo springt de prikkel van cel naar cel.','<b>Plateau</b>: calcium stroomt de cel in (groen) en de cel trekt samen. Het plateau duurt ruim 200 ms.','<b>Repolarisatie</b>: kalium stroomt uit, de cel ontspant. Pas nu kan een nieuwe prikkel komen. Zo kan het hart niet in een aanhoudende samentrekking schieten.'];
+     const i=Math.max(0,P3.stage);cap=cycLine(PN3,i)+PH[i];}
+   else if(st===2)cap='<b>Inspanning</b> ('+P3.ts+'× trager): ongeveer 160 slagen per minuut. Eén actiepotentiaal duurt nu zo’n <b>170 ms</b> (in rust 280 ms). De sympathicus (noradrenaline) laat <b>meer calcium</b> binnen (groen): de cel trekt krachtiger samen. Kies 12× trager om elke stap te volgen.';
+   else cap='<b>Eén actiepotentiaal</b> ('+P3.ts+'× trager): een snelle <b>depolarisatie</b> die via de gap junctions van cel naar cel springt, een lang <b>plateau</b> waarin calcium binnenkomt (groen) en de cel samentrekt, en dan <b>repolarisatie</b>. Kies 12× trager om elke stap te volgen.';
+   K.capSet(K.stateText(),cap);}
+ const L3H={step:step3,reset(n){P3.mode='sinus';P3.vfT=0;P3.shockS=-1;P3.s0=P3.sig;},
+   onShow(){const k=PORT?Math.min(1.9,1/Math.pow(innerWidth/innerHeight,.85)):1;fogSet(12*k,27*k);},
+   hud(){return `<div class="hh${S.state===3?' s3':''}"><div class="hcol">${K.stepsHTML(S.state===3?['Normaal','Fibrilleren','Schok','Herstel']:PN3)}${K.bars(['Membraanpotentiaal','Calcium in de cel','Kracht'])}</div><canvas class="ecg" id="ecg3" width="420" height="112" aria-label="Actiepotentiaal"></canvas></div>`;},
+   ctl(){return S.state===3?'':`<label>Tempo</label>${[[3,'3× trager'],[12,'12× trager']].map(o=>`<button data-ts3="${o[0]}" class="${P3.ts===o[0]?'on':''}">${o[1]}</button>`).join('')}`;},
+   bind(){K.$$('#ctl [data-ts3]').forEach(b=>b.addEventListener('click',()=>{P3.ts=+b.dataset.ts3;K.$$('#ctl [data-ts3]').forEach(x=>x.classList.toggle('on',x===b));}));},
+   sound(a){const ev=P3.ev;if(ev.beat)a.thump(60,.2,.22);if(ev.gj)a.click(1.6);if(ev.shock){a.thump(36,.55,.6);a.noise(.25,'bandpass',900,1,.22,.004);}}};
+
+ /* ================= punten ================= */
+ const VALV=()=>Object.values(VL).map(v=>v.g).concat([CHORD]);
+ const points=[
+ {lv:0,name:'Het hart, een dubbele pomp',lat:'Cor',at:()=>W.heart,view:[[2.8,5.7,5.2],[0,4.3,-1.6]],focus:()=>[HM.g],tabs:[
+  `<p>Het hart is een holle spier van ongeveer een vuist groot. Het zijn eigenlijk <b>twee pompen naast elkaar</b>. De rechterhelft (links in beeld) pompt zuurstofarm bloed naar de longen, de linkerhelft pompt zuurstofrijk bloed naar het hele lichaam.</p><p>Beide pompen slaan tegelijk en pompen per slag evenveel bloed. Wat rechts de longen in gaat, komt links weer terug.</p>`,
+  `<p>Kijk in stand 2 naar de HUD. Het <b>hartminuutvolume</b> is hartslag × slagvolume. In rust is dat 65 × 70 ml ≈ 5 L/min. Aan het eind van de bleeptest is het bij een getrainde student 200 × 120 ml ≈ 24 L/min: bijna vijf keer zoveel.</p><p>Meet in de les de hartslag na elke trap, met een hartslagmeter of twee vingers in de hals. Bij elke trap legt de leerling dezelfde 20 m af in minder tijd: v = Δs/Δt (zie het lab <a href="bocht.html">De bocht</a>).</p>`,
+  `<p>Een hart slaat in een mensenleven ruim 2,5 miljard keer. Bij topduursporters kan het hartminuutvolume tot 35 à 40 L/min stijgen, vooral door een groter slagvolume.</p>`,
+  `<p class="think">Waarom hebben duursporters in rust vaak een lage hartslag, soms onder de 50? Gebruik de formule hartminuutvolume = hartslag × slagvolume.</p>`]},
+ {lv:0,name:'Kransslagaders',lat:'Arteria coronaria dextra et sinistra',at:()=>W.cor,view:[[1.6,5.2,3.1],[0,4.2,-1.6]],focus:()=>corL,pick:()=>corL,tabs:[
+  `<p>Het hart pompt bloed voor het hele lichaam, maar voedt zichzelf via twee eigen slagaders: de <b>kransslagaders</b>. Ze ontspringen net boven de aortaklep en lopen in de groeven over het hart, ingebed in geel vet.</p><p>De linker splitst zich in een tak aan de voorkant, tussen de kamers, en een tak die om de linkerkant heen loopt. De rechter loopt in de groef tussen rechterboezem en rechterkamer.</p>`,
+  `<p>Hartspier haalt al in rust zo’n 70% van de zuurstof uit het bloed. Bij inspanning kan dat nauwelijks meer, dus moet de <b>doorbloeding</b> zelf stijgen: de kransslagaders verwijden. Een vernauwing merk je daarom het eerst bij inspanning, bijvoorbeeld als pijn op de borst tijdens de bleeptest.</p>`,
+  `<p>Het hart is ongeveer 0,5% van het lichaamsgewicht, maar krijgt in rust zo’n 5% van het hartminuutvolume (ongeveer 250 ml per minuut).</p>`,
+  `<p class="think">De kransslagaders worden vooral gevuld tijdens de ontspanningsfase van het hart. Wat betekent een heel hoge hartslag voor de doorbloeding van de hartspier zelf?</p>`]},
+ {lv:0,name:'Kleine bloedsomloop',lat:'Truncus pulmonalis · venae pulmonales',at:()=>W.lung,view:[[-2.6,6.8,6.4],[-4.3,4.6,-2.2]],focus:()=>[LUNG,VES0[0],VES0[1],RBC0,HM.ves.pt],tabs:[
+  `<p>De <b>rechterkamer</b> pompt zuurstofarm bloed (blauw) via de <b>longslagader</b> naar de longen. In de haarvaten rond de longblaasjes geeft het bloed CO₂ af en neemt het O₂ op. Het wordt rood en stroomt via de <b>longaders</b> terug naar de linkerboezem.</p><p>Let op: de longslagader vervoert zuurstofarm bloed en de longaders zuurstofrijk bloed. Slagader of ader zegt iets over de richting (van of naar het hart), niet over de zuurstof.</p>`,
+  `<p>Tijdens de bleeptest gaat er per minuut net zoveel bloed door de longen als door de rest van het lichaam: tot 20 à 25 liter. Je ademhaling stijgt mee, zie <a href="longen.html">halte 3, de longen</a>.</p>`,
+  `<p>Een rode bloedcel doet er in rust ongeveer 0,75 seconde over om door een haarvat in de long te gaan. Bij zware inspanning is dat zo’n 0,3 seconde, en meestal nog net genoeg om vol te raken met zuurstof.</p>`,
+  `<p class="think">De rechterkamerwand is veel dunner dan die van de linkerkamer. Wat zegt dat over de bloeddruk in de kleine bloedsomloop?</p>`]},
+ {lv:0,name:'Grote lichaamsslagader',lat:'Aorta',at:()=>W.ao,view:[[3.2,6.6,4.6],[.8,4.9,-2]],focus:()=>[HM.ves.ao].concat(HM.ves.br,VES0.slice(2,5),[RBC0]),tabs:[
+  `<p>De <b>aorta</b> is de grootste slagader van het lichaam: ongeveer 2,5 cm doorsnee. Hij komt uit de linkerkamer, maakt een boog naar links en achteren (de aortaboog) en loopt dan langs de wervelkolom naar beneden.</p><p>Uit de boog gaan slagaders naar hoofd en armen; lager splitst hij naar organen en benen.</p>`,
+  `<p>De aortawand is elastisch. Bij elke slag rekt hij op en daarna veert hij terug. Zo wordt de stootsgewijze stroom uit het hart een meer gelijkmatige stroom. Die golf voel je als <b>polsslag</b>, zelfs in je pols, ver van het hart.</p>`,
+  `<p>Bij een normale bloeddruk van 120/80 mmHg is 120 de druk tijdens het uitpompen (systole) en 80 de druk tussen twee slagen (diastole). Bij maximale inspanning stijgt de bovendruk bij jonge sporters vaak naar 180 à 200 mmHg.</p>`,
+  `<p class="think">Waarom stijgt bij inspanning vooral de bovendruk en blijft de onderdruk ongeveer gelijk? Denk aan de verwijde bloedvaten in de spieren.</p>`]},
+ {lv:0,name:'Haarvaten in de spier',lat:'Vasa capillaria',state:2,at:()=>W.musc,view:[[9.2,5.2,3.2],[5.1,3.1,-2.4]],focus:()=>[MUS,CAPM,RBC0],tabs:[
+  `<p>In de spier vertakken de slagaders tot <b>haarvaten</b>: buisjes van 5 tot 10 µm, net breed genoeg voor één rode bloedcel. Hier geeft het bloed zuurstof af aan de spiervezels en neemt het CO₂ en warmte mee. Kijk hoe de cellen van rood naar blauw kleuren.</p><p>In rust is maar een deel van de haarvaten open. Bij inspanning gaan ze bijna allemaal open.</p>`,
+  `<p>Tijdens de bleeptest verschuift de bloedverdeling: in rust gaat ongeveer 20% van het hartminuutvolume naar de spieren, aan het eind meer dan 80%. Organen zoals darmen en nieren krijgen dan relatief minder. Daarom is een zware maaltijd vlak voor de test geen goed idee.</p>`,
+  `<p>Duurtraining maakt extra haarvaten rond elke spiervezel aan. Zo wordt de afstand voor zuurstof kleiner. Zie ook <a href="spier.html#6">halte 8, de bloedvaten in de spier</a>.</p>`,
+  `<p class="think">Een getrainde leerling haalt uit hetzelfde bloed meer zuurstof dan een ongetrainde. Hoe zie je dat terug in de kleur van het bloed dat de spier verlaat?</p>`]},
+ {lv:0,name:'Spierpomp en aderkleppen',lat:'Venae profundae · valvulae venosae',state:2,at:()=>W.vein,view:[[8.8,3.6,4.8],[5.0,3.0,-1.8]],focus:()=>[deepV,MUS,RBC0].concat(VVAL.map(v=>v.g)),pick:()=>[deepV].concat(VVAL.map(v=>v.g)),tabs:[
+  `<p>In de aders van de benen is de druk laag. Het bloed moet tegen de zwaartekracht in terug naar het hart. Daarbij helpt de <b>spierpomp</b>: als de kuitspier aanspant, knijpt hij de diepe aders samen.</p><p>De <b>aderkleppen</b> laten het bloed alleen naar boven door. Bij ontspanning vallen ze dicht, zodat het bloed niet terugzakt.</p>`,
+  `<p>Stop je na de bleeptest abrupt en blijf je stil staan, dan valt de spierpomp weg. Het bloed zakt in de benen, het slagvolume en de bloeddruk dalen en je kunt flauwvallen. Bekijk het in stand 3, knop <b>Flauwvallen</b>. Een <b>cooling-down</b> (rustig uitlopen) voorkomt dat.</p><p>Zakt een leerling in elkaar, controleer dan altijd eerst of hij reageert en normaal ademt. Een collaps tijdens het sporten is een hartstilstand tot het tegendeel blijkt.</p>`,
+  `<p>In rust zit ongeveer twee derde van al het bloed in de aders. Ze werken als een voorraadvat dat bij inspanning wordt aangesproken.</p>`,
+  `<p class="think">Waarom zakken soldaten die lang stil in de houding staan soms in elkaar, en waarom wiebelen ze daarom op hun tenen?</p>`]},
+ {lv:1,name:'Rechterboezem en rechterkamer',lat:'Atrium dextrum · ventriculus dexter',at:()=>W.RV,view:[[-4.5,1.2,8.5],[-1.5,0,-.3]],focus:()=>[CHB.RA.tilt,CHB.RV.tilt,SVC1,IVC1,PT1[0],VL.tri.g,VL.pul.g],pick:()=>[CHB.RA.tilt,CHB.RV.tilt],tabs:[
+  `<p>Via de <b>bovenste en onderste holle ader</b> komt zuurstofarm bloed in de <b>rechterboezem</b>. Door de <b>driepuntige klep</b> stroomt het in de <b>rechterkamer</b>, die het via de longslagaderklep naar de longen pompt.</p><p>De rechterkamerwand is dun (3 tot 5 mm). De longen liggen dichtbij en de druk in de kleine bloedsomloop is laag.</p>`,
+  `<p>Bij inspanning komt er veel meer bloed terug uit de spieren. De rechterboezem vult daardoor sneller en de kamerwand wordt verder opgerekt. Een opgerekte hartspier trekt krachtiger samen (de wet van Frank-Starling): zo pompt het hart vanzelf uit wat er binnenkomt.</p>`,
+  `<p>In de wand van de rechterboezem, vlak bij de bovenste holle ader, ligt de sinusknoop: de natuurlijke pacemaker. Zoom in naar <b>Prikkelgeleiding</b> om hem te zien.</p>`,
+  `<p class="think">Waarom is het belangrijk dat rechter- en linkerkamer per slag precies evenveel bloed wegpompen? Wat gebeurt er als rechts ook maar 1 ml per slag meer pompt?</p>`]},
+ {lv:1,name:'Linkerkamer en hartspier',lat:'Ventriculus sinister · myocardium',at:()=>W.LVw,view:[[5,0,8.5],[1.4,-1,-.3]],focus:()=>[CHB.LA.tilt,CHB.LV.tilt,AO1,VL.mit.g,VL.aov.g].concat(PV1),pick:()=>[CHB.LV.tilt,CHB.LA.tilt],tabs:[
+  `<p>Zuurstofrijk bloed uit de longen komt in de <b>linkerboezem</b>, stroomt door de <b>mijterklep</b> in de <b>linkerkamer</b> en wordt via de aortaklep de aorta in gepompt.</p><p>De linkerkamer heeft de dikste wand, ongeveer 1 cm. Kijk naar het snijvlak: die spier moet het bloed door het hele lichaam drukken, tegen een druk van 120 mmHg in.</p>`,
+  `<p>Duurtraining laat de linkerkamer groeien: de holte wordt groter en de wand iets dikker (het ‘sporthart’). Het slagvolume neemt toe, dus is in rust een lagere hartslag genoeg.</p>`,
+  `<p>Hartspiercellen vernieuwen nauwelijks: rond je 25e wordt ongeveer 1% per jaar vervangen (Bergmann e.a., <i>Science</i> 2009). Daarom is schade aan de hartspier, zoals na een infarct, blijvend.</p>`,
+  `<p class="think">Vergelijk in stand 2 de drukbalk met die in rust. Waarom stijgt de druk in de linkerkamer bij inspanning?</p>`]},
+ {lv:1,name:'Hartkleppen',lat:'Valva tricuspidalis · valva mitralis · valva aortae · valva trunci pulmonalis',at:()=>W.mit,view:[[.6,1.8,7],[-.2,.1,0]],focus:VALV,pick:VALV,tabs:[
+  `<p>Vier kleppen zorgen dat het bloed maar één kant op kan. Tussen boezem en kamer zitten de <b>zeilkleppen</b>: rechts de driepuntige klep, links de mijterklep. <b>Peesdraden</b> naar de papillairspieren voorkomen dat ze doorslaan naar de boezem.</p><p>Bij de uitgang van de kamers zitten de <b>halvemaanvormige kleppen</b>: de aortaklep en de longslagaderklep. Hun zakjes vullen zich met bloed en sluiten zo de opening af.</p>`,
+  `<p>De harttonen zijn het geluid van dichtslaande kleppen. <b>Lub</b>: de zeilkleppen sluiten als de kamers aanspannen. <b>Dub</b>: de halvemaanvormige kleppen sluiten aan het eind van het uitpompen. Zet het geluid aan en vergelijk rust met inspanning.</p>`,
+  `<p>Een klep gaat open of dicht door het drukverschil, niet door een spier. Ruis tussen de tonen (een geruis) kan wijzen op een klep die lekt of te nauw is. Een arts luistert daar met een stethoscoop naar.</p>`,
+  `<p class="think">Wat zou er met het slagvolume gebeuren als de mijterklep tijdens het uitpompen een beetje lekt?</p>`]},
+ {lv:2,name:'Sinusknoop',lat:'Nodus sinuatrialis',at:()=>W.SAm,view:[[-4,5.2,8.5],[-1.6,2.4,.5]],focus:()=>[SAm,SYM,VAG,MYP].concat(tracts.map(c=>c.m)),pick:()=>[SAm],tabs:[
+  `<p>De <b>sinusknoop</b> is een klein groepje gespecialiseerde hartspiercellen in de wand van de rechterboezem. Zijn membraanpotentiaal kruipt vanzelf omhoog tot hij vuurt: een ingebouwde <b>pacemaker</b>.</p><p>De prikkel loopt over beide boezems, die daardoor samentrekken. Op het ECG is dat de <b>P-top</b>.</p>`,
+  `<p>Het autonome zenuwstelsel stelt het tempo bij. De <b>nervus vagus</b> (groen, stand 1) remt, de <b>sympathicus</b> (geel, stand 2) versnelt, samen met adrenaline. Daarom stijgt je hartslag al vóór de start van de bleeptest. Zie <a href="zenuw.html">halte 1, het zenuwstelsel</a>.</p>`,
+  `<p>Zonder zenuwinvloed vuurt de sinusknoop ongeveer 100 keer per minuut. De rusthartslag van 60 à 70 komt doordat de nervus vagus continu remt. Een vuistregel voor de maximale hartslag is 220 min je leeftijd, met een spreiding van ruim 10 slagen.</p>`,
+  `<p class="think">Na een harttransplantatie zijn de zenuwen naar het hart doorgesneden. Hoe zou de hartslag van zo iemand reageren op de start van een inspanning?</p>`]},
+ {lv:2,name:'AV-knoop en bundel van His',lat:'Nodus atrioventricularis · fasciculus atrioventricularis',at:()=>W.AV,view:[[2,2.2,8],[-.4,.2,.2]],focus:()=>[AVm,his.m,lbb.m,rbb.m],pick:()=>[AVm,his.m],tabs:[
+  `<p>Tussen boezems en kamers zit een isolerende laag bindweefsel. De enige doorgang voor de prikkel is de <b>AV-knoop</b>. Die geleidt langzaam: de prikkel wacht er ongeveer 0,1 seconde.</p><p>Daarna gaat de prikkel snel door de <b>bundel van His</b> in het tussenschot, die zich splitst in een linker en een rechter bundeltak.</p>`,
+  `<p>Dankzij de vertraging zijn de boezems klaar met vullen voordat de kamers samentrekken. Op het ECG is dat de <b>PQ-tijd</b>. Kijk naar de PQ-tijd achter de hartslag in de HUD: bij inspanning wordt hij korter, zodat de kamers ook bij 180 slagen per minuut nog op tijd gevuld worden.</p>`,
+  `<p>Een normale PQ-tijd is 0,12 tot 0,20 seconde. De AV-knoop beschermt de kamers ook: komen er te veel prikkels uit de boezems, dan laat hij er maar een deel door.</p>`,
+  `<p class="think">Zet de tempoknop op 16× trager. Wat zie je in de boezems en in de kamers gebeuren tijdens de PQ-tijd?</p>`]},
+ {lv:2,name:'Purkinjevezels',lat:'Rami subendocardiales',at:()=>W.Pk,view:[[6,-1.5,9],[1.2,-1.8,0]],focus:()=>[PKL,lbb.m,rbb.m,MYP],pick:()=>[lbb.m,rbb.m],tabs:[
+  `<p>De bundeltakken vertakken zich onder de binnenwand van de kamers in een net van <b>Purkinjevezels</b>. Die geleiden met 2 tot 4 m/s veel sneller dan gewone hartspier.</p><p>Zo wordt de hele kamerwand binnen ongeveer 0,1 seconde geprikkeld, eerst bij de punt en dan richting basis. Op het ECG is dat het <b>QRS-complex</b>.</p>`,
+  `<p>Doordat de punt het eerst samentrekt, wordt het bloed omhoog geperst, naar de uitgangen bij de kleppen. Net als tandpasta die je van onderen uit de tube knijpt.</p>`,
+  `<p>Een ECG meet op de huid spanningen van ongeveer 1 millivolt. In de cel zelf schommelt de spanning met ruim 100 millivolt. Zoom in naar de <b>hartspiercel</b>.</p>`,
+  `<p class="think">Bekijk stand 3. Waarom kan een hart met chaotische golven geen bloed rondpompen, ook al trekken alle cellen nog steeds samen?</p>`]},
+ {lv:3,name:'Hartspiercel',lat:'Myocytus cardiacus',at:()=>W.FC,view:[[2.5,2.2,7.2],[FC.x+FC.L0/2,0,0]],focus:()=>[FG],pick:()=>[FG,nuc3],tabs:[
+  `<p>Een <b>hartspiercel</b> is ongeveer 100 µm lang en 15 µm breed. Hij is gestreept zoals skeletspier, maar <b>vertakt</b>, en heeft één of twee <b>kernen in het midden</b> (paars). Skeletspiervezels zijn veel langer en hebben honderden kernen aan de rand.</p><p>Ongeveer een derde van de cel bestaat uit <b>mitochondriën</b> (oranje): het hart werkt bijna volledig aeroob.</p>`,
+  `<p>Kijk naar het membraanpotentiaal. Na de snelle depolarisatie volgt een <b>plateau</b> van ruim 200 ms waarin calcium binnenstroomt. Zolang dat duurt, is de cel onprikkelbaar. Daardoor kunnen prikkels niet optellen tot één lange, aanhoudende samentrekking (<b>tetanus</b>), zoals bij skeletspier wel kan (zie <a href="spier.html#8">halte 8, de motorische eindplaat</a>).</p>`,
+  `<p>Hartspier raakt niet vermoeid zoals skeletspier: hij heeft altijd zuurstof nodig en kan bijna geen zuurstofschuld opbouwen. Daarom is een afgesloten kransslagader zo snel schadelijk.</p>`,
+  `<p class="think">Waarom zou een hart dat in tetanus kan schieten gevaarlijk zijn? Denk aan vullen en pompen.</p>`]},
+ {lv:3,name:'Intercalaire schijf en gap junctions',lat:'Discus intercalatus · nexus',at:()=>W.disc,view:[[1.2,1.4,5.2],[FC.x+FC.L0,0,0]],focus:()=>[GJ,ION].concat(CELL3.map(c=>c.disc)),pick:()=>CELL3.map(c=>c.disc),tabs:[
+  `<p>Hartspiercellen zitten kop aan kop vast via de <b>intercalaire schijven</b> (donker, getand). Daarin zitten twee soorten verbindingen: stevige <b>desmosomen</b> die de cellen bij elkaar houden als ze trekken, en <b>gap junctions</b> (blauw).</p><p>Gap junctions zijn kanaaltjes tussen twee cellen. Ionen glippen er direct doorheen (gele bolletjes), zodat de prikkel van cel naar cel springt.</p>`,
+  `<p>Door de gap junctions werken alle cellen van de boezems samen als één geheel, en alle cellen van de kamers ook: twee <b>functionele syncytia</b>. De bindweefselring ertussen laat de prikkel alleen door via de AV-knoop. Zo trekken eerst de boezems en dan de kamers samen, net als een team dat tegelijk aan een touw trekt.</p>`,
+  `<p>Een gap junction bestaat uit twee halve kanaaltjes (connexonen), elk opgebouwd uit zes eiwitten. Er passen kleine ionen en moleculen door, geen grote eiwitten.</p>`,
+  `<p class="think">Wat gebeurt er met de samenwerking van de cellen als een stuk hartspier na een infarct vervangen is door littekenweefsel zonder gap junctions?</p>`]}];
+
+ // staand scherm: het paneel ligt over de onderste helft, dus mik lager zodat het onderdeel boven het paneel staat
+ const pp=v=>{if(!PORT||!v)return v;const d=Math.hypot(v[0][0]-v[1][0],v[0][1]-v[1][1],v[0][2]-v[1][2]);const dy=-.42*d;return [[v[0][0],v[0][1]+dy,v[0][2]],[v[1][0],v[1][1]+dy,v[1][2]]];};
+ points.forEach(p=>{p.view=pp(p.view);});
+ /* ================= labels ================= */
+ const tags=[
+  {lv:0,cls:'band',txt:'kleine bloedsomloop',at:()=>V(-2.9,6.45,-1.95),show:()=>S.state!==3},
+  {lv:0,cls:'band',txt:'grote bloedsomloop',at:()=>V(2.4,5.15,-2.6),show:()=>S.state!==3},
+  {lv:0,cls:'o2',txt:'O₂ erin · CO₂ eruit',at:()=>V(-5.6,6.55,-2.2)},
+  {lv:0,cls:'co2',txt:'O₂ naar de spier',at:()=>V(5.0,5.85,-2.4),show:()=>S.state===2},
+  {lv:0,cls:'band',txt:'organen',at:()=>V(7.15,3.6,-.3)},
+  {lv:0,cls:'ecgt',txt:()=>P0.mode==='vf'?'♥ VF':'♥ '+Math.round(P0.hr),at:()=>W.run,show:()=>S.state>1},
+  {lv:0,cls:'force',txt:'AED',at:()=>W.aed,show:()=>S.state===3&&P0.scen==='vf'},
+  {lv:1,cls:'co2',txt:PORT?'zuurstofarm in':'zuurstofarm, uit het lichaam',at:()=>V(-1.75,4.1,-.3)},
+  {lv:1,cls:'o2',txt:PORT?'zuurstofrijk in':'zuurstofrijk, uit de longen',at:()=>V(3.3,1.75,-.8)},
+  {lv:1,cls:'co2',txt:'naar de longen',at:()=>V(-2.9,2.95,-.4)},
+  {lv:1,cls:'o2',txt:'naar het lichaam',at:()=>V(1.9,3.6,-.6)},
+  {lv:1,cls:'force',txt:'LUB',at:()=>V(-.3,-3.0,.5),show:()=>P1.mode==='sinus'&&P1.stage===2},
+  {lv:1,cls:'force',txt:'DUB',at:()=>V(-.3,-3.0,.5),show:()=>P1.mode==='sinus'&&P1.stage===4},
+  {lv:2,cls:'nerve',txt:'sympathicus',at:()=>V(-.9,2.25,.5).multiplyScalar(HS2).add(H2c),show:()=>S.state!==3},
+  {lv:2,cls:'ca',txt:'nervus vagus',at:()=>V(-1.3,2.15,-.2).multiplyScalar(HS2).add(H2c),show:()=>S.state!==3},
+  {lv:2,cls:'band',txt:'bundeltakken',at:()=>W.LBBt},
+  {lv:3,cls:'ca',txt:'Ca²⁺',at:()=>V(FC.x+FC.len*.7,.35,.5),show:()=>FC.ca>.3&&P3.mode!=='vf'},
+  {lv:3,cls:'atp',txt:'mitochondriën',at:()=>W.mito},
+  {lv:3,cls:'nerve',txt:'gap junctions',at:()=>W.gj},
+  {lv:3,cls:'o2',txt:'haarvat',at:()=>V(-2,1.45,1.05)}];
+
+ /* ================= lagen ================= */
+ const layers=[
+  {name:'Bloedcellen',lv:0,objs:()=>[RBC0]},
+  {name:'Bloedvaten',lv:0,objs:()=>VES0.concat([deepV])},
+  {name:'Longen en organen',lv:0,objs:()=>[LUNG,MUS,orgG,CAPM]},
+  {name:'Bloedstroom',lv:1,objs:()=>[RBC1]},
+  {name:'Kleppen',lv:1,objs:VALV},
+  {name:'Grote vaten',lv:1,objs:()=>[AO1,SVC1,IVC1].concat(PT1,PV1)},
+  {name:'Hartwand',lv:2,objs:()=>[HM2.vent,HM2.atr].concat(Object.values(HM2.ves).flat())},
+  {name:'Geleiding',lv:2,objs:()=>[SAm,AVm,PKL,IMP].concat(CT.map(c=>c.m))},
+  {name:'Golf',lv:2,objs:()=>[MYP]},
+  {name:'Celvlies',lv:3,objs:()=>[fShell]},
+  {name:'Mitochondriën',lv:3,objs:()=>[MITO3]},
+  {name:'Haarvaten',lv:3,objs:()=>CAP3.concat([RBC3])}];
+
+ /* ================= speurtocht ================= */
+ const quiz=[
+  {t:'R',type:'find',lv:1,state:1,view:[[2.2,.9,18.5],[0,-.4,0]],q:'Klik op de <b>ventriculus sinister</b>.',opts:[()=>W.RV,()=>W.LA,()=>W.LV,()=>W.RA],ok:2,
+   fb:['Dat is de ventriculus dexter, de rechterkamer: dunne wand, hij pompt naar de longen.','Dat is het atrium sinistrum, de linkerboezem. Die vangt het bloed uit de longen op.','Goed! De ventriculus sinister is de linkerkamer, met een wand van ongeveer 1 cm. Hij pompt het bloed door het hele lichaam.','Dat is het atrium dextrum, de rechterboezem, waar de holle aders uitkomen.']},
+  {t:'R',type:'find',lv:0,state:1,view:[[1,8.6,12.5],[-1.6,4.6,-2.2]],q:'Klik op het bloedvat dat <b>zuurstofrijk</b> bloed van de longen naar het hart brengt.',opts:[()=>W.pa,()=>W.aoD,()=>W.ivc,()=>W.pv],ok:3,
+   fb:['Dat is de truncus pulmonalis, de longslagader. Die brengt zuurstofarm bloed van het hart náár de longen.','Dat is de aorta. Die vervoert wel zuurstofrijk bloed, maar van het hart naar het lichaam.','Dat is de vena cava inferior, de onderste holle ader: zuurstofarm bloed uit het lichaam.','Goed! De venae pulmonales, de longaders, brengen zuurstofrijk bloed naar de linkerboezem. Een ader die rood bloed vervoert: ader zegt iets over de richting, niet over de zuurstof.']},
+  {t:'T1',type:'mc',lv:2,state:1,q:'Zet het tempo op <b>8× trager</b> en kijk naar de gele golf. In welke volgorde loopt de prikkel door het hart?',opts:['Sinusknoop, boezems, AV-knoop, bundel van His, Purkinjevezels','AV-knoop, sinusknoop, boezems, Purkinjevezels, bundel van His','Sinusknoop, bundel van His, AV-knoop, boezems, Purkinjevezels','Purkinjevezels, bundel van His, AV-knoop, sinusknoop, boezems'],ok:0,
+   ex:'Het startsein komt uit de sinusknoop in de rechterboezem. De golf loopt over beide boezems (P-top). In de AV-knoop wacht de prikkel ongeveer 0,1 s, daarna gaat hij snel via de bundel van His en de Purkinjevezels door de kamers (QRS).',
+   why:[null,'De AV-knoop vuurt niet als eerste: hij wacht juist op de prikkel uit de boezems. Kijk waar de golf begint.','De bundel van His ligt in het tussenschot van de kamers. De prikkel moet eerst door de AV-knoop om daar te komen.','Dit is precies omgekeerd. De Purkinjevezels in de kamerwand zijn het eindstation.']},
+  {t:'T1',type:'mc',lv:3,state:1,q:'Kijk naar het membraanpotentiaal van de hartspiercel. Waarom kan hartspier niet in een aanhoudende samentrekking (tetanus) schieten, zoals skeletspier wel kan?',opts:['Omdat hartspiercellen geen calcium gebruiken','Omdat het lange plateau de cel onprikkelbaar houdt tot hij bijna ontspannen is','Omdat de nervus vagus elke cel afremt','Omdat hartspiercellen geen myosine hebben'],ok:1,
+   ex:'Tijdens het plateau en het grootste deel van de repolarisatie kan geen nieuwe prikkel komen. Prikkels kunnen dus niet optellen: een nieuwe samentrekking kan pas als de vorige bijna voorbij is, en de kamer kan tussendoor weer vullen.',
+   why:['Juist calcium zet de samentrekking aan; kijk naar de groene gloed tijdens het plateau.',null,'De vagus remt de sinusknoop, niet de samentrekking van elke cel.','Hartspier is gestreept: actine en myosine zijn er gewoon.']},
+  {t:'T2',type:'mc',lv:0,state:2,q:'Aan het eind van de bleeptest slaat het hart van een student 190 keer per minuut, met een slagvolume van 120 ml. Hoe groot is het hartminuutvolume ongeveer?',opts:['2,3 L/min','5 L/min','23 L/min','230 L/min'],ok:2,
+   ex:'190 × 120 ml = 22.800 ml, dus bijna 23 liter per minuut. Dat is ruim vier keer zoveel als in rust.',
+   why:['Reken de milliliters goed om: 1000 ml is 1 liter.','Dat is ongeveer het hartminuutvolume in rust.',null,'Dat is tien keer te veel: 22.800 ml is geen 228 liter.']},
+  // deze opdracht hoort bij het scenario Flauwvallen: kies dat zelf, ook als de hartstilstand al loopt
+  {t:'T2',type:'mc',lv:0,get state(){if(P0.scen!=='faint'){P0.scen='faint';if(S.state===3&&S.lvl===0)K.setState(3);}return 3;},q:'Een leerling stopt na de laatste trap abrupt, blijft stilstaan en valt flauw (stand 3, Flauwvallen). Wat is de belangrijkste oorzaak?',opts:['Het hart raakt uitgeput en stopt even','Er zit te weinig zuurstof in de longen','Het bloed is te zuur geworden door melkzuur','De spierpomp valt weg, er komt minder bloed terug en de hersenen krijgen te weinig'],ok:3,
+   ex:'Zonder spierpomp zakt het bloed in de verwijde vaten van de benen. Het slagvolume en de bloeddruk dalen, terwijl de spiervaten nog wijd openstaan. Uitlopen houdt de spierpomp aan het werk. Let op: controleer bij iemand die in elkaar zakt altijd eerst of hij reageert en normaal ademt.',
+   why:['Het hart blijft gewoon kloppen, zelfs snel. Het krijgt alleen te weinig bloed aangevoerd.','De longen blijven goed werken; het probleem zit in de terugstroom van het bloed.','Verzuring maakt je moe, maar laat je niet flauwvallen.',null]},
+  {t:'T2',type:'mc',lv:2,state:3,q:'Bekijk stand 3 op het niveau <b>Prikkelgeleiding</b>. Waarom pompt een fibrillerend hart geen bloed, en wat doet de AED-schok?',opts:['De cellen trekken helemaal niet meer samen; de schok laadt ze weer op met nieuwe energie.','Golven cirkelen rond, zodat de kamer niet als geheel samentrekt; de schok prikkelt alle cellen tegelijk.','De kleppen zijn door de chaos kapotgegaan; de schok zorgt dat ze weer goed sluiten.','Het hart klopt veel te langzaam om bloed te pompen; de schok zet het weer op tempo.'],ok:1,
+   ex:'Bij fibrilleren trekken stukjes kamerwand op verschillende momenten samen. Er ontstaat geen druk. De schok zet alle cellen tegelijk in dezelfde toestand; daarna kan het normale ritme vanuit de sinusknoop terugkomen.',
+   why:['De cellen trekken juist heel vaak samen, maar niet tegelijk. Een AED ‘laadt’ geen cellen op.',null,'De kleppen zijn heel, ze fladderen alleen mee omdat er geen drukverschil is.','Het tegendeel: de golven gaan juist veel te snel, 300 tot 400 keer per minuut.']},
+  {t:'I',type:'open',lv:0,state:2,q:'Je neemt als docent LO de bleeptest af bij een klas. Leg uit wat het hart en de bloedsomloop van een leerling doen tussen trap 1 en het einde van de test. Beschrijf daarna drie afspraken die je vooraf maakt voor de veiligheid, en leg bij elke afspraak uit waarom.',
+   model:'<p><b>Hart en bloedsomloop</b>: de hartslag stijgt van ongeveer 65 naar bijna het maximum (vuistregel 220 min leeftijd). Het slagvolume stijgt eerst van 70 naar ongeveer 120 ml en vlakt dan af. Het hartminuutvolume gaat van 5 naar 20 à 25 L/min. De sympathicus versnelt de sinusknoop en verkort de AV-vertraging. Het bloed wordt verdeeld naar de werkende spieren (van ongeveer 20% naar meer dan 80%), en de spierpomp stuwt het via de aderkleppen terug.</p><p><b>Afspraken</b>: (1) een <b>cooling-down</b>: na het uitvallen rustig uitlopen, zodat de spierpomp blijft werken en niemand flauwvalt; (2) weten waar de <b>AED</b> hangt en wie hem haalt, omdat elke minuut zonder schok de overlevingskans bij een hartstilstand verkleint; (3) wie <b>112 belt</b> en wie <b>reanimeert</b> (BHV-afspraken). Zakt iemand in elkaar, dan controleer je eerst of hij reageert en normaal ademt; zo niet, dan behandel je het als een hartstilstand. Leerlingen die zich ziek voelen of klachten krijgen, laat je niet doorgaan.</p>'}];
+ quiz.forEach(q=>{if(q.view)q.view=pp(q.view);});
+ quiz[7].view=V0;// de slotvraag gaat over de bleeptest: terug naar het overzicht
+ /* ================= de film ================= */
+ const C0={wide:[[2.5,12.5,21.5],[0,2.6,.6]],heart:[[3.0,6.0,6.4],[0,4.3,-1.6]],lung:[[-2.4,6.9,7.2],[-4.4,4.6,-2.2]],body:[[9.6,5.8,6.4],[5.6,3.2,-1.4]],calf:[[8.8,3.6,4.8],[5.0,3.0,-1.8]],run:[[1.5,3.6,12],[0,1.2,4.2]],runVF:[[3.8,3.4,9.8],[1.2,.7,4.2]],runF:[[8.6,3.2,10.2],[6.0,.7,4.2]]};
+ const C1={wide:[[2.2,.9,18.5],[0,-.4,0]],valves:[[.6,1.8,8],[-.2,.1,0]],left:[[5,0,9.5],[1.2,-.7,-.2]]};
+ const C2={wide:[[4.2,1.8,25.5],[0,-.5,0]],top:[[-3.4,5,9.5],[-1.4,2,.4]],vent:[[6,-1.5,10],[.9,-2,0]]};
+ const C3={wide:[[4.0,3.4,15.2],[.2,-.45,-.9]],close:[[2.6,2,7.4],[FC.x+FC.L0/2,0,0]]};
+ const F=K.FILM;
+ const free=()=>{FH.t=null;};
+ const scenes=[
+  {chap:'',lv:0,st:2,view:C0.wide,setup(){free();P0.auto=true;P0.trap=1;},title:['Hoe je hart de bleeptest volhoudt','Van bloedsomloop tot hartspiercel · drie keer inzoomen'],lines:[
+   {t:'Twintig meter heen, twintig meter terug. Bij elke piep moet je over de lijn zijn.'},
+   {t:'Elke trap gaat het een halve kilometer per uur sneller.'},
+   {t:'Maar wat doet je hart ondertussen? We zoomen in, van de bloedsomloop tot één hartspiercel.',do:()=>{F.title=null;}}]},
+  {chap:'1 · Twee kringlopen',lv:0,st:1,view:C0.wide,setup:free,lines:[
+   {t:'Je hart is eigenlijk twee pompen naast elkaar.',cam:C0.heart},
+   {t:'De rechterhelft pompt zuurstofarm bloed, hier blauw, naar de longen. Dat is de kleine bloedsomloop.',cam:C0.lung},
+   {t:'In de longen neemt het bloed zuurstof op en wordt het rood. Daarna stroomt het terug naar de linkerhelft van het hart.'},
+   {t:'De linkerhelft pompt het via de aorta naar de rest van het lichaam: de grote bloedsomloop.',cam:C0.body},
+   {t:'In rust is dat ongeveer vijf liter per minuut: zeventig milliliter per slag, vijfenzestig keer per minuut.',cam:C0.wide}]},
+  {chap:'2 · De bleeptest',lv:0,st:2,view:C0.run,setup(){free();P0.auto=false;P0.trap=1;},lines:[
+   {t:'De test begint. De hartslag schiet omhoog, en ook het slagvolume stijgt.',do:()=>{P0.trap=2;}},
+   {t:'Vanaf ongeveer de helft van je maximum vlakt het slagvolume af. Daarna komt de extra pompkracht vooral uit de hartslag.',do:()=>{P0.trap=6;},cam:C0.wide},
+   {t:'Aan het eind pompt het hart twintig tot vijfentwintig liter per minuut.',do:()=>{P0.trap=10;}},
+   {t:'En het bloed wordt anders verdeeld: ongeveer vier vijfde gaat nu naar de werkende spieren.',cam:C0.body},
+   {t:'De kuitspier helpt mee. Bij elke pas knijpt hij de diepe ader samen, en de aderkleppen laten het bloed alleen naar boven door.',cam:C0.calf}]},
+  {chap:'3 · Kamers en kleppen',lv:1,st:1,view:C1.wide,setup(){free();P1.ts=1;},lines:[
+   {t:'Zoom in op het hart zelf. We hebben het opengesneden.'},
+   {t:'Boven liggen de twee boezems, onder de twee kamers. De linkerkamer heeft de dikste wand: hij bedient het hele lichaam.',cam:C1.left},
+   {t:'Tussen boezem en kamer zitten de zeilkleppen. Peesdraden houden ze op hun plek.',cam:C1.valves,do:()=>{P1.ts=4;}},
+   {t:'Als de kamers samentrekken, slaan de zeilkleppen dicht. Dat is de eerste harttoon: lub.'},
+   {t:'Aan het eind van het uitpompen slaan de halvemaanvormige kleppen dicht: dub.',cam:C1.wide,do:()=>{P1.ts=1;}}]},
+  {chap:'4 · Bij inspanning',lv:1,st:2,view:C1.wide,setup(){free();P1.setHR=170;P1.ts=1;},lines:[
+   {t:'Bij inspanning gaat alles veel sneller.'},
+   {t:'Vooral de vulfase wordt korter: van ruim een halve seconde naar ongeveer een tiende. Het uitpompen wordt maar een beetje korter.',cam:C1.valves},
+   {t:'Daarom stijgt het slagvolume bij een heel hoge hartslag niet verder.',cam:C1.wide}]},
+  {chap:'5 · De elektrische prikkel',lv:2,st:1,view:C2.wide,setup(){free();P2.ts=8;},lines:[
+   {t:'Wie geeft het startsein? Een klein groepje cellen in de rechterboezem: de sinusknoop.',cam:C2.top},
+   {t:'De prikkel loopt over de boezems. Op het ECG, rechtsboven, zie je dat als de P-top.'},
+   {t:'In de AV-knoop wacht de prikkel even, zodat de boezems eerst de kamers kunnen vullen.',cam:C2.wide},
+   {t:'Daarna jagen de bundel van His en de Purkinjevezels de prikkel door de kamers. Dat is het QRS-complex.',cam:C2.vent},
+   {t:'Bij inspanning versnelt de sympathicus de sinusknoop.',do:()=>K.setState(2),cam:C2.wide}]},
+  {chap:'6 · De hartspiercel',lv:3,st:1,view:C3.wide,setup(){free();P3.ts=3;},lines:[
+   {t:'Nog verder in: hartspiercellen. Ze zijn vertakt en zitten kop aan kop aan elkaar vast.'},
+   {t:'In die verbindingen, de intercalaire schijven, zitten gap junctions: kanaaltjes waardoor de prikkel van cel naar cel springt.',cam:C3.close},
+   {t:'Zo trekken alle cellen van een kamer kort na elkaar samen, als één geheel.'},
+   {t:'De prikkel duurt lang: een plateau van ruim tweehonderd milliseconden. Daardoor kan de hartspier niet blijven aanspannen: na elke slag moet hij eerst ontspannen.',cam:C3.wide}]},
+  {chap:'7 · Als het ritme ontspoort',lv:2,st:3,view:C2.wide,setup(){free();P2.ts=8;},lines:[
+   {t:'Heel soms gaat het mis. Bij ventrikelfibrilleren draaien cirkelende golven rond over de kamers.',min:4.5,do:hold(2,8)},
+   {t:'Elke vezel trekt op een eigen moment samen. De kamers trillen, maar pompen niet.',min:4.5,cam:C2.vent,do:hold(2,8.6)},
+   {t:'Een AED geeft een schok die alle cellen tegelijk prikkelt. Daarna kan de sinusknoop het ritme weer overnemen.',min:5,cam:C2.wide,do:jump(2,8.75)}]},
+  {chap:'8 · Bellen, reanimeren, AED',lv:0,st:3,view:C0.runVF,steps:{names:['Herken','112','Drukken','AED','Doorgaan'],cur:()=>{const t=S.stT;return t<VF.collapse?-1:t<VF.call?0:t<VF.cpr?1:t<VF.aed?2:t<VF.shock+.4?3:4;}},setup(){P0.scen='vf';K.setState(3);free();},lines:[
+   {t:'In de gymzaal ziet dat er zo uit. Een oefenscenario, zakelijk in beeld gebracht.',min:4,do:hold(0,VF.teaIn)},
+   {t:'Iemand zakt in elkaar, reageert niet en ademt niet normaal. Gaspen is geen normale ademhaling.',min:4.5,do:hold(0,VF.call-.1)},
+   {t:'Bel 112, of laat bellen, en laat iemand de AED halen.',min:3.5,do:hold(0,VF.cpr-.1)},
+   {t:'Begin direct met reanimeren: hard en snel drukken, honderd tot honderdtwintig keer per minuut, en na elke dertig keer twee keer beademen.',min:5,do:hold(0,VF.aed+1.4)},
+   {t:'Als de AED er is, plak je de elektroden op en volg je de aanwijzingen. Tijdens de analyse raakt niemand de leerling aan.',min:4.5,do:hold(0,VF.shock-.15)},
+   {t:'Na de schok ga je meteen door met reanimeren, tot de leerling weer normaal ademt of het ambulanceteam het overneemt.',min:9,do:jump(0,VF.shock-.1,VF.stop+1.2)},
+   {t:'Elke minuut zonder reanimatie en AED daalt de kans op overleven sterk. Weet dus waar de AED in jouw sporthal hangt.',min:4,do:free}]},
+  {chap:'9 · Niet abrupt stoppen',lv:0,st:3,view:C0.runF,steps:{names:['Stoppen','Flauw','Controle','Benen op','Herstel'],cur:()=>{const t=S.stT;return t<FT.stop?-1:t<FT.sink?0:t<FT.arrive?1:t<FT.legs?2:t<FT.sit?3:4;}},setup(){P0.scen='faint';K.setState(3);free();},lines:[
+   {t:'Veel vaker gebeurt iets anders. Na de laatste trap stopt een leerling abrupt en blijft staan.',min:5.5,do:hold(0,FT.stop+1.6)},
+   {t:'Zonder spierpomp zakt het bloed in de benen. Er komt minder terug naar het hart en de bloeddruk daalt.',min:4.5,do:hold(0,FT.sink-.1)},
+   {t:'De hersenen krijgen te weinig bloed, en de leerling zakt in elkaar.',min:3.5,do:hold(0,FT.arrive)},
+   {t:'Zakt iemand in elkaar, controleer dan altijd eerst of hij reageert en normaal ademt. Zo niet: bel 112 en begin met reanimeren.',min:5,do:hold(0,FT.legs-.2)},
+   {t:'Reageert hij en ademt hij normaal, dan is hij flauwgevallen. Plat liggen met de benen omhoog helpt het bloed terug.',min:5,do:hold(0,FT.sit+1)},
+   {t:'Beter nog: voorkom het met een cooling-down. Na de test rustig uitlopen.',min:4,do:free}]},
+  {chap:'Tot slot',lv:0,st:2,view:C0.wide,setup(){free();P0.scen='vf';P0.auto=true;},lines:[
+   {t:'Twee pompen, vier kleppen, één elektrisch startsein en miljarden cellen die samenwerken.'},
+   {t:'Zo houdt je hart de bleeptest vol, trap na trap.'},
+   {t:'',min:5,do:()=>{F.title=['Verken het zelf','De Bewegingsatlas · zoom in, van bleeptest tot hartspiercel'];}}]}];
+
+ return {levels:[L0H,L1H,L2H,L3H],points,tags,quiz,layers,film:{scenes,stop(){FH.t=null;P0.auto=true;P0.scen='vf';P1.setHR=170;P1.ts=1;P2.ts=8;P3.ts=3;fEcg.classList.remove('on');
+   // film gestopt midden in een noodgeval: terug naar rust, zodat het scenario niet opnieuw begint
+   if(S.state===3)K.setState(1);}}};
+ }});
+</script>
+</body>
+</html>

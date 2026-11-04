@@ -1,0 +1,954 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Enkel · Bewegingsatlas</title>
+<meta name="description" content="Halte 10 van De Bewegingsatlas: een 3D-zoomreis door de enkel. Van een landing op de voet van een tegenstander onder de basket, via de buitenbanden, tot het bandweefsel met collageen, fibroblasten en mechanoreceptoren. Met de enkelverstuiking in drie graden.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="atlas3d.css">
+<style>
+#scope{display:block;width:100%;max-width:330px;height:46px;margin-top:7px;border-radius:7px;background:rgba(8,11,13,.6);border:1px solid var(--line)}
+.tg.lig{color:#f5f0e4;border-color:rgba(245,240,228,.45)}
+.tg.axtc{color:#ffc56b;border-color:rgba(255,190,90,.5)}
+.tg.axst{color:#7fe4ff;border-color:rgba(110,220,255,.5)}
+#ctl .sl{display:flex;align-items:center;gap:6px}
+#ctl output{font:11px "JetBrains Mono",monospace;color:var(--muted);min-width:34px}
+@media (max-width:760px){#scope{height:38px}
+ /* speurtocht op een smal scherm: de HUD wijkt en het paneel zakt naar onder, zodat de letters A–D in beeld vrij liggen */
+ body.quiz-on #hud{display:none}
+ body.quiz-on #quiz{bottom:max(8px,env(safe-area-inset-bottom));max-height:46%}}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="atlas3d.js"></script>
+<script>
+/* De Bewegingsatlas · halte 10 · Enkel.
+   Drie zoomniveaus: de enkel onder de basket (20 cm), de buitenbanden (3 cm) en het bandweefsel (0,5 mm).
+   Gebouwd op de gedeelde motor atlas3d.js; zie BOUWEN.md. */
+const CFG={
+ id:'enkel',halte:10,name:'Enkel',
+ docTitle:'Enkel · Bewegingsatlas',
+ aria:'3D-zoomreis door de enkel: van een landing onder de basket tot het bandweefsel',
+ loader:['De enkel wordt opgebouwd…','Van sprong tot collageenvezel'],
+ seed:10,
+ shadow:{left:-12,right:12,top:12,bottom:-7},
+ levels:[
+  {name:'Enkel',scale:'20 cm',sc:'GEWRICHT',title:'De enkel',sub:'<i>Articulatio talocruralis</i> en <i>subtalaris</i> · onder de basket',
+   get view(){return innerWidth<760?[[3.2,6.6,15.5],[-1.6,1.7,0]]:[[7.2,8.2,20.4],[-.5,2.7,-.3]];},zoomTo:[-3.25,1.95,.95],s1:'Rust',s2:'Sprong',s3:'Verzwikken',
+   bg:['#3d352b','#201b16','#0d0b09'],fog:0x201b16,hemi:.62,shadows:true},
+  {name:'Banden',scale:'3 cm',sc:'BANDEN',title:'De buitenbanden',sub:'<i>Lig. talofibulare anterius</i>, <i>calcaneofibulare</i> en <i>talofibulare posterius</i>',
+   view:[[5.6,2.0,20.5],[.8,-.9,0]],zoomTo:[2.2,.25,.7],s1:'Rust',s2:'Rek',s3:'Scheur',
+   bg:['#2f3c45','#172028','#0a0e11'],fog:0x172028,hemi:.5},
+  {name:'Bandweefsel',scale:'0,5 mm',sc:'WEEFSEL',title:'Bandweefsel',sub:'<i>Fibrae collagenosae</i>, fibroblasten en mechanoreceptoren',
+   view:[[2.4,2.8,14.2],[-.3,.1,0]],s1:'Rust',s2:'Rek',s3:'Scheur',
+   bg:['#3f2b36','#21161c','#0d080b'],fog:0x21161c,hemi:.85,drone:true}],
+ help:{title:'Zo werkt de zoomreis',
+  html:`<p>Je begint bij een vergrote <b>rechterenkel</b> op een krachtplaat, onder een basket. Naast het model springt een basketballer om een schot te blokken; de tegenstander staat stil. In stand 2 en 3 beweegt het model mee met de rechterenkel van de speler. In stand 1 stuur je het model zelf met de schuiven; de camera volgt dan de enkel. Daarna zoom je twee keer in:</p>
+  <ul><li><b>Enkel</b> (≈ 20 cm): botten, het bovenste en onderste spronggewricht met hun draaiassen, de banden, de kuitspier en de kuitbeenspieren.</li>
+  <li><b>Banden</b> (≈ 3 cm): de drie buitenbanden ATFL, CFL en PTFL als bundels vezels.</li>
+  <li><b>Bandweefsel</b> (≈ 0,5 mm): collageenvezels met hun golfpatroon (crimp), fibroblasten en mechanoreceptoren met een zenuwvezel die impulsen vuurt.</li></ul>
+  <h3>Drie standen, op elk niveau</h3>
+  <p><b>1 · Rust</b>: verkennen, met schuiven voor de voetstand of de rek. <b>2 · Sprong</b> of <b>Rek</b>: afzet en landing, of de band die gerekt wordt. <b>3 · Verzwikken</b> of <b>Scheur</b>: een inversietrauma, met graad 1–3.</p>
+  <h3>Kleuren</h3>
+  <p>Banden: <b>grijs</b> is slap, <b>wit</b> is gespannen, <b>oranje</b> is zwaar belast (strak) en <b>rood</b> is overrekt. Spiervezels gloeien op als ze aanspannen.</p>
+  <p>De <b>oranje as</b> is de draaias van het bovenste spronggewricht, de <b>blauwe as</b> die van het onderste. De <b>oranje pijl</b> is de grondreactiekracht onder de rechtervoet (× LG = keer je lichaamsgewicht). Op twee voeten draagt elke voet ongeveer een half lichaamsgewicht. De <b>blauwe boog</b> in stand 3 is het moment om de as van het onderste spronggewricht: de draaiende werking die de voet naar binnen kantelt.</p>`,
+  states:'Rust · sprong of rek · verzwikken of scheur',
+  note:'Vereenvoudigd didactisch model: aantallen, kleuren en verhoudingen zijn aangepast om het zichtbaar te maken. De voorvoet en de tenen zijn schematisch. Dit is geen hulpmiddel om een blessure te beoordelen.'},
+ film:{brand:'ENKEL',blurb:'Hoe een enkel verzwikt · ca. 4 minuten · met stem en ondertitels',file:'enkel-uitleg'},
+ quizEnd:'<p>Bespreek de slotvraag met je groep. Probeer daarna in de gymzaal een balanscircuit op één been: eerst met de ogen open, dan dicht, dan op een balanskussen. Merk je het verschil?</p>',
+ build(K){
+const {THREE,V,R,clamp,lerp,smooth,D2R,TAU,mesh,std,glass,glow,add,inst,segMatrix,placeMatrix,ZERO,orient,BAND,UCYL,canvasTex,lathe,boneGeo,W,S}=K;
+const G0=K.groups[0],G1=K.groups[1],G2=K.groups[2];
+const _a=V(0,0,0),_b=V(0,0,0),_d=V(0,0,0),_e=V(0,0,0),_f=V(0,0,0),_g=V(0,0,0),_c=new THREE.Color(),_q=new THREE.Quaternion();
+const AXX=V(1,0,0),AXZ=V(0,0,1);
+let TEMPO=1;
+const fmt=(v,d)=>(+v).toFixed(d===undefined?1:d).replace('.',',');
+const ramp=(x,a,b)=>clamp((x-a)/(b-a),0,1);
+function table(T,u){if(u<=T[0][0])return T[0][1];for(let i=1;i<T.length;i++){if(u<=T[i][0]){const t=(u-T[i-1][0])/(T[i][0]-T[i-1][0]);return lerp(T[i-1][1],T[i][1],t);}}return T[T.length-1][1];}
+function nd(m){m.castShadow=false;return m;}
+
+/* ---------- gedeelde bouwstenen ---------- */
+// afgeronde, licht onregelmatige vorm (superellipsoïde) voor botten en cellen
+function blobGeo(sx,sy,sz,p,nz,seg){seg=seg||30;const g=new THREE.SphereGeometry(1,seg,Math.round(seg*.7));const a=g.attributes.position,e=2/(p||2.5),ph=R()*20,n0=nz===undefined?.03:nz;
+  const f=v=>Math.sign(v)*Math.pow(Math.abs(v),e);
+  for(let i=0;i<a.count;i++){const x=a.getX(i),y=a.getY(i),z=a.getZ(i);const n=1+n0*2*Math.sin(x*4.7+ph)*Math.sin(y*3.9+ph*.6)*Math.sin(z*4.3+ph*1.4);a.setXYZ(i,f(x)*sx*n,f(y)*sy*n,f(z)*sz*n);}
+  g.computeVertexNormals();return g;}
+function blob(sx,sy,sz,mat,pos,parent,o){o=o||{};return mesh(blobGeo(sx,sy,sz,o.p,o.nz,o.seg),mat,pos,o.rot,0,parent);}
+function longBone(a,b,r,mat,parent,k1,k2){_d.subVectors(b,a);const L=_d.length();const m=mesh(boneGeo(L,r,k1===undefined?.7:k1,k2===undefined?.55:k2,16),mat,0,0,0,parent);m.position.copy(a);m.quaternion.setFromUnitVectors(K.AY,_d.normalize());return m;}
+// een buigzame streng (pees, bloedvat, zenuw) uit cilindersegmenten langs een kromme door bewegende punten
+function rope(n,r,mat,parent,geo){const m=inst(geo||UCYL,mat,n);m.castShadow=false;parent.add(m);const cv=new THREE.CatmullRomCurve3([V(0,0,0),V(0,1,0)]);const P=[];for(let i=0;i<=n;i++)P.push(V(0,0,0));
+  const o={m,cv,P,hide:null,set(ctrl){cv.points=ctrl;for(let i=0;i<=n;i++)cv.getPoint(i/n,P[i]);
+    for(let i=0;i<n;i++){if(o.hide&&i>=o.hide[0]&&i<=o.hide[1]){m.setMatrixAt(i,ZERO);continue;}_e.subVectors(P[i+1],P[i]).multiplyScalar(.14);_a.copy(P[i]).sub(_e);_b.copy(P[i+1]).add(_e);m.setMatrixAt(i,segMatrix(_a,_b,r));}
+    m.instanceMatrix.needsUpdate=true;}};return o;}
+function spindle(len,r0,r1,rm,mat,parent,pos){const pts=[];for(let i=0;i<=18;i++){const t=i/18;pts.push([lerp(r0,r1,t)+rm*Math.sin(Math.PI*t),t*len]);}pts.push([.001,len]);return lathe(pts,mat,parent,22,pos);}
+// strekking van de banden (in %) als functie van de voetstand: plantairflexie pf en inversie inv in graden
+// Binnen de normale uitslag (tot ≈ 45° strekken en 30° inversie, zonder gewicht) blijft de rek onder ≈ 5%; pas voorbij ≈ 30–36° inversie loopt hij snel op.
+function strains(pf,inv){const P=Math.max(pf,0),I=Math.max(inv,0);
+  return {atfl:-1.5+.06*pf+.1*inv+.0006*P*I+.35*Math.max(0,inv-30),cfl:-1-.06*pf+.12*inv+.15*Math.max(0,inv-36),ptfl:-1-.14*pf+.05*inv,delt:-1.5-.2*inv+.03*pf};}
+// loft: een organische vorm uit doorsneden langs een as. secs = [[t, c1, c2, r1, r2, p?], …]; bij as 'y' is (c1,c2,r1,r2) = (x,z,rx,rz), bij as 'x' = (y,z,ry,rz).
+// p is de 'hoekigheid' van de doorsnede (2 = ellips, 3 = afgeronde rechthoek). De doorsneden worden vloeiend geïnterpoleerd (Catmull-Rom).
+const WP=V(0,0,0);
+function loftGeo(secs,o){o=o||{};const seg=o.seg||40,sub=o.sub||5,p0=o.p||2.4,nz=o.nz===undefined?.02:o.nz,ax=o.axis||'y',ph=R()*20,vr=o.vrep||.22;
+  const n=secs.length,gs=i=>secs[Math.max(0,Math.min(n-1,i))],cr=(a,b,c,d,t)=>.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t*t+(-a+3*b-3*c+d)*t*t*t);
+  const rows=[];for(let i=0;i<n-1;i++)for(let k=0;k<(i===n-2?sub+1:sub);k++){const t=k/sub,a=gs(i-1),b=gs(i),c=gs(i+1),d=gs(i+2),r=[];for(let q=0;q<6;q++){const f=v=>v[q]===undefined?p0:v[q];r.push(cr(f(a),f(b),f(c),f(d),t));}r[3]=Math.max(.002,r[3]);r[4]=Math.max(.002,r[4]);r[5]=Math.max(1.6,r[5]);if(o.pmax)r[5]=Math.min(o.pmax,r[5]);rows.push(r);}
+  const NR=rows.length,W1=seg+1,pos=[],uv=[],col=[],idx=[];const t0=rows[0][0];
+  rows.forEach((r,ri)=>{const e=2/r[5];for(let j=0;j<=seg;j++){const th=j/seg*TAU,cu=Math.cos(th),sv=Math.sin(th);const u=Math.sign(cu)*Math.pow(Math.abs(cu),e),v=Math.sign(sv)*Math.pow(Math.abs(sv),e);
+    const a1=r[1]+r[3]*u,a2=r[2]+r[4]*v;let x,y,z;if(ax==='y'){x=a1;y=r[0];z=a2;}else{x=r[0];y=a1;z=a2;}
+    const nn=1+nz*(Math.sin(x*3.1+ph)*Math.sin(y*2.7+ph*.6)*Math.sin(z*3.3+ph*1.4)+.4*Math.sin(x*7.3+y*5.1+ph));
+    if(ax==='y'){x=r[1]+(x-r[1])*nn;z=r[2]+(z-r[2])*nn;}else{y=r[1]+(y-r[1])*nn;z=r[2]+(z-r[2])*nn;}
+    if(o.warp){WP.set(x,y,z);o.warp(WP,u,v,r);x=WP.x;y=WP.y;z=WP.z;}
+    pos.push(x,y,z);uv.push(j/seg,(r[0]-t0)*vr);if(o.col){o.col(x,y,z,r,_c);col.push(_c.r,_c.g,_c.b);}}});
+  for(let i=0;i<NR-1;i++)for(let j=0;j<seg;j++){const a=i*W1+j,b=a+W1;idx.push(a,b,a+1,b,b+1,a+1);}
+  [0,NR-1].forEach((ri,k)=>{const r=rows[ri];const c=pos.length/3;if(ax==='y')pos.push(r[1],r[0]+(k?1:-1)*.002,r[2]);else pos.push(r[0]+(k?1:-1)*.002,r[1],r[2]);uv.push(.5,k);if(o.col){o.col(pos[c*3],pos[c*3+1],pos[c*3+2],r,_c);col.push(_c.r,_c.g,_c.b);}
+    for(let j=0;j<seg;j++){const a=ri*W1+j;if(k)idx.push(a,a+1,c);else idx.push(a+1,a,c);}});
+  // zorg dat de driehoeken naar buiten wijzen (teken van het volume)
+  let vol=0;for(let i=0;i<idx.length;i+=3){const A=idx[i]*3,B=idx[i+1]*3,C=idx[i+2]*3;vol+=pos[A]*(pos[B+1]*pos[C+2]-pos[B+2]*pos[C+1])-pos[A+1]*(pos[B]*pos[C+2]-pos[B+2]*pos[C])+pos[A+2]*(pos[B]*pos[C+1]-pos[B+1]*pos[C]);}
+  if(vol<0)for(let i=0;i<idx.length;i+=3){const t=idx[i];idx[i]=idx[i+1];idx[i+1]=t;}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));if(o.col)g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+  const N=g.attributes.normal;for(let i=0;i<NR;i++){const a=i*W1,b=a+seg;_d.set(N.getX(a)+N.getX(b),N.getY(a)+N.getY(b),N.getZ(a)+N.getZ(b)).normalize();N.setXYZ(a,_d.x,_d.y,_d.z);N.setXYZ(b,_d.x,_d.y,_d.z);}
+  return g;}
+function loft(secs,mat,parent,o){return mesh(loftGeo(secs,o),mat,0,0,0,parent);}
+// een bundel gladde vezelstrengen in één geometrie: elke streng is een buis langs een kromme die elk frame wordt bijgewerkt
+function Bundle(nS,Kseg,RS,mat,parent){const W1=RS+1,PR=(Kseg+1)*W1,nV=nS*PR;const pos=new Float32Array(nV*3),nor=new Float32Array(nV*3),col=new Float32Array(nV*3).fill(1),uv=new Float32Array(nV*2),idx=[];
+  for(let s=0;s<nS;s++)for(let j=0;j<=Kseg;j++)for(let r=0;r<=RS;r++){const v=s*PR+j*W1+r;uv[v*2]=r/RS;uv[v*2+1]=j/Kseg;if(j<Kseg&&r<RS){const b=v+W1;idx.push(v,b,v+1,b,b+1,v+1);}}
+  const g=new THREE.BufferGeometry();const aP=new THREE.BufferAttribute(pos,3),aN=new THREE.BufferAttribute(nor,3),aC=new THREE.BufferAttribute(col,3);[aP,aN,aC].forEach(a=>a.setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('position',aP);g.setAttribute('normal',aN);g.setAttribute('color',aC);g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setIndex(idx);
+  const m=new THREE.Mesh(g,mat);m.frustumCulled=false;m.castShadow=false;m.receiveShadow=true;parent.add(m);
+  const T=V(),Nn=V(),Bn=V();
+  return {m,g,K:Kseg,RS,
+   set(s,P,side,rad,colAt){for(let j=0;j<=Kseg;j++){T.subVectors(P[Math.min(Kseg,j+1)],P[Math.max(0,j-1)]);if(T.lengthSq()<1e-12)T.set(0,1,0);T.normalize();Nn.crossVectors(T,side);if(Nn.lengthSq()<1e-6)Nn.crossVectors(T,AXX);Nn.normalize();Bn.crossVectors(T,Nn).normalize();
+     const r=rad(j),c=colAt(j);for(let q=0;q<=RS;q++){const th=q/RS*TAU,cs=Math.cos(th),sn=Math.sin(th);const v=(s*PR+j*W1+q)*3;const nx=Nn.x*cs+Bn.x*sn,ny=Nn.y*cs+Bn.y*sn,nz2=Nn.z*cs+Bn.z*sn;
+      pos[v]=P[j].x+nx*r;pos[v+1]=P[j].y+ny*r;pos[v+2]=P[j].z+nz2*r;nor[v]=nx;nor[v+1]=ny;nor[v+2]=nz2;col[v]=c.r;col[v+1]=c.g;col[v+2]=c.b;}}},
+   done(){aP.needsUpdate=aN.needsUpdate=aC.needsUpdate=true;}};}
+const fibTex=canvasTex(128,32,(x,w,h)=>{x.fillStyle='#ffffff';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=3){x.fillStyle=`rgba(120,105,85,${.08+R()*.2})`;x.fillRect(i,0,1,h);}for(let j=0;j<h;j+=4){x.fillStyle='rgba(255,255,255,.18)';x.fillRect(0,j,w,1);}});
+// radiale kleuring voor bloeduitstorting: donkerrood in de kern, paarsblauw aan de rand (per vertex, naar de kijkrichting 'out')
+function bruiseCol(g,out,seed){const P=g.attributes.position,N=g.attributes.normal,c=new Float32Array(P.count*3);const k1=new THREE.Color(0x160103),k2=new THREE.Color(0x2c0409),k3=new THREE.Color(0x1e1838);
+  for(let i=0;i<P.count;i++){_d.set(N.getX(i),N.getY(i),N.getZ(i));const d=clamp(_d.dot(out),-1,1);const w=.5+.5*d+.12*Math.sin(P.getX(i)*9+seed)*Math.sin(P.getY(i)*7+seed);
+    if(w>.6)_c.copy(k2).lerp(k1,clamp((w-.6)/.4,0,1));else _c.copy(k3).lerp(k2,clamp(w/.6,0,1));c[i*3]=_c.r;c[i*3+1]=_c.g;c[i*3+2]=_c.b;}
+  g.setAttribute('color',new THREE.BufferAttribute(c,3));return g;}
+const TEAR=6.5;
+function ligCol(e,vr,torn,near){if(torn){if(near)_c.setRGB(.6,.12,.09);else _c.setRGB(.82,.5,.44);return _c;}
+  let r,g,b;if(e<0){const t=clamp(-e/3,0,1);r=lerp(.84,.5,t);g=lerp(.83,.52,t);b=lerp(.78,.56,t);}
+  else if(e<4){const t=e/4;r=lerp(.84,1,t);g=lerp(.83,1,t);b=lerp(.78,.96,t);}
+  else if(e<TEAR){const t=(e-4)/(TEAR-4);r=1;g=lerp(1,.56,t);b=lerp(.96,.36,t);}
+  else{const t=clamp((e-TEAR)/3,0,1);r=lerp(1,.92,t);g=lerp(.56,.17,t);b=lerp(.36,.12,t);}
+  return _c.setRGB(r*vr,g*vr,b*vr);}
+function eText(e,torn){return torn?'gescheurd':e<0?'slap':e<4?fmt(e)+'% gespannen':e<TEAR?fmt(e)+'% strak':fmt(e)+'% overrekt';}
+function eCls(e,torn){return torn||e>=TEAR?'bad':e>=4?'ecc':e>=0?'ok':'';}
+function eBg(e,torn){return torn?'#8f2a20':e<0?'#7c828a':e<4?'#e9e4d8':e<TEAR?'#f0a35d':'#e86a5a';}
+function eFrac(e){return clamp((e+3)/14,0,1);}
+function angText(pf){const a=Math.round(Math.abs(pf));return a<2?'neutraal':pf>0?a+'° plantair':a+'° dorsaal';}
+function invText(i){const a=Math.round(Math.abs(i));return a<2?'neutraal':i>0?a+'° inversie':a+'° eversie';}
+const SQ=v=>{K.SND.tone(2300+R()*600,.06,.035*(v||1),'sine',undefined,3400);K.SND.noise(.05,'bandpass',3800,6,.03*(v||1),.004);};
+const THUD=v=>{K.SND.thump(85,.22,.34*(v||1));K.SND.noise(.08,'lowpass',500,.7,.1*(v||1),.003);};
+
+/* ---------- texturen ---------- */
+const boneTex=canvasTex(512,512,(x,w,h)=>{x.fillStyle='#ece0c4';x.fillRect(0,0,w,h);
+  for(let i=0;i<5200;i++){const r=.5+R()*1.8;x.fillStyle=`rgba(${140+R()*60|0},${112+R()*40|0},${76+R()*30|0},${.05+R()*.12})`;x.beginPath();x.arc(R()*w,R()*h,r,0,TAU);x.fill();}
+  for(let i=0;i<900;i++){x.fillStyle=`rgba(255,250,235,${R()*.25})`;x.fillRect(R()*w,R()*h,1+R()*3,1);}
+  x.lineWidth=1.3;for(let k=0;k<16;k++){x.strokeStyle=`rgba(${170+R()*40|0},70,60,${.16+R()*.2})`;let px=R()*w,py=R()*h;x.beginPath();x.moveTo(px,py);for(let s=0;s<14;s++){px+=(R()-.5)*34;py+=(R()-.35)*26;x.lineTo(px,py);}x.stroke();}});
+const capTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#e6d6b4';x.fillRect(0,0,w,h);const g=x.createRadialGradient(128,128,8,128,128,104);g.addColorStop(0,'#a9573a');g.addColorStop(.7,'#c98a5a');g.addColorStop(1,'#e8d9b8');x.fillStyle=g;x.beginPath();x.arc(128,128,104,0,TAU);x.fill();
+  for(let i=0;i<800;i++){x.fillStyle=`rgba(120,50,30,${R()*.35})`;x.beginPath();x.arc(128+(R()-.5)*190,128+(R()-.5)*190,R()*3,0,TAU);x.fill();}x.strokeStyle='#f3ead6';x.lineWidth=20;x.beginPath();x.arc(128,128,118,0,TAU);x.stroke();});
+const muscCapTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#8e2a22';x.fillRect(0,0,w,h);for(let i=0;i<420;i++){x.fillStyle=`rgba(${190+R()*40|0},${70+R()*30|0},${55+R()*20|0},.9)`;x.beginPath();x.arc(R()*w,R()*h,4+R()*5,0,TAU);x.fill();}x.strokeStyle='rgba(240,220,200,.5)';x.lineWidth=2;for(let i=0;i<14;i++){x.beginPath();x.moveTo(R()*w,R()*h);x.lineTo(R()*w,R()*h);x.stroke();}});
+const BONE0=std(0xffffff,{map:boneTex,roughness:.55});
+const capMat=std(0xffffff,{map:capTex,roughness:.7});
+const CART0=std(0xbfe0ea,{roughness:.22,transparent:true,opacity:.9});
+const TENDM=std(0xf1ece0,{roughness:.33});
+
+/* =====================================================================
+   NIVEAU 0 · De enkel onder de basket
+   ===================================================================== */
+// sportvloer met basketbalbelijning; de basket staat achter de spelers
+function courtTex(){return canvasTex(1024,672,(x,w,h)=>{
+  x.fillStyle='#cf9d62';x.fillRect(0,0,w,h);
+  for(let j=0;j<h;j+=24){const sh=(R()-.5)*20;x.fillStyle=`rgb(${207+sh|0},${157+sh|0},${98+sh*.6|0})`;x.fillRect(0,j,w,23);x.fillStyle='rgba(70,40,15,.22)';x.fillRect(0,j+23,w,1);let xx=R()*120;while(xx<w){x.fillRect(xx,j,1,23);xx+=140+R()*240;}}
+  for(let i=0;i<3200;i++){x.fillStyle=`rgba(90,55,20,${R()*.07})`;x.fillRect(R()*w,R()*h,R()*46,1);}
+  const hx=716,hy=130;
+  x.fillStyle='rgba(160,52,34,.82)';x.fillRect(hx-160,24,320,392);
+  x.lineWidth=6;x.strokeStyle='#f3efe6';
+  x.beginPath();x.arc(hx,hy,457,-.235,Math.PI+.235);x.stroke();
+  x.strokeRect(hx-160,24,320,392);
+  x.beginPath();x.arc(hx,416,122,0,Math.PI);x.stroke();
+  x.setLineDash([22,18]);x.beginPath();x.arc(hx,416,122,Math.PI,TAU);x.stroke();x.setLineDash([]);
+  x.beginPath();x.arc(hx,hy,74,0,Math.PI);x.stroke();
+  [130,200,270,340].forEach(y=>{x.fillStyle='#f3efe6';x.fillRect(hx-176,y,16,6);x.fillRect(hx+160,y,16,6);});
+  x.strokeRect(24,24,w-48,h-48);
+  x.globalAlpha=.9;x.fillStyle='#f3efe6';x.fillRect(24,h-30,w-48,6);x.globalAlpha=1;});}
+K.base({parent:G0,floor:courtTex(),plaque:['ARTICULATIO TALOCRURALIS','de rechterenkel · bij de sprong en de landing']});
+
+// ---- het enkelmodel: lokaal assenstelsel x = mediaal (binnenkant), y = omhoog, z = naar de tenen ----
+const MX=-3.55,MZ=.25,PLATE=.62,TOPY=4.2;
+const MODEL=new THREE.Group();MODEL.position.set(MX,0,MZ);MODEL.rotation.y=Math.PI/2;G0.add(MODEL);
+const AK=new THREE.Group();MODEL.add(AK);
+function toW(p,o){return o.set(MX+p.z,p.y+AK.position.y,MZ-p.x);}   // AK-coördinaten naar wereld
+function toWf(p,o){return o.set(MX+p.z,p.y,MZ-p.x);}               // modelkader naar wereld
+// twee draaiassen: bovenste spronggewricht (TC) en onderste spronggewricht (ST)
+const TC0=V(-1.3,-.74,-.16),TC1=V(1.15,-.5,.1),TCP=V(-.08,-.62,-.03),TCD=V().subVectors(TC1,TC0).normalize();
+const ST0=V(-.42,-1.86,-1.06),ST1=V(.18,-.64,.8),STP=ST0.clone(),STD=V().subVectors(ST1,ST0).normalize();
+const tcG=new THREE.Group();tcG.position.copy(TCP);AK.add(tcG);const tcIn=new THREE.Group();tcIn.position.copy(TCP).negate();tcG.add(tcIn);
+const stG=new THREE.Group();stG.position.copy(STP);tcIn.add(stG);const stIn=new THREE.Group();stIn.position.copy(STP).negate();stG.add(stIn);
+const qTC=new THREE.Quaternion(),qST=new THREE.Quaternion();
+function setFoot(pf,inv){qTC.setFromAxisAngle(TCD,pf*D2R);qST.setFromAxisAngle(STD,inv*.62*D2R);_q.setFromAxisAngle(AXZ,inv*.38*D2R);qST.multiply(_q);tcG.quaternion.copy(qTC);stG.quaternion.copy(qST);}
+function xTC(p,o){return o.copy(p).sub(TCP).applyQuaternion(qTC).add(TCP);}
+function xST(p,o){o.copy(p).sub(STP).applyQuaternion(qST).add(STP);return xTC(o,o);}
+function xB(bone,p,o){return bone==='tc'?xTC(p,o):bone==='st'?xST(p,o):o.copy(p);}
+
+// scheenbeen en kuitbeen (vast aan de houder)
+const tib=lathe([[.05,-.06],[.5,-.05],[.7,.04],[.74,.28],[.67,.66],[.57,1.15],[.5,1.8],[.47,2.7],[.46,3.6],[.465,TOPY],[.001,TOPY+.005]],BONE0,AK,40,[.22,0,.05]);tib.scale.set(1.12,1,.86);
+const medMal=blob(.2,.42,.33,BONE0,[.84,-.24,.06],AK,{p:2.3});
+const tibCap=mesh(new THREE.CircleGeometry(.465,40),capMat,[.22,TOPY+.012,.05],[-Math.PI/2,0,0],[1.12,.86,1],AK);
+const fib=lathe([[.05,.12],[.15,.18],[.16,.9],[.17,2.4],[.19,TOPY],[.001,TOPY+.005]],BONE0,AK,24,[-.8,0,-.2]);
+const latMal=blob(.25,.58,.36,BONE0,[-.85,-.38,-.12],AK,{p:2.3});
+const latMal2=blob(.2,.42,.25,BONE0,[-.82,.26,-.17],AK,{p:2.2});
+const fibCap=mesh(new THREE.CircleGeometry(.19,24),capMat,[-.8,TOPY+.012,-.2],[-Math.PI/2,0,0],0,AK);
+nd(mesh(new THREE.PlaneGeometry(.5,TOPY-.7),glass(0xe8dcc8,.2),[-.36,(TOPY+.7)/2,-.12],0,0,AK));
+orient(mesh(BAND,TENDM,0,0,0,AK),V(-.66,.1,.1),V(-.2,.34,.44),.06,.025);
+// sprongbeen (draait in het bovenste spronggewricht)
+function taperCyl(r,len,seg,open,t0,tl,tap){const g=new THREE.CylinderGeometry(r,r,len,seg,1,open,t0,tl);g.rotateZ(Math.PI/2);const a=g.attributes.position;for(let i=0;i<a.count;i++){a.setX(i,a.getX(i)*(1+tap*a.getZ(i)/r));}g.computeVertexNormals();return g;}
+const talus=[mesh(taperCyl(.5,.96,40,false,0,TAU,.17),BONE0,[-.02,-.5,0],0,0,tcIn),
+  blob(.46,.3,.56,BONE0,[-.02,-.8,-.05],tcIn),blob(.3,.26,.38,BONE0,[.12,-.82,.66],tcIn),blob(.28,.26,.24,BONE0,[.22,-.88,.98],tcIn),
+  blob(.15,.14,.2,BONE0,[-.46,-.92,.04],tcIn),blob(.17,.13,.15,BONE0,[-.14,-.93,-.62],tcIn)];
+const talCart=nd(mesh(taperCyl(.518,.98,40,true,.32,2.5,.17),CART0,[-.02,-.5,0],0,0,tcIn));
+// hielbeen en voorvoet (draaien mee in het onderste spronggewricht)
+const calc=[blob(.48,.46,1.2,BONE0,[-.12,-1.42,-.42],stIn,{p:2.5,nz:.04}),blob(.42,.5,.38,BONE0,[-.1,-1.4,-1.45],stIn),blob(.34,.3,.36,BONE0,[-.34,-1.36,.72],stIn),
+  blob(.26,.1,.3,BONE0,[.36,-1.1,-.08],stIn),blob(.08,.08,.14,BONE0,[-.6,-1.5,.12],stIn)];
+const TOES=[];const fore=[blob(.4,.28,.17,BONE0,[.3,-.98,1.3],stIn),blob(.28,.27,.33,BONE0,[-.42,-1.4,1.36],stIn),
+  blob(.18,.26,.22,BONE0,[.5,-1.07,1.68],stIn),blob(.13,.24,.2,BONE0,[.18,-1.12,1.7],stIn),blob(.13,.22,.2,BONE0,[-.08,-1.18,1.68],stIn)];
+[[[.52,-1.18,1.92],[.62,-1.78,3.75],.14],[[.22,-1.24,1.95],[.28,-1.8,4.0],.1],[[-.03,-1.3,1.92],[-.02,-1.8,3.9],.095],[[-.26,-1.38,1.75],[-.32,-1.8,3.7],.09],[[-.5,-1.5,1.6],[-.66,-1.8,3.45],.095]].forEach((m,i)=>{
+  const a=V(...m[0]),b=V(...m[1]);fore.push(longBone(a,b,m[2],BONE0,stIn,.75,.5));
+  _d.subVectors(b,a).normalize();const p1=b.clone().addScaledVector(_d,.05);const L1=i===0?.5:.36;const t1=p1.clone().add(V(_d.x*L1,-.06,_d.z*L1));
+  const t2=t1.clone().add(V(_d.x*(i===0?.36:.24),-.03,_d.z*(i===0?.36:.24)));
+  // de teen buigt op in het grondgewricht als hij de plaat raakt
+  const tg=new THREE.Group();tg.position.copy(b);stIn.add(tg);const ti=new THREE.Group();ti.position.copy(b).negate();tg.add(ti);
+  fore.push(mesh(new THREE.SphereGeometry(m[2]*1.05,16,12),BONE0,[b.x,b.y,b.z],0,[1,.9,1.1],stIn));
+  fore.push(longBone(p1,t1,m[2]*.72,BONE0,ti,.75,.62),longBone(t1.clone().addScaledVector(_d,.015),t2,m[2]*.6,BONE0,ti,.6,.5),mesh(new THREE.SphereGeometry(m[2]*.62,12,10),BONE0,[t1.x,t1.y,t1.z],0,0,ti));TOES.push({g:tg,b:b.clone(),tip:t2.clone().add(V(0,-m[2]*.5,0)),a:0});});
+fore.push(blob(.12,.1,.14,BONE0,[-.6,-1.55,1.62],stIn));
+// contactpunten van de voetzool (in stIn-coördinaten) voor de krachtplaat
+// eerst raken de hiel en de middenvoetskopjes de plaat; het drukpunt is gewogen (hiel .55, kopjes .4, de rest .05)
+const SUP=[[-.1,-1.92,-1.45],[-.38,-1.9,-1.3],[.16,-1.9,-1.3],[-.12,-1.91,-.9],[-.62,-1.86,1.55],[-.56,-1.84,.6],[.62,-1.915,3.75],[.28,-1.915,4.0],[-.02,-1.915,3.9],[-.32,-1.915,3.7],[-.66,-1.915,3.45],[.58,-1.66,2.3]].map(p=>V(...p));
+const SUPWT=[.1375,.1375,.1375,.1375,.0167,.0167,.08,.08,.08,.08,.08,.0167];
+const SUPW=SUP.map(()=>V(0,0,0));
+
+// houder: voet, krachtplaat, rail met slede en een wijzerplaat voor de grondreactiekracht
+const plateTex=canvasTex(620,820,(x,w,h)=>{x.fillStyle='#8d959b';x.fillRect(0,0,w,h);for(let i=0;i<2500;i++){x.fillStyle=`rgba(255,255,255,${R()*.06})`;x.fillRect(R()*w,R()*h,R()*20,1);}
+  x.strokeStyle='rgba(30,36,40,.45)';x.lineWidth=2;for(let i=32;i<w;i+=32){x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke();}for(let j=32;j<h;j+=32){x.beginPath();x.moveTo(0,j);x.lineTo(w,j);x.stroke();}
+  x.strokeStyle='#e0782f';x.lineWidth=6;x.strokeRect(8,8,w-16,h-16);
+  x.save();x.translate(w-30,h*.55);x.rotate(Math.PI/2);x.fillStyle='rgba(20,24,28,.78)';x.font='700 30px "JetBrains Mono",monospace';x.textAlign='center';x.fillText('KRACHTPLAAT',0,0);x.restore();});
+plateTex.wrapS=plateTex.wrapT=THREE.ClampToEdgeWrapping;
+const fr=new THREE.Group();MODEL.add(fr);
+const M=K.ENV;
+mesh(new THREE.BoxGeometry(6.2,.2,8.9),M.dark,[1.4,.18,1.15],0,0,fr);
+mesh(new THREE.BoxGeometry(5.6,.34,7.4),[M.metal,M.metal,std(0xffffff,{map:plateTex,roughness:.45,metalness:.3}),M.metal,M.metal,M.metal],[1.4,.45,1.55],0,0,fr);
+mesh(new THREE.BoxGeometry(.26,9.6,.26),M.metal,[0,.28+4.8,-3.05],0,0,fr);
+mesh(new THREE.BoxGeometry(.06,9.1,.08),M.dark,[0,5.15,-2.9],0,0,fr);
+mesh(new THREE.BoxGeometry(.5,.06,.5),M.dark,[0,9.9,-3.05],0,0,fr);
+// slede met arm en twee pennen in de doorgezaagde botten (beweegt mee met het model)
+mesh(new THREE.BoxGeometry(.52,.62,.42),M.metal,[0,TOPY+.5,-2.86],0,0,AK);
+mesh(new THREE.BoxGeometry(.16,.16,3.0),M.metal,[0,TOPY+.62,-1.45],0,0,AK);
+mesh(new THREE.BoxGeometry(1.3,.14,.16),M.metal,[-.29,TOPY+.62,.05],0,0,AK);
+mesh(new THREE.CylinderGeometry(.06,.06,.62,12),M.dark,[.22,TOPY+.3,.05],0,0,AK);
+mesh(new THREE.CylinderGeometry(.045,.045,.62,10),M.dark,[-.8,TOPY+.3,-.2],0,0,AK);
+// wijzerplaat
+const dialTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#f4efe4';x.beginPath();x.arc(128,128,124,0,TAU);x.fill();x.strokeStyle='#222';x.lineWidth=6;x.stroke();
+  x.lineWidth=3;x.fillStyle='#222';x.font='600 22px Georgia';x.textAlign='center';
+  for(let i=0;i<=6;i++){const a=(-220+i*(260/6))*D2R,big=i%2===0;x.lineWidth=big?3:2;x.beginPath();x.moveTo(128+Math.cos(a)*102,128+Math.sin(a)*102);x.lineTo(128+Math.cos(a)*(big?84:92),128+Math.sin(a)*(big?84:92));x.stroke();if(big)x.fillText(String(i/2),128+Math.cos(a)*66,128+Math.sin(a)*66+8);}
+  x.strokeStyle='#d6402f';x.lineWidth=10;x.beginPath();x.arc(128,128,108,(-220+260*2.5/3)*D2R,40*D2R);x.stroke();
+  x.font='700 16px Georgia';x.fillText('RECHTERVOET',128,184);x.font='italic 16px Georgia';x.fillText('× lichaamsgewicht',128,204);});
+const dial=new THREE.Group();dial.position.set(-.62,6.2,-3.05);dial.rotation.y=-Math.PI/2;MODEL.add(dial);
+mesh(new THREE.CylinderGeometry(.62,.62,.14,32),M.dark,[0,0,0],[Math.PI/2,0,0],0,dial);
+mesh(new THREE.CircleGeometry(.56,40),std(0xffffff,{map:dialTex,roughness:.4}),[0,0,.075],0,0,dial);
+const needle=new THREE.Group();needle.position.z=.09;dial.add(needle);
+mesh(new THREE.BoxGeometry(.035,.46,.02),std(0xd6402f),[0,.2,0],0,0,needle);mesh(new THREE.CylinderGeometry(.055,.055,.04,12),M.dark,[0,0,0],[Math.PI/2,0,0],0,needle);
+mesh(new THREE.BoxGeometry(.5,.1,.1),M.metal,[-.36,6.2,-3.05],0,0,MODEL);
+// de schoen van de tegenstander (schuift in stand 3 onder de binnenkant van de voorvoet)
+const SHOEZ=3.0,SHOEH=.85,SHOEX=2.55;
+const shoe=new THREE.Group();fr.add(shoe);
+// een sneaker: neus naar het model (−x), met leer, stiksels, veters en een profielzool
+const shoeTex=canvasTex(512,256,(x,w,h)=>{x.fillStyle='#f2efe8';x.fillRect(0,0,w,h);for(let i=0;i<2600;i++){x.fillStyle=`rgba(120,110,95,${R()*.06})`;x.fillRect(R()*w,R()*h,1+R()*2,1);}
+  // zijstrepen (u = .25 en .75 zijn de zijkanten)
+  [.25,.75].forEach(u=>{x.fillStyle='#c23b30';x.beginPath();x.moveTo(u*w-70,h*.95);x.quadraticCurveTo(u*w-10,h*.5,u*w+46,h*.28);x.lineTo(u*w+60,h*.36);x.quadraticCurveTo(u*w+6,h*.6,u*w-40,h*.98);x.closePath();x.fill();});
+  // neus met perforatie en een stiksel rond de neuskap
+  x.fillStyle='rgba(60,55,50,.35)';for(let i=0;i<70;i++){const u=R()<.5?R()*.14:1-R()*.14;x.beginPath();x.arc(u*w,h*(.05+R()*.14),1.6,0,TAU);x.fill();}
+  x.strokeStyle='rgba(90,80,70,.55)';x.setLineDash([5,4]);x.lineWidth=1.5;x.beginPath();x.moveTo(0,h*.24);x.lineTo(w,h*.24);x.stroke();x.beginPath();x.moveTo(0,h*.85);x.lineTo(w,h*.85);x.stroke();x.setLineDash([]);
+  // tong en veters bovenop (u rond 0 en 1)
+  x.fillStyle='#dcd7cc';x.fillRect(0,h*.36,w*.09,h*.64);x.fillRect(w*.91,h*.36,w*.09,h*.64);
+  x.strokeStyle='#2a2d33';x.lineWidth=5;for(let k=0;k<5;k++){const v=h*(.42+k*.12);x.beginPath();x.moveTo(w*.075,v);x.lineTo(w*.925+w*.075,v+h*.05);x.stroke();x.beginPath();x.moveTo(-w*.075+w,v);x.lineTo(w*.075-w*.0,v+h*.05);x.stroke();}
+  x.fillStyle='#8d8f94';for(let k=0;k<5;k++){const v=h*(.42+k*.12);[w*.085,w*.915].forEach(u=>{x.beginPath();x.arc(u,v,3.5,0,TAU);x.fill();});}});
+const shoeUp=loft([[-1.36,PLATE+.3,0,.06,.12,2],[-1.28,PLATE+.36,0,.28,.62],[-1.0,PLATE+.42,0,.4,.98],[-.4,PLATE+.47,0,.45,1.15],[.4,PLATE+.52,0,.5,1.18],[1.2,PLATE+.58,0,.56,1.12],[1.85,PLATE+.6,0,.58,1.0],[2.12,PLATE+.6,0,.4,.7],[2.2,PLATE+.6,0,.05,.1,2]],std(0xffffff,{map:shoeTex,roughness:.5}),shoe,{axis:'x',p:2.6,nz:.004,seg:48,vrep:1/3.56});
+const soleTex=canvasTex(256,128,(x,w,h)=>{x.fillStyle='#2a2e33';x.fillRect(0,0,w,h);x.fillStyle='#e9e5dc';x.fillRect(0,h*.5-14,w,10);x.fillStyle='#1b1e22';for(let i=0;i<w;i+=10)x.fillRect(i,h*.5+6,5,h*.5);});
+loft([[-1.42,PLATE+.12,0,.06,.16,2],[-1.34,PLATE+.12,0,.12,.68,4],[-1.05,PLATE+.12,0,.13,1.05,4],[-.3,PLATE+.12,0,.13,1.24,4],[.6,PLATE+.12,0,.13,1.26,4],[1.5,PLATE+.12,0,.13,1.2,4],[2.05,PLATE+.12,0,.13,1.06,4],[2.28,PLATE+.12,0,.1,.75,4],[2.34,PLATE+.12,0,.04,.12,2]],std(0xffffff,{map:soleTex,roughness:.75}),shoe,{axis:'x',p:4,nz:0,seg:40,vrep:.3});
+shoe.position.set(4,0,SHOEZ);shoe.visible=false;
+
+// banden: elke band is een bundel strengen die meekleurt met de spanning
+const LIGTEX=fibTex;
+function ligament(strands,r,parent,Kseg){Kseg=Kseg||12;const mat=std(0xffffff,{roughness:.34,vertexColors:true,map:LIGTEX,side:THREE.DoubleSide});const B=Bundle(strands.length,Kseg,6,mat,parent);
+  strands.forEach(s=>{s.rank=R();s.phi=R()*TAU;s.sT=.38+R()*.24;s.vr=.92+R()*.12;if(!s.side)s.side=V(0,0,1);});strands[strands.length>>1].rank=.02;
+  const pts=[];for(let j=0;j<=Kseg;j++)pts.push(V(0,0,0));return {m:B.m,B,strands,r,K:Kseg,pts};}
+// kleur en dikte per ring; bij een gescheurde streng klappen de twee ringen bij de scheur dicht (een open gat met puntige uiteinden)
+const _lc=new THREE.Color();
+function emitStrand(L,si,s,e,torn,iT,rScale){const r0=L.r*(rScale||1),Kseg=L.K;
+  L.B.set(si,L.pts,s.side||s.wd,j=>{if(torn&&(j===iT||j===iT+1))return 0;const u=j/Kseg;let f=.8+.2*Math.sin(Math.PI*u);if(torn){const d=j<iT?iT-j:j-iT-1;f*=Math.min(1,.45+.3*d);}return r0*f;},
+    j=>_lc.copy(ligCol(e,s.vr,torn,torn&&Math.abs(j-iT-.5)<=2)));}
+function ligUpdate(L,e,tornFrac,tearAmt,xf){const Kseg=L.K;
+  L.strands.forEach((s,si)=>{xf(s.bone,s.b,_b);_a.copy(s.a);const torn=tearAmt>0&&s.rank<tornFrac;const sag=Math.min(.07,Math.max(0,-e)*.018)+.004;const iT=Math.max(1,Math.min(Kseg-2,Math.round(s.sT*Kseg)));const ret=.34*tearAmt;
+    for(let j=0;j<=Kseg;j++){const P=L.pts[j],u=j/Kseg;
+      if(!torn){P.lerpVectors(_a,_b,u);P.y-=sag*Math.sin(Math.PI*u);P.addScaledVector(s.side,Math.sin(u*TAU*2+s.phi)*sag*.5);}
+      else if(j<=iT){const q=j/iT;_e.lerpVectors(_a,_b,s.sT*(1-ret));P.lerpVectors(_a,_e,q);P.y-=tearAmt*.07*q*q;P.addScaledVector(s.side,Math.sin(q*8+s.phi)*.03*tearAmt*q);}
+      else{const q=(Kseg-j)/(Kseg-iT);_e.lerpVectors(_b,_a,(1-s.sT)*(1-ret));P.lerpVectors(_b,_e,q);P.y-=tearAmt*.07*q*q;P.addScaledVector(s.side,Math.sin(q*8+s.phi)*.03*tearAmt*q);}}
+    emitStrand(L,si,s,e,torn,iT);});
+  L.B.done();}
+function flatStrands(a,b,bone,n,wa,wb,wdir,th,side){const o=[];for(let i=0;i<n;i++){const t=n>1?i/(n-1)-.5:0;const tz=(R()-.5)*th;o.push({a:a.clone().addScaledVector(wdir,t*wa).add(V(tz,0,0)),b:b.clone().addScaledVector(wdir,t*wb).add(V(tz,0,0)),bone,side:side||wdir});}return o;}
+function roundStrands(a,b,bone,n,rad){const o=[];const sf=K.sunflower(n);_d.subVectors(b,a).normalize();const u=V().crossVectors(_d,K.AY).normalize(),w=V().crossVectors(_d,u).normalize();sf.forEach(p=>{const off=u.clone().multiplyScalar(p[0]*rad).addScaledVector(w,p[1]*rad);o.push({a:a.clone().add(off),b:b.clone().add(off),bone,side:u.clone()});});return o;}
+const LG0={
+ atfl:ligament(flatStrands(V(-.9,-.5,.18),V(-.5,-.8,.64),'tc',9,.26,.2,V(0,1,0),.05),.033,AK),
+ cfl:ligament(roundStrands(V(-.93,-.9,-.1),V(-.66,-1.52,-.62),'st',7,.05),.034,AK),
+ ptfl:ligament(flatStrands(V(-.76,-.6,-.42),V(-.24,-.92,-.74),'tc',7,.18,.14,V(0,1,0),.04),.03,AK),
+ delt:ligament([].concat(
+   flatStrands(V(.9,-.42,.14),V(.55,-.98,1.22),'st',4,.08,.12,V(0,0,1),.03,V(0,1,0)),
+   flatStrands(V(.95,-.5,.05),V(.6,-.8,.52),'tc',4,.08,.1,V(0,0,1),.03,V(0,1,0)),
+   flatStrands(V(.95,-.6,-.02),V(.58,-1.16,-.06),'st',4,.1,.12,V(0,0,1),.03,V(0,1,0)),
+   flatStrands(V(.9,-.52,-.12),V(.48,-.88,-.56),'tc',4,.08,.1,V(0,0,1),.03,V(0,1,0))),.032,AK)};
+
+// spieren: kuitspier (m. triceps surae) als bundel vezels met achillespees
+const CALF={top:V(.0,TOPY,-1.18),rx:.74,rz:.5,ins:V(-.1,-1.32,-1.76),N:70,K:8};
+const CF=K.sunflower(CALF.N).map(p=>({u:p[0],v:p[1],col:.88+R()*.24}));
+const calfM=inst(UCYL,std(0xffffff,{roughness:.5}),CALF.N*CALF.K);AK.add(calfM);for(let i=0;i<CALF.N*CALF.K;i++)calfM.setColorAt(i,_c.setRGB(.6,.16,.12));
+const LB0=3.1,LT0=CALF.top.distanceTo(CALF.ins)-LB0;
+const MTJ=V(0,0,0),cpts=[];for(let j=0;j<=CALF.K;j++)cpts.push(V(0,0,0));
+const achM=mesh(BAND,TENDM,0,0,0,AK),apon=nd(mesh(BAND,TENDM,0,0,0,AK));
+const calfCap=mesh(new THREE.CircleGeometry(1,40),std(0xffffff,{map:muscCapTex,roughness:.6}),[CALF.top.x,TOPY+.01,CALF.top.z],[-Math.PI/2,0,0],[CALF.rx*1.08,CALF.rz*1.08,1],AK);
+const calfSheath=nd(mesh(new THREE.CylinderGeometry(1,1,1,36,1,true),glass(0xe9b9a8,.12),0,0,0,AK));calfSheath.visible=false;
+// kuitbeenspieren (mm. fibulares) en de voorste scheenbeenspier
+const perMat=glow(0xb04a3c,0xff5a28,0);
+const perL=spindle(TOPY-1.4,.06,.17,.07,perMat,AK,[-1.06,1.4,-.32]);
+const perB=spindle(TOPY-1.1-.55,.05,.12,.07,perMat,AK,[-.98,.55,-.1]);
+const taMat=std(0x9e3a2e,{roughness:.5});
+const taM=spindle(TOPY-2.2,.07,.17,.06,taMat,AK,[.68,2.2,.56]);
+const TENDR=std(0xf1ece0,{roughness:.35});
+const rPL=rope(26,.05,TENDR,AK),rPB=rope(24,.048,TENDR,AK),rTA=rope(20,.05,TENDR,AK);
+const ctlPL=[V(-1.06,1.5,-.32),V(-1.05,.6,-.44),V(-1.0,-.28,-.5),V(-.98,-.95,-.32),V(),V(),V(),V()],movPL=[V(-.72,-1.44,.12),V(-.58,-1.82,1.2),V(-.1,-1.97,1.55),V(.42,-1.64,1.95)];
+const ctlPB=[V(-.98,.6,-.12),V(-.96,-.28,-.36),V(-.92,-.92,-.2),V(),V(),V()],movPB=[V(-.68,-1.36,.26),V(-.73,-1.5,1.1),V(-.63,-1.56,1.6)];
+const ctlTA=[V(.68,2.25,.62),V(.66,1.0,.72),V(.62,.12,.84),V(),V()],movTA=[V(.64,-.74,1.36),V(.6,-1.04,1.7)];
+nd(mesh(new THREE.TorusGeometry(.2,.035,6,20,Math.PI*1.2),glass(0xe8dcc8,.45),[-1.02,-.72,-.4],[0,Math.PI/2,1.9],0,AK));
+// draaiassen
+// draaiassen: verzadigde, niet-additieve kleuren met een donkere rand, zodat oranje en blauw ook op wit bot leesbaar blijven
+const COL_TC=0xff9a1f,COL_ST=0x1fb4ff;
+const solidM=(c,op)=>new THREE.MeshBasicMaterial({color:c,depthTest:false,depthWrite:false,transparent:true,toneMapped:false,opacity:op===undefined?.96:op});
+const edgeM=(op)=>new THREE.MeshBasicMaterial({color:0x1a120a,depthTest:false,depthWrite:false,transparent:true,toneMapped:false,opacity:op===undefined?.85:op,side:THREE.BackSide});
+function outlined(geo,c,parent,k){const m=new THREE.Mesh(geo,solidM(c));m.renderOrder=7;const o=new THREE.Mesh(geo,edgeM());o.renderOrder=6;o.scale.set(k||1.45,1.02,k||1.45);m.add(o);m.userData.edge=o;parent.add(m);return m;}
+const CONE=new THREE.ConeGeometry(1,1,16);CONE.translate(0,.5,0);
+function axisRod(a0,a1,c,parent){const m=outlined(UCYL,c,parent,1.38);orient(m,a0,a1,.036);const ends=[];[[a1,1],[a0,-1]].forEach(e=>{const cn=outlined(CONE,c,parent,1.3);_d.subVectors(a1,a0).normalize().multiplyScalar(e[1]);cn.position.copy(e[0]);cn.quaternion.setFromUnitVectors(K.AY,_d);cn.scale.set(.11,.26,.11);ends.push(cn);});return {m,ends};}
+const TCa0=TC0.clone().addScaledVector(TCD,-.75),TCa1=TC1.clone().addScaledVector(TCD,.6),STa0=ST0.clone().addScaledVector(STD,-.55),STa1=ST1.clone().addScaledVector(STD,.75);
+const axTC=axisRod(TCa0,TCa1,COL_TC,AK),axST=axisRod(STa0,STa1,COL_ST,tcIn);
+const axTCm=axTC.m,axSTm=axST.m,axEnds=axTC.ends.concat(axST.ends);
+// speling in de enkelvork (licht op bij een gestrekte voet)
+const gapMat=add(0x7fd7ff,0);const gaps=[nd(mesh(new THREE.PlaneGeometry(.06,.5),gapMat,[-.62,-.3,-.18],[0,Math.PI/2,0],0,AK)),nd(mesh(new THREE.PlaneGeometry(.06,.5),gapMat,[.62,-.28,-.18],[0,Math.PI/2,0],0,AK))];
+// huid (laag, standaard uit) en zwelling
+const skinM=glass(0xdba584,.15);
+const skin=[nd(lathe([[1.18,.1],[1.24,1.2],[1.3,2.6],[1.34,TOPY]],skinM,AK,36,[-.12,0,-.34])),nd(blob(1.1,.78,1.2,skinM,[-.05,-.62,-.25],tcIn,{p:2.2,nz:0})),nd(blob(.98,.6,3.3,skinM,[0,-1.45,1.45],stIn,{p:2.3,nz:0}))];
+skin[0].scale.z=.95;
+// zwelling: één bloeduitstorting rond de buitenenkel (donkerrood in de kern, paarsblauw aan de rand) onder een opgezette huid
+const swellG=bruiseCol(blobGeo(.42,.55,.85,2,.16,40),V(-1,0,0),3);
+const swellM=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.55,transparent:true,opacity:0,depthWrite:false});
+const AXMATS=[];[axTC,axST].forEach(a=>[a.m].concat(a.ends).forEach(m=>{AXMATS.push([m.material,.96],[m.userData.edge.material,.85]);}));
+const swell=nd(mesh(swellG,swellM,[-1.02,-.7,.28],0,0,AK));swell.visible=false;
+const swSkinM=glass(0xb88aa8,0,{roughness:.45});const swSkin=nd(blob(.82,.8,1.3,swSkinM,[-.98,-.68,.22],AK,{p:2,nz:.03,seg:40}));swSkin.visible=false;
+// grondreactiekracht (pijl onder de rechtervoet)
+const grfShaft=outlined(UCYL,0xff8a1a,MODEL,1.6),grfHead=outlined(new THREE.ConeGeometry(.15,.38,18),0xff8a1a,MODEL,1.25);
+const grfMat=grfShaft.material,grfMats=[grfShaft.material,grfHead.material,grfShaft.userData.edge.material,grfHead.userData.edge.material];
+const momMat=solidM(COL_ST,0),momEdge=edgeM(0);const momG=new THREE.TorusGeometry(.5,.03,8,48,Math.PI*1.4);const mom=new THREE.Mesh(momG,momMat);mom.renderOrder=7;tcIn.add(mom);
+const momE=new THREE.Mesh(new THREE.TorusGeometry(.5,.055,8,48,Math.PI*1.4),momEdge);momE.renderOrder=6;mom.add(momE);
+mom.position.copy(ST0).lerp(ST1,.45);mom.quaternion.setFromUnitVectors(AXZ,STD);
+const momHead=new THREE.Mesh(new THREE.ConeGeometry(.08,.2,14),momMat);momHead.renderOrder=7;mom.add(momHead);momHead.position.set(.5*Math.cos(Math.PI*1.4),.5*Math.sin(Math.PI*1.4),0);momHead.rotation.z=Math.PI*1.4;
+
+// ---- decor: basket, ballen ----
+const hoop=new THREE.Group();G0.add(hoop);
+mesh(new THREE.CylinderGeometry(.11,.13,4.4,16),std(0x2f3a44,{metalness:.6,roughness:.4}),[3.6,2.28,-5.4],0,0,hoop);
+mesh(new THREE.BoxGeometry(.5,1.5,.5),std(0x2459a8,{roughness:.8}),[3.6,.83,-5.4],0,0,hoop);
+mesh(new THREE.BoxGeometry(.14,.14,1.2),std(0x2f3a44,{metalness:.6,roughness:.4}),[3.6,4.3,-4.8],0,0,hoop);
+mesh(new THREE.BoxGeometry(.12,.7,.12),std(0x2f3a44,{metalness:.6,roughness:.4}),[3.6,3.95,-4.25],[.6,0,0],0,hoop);
+const boardM=glass(0xdfeef5,.28,{roughness:.1,metalness:.1});nd(mesh(new THREE.BoxGeometry(2.1,1.22,.05),boardM,[3.6,3.98,-4.15],0,0,hoop));
+const frameM=std(0x1f2328,{metalness:.5,roughness:.4});
+[[0,.61,2.14,.05],[0,-.61,2.14,.05],[1.05,0,.05,1.26],[-1.05,0,.05,1.26]].forEach(f=>mesh(new THREE.BoxGeometry(f[2],f[3],.07),frameM,[3.6+f[0],3.98+f[1],-4.15],0,0,hoop));
+const whiteM=std(0xf6f4ee,{roughness:.4});[[0,.21,.62,.035],[0,-.17,.62,.035],[.31,.02,.035,.42],[-.31,.02,.035,.42]].forEach(f=>mesh(new THREE.BoxGeometry(f[2],f[3],.06),whiteM,[3.6+f[0],3.75+f[1],-4.12],0,0,hoop));
+mesh(new THREE.BoxGeometry(.2,.08,.24),std(0xe0602a,{metalness:.4,roughness:.4}),[3.6,3.53,-4.02],0,0,hoop);
+mesh(new THREE.TorusGeometry(.27,.022,10,40),std(0xe0602a,{metalness:.4,roughness:.35}),[3.6,3.53,-3.75],[Math.PI/2,0,0],0,hoop);
+nd(mesh(new THREE.LatheGeometry([new THREE.Vector2(.27,0),new THREE.Vector2(.23,-.2),new THREE.Vector2(.18,-.42)],14),new THREE.MeshBasicMaterial({color:0xf4f1ea,wireframe:true,transparent:true,opacity:.65}),[3.6,3.53,-3.75],0,0,hoop));
+const ballTex=canvasTex(256,128,(x,w,h)=>{x.fillStyle='#d96a2b';x.fillRect(0,0,w,h);for(let i=0;i<1500;i++){x.fillStyle=`rgba(90,30,10,${R()*.18})`;x.fillRect(R()*w,R()*h,2,2);}x.strokeStyle='#1b120c';x.lineWidth=4;x.beginPath();x.moveTo(0,h/2);x.lineTo(w,h/2);x.stroke();[w*.25,w*.75].forEach(c=>{x.beginPath();x.moveTo(c,0);x.lineTo(c,h);x.stroke();});[0,w/2,w].forEach(c=>{x.beginPath();x.ellipse(c,h/2,w*.16,h*.52,0,0,TAU);x.stroke();});});
+const ballM=std(0xffffff,{map:ballTex,roughness:.7});
+const ball=mesh(new THREE.SphereGeometry(.14,24,16),ballM,[0,0,0],0,0,G0);
+mesh(new THREE.SphereGeometry(.14,24,16),ballM,[7.4,.22,4.3],[.4,.8,0],0,G0);mesh(new THREE.SphereGeometry(.14,24,16),ballM,[5.4,.22,-4.9],[1.2,.2,.3],0,G0);
+
+// ---- de sporters: een blokkende basketballer (A) en een tegenstander die stilstaat (B) ----
+const AX0=3.05,AZ0=1.78;
+const A=K.figure({parent:G0,pos:[AX0,.08,AZ0],rotY:Math.PI/2,shirt:0x2d6fd1,shorts:0x1f3f7a,sole:0xe0782f});
+const B=K.figure({parent:G0,pos:[4.25,.08,1.72],rotY:-Math.PI/2,shirt:0xc23b30,shorts:0x5a1610,skin:0x7a4b30,hair:0x120b07,sole:0x24282c});
+const FA=.62,FB=.6,ANKH=.09;
+function legRel(h,k){return {y:-FA*Math.cos(h)-FB*Math.cos(h+k),z:-FA*Math.sin(h)-FB*Math.sin(h+k)};}
+B.pose({py:ANKH+.02-legRel(-.55,.55).y,hipL:-.55,kneeL:.55,ankL:0,hipR:.28,kneeR:.26,ankR:-.54,lean:-.04,shR:[-2.75,0,-.22],shL:[-2.75,0,.22],elbR:-.6,elbL:-.6,head:-.12});
+B.root.updateMatrixWorld(true);
+{const a=V(),b=V();B.aR.wr.getWorldPosition(a);B.aL.wr.getWorldPosition(b);ball.position.copy(a).add(b).multiplyScalar(.5).add(V(0,.13,0));}
+const bFoot=V();B.lL.an.getWorldPosition(bFoot);const BSHOEX=bFoot.x-.07;
+// gloeistreepjes op het rechteronderbeen van A: kuitspier, kuitbeenspieren en de buitenenkel
+const calfG=glow(0xff4a30,0xff2a10,0);nd(mesh(new THREE.CapsuleGeometry(.032,.2,4,10),calfG,[0,-.24,-.066],0,0,A.lR.kn));
+const perG=glow(0xffb040,0xff9020,0);nd(mesh(new THREE.CapsuleGeometry(.02,.2,4,8),perG,[-.058,-.3,-.01],0,0,A.lR.kn));
+const sprG=add(0xff4030,0);const sprB=new THREE.Mesh(new THREE.SphereGeometry(.05,12,10),sprG);sprB.position.set(-.065,-.03,.01);A.lR.an.add(sprB);
+function aPose(h,k,pf,arm,elb,lift,pz,ex){const r=legRel(h,k);const o={py:ANKH+.02-r.y+.19*Math.sin(Math.max(0,pf))+(lift||0),pz:(pz||0)-r.z,hipR:h,hipL:h,kneeR:k,kneeL:k,ankR:-(h+k)+pf,ankL:-(h+k)+pf,lean:.42*Math.max(0,-h)+.04,shR:[arm,0,-.14],shL:[arm,0,.14],elbR:elb,elbL:elb,head:-.06};if(ex)Object.assign(o,ex);return o;}
+// sprongcyclus: aanzet, afzet, vlucht, landing
+const JK=[[0,0,.05,0,.15,-.3],[.2,-.85,1.2,0,.75,-.5],[.3,-.04,.04,.75,-2.6,-.2],[.42,-.15,.28,.55,-2.95,-.15],[.55,-.2,.22,.45,-2.3,-.3],[.66,-.8,1.1,0,-.8,-.5],[.82,-.05,.08,0,.1,-.3],[1,0,.05,0,.15,-.3]];
+function jk(u){let i=1;while(i<JK.length-1&&u>JK[i][0])i++;const P=JK[i-1],Q=JK[i];const t=smooth((u-P[0])/(Q[0]-P[0]));return [lerp(P[1],Q[1],t),lerp(P[2],Q[2],t),lerp(P[3],Q[3],t),lerp(P[4],Q[4],t),lerp(P[5],Q[5],t)];}
+const liftU=u=>u>.3&&u<.55?2*((u-.3)/.25)*(1-(u-.3)/.25):0;
+// grondreactie onder één voet (× lichaamsgewicht); op twee voeten draagt elke voet ongeveer de helft
+const GT=[[0,.5],[.07,.31],[.16,.7],[.22,.95],[.27,1.2],[.3,0],[.55,0],[.58,1.95],[.62,1.3],[.68,.75],[.8,.52],[1,.5]];
+const ACT=[[0,.15],[.1,.3],[.2,.55],[.26,.95],[.3,.55],[.36,.12],[.46,.2],[.54,.6],[.58,.95],[.66,.7],[.8,.25],[1,.15]];
+// stand 3: een tijdlijn met de landing op de voet van de tegenstander
+const TC_=1.74;
+const PZD=BSHOEX-.14-.111-AX0;
+const STAG={hipR:-.55,kneeR:.95,ankR:[.45,0,.35],hipL:-.7,kneeL:1.05,lean:.42,side:-.12,shR:[-.5,0,-1.05],shL:[-.4,0,1.0],elbR:-.4,elbL:-.4,head:.1};
+const SIT={py:.3,pz:-.05,hipR:-1.2,kneeR:1.95,ankR:[.35,0,.3],hipL:-1.3,kneeL:.55,ankL:.2,lean:.55,side:0,shR:[-1.0,0,-.12],shL:[-.75,0,.25],elbR:-.45,elbL:-.6,head:.45};
+const S0={pf:0,inv:0,pfMan:0,invMan:0,ph:0,phase:-1,t3:0,grf:1,act:.15,mode:'rust',per:.1,sw:0,tearA:false,tearAT:0,tearC:false,tearCT:0,lift:0,shoe:5,demo:null,prevU:0,ay:2.57,copX:0,copZ:0,copH:PLATE,e:strains(0,0),ms:-1,camOff:0,camPrev:0};
+let AY0=2.6;
+function reset0(n){S0.ph=0;S0.t3=0;S0.tearA=S0.tearC=false;S0.sw=0;S0.lift=0;S0.shoe=5;S0.phase=-1;S0.per=.1;S0.pfMan=0;S0.invMan=0;S0.prevU=0;S0.ms=-1;S0.contact=false;}
+function supportH(x,z){let h=PLATE;if(S0.shoe<4.7){const dx=(x-S0.shoe)/1.25,dz=(z-SHOEZ)/1.3;if(Math.abs(dx)<1&&Math.abs(dz)<1)h=Math.max(h,PLATE+SHOEH*Math.sqrt(1-dx*dx)*Math.sqrt(1-dz*dz*.6));}return h;}
+function contact0(){let ay=-1e9;SUP.forEach((p,i)=>{xST(p,SUPW[i]);const need=supportH(SUPW[i].x,SUPW[i].z)-SUPW[i].y;SUPW[i].need=need;if(need>ay)ay=need;});
+  let n=0,cx=0,cz=0;SUPW.forEach((p,i)=>{const d=ay-p.need;if(d<.12){const w=SUPWT[i]*(1-d/.12);cx+=p.x*w;cz+=p.z*w;n+=w;}});S0.copX=cx/n;S0.copZ=cz/n;S0.copH=supportH(S0.copX,S0.copZ);return ay;}
+function sched3(t,g){const o={};const invMax=[0,44,50,56][g],res=[0,4,8,14][g];
+  let u;if(t<.5)u=0;else if(t<1)u=.2*(t-.5)/.5;else if(t<1.18)u=.2+.1*(t-1)/.18;else u=Math.min(.55,.3+.25*(t-1.18)/.56);
+  const P=jk(u);o.lift=liftU(u);o.u=u;
+  const drift=PZD*smooth((t-1.12)/.6);
+  o.shoe=t<1.1?5:t<1.62?lerp(4.6,SHOEX,smooth((t-1.1)/.52)):t<2.35?SHOEX:t<2.95?lerp(SHOEX,4.6,smooth((t-2.35)/.6)):5;
+  if(t<TC_){o.pose=aPose(P[0],P[1],P[2],P[3],P[4],o.lift,drift);const pre=ramp(t,1.22,1.5);o.pose.ankR=[o.pose.ankR,0,.17*pre];o.invM=10*pre;o.pfM=o.pose.ankR[0]/D2R;o.grf=table(GT,u);o.act=table(ACT,u);o.phase=0;}
+  else{const c=t-TC_;let inv;if(c<.06)inv=lerp(10,invMax,smooth(c/.06));else if(c<.12)inv=invMax;else inv=lerp(invMax,res,smooth((c-.12)/.38));o.invM=inv;
+    o.pfM=lerp(14,5,smooth((c-.12)/.5));
+    const land=aPose(-.2,.22,.45,-2.3,-.3,0,PZD);land.py+=.085;land.ankR=[o.pfM*D2R,0,inv*D2R*.85];land.hipL=-.35;land.kneeL=.55;land.ankL=.35;land.side=.1*smooth(c/.1);land.lean=.15;
+    let pose=land;if(c>.14){const s1=smooth((c-.14)/.55);pose=K.mixPose(land,Object.assign({},land,STAG,{py:ANKH+.02-legRel(-.7,1.05).y,pz:PZD+.05}),s1);}
+    if(c>.75){const s2=smooth((c-.75)/.9);pose=K.mixPose(pose,Object.assign({},SIT,{pz:PZD-.8}),s2);}
+    o.pose=pose;o.grf=c<.02?lerp(0,2.8,c/.02):c<.14?lerp(2.8,.9,(c-.02)/.12):lerp(.9,.05,smooth((c-.14)/.5));o.act=lerp(.7,.08,smooth(c/.4));
+    o.phase=c<.04?1:c<.6?2:3;}
+  o.per=.12+.88*ramp(t,TC_+.07,TC_+.11)*(1-ramp(t,TC_+.5,TC_+1.4));
+  o.sw=[0,.42,.72,1][g]*smooth((t-2.3)/3.4);return o;}
+const HUD0={1:['Enkelhoek','Inversie','Rek ATFL','Rek CFL'],2:['Enkelhoek','Kuitspier','Grondreactie','Speling enkelvork'],3:['Inversie','Rek ATFL','Rek CFL','Kuitbeenspieren']};
+function updCalf(act,force){xST(CALF.ins,_f);const D=CALF.top.distanceTo(_f);const Lt=LT0*(1+.035*force);const Lb=Math.max(1.3,D-Lt);_d.subVectors(_f,CALF.top).divideScalar(D);MTJ.copy(CALF.top).addScaledVector(_d,Lb);const rs=Math.sqrt(LB0/Lb);
+  let k=0;CF.forEach(f=>{for(let j=0;j<=CALF.K;j++){const s=j/CALF.K;const fr=lerp(1,.22,Math.pow(s,1.6))*(1+.16*Math.sin(Math.PI*s))*rs;cpts[j].copy(CALF.top).lerp(MTJ,s);cpts[j].x+=f.u*CALF.rx*fr;cpts[j].z+=f.v*CALF.rz*fr;}
+    for(let j=0;j<CALF.K;j++){_e.subVectors(cpts[j+1],cpts[j]).multiplyScalar(.06);_a.copy(cpts[j]).sub(_e);_b.copy(cpts[j+1]).add(_e);calfM.setMatrixAt(k,segMatrix(_a,_b,.072*(j===CALF.K-1?.75:1)));
+      _c.setRGB((.58+.4*act)*f.col,(.15+.07*act)*f.col,(.12+.04*act)*f.col);calfM.setColorAt(k++,_c);}});
+  calfM.instanceMatrix.needsUpdate=true;calfM.instanceColor.needsUpdate=true;
+  orient(achM,_a.copy(MTJ).add(V(0,.25,0)),_f,.19,.095);orient(apon,_b.copy(CALF.top).add(V(0,0,-CALF.rz*.95)),_e.copy(MTJ).add(V(0,.1,-.1)),.28,.02);
+  calfSheath.position.copy(MTJ);calfSheath.quaternion.setFromUnitVectors(K.AY,_d.set(0,0,0).subVectors(CALF.top,MTJ).normalize());calfSheath.scale.set(CALF.rx*1.18*rs,CALF.top.distanceTo(MTJ),CALF.rz*1.22*rs);calfSheath.translateY(0);
+  W.ach=toW(_g.copy(MTJ).lerp(_f,.55).add(V(0,0,-.2)),V());}
+// het geometrische midden van de cilinder ligt in het midden: verschuif zodat hij van MTJ tot de top loopt
+calfSheath.geometry.translate(0,.5,0);
+let shoeTag=V(),grfTop=V();
+function toes0(dt){TOES.forEach(t=>{let th=0;for(;th<1.25;th+=.06){_a.subVectors(t.tip,t.b).applyAxisAngle(AXX,-th).add(t.b);xST(_a,_b);if(_b.y+AK.position.y>=supportH(_b.x,_b.z)+.01)break;}t.a=dt>0?lerp(t.a,th,clamp(dt*14,0,1)):th;t.g.rotation.x=-t.a;});}
+function step0(dt){const st=S.state,g=S.grade;let pose,pf=0,inv=0,grf=1,act=.15,lift=0,per=.12;S0.phase=-1;S0.ms=-1;
+  if(st===1){pf=S0.pfMan;inv=S0.invMan;if(S0.demo==='pf')pf=14+28*Math.sin(S.clock*1.25);else if(S0.demo==='inv'){pf=6;inv=10+20*Math.sin(S.clock*1.35);}else if(S0.demo==='lig'){pf=28;inv=22;}
+    pf=lerp(S0.pf,pf,clamp(dt*7,0,1));inv=lerp(S0.inv,inv,clamp(dt*7,0,1));
+    pose=aPose(0,.05,0,.12+.03*Math.sin(S.clock*1.1),-.3,0,0,{head:-.04+.03*Math.sin(S.clock*.7)});act=.12;grf=1;S0.mode='rust';}
+  else if(st===2){const u0=S0.ph;S0.ph=(S0.ph+dt*TEMPO/3.2)%1;const u=S0.ph;const P=jk(u);lift=liftU(u);pose=aPose(P[0],P[1],P[2],P[3],P[4],lift);
+    pf=pose.ankR/D2R;inv=7*ramp(lift,0,.3);pose.ankR=[pose.ankR,0,inv*D2R*.85];grf=table(GT,u);act=table(ACT,u);
+    S0.phase=u<.22?0:u<.3?1:u<.55?2:u<.75?3:-1;
+    if(dt>0){const dpf=(pf-S0.pf)/dt;S0.mode=lift>0?(act>.35?'voorspanning':'ontspannen'):act<.25?'rustig':dpf>12?'concentrisch':dpf<-12?'excentrisch':'isometrisch';}
+    if(u0<.3&&u>=.3)SQ(.8);if(u0<.55&&u>=.55){THUD(1);SQ(1);}}
+  else{const w=S0.t3>1.7&&S0.t3<2.06?.2:1;S0.t3+=dt*w;const t=S0.t3;const o=sched3(t,g);pose=o.pose;pf=o.pfM;inv=o.invM;grf=o.grf;act=o.act;lift=o.lift;per=o.per;S0.shoe=o.shoe;S0.sw=o.sw;
+    S0.phase=o.phase;if(t>=TC_&&t<TC_+.45)S0.ms=Math.round((t-TC_)*1000);
+    if(!S0.contact&&t>=TC_){S0.contact=true;THUD(1.1);SQ(1.2);}
+    S0.mode=t<TC_?'':'';}
+  const prevE=S0.e;S0.pf=pf;S0.inv=inv;S0.grf=grf;S0.act=act;S0.per=per;S0.lift=lift;
+  A.pose(pose);setFoot(pf,inv);
+  const ay=contact0();AK.position.y=ay+lift*1.0;S0.ay=ay;toes0(dt);
+  // de camera volgt de enkel: in stand 1 als de voet strekt en het model omhoog komt, en in de film op de standpunten bij het model
+  const off=AK.position.y-AY0;S0.camOff=dt>0?lerp(S0.camOff,off,clamp(dt*5,0,1)):off;
+  if(K.FILM.on){FOLLOW.forEach(k=>{CAM[k][0][1]=CAMY[k][0]+S0.camOff;CAM[k][1][1]=CAMY[k][1]+S0.camOff;});}
+  else if(st===1&&S.lvl===0&&!S.zooming){const d=S0.camOff-S0.camPrev;if(Math.abs(d)>1e-5){K.camera.position.y+=d;K.controls.target.y+=d;}}
+  S0.camPrev=S0.camOff;
+  const e=strains(pf,inv);S0.e=e;
+  if(st===3&&S0.t3>TC_){if(!S0.tearA&&e.atfl>TEAR){S0.tearA=true;S0.tearAT=S0.t3;K.flash({big:g>=2,a:g===1?.55:1,shake:g===1?.2:.45});}
+    if(g===3&&S0.tearA&&!S0.tearC&&e.cfl>TEAR){S0.tearC=true;S0.tearCT=S0.t3;K.flash({big:false,a:.7,shake:.3});}}
+  const tA=S0.tearA?smooth((S0.t3-S0.tearAT)/.12):0,tC=S0.tearC?smooth((S0.t3-S0.tearCT)/.12):0;
+  ligUpdate(LG0.atfl,e.atfl,[0,.07,.7,1.01][g],tA,xB);ligUpdate(LG0.cfl,e.cfl,1.01,tC,xB);ligUpdate(LG0.ptfl,e.ptfl,0,0,xB);ligUpdate(LG0.delt,e.delt,0,0,xB);
+  updCalf(act,grf/3);
+  movPL.forEach((p,i)=>xST(p,ctlPL[4+i]));rPL.set(ctlPL);movPB.forEach((p,i)=>xST(p,ctlPB[3+i]));rPB.set(ctlPB);movTA.forEach((p,i)=>xST(p,ctlTA[3+i]));rTA.set(ctlTA);
+  perMat.emissiveIntensity=per*1.1;perMat.color.setRGB(.6+.3*per,.17+.1*per,.13);
+  calfG.emissiveIntensity=st===1?0:act*2.2;perG.emissiveIntensity=per>.3?per*2.2:0;
+  const spel=clamp(pf/45,0,1);gapMat.opacity=st===1&&S0.demo!=='pf'?.0:spel*.55;
+  // krachtpijl
+  if(grf>.04){const L=1.05*grf;grfShaft.visible=grfHead.visible=true;grfShaft.position.set(S0.copX,S0.copH,S0.copZ);grfShaft.scale.set(.05,L,.05);grfHead.position.set(S0.copX,S0.copH+L+.15,S0.copZ);toWf(_a.set(S0.copX,S0.copH+L+.45,S0.copZ),grfTop);}else{grfShaft.visible=grfHead.visible=false;}
+  needle.rotation.z=(130-260*clamp(grf,0,3)/3)*D2R;
+  momMat.opacity=st===3&&S0.t3>TC_-.02&&S0.t3<TC_+.4&&layerOn('Draaiassen')?.95:0;momEdge.opacity=momMat.opacity*.85;mom.visible=momHead.visible=momMat.opacity>0;
+  // schoen van de tegenstander
+  shoe.visible=S0.shoe<4.7;shoe.position.x=S0.shoe;toWf(_a.set(S0.shoe+.6,PLATE+1.3,SHOEZ),shoeTag);
+  // zwelling
+  const sw=S0.sw;swell.visible=sw>.01;const sg=smooth(clamp(sw*1.25,0,1));swell.scale.set(.3+.75*sg,.3+.7*sg,.3+.8*sg);swellM.opacity=.68*sg;
+  AXMATS.forEach(a=>a[0].opacity=a[1]*(1-.75*sg));
+  swSkin.visible=sw>.01;swSkin.scale.set(.75+.35*sg,.8+.25*sg,.8+.3*sg);swSkinM.opacity=.3*sg;swSkinM.color.setRGB(lerp(.86,.62,sg),lerp(.68,.5,sg),lerp(.6,.7,sg));sprG.opacity=.9*sw;
+  // ankerpunten, verspreid over het model zodat de markers niet klonteren
+  toW(_a.set(.55,3.3,.5),W.tib||(W.tib=V()));toW(_a.set(-.98,1.15,-.2),W.fib||(W.fib=V()));toW(xTC(_b.set(-.2,-.78,.9),_a),W.tal||(W.tal=V()));
+  toW(xST(_b.set(-.42,-1.5,-1.72),_a),W.calc||(W.calc=V()));toW(xST(_b.set(.75,-1.22,-.4),_a),W.delt||(W.delt=V()));toW(_a.set(-1.2,2.1,-.36),W.per||(W.per=V()));toW(_a.set(-1.1,.45,-.47),W.perT||(W.perT=V()));
+  const sA=LG0.atfl.strands[4];xTC(sA.b,_b);toW(_a.copy(sA.a).lerp(_b,.5).add(V(-.1,0,0)),W.atfl||(W.atfl=V()));
+  const sC=LG0.cfl.strands[0];xST(sC.b,_b);toW(_a.copy(sC.a).lerp(_b,.5).add(V(-.1,0,0)),W.cfl||(W.cfl=V()));
+  A.head.getWorldPosition(W.sport||(W.sport=V()));W.sport.y+=.32;
+  toW(_a.copy(TCa0),W.axTC||(W.axTC=V()));toW(xTC(_b.copy(STa1),_a),W.axST||(W.axST=V()));
+  toW(_a.set(-.85,-.3,-.18),W.gap||(W.gap=V()));toW(_a.set(-1.4,-.8,.3),W.swell||(W.swell=V()));
+  hud0();}
+function hud0(){const st=S.state,e=S0.e,g=S.grade;const tA=S0.tearA,tC=S0.tearC;
+  if(st===1){K.bar(1,clamp((S0.pf+25)/75,0,1),angText(S0.pf));K.bar(2,clamp((S0.inv+20)/55,0,1),invText(S0.inv));
+    K.bar(3,eFrac(e.atfl),eText(e.atfl),eCls(e.atfl),eBg(e.atfl));K.bar(4,eFrac(e.cfl),eText(e.cfl),eCls(e.cfl),eBg(e.cfl));
+    const x=S0.pf>12&&S0.inv>12?'Gestrekt <b>én</b> naar binnen: de voorste talofibulaire band (ATFL) staat het strakst. Rustig en zonder lichaamsgewicht haalt een gezonde enkel deze stand zonder schade. Bij een verzwikking gaat de voet verder, sneller en met je hele gewicht erop.':S0.inv>12?'Naar binnen gekanteld (inversie): de banden aan de <b>buitenkant</b> rekken, vooral de CFL naar het hielbeen.':S0.inv<-6?'Naar buiten gekanteld (eversie): de buitenbanden worden slap. Draai naar de binnenkant: daar spant de <b>deltaband</b>.':S0.pf>12?'Gestrekt (plantairflexie): de ATFL komt op spanning en het smalle deel van het sprongbeen zit in de enkelvork.':S0.pf<-8?'Opgetrokken (dorsaalflexie): het brede voorste deel van het sprongbeen klemt in de enkelvork. Stabiel. Achter de buitenenkel spant de <b>PTFL</b>.':'Rust. Gebruik de schuiven en kijk welke band gespannen raakt (wit), zwaar belast wordt (oranje) of overrekt (rood). Zoom in met <b>+</b>.';
+    K.capSoft(K.stateText(),x,1.2);}
+  else if(st===2){K.bar(1,clamp((S0.pf+25)/75,0,1),angText(S0.pf));const mc={concentrisch:'con',excentrisch:'ecc',isometrisch:'iso',voorspanning:'iso'}[S0.mode]||'';K.bar(2,S0.act,S0.mode,mc);
+    K.bar(3,clamp(S0.grf/3,0,1),fmt(S0.grf)+' × LG',S0.grf>2.5?'bad':S0.grf>1.4?'ecc':'');const sp=clamp(S0.pf/45,0,1);K.bar(4,sp,sp<.15?'klein':sp<.55?'groter':'groot',sp>.55?'ecc':'ok','#7fd7ff');
+    K.stepOn(S0.phase);
+    const tx=['<b>Aanzet</b>: de speler zakt door. De kuitspier remt af terwijl de voet opbuigt.','<b>Afzet</b>: de voet strekt (plantairflexie). De kuitspier wordt korter en levert kracht: <b>concentrisch</b>.','<b>Vlucht</b>: de voet hangt gestrekt. Nu zit het smalle achterste deel van het sprongbeen in de enkelvork: de enkel zit <b>losser</b>.','<b>Landing</b>: eerst de voorvoet, dan zakt de hiel. De kuitspier remt af terwijl hij langer wordt: <b>excentrisch</b>.'];
+    if(S0.phase>=0)K.capSoft(K.stateText(),tx[S0.phase],.45);}
+  else{const ms=S0.ms>=0?' · '+S0.ms+' ms':'';K.bar(1,clamp(S0.inv/56,0,1),Math.round(Math.max(0,S0.inv))+'°'+ms,S0.inv>30?'bad':'');
+    K.bar(2,tA?1:eFrac(e.atfl),tA&&g===1?'deels gescheurd':eText(e.atfl,tA),eCls(e.atfl,tA),eBg(e.atfl,tA));K.bar(3,tC?1:eFrac(e.cfl),eText(e.cfl,tC),eCls(e.cfl,tC),eBg(e.cfl,tC));
+    const late=S0.t3>TC_+.07&&S0.t3<TC_+1.2;K.bar(4,S0.per,S0.t3<TC_+.07?'nog niet actief':late?'reflex ≈ 70 ms':'rust',late?'con':'','#ffb040');
+    K.stepOn(S0.phase);const t=S0.t3;
+    const gr=['','<b>Graad 1</b>: de ATFL is overrekt, met kleine scheurtjes in het weefsel. Pijn, weinig zwelling, de enkel blijft stabiel.','<b>Graad 2</b>: de ATFL is voor een groot deel doorgescheurd. De CFL houdt nog. Duidelijke zwelling.','<b>Graad 3</b>: de ATFL én de CFL zijn helemaal gescheurd. De buitenkant van de enkel is instabiel.'][g];
+    const x=t<1.18?'Een blokpoging onder de basket. De speler zakt door en zet af met beide voeten.':t<TC_?'In de lucht hangt de voet licht gestrekt en iets naar binnen. Onder de rechtervoet staat de voet van de tegenstander.':t<TC_+.16?'<b>Landing op de voet van de tegenstander.</b> De voet klapt naar binnen (inversie), binnen ongeveer 50 ms. Beeld 5× vertraagd. De blauwe boog is het kantelmoment.':t<TC_+.75?gr+' De kuitbeenspieren vuren pas na ongeveer 70 ms, en leveren nog later echt kracht: te laat.':t<3.9?gr:'Bloed en vocht lopen uit de gescheurde band: de buitenkant van de enkel zwelt op en verkleurt. In de les: stoppen, ontlasten en hulp inschakelen. Kies <b>Graad</b> 1–3 of <b>↻ Opnieuw</b>.';
+    K.capSoft(K.stateText(),x,.7);}}
+const H0={
+ step:step0,
+ reset(n){reset0(n);},
+ hud(){const st=S.state;return K.bars(HUD0[st])+(st===2?K.stepsHTML(['Aanzet','Afzet','Vlucht','Landing']):st===3?K.stepsHTML(['Sprong','Landing','Scheur','Zwelling']):'');},
+ ctl(){const st=S.state;if(st===1)return `<span class="sl"><label for="sPF">Strekken</label><input type="range" id="sPF" min="-20" max="45" step="1" value="${Math.round(S0.pfMan)}" aria-label="Voet strekken (plantairflexie) of optrekken (dorsaalflexie)"></span><span class="sl"><label for="sINV">Inversie</label><input type="range" id="sINV" min="-15" max="30" step="1" value="${Math.round(S0.invMan)}" aria-label="Voet naar binnen (inversie) of naar buiten (eversie) kantelen"></span><button id="bNeu">Neutraal</button>`;
+   if(st===2)return `<label for="sT0">Tempo</label><input type="range" id="sT0" min=".25" max="1.5" step=".05" value="${TEMPO}" aria-label="Tempo van de sprong">`;return '';},
+ bind(){const a=K.$('#sPF'),b=K.$('#sINV'),n=K.$('#bNeu'),t=K.$('#sT0');if(a)a.addEventListener('input',()=>{S0.pfMan=+a.value;S0.demo=null;});if(b)b.addEventListener('input',()=>{S0.invMan=+b.value;S0.demo=null;});
+   if(n)n.addEventListener('click',()=>{S0.pfMan=0;S0.invMan=0;a.value=0;b.value=0;});if(t)t.addEventListener('input',()=>{TEMPO=+t.value;});},
+ grades:true,
+ sound(api){const now=api.now;if(!H0._n||now>H0._n){H0._n=now+1.6+R()*1.4;if(S.state!==3)api.thump(120+R()*20,.07,.035);}}
+};
+
+/* =====================================================================
+   NIVEAU 1 · De buitenbanden (≈ 3 cm)
+   ===================================================================== */
+// De botten zijn geloft uit doorsneden: een spitse buitenenkel, een sprongbeen met rol, hals en kop, en een hielbeen met tuber en sinus tarsi.
+// Het kraakbeen is geen losse schijf, maar een blauwwitte kleuring van het gewrichtsvlak zelf (per vertex).
+const B1=std(0xffffff,{map:boneTex,bumpMap:boneTex,bumpScale:.025,roughness:.56,vertexColors:true});
+const BC1=[.95,.87,.72],CC1=[.76,.87,.93];
+function cartCol(w,o){w=clamp(w,0,1);return o.setRGB(lerp(BC1[0],CC1[0],w),lerp(BC1[1],CC1[1],w),lerp(BC1[2],CC1[2],w));}
+function paint(g,w){const n=g.attributes.position.count,c=new Float32Array(n*3);cartCol(w||0,_c);for(let i=0;i<n;i++){c[i*3]=_c.r;c[i*3+1]=_c.g;c[i*3+2]=_c.b;}g.setAttribute('color',new THREE.BufferAttribute(c,3));return g;}
+const sm=(a,b,x)=>smooth(clamp((x-a)/(b-a),0,1));
+const gau=(x,w)=>Math.exp(-(x*x)/(w*w));
+const win=(x,a,b,f)=>sm(a-f,a,x)*(1-sm(b,b+f,x));
+// kuitbeen: smalle schacht, dan de brede, driehoekige buitenenkel die naar een punt loopt, met achteraan een groeve voor de pezen
+const fib1=[loft([[-1.85,.06,.32,.03,.03,2],[-1.7,.06,.32,.22,.16,2],[-1.3,-.02,.31,.62,.38,2.2],[-.6,-.14,.3,1.02,.52,2.4],[.3,-.2,.28,1.24,.58,2.5],[1.3,-.26,.22,1.06,.56,2.4],[2.2,-.34,.12,.74,.52,2.2],[3.3,-.4,.02,.56,.48,2.1],[5.5,-.43,-.06,.48,.44,2.1],[8,-.45,-.1,.46,.43,2.1],[11.5,-.46,-.12,.46,.43,2.1],[11.6,-.46,-.12,.05,.05,2]],B1,G1,
+  {axis:'y',seg:48,nz:.016,warp:(P,u,v,r)=>{P.x+=.2*gau(v,.5)*sm(-.55,-.92,u)*win(P.y,-1.0,1.4,.5);P.z+=.07*sm(.5,.95,v)*gau(u,.6)*win(P.y,-1.2,1.0,.6);},
+   col:(x,y,z,r,o)=>{const v=(z-r[2])/r[4];return cartCol(sm(-.45,-.8,v)*sm(-1.3,-.9,y)*(1-sm(.9,1.4,y)),o);}})];
+const tib1=loft([[1.22,1.2,-2.7,.4,.4,2],[1.28,1.2,-2.7,1.6,1.65,2.5],[1.45,1.2,-2.7,1.95,1.95,2.5],[2.3,1.15,-2.75,2.05,2.0,2.4],[3.6,1.0,-2.8,1.7,1.75,2.3],[5.6,.9,-2.85,1.4,1.5,2.2],[8,.85,-2.9,1.3,1.42,2.1],[11.5,.85,-2.9,1.28,1.4,2.1],[11.6,.85,-2.9,.05,.05,2]],B1,G1,
+  {axis:'y',seg:48,nz:.015,warp:(P,u,v,r)=>{P.x+=.12*sm(.6,.95,u)*gau(v,.5)*win(P.y,1.4,2.4,.3);},col:(x,y,z,r,o)=>cartCol(1-sm(1.3,1.5,y),o).multiplyScalar(.84+.16*(1-sm(1.5,3,y)))});
+const P1=V(.4,-.7,-1.6);
+const foot1=new THREE.Group();foot1.position.copy(P1);G1.add(foot1);const foot1In=new THREE.Group();foot1In.position.copy(P1).negate();foot1.add(foot1In);
+const tal1=[loft([[-2.25,-.55,-2.35,.05,.05,2],[-2.1,-.5,-2.3,.38,.42,2.2],[-1.75,-.35,-2.1,.72,.8,2.4],[-1.0,-.12,-1.95,1.08,1.5,2.6],[.2,-.02,-1.95,1.27,1.72,2.8],[1.4,.02,-1.95,1.28,1.74,2.8],[2.5,-.12,-1.85,1.05,1.6,2.6],[3.2,-.36,-1.6,.72,1.42,2.4],[3.8,-.5,-1.5,.82,1.4,2.3],[4.5,-.6,-1.45,.98,1.35,2.2],[5.1,-.65,-1.45,.8,1.1,2.1],[5.45,-.65,-1.45,.32,.45,2],[5.52,-.65,-1.45,.04,.04,2]],B1,foot1In,
+  {axis:'x',seg:48,nz:.015,pmax:2.4,warp:(P,u,v,r)=>{P.y-=.16*gau(v+.05,.32)*sm(.5,.85,u)*win(P.x,-1.5,2.2,.5);P.y+=.06*gau(v-.75,.2)*sm(.5,.85,u)*win(P.x,-1.3,2.0,.5);},col:(x,y,z,r,o)=>{const u=(y-r[1])/r[3],v=(z-r[2])/r[4];const top=sm(.45,.7,u)*sm(-1.9,-1.4,x)*(1-sm(2.3,2.8,x)),lat=sm(.7,.88,v)*sm(-.4,0,u)*sm(-1.4,-1,x)*(1-sm(1.8,2.3,x)),bot=sm(-.6,-.82,u)*sm(-1.8,-1.4,x)*(1-sm(.6,1.1,x)),head=sm(4.4,4.9,x);return cartCol(Math.max(top,lat,bot,head),o);}}),
+  mesh(paint(blobGeo(.62,.42,.48,2.3,.03,24)),B1,[.5,-1.25,-.45],0,0,foot1In)];
+const cal1=[loft([[-6.0,-3.95,-1.2,.05,.05,2],[-5.85,-3.9,-1.2,.9,.8,2.2],[-5.4,-3.8,-1.2,1.7,1.38,2.5],[-4.4,-3.7,-1.15,1.95,1.55,2.6],[-3.2,-3.75,-1.12,1.68,1.65,2.6],[-1.9,-3.45,-1.1,2.05,2.0,2.7],[-.6,-3.45,-1.1,1.75,1.95,2.7],[.6,-3.65,-1.05,1.32,1.85,2.6],[1.8,-3.55,-1.0,1.22,1.6,2.6],[3.0,-3.4,-1.0,1.1,1.35,2.6],[3.7,-3.35,-1.0,.95,1.15,2.6],[3.95,-3.35,-1.0,.5,.6,2.2],[4.02,-3.35,-1.0,.05,.05,2]],B1,foot1In,
+  {axis:'x',seg:48,nz:.02,pmax:2.35,warp:(P,u,v,r)=>{P.z-=.18*sm(.55,.95,v)*gau(u+.05,.55)*win(P.x,-3.6,2.6,.8);P.y-=.18*sm(-.55,-.95,u)*gau(v+.4,.45)*win(P.x,-5.6,-4.2,.4);},col:(x,y,z,r,o)=>{const u=(y-r[1])/r[3];return cartCol(Math.max(sm(.72,.9,u)*sm(-2.6,-2.1,x)*(1-sm(-.9,-.5,x)),sm(3.75,3.95,x)),o);}}),
+  mesh(paint(blobGeo(.45,.36,.3,2.2,.03,20)),B1,[.9,-3.85,.98],0,0,foot1In)];
+// voor het sprongbeen en het hielbeen: het os naviculare, het os cuboideum en de basis van het vijfde middenvoetsbeen
+const fore1=[mesh(paint(blobGeo(.42,.82,1.0,2.3,.03,32),.15),B1,[5.98,-.72,-1.6],[0,0,-.12],0,foot1In),
+  loft([[4.02,-3.3,-.95,.05,.05,2],[4.1,-3.3,-.95,.78,.9,2.6],[4.6,-3.25,-.95,.88,1.0,2.8],[5.3,-3.2,-.95,.82,.95,2.8],[5.68,-3.2,-.95,.7,.82,2.6],[5.75,-3.2,-.95,.05,.05,2]],B1,foot1In,{axis:'x',seg:40,nz:.02,col:(x,y,z,r,o)=>cartCol(sm(5.55,5.72,x)+(1-sm(4.08,4.25,x)),o)}),
+  loft([[5.72,-3.7,.12,.05,.05,2],[5.8,-3.7,.14,.42,.48,2.2],[6.2,-3.72,.2,.5,.58,2.4],[6.8,-3.85,.26,.34,.36,2.1],[8.2,-4.05,.32,.26,.27,2],[10.5,-4.2,.36,.25,.26,2],[10.6,-4.2,.36,.04,.04,2]],B1,foot1In,{axis:'x',seg:32,nz:.015,col:(x,y,z,r,o)=>cartCol(1-sm(5.78,5.95,x),o)})];
+// voorste tibiofibulaire band (syndesmose) tussen scheenbeen en kuitbeen: een platte, schuin lopende vezelplaat
+{const aitM=std(0xece5d6,{roughness:.3,map:fibTex,vertexColors:true,side:THREE.DoubleSide});const NA=16,B=Bundle(NA,10,6,aitM,G1),P=[];for(let j=0;j<=10;j++)P.push(V());
+ for(let i=0;i<NA;i++){const t=i/(NA-1);_a.set(.78+.06*t,2.3-.95*t,.32);_b.set(2.9,2.85-1.0*t,-.68);for(let j=0;j<=10;j++){const u=j/10;P[j].lerpVectors(_a,_b,u);P[j].z+=.12*Math.sin(Math.PI*u);P[j].y+=.03*Math.sin(u*TAU*2+i);}
+  B.set(i,P,AXZ,j=>.042*(.75+.25*Math.sin(Math.PI*j/10)),()=>_lc.setRGB(.86,.84,.79));}B.done();}
+// ambient occlusion: donkerder waar botten dicht bij elkaar of in een holte liggen (eenmalig berekend uit puntmonsters)
+function bakeAO(meshes,NS,Rr,k){const S=[];meshes.forEach(m=>{const P=m.geometry.attributes.position,N=m.geometry.attributes.normal,step=Math.max(1,Math.floor(P.count/(NS/meshes.length)));for(let i=0;i<P.count;i+=step)S.push([P.getX(i)+m.position.x,P.getY(i)+m.position.y,P.getZ(i)+m.position.z]);});
+  meshes.forEach(m=>{const P=m.geometry.attributes.position,N=m.geometry.attributes.normal,C=m.geometry.attributes.color;if(!C)return;
+    for(let i=0;i<P.count;i++){const x=P.getX(i)+m.position.x,y=P.getY(i)+m.position.y,z=P.getZ(i)+m.position.z,nx=N.getX(i),ny=N.getY(i),nz2=N.getZ(i);let occ=0;
+      for(let s=0;s<S.length;s++){const q=S[s],dx=q[0]-x,dy=q[1]-y,dz=q[2]-z,d2=dx*dx+dy*dy+dz*dz;if(d2<.004||d2>Rr*Rr)continue;const d=Math.sqrt(d2),c=(dx*nx+dy*ny+dz*nz2)/d;if(c<=.15)continue;const f=1-d/Rr;occ+=c*f*f;}
+      const ao=lerp(.42,1,Math.exp(-occ*k));C.setXYZ(i,C.getX(i)*ao,C.getY(i)*ao,C.getZ(i)*ao);}C.needsUpdate=true;});}
+bakeAO(fib1.concat(tal1,cal1,fore1,[tib1]),2600,2.0,.15);
+// periostvaatjes: kronkelende vaatjes die precies op het botoppervlak liggen (met een straal op het bot geprojecteerd)
+{const rc=new THREE.Raycaster();const tgt=fib1.concat(tal1,cal1,[tib1]);G1.updateMatrixWorld(true);const artM=std(0xb8322a,{roughness:.35}),veM=std(0x3b5bab,{roughness:.35});
+ const paths=[[[-1.5,3.9],[-1.0,2.7],[-.55,1.7],[-.1,.9],[.35,-.1]],[[-.15,3.1],[.25,2.2],[-.25,1.25],[-.85,.25],[-1.1,-.6]],[[-5.0,-2.7],[-3.8,-3.0],[-2.6,-3.7],[-1.2,-4.2],[.4,-4.5],[1.9,-5.0]],[[-4.4,-4.7],[-3.1,-5.0],[-1.7,-5.1],[-.1,-5.3],[1.2,-5.2]],[[2.5,.75],[3.3,.4],[4.3,.0],[5.0,-.45]],[[2.7,-.3],[3.5,-.9],[4.4,-1.2]],[[-3.8,-3.4],[-3.0,-2.8],[-2.3,-2.3],[-1.6,-2.2]]];
+ paths.forEach((pp,k)=>{const cv=new THREE.CatmullRomCurve3(pp.map(p=>V(p[0],p[1],0)));const pts=[];let onFoot=0;
+  for(let i=0;i<=28;i++){const q=cv.getPoint(i/28);rc.set(V(q.x,q.y,14),V(0,0,-1));const h=rc.intersectObjects(tgt,false)[0];if(h){const n=h.face.normal.clone().transformDirection(h.object.matrixWorld);pts.push(h.point.clone().addScaledVector(n,.045));if(h.object.parent===foot1In)onFoot++;}}
+  if(pts.length>4){const t=K.tube(pts,k%2?.05:.06,k%2?veM:artM,onFoot>pts.length/2?foot1In:G1,70,7);t.castShadow=false;}});}
+// vetkussen in de sinus tarsi, tussen sprongbeen en hielbeen
+{const NF=110,FAT=inst(new THREE.SphereGeometry(1,12,9),std(0xeec870,{roughness:.22,transparent:true,opacity:.93}),NF);FAT.castShadow=false;foot1In.add(FAT);
+ for(let i=0;i<NF;i++){const t=R();FAT.setMatrixAt(i,placeMatrix(V(1.55+t*2.0,-1.45-R()*.85+.25*Math.sin(t*3),-.35+R()*.85),[R(),R(),R()],[.09+R()*.08,.08+R()*.06,.09+R()*.07]));}FAT.instanceMatrix.needsUpdate=true;
+ nd(mesh(blobGeo(1.05,.42,.5,2,.05,24),glass(0xf3dc9a,.28),[2.55,-1.85,.1],0,0,foot1In));}
+function setFoot1(pf,inv){_q.setFromAxisAngle(AXX,inv*.55*D2R);foot1.quaternion.setFromAxisAngle(AXZ,-pf*.55*D2R).premultiply(_q);}
+function x1(bone,p,o){if(bone==='fix')return o.copy(p);return o.copy(p).sub(P1).applyQuaternion(foot1.quaternion).add(P1);}
+// vezelbundels van de drie banden
+function fiberLig1(groups,r,Kseg,mat){const strands=[];groups.forEach(gp=>{for(let i=0;i<gp.n;i++){const t=gp.n>1?i/(gp.n-1):.5;let a,b;
+    if(gp.round){const sf=K.sunflower(gp.n)[i];_d.subVectors(gp.b,gp.a).normalize();const u=V().crossVectors(_d,AXZ).normalize();const w=V().crossVectors(_d,u).normalize();a=gp.a.clone().addScaledVector(u,sf[0]*gp.rad).addScaledVector(w,sf[1]*gp.rad);b=gp.b.clone().addScaledVector(u,sf[0]*gp.rad*.85).addScaledVector(w,sf[1]*gp.rad*.85);strands.push({a,b,wd:u,bul:gp.bul||.12});}
+    else{const tz=(R()-.5)*gp.th;a=gp.a0.clone().lerp(gp.a1,t).add(V(0,0,tz));b=gp.b0.clone().lerp(gp.b1,t).add(V(0,0,tz));strands.push({a,b,wd:gp.wd||V(0,.35,1).normalize(),bul:gp.bul||.12});}}});
+  strands.forEach(s=>{s.rank=R();s.phi=R()*.8;s.sT=.35+R()*.3;s.vr=.9+R()*.14;s.cur=R()*TAU;});strands[strands.length>>1].rank=.02;
+  const B=Bundle(strands.length,Kseg,7,mat,G1);
+  const pts=[];for(let j=0;j<=Kseg;j++)pts.push(V(0,0,0));return {m:B.m,B,strands,r,K:Kseg,pts,mat};}
+function ligUpdate1(L,e,tornFrac,tearAmt){const Kseg=L.K;const amp=.06*clamp(1-(e+1)/4,0,1)+.006;
+  L.strands.forEach((s,si)=>{x1('foot',s.b,_b);_a.copy(s.a);const torn=tearAmt>0&&s.rank<tornFrac;const iT=Math.max(1,Math.min(Kseg-2,Math.round(s.sT*Kseg)));const ret=.42*tearAmt;
+    for(let j=0;j<=Kseg;j++){const P=L.pts[j],u=j/Kseg;
+      if(!torn){P.lerpVectors(_a,_b,u);P.addScaledVector(s.wd,amp*Math.sin(u*TAU*3.5+s.phi));P.z+=s.bul*Math.sin(Math.PI*u);}
+      else if(j<=iT){const q=j/iT;_e.lerpVectors(_a,_b,s.sT*(1-ret));P.lerpVectors(_a,_e,q);P.addScaledVector(s.wd,(amp+.16*tearAmt*q*q)*Math.sin(q*TAU*1.6+s.cur));P.z+=s.bul*Math.sin(Math.PI*q*s.sT)+.2*tearAmt*q*q;P.y-=.25*tearAmt*q*q;}
+      else{const q=(Kseg-j)/(Kseg-iT);_e.lerpVectors(_b,_a,(1-s.sT)*(1-ret));P.lerpVectors(_b,_e,q);P.addScaledVector(s.wd,(amp+.16*tearAmt*q*q)*Math.sin(q*TAU*1.6+s.cur+1));P.z+=s.bul*Math.sin(Math.PI*q*(1-s.sT))+.2*tearAmt*q*q;P.y-=.25*tearAmt*q*q;}}
+    emitStrand(L,si,{side:s.wd,vr:s.vr},e,torn,iT,torn?.85:1);});
+  L.B.done();L.mat.emissive.setRGB(clamp((e-TEAR+1)/4,0,1)*.35,0,0);}
+const LIGM=()=>std(0xffffff,{roughness:.3,metalness:.05,emissive:0x000000,vertexColors:true,map:fibTex,side:THREE.DoubleSide});
+const L1={
+ atfl:fiberLig1([{n:22,a0:V(1.0,1.28,.36),a1:V(.98,.74,.38),b0:V(3.48,.22,-.05),b1:V(3.44,-.24,-.02),th:.22},{n:22,a0:V(.98,.52,.4),a1:V(.95,.02,.42),b0:V(3.4,-.4,0),b1:V(3.3,-.86,.02),th:.22}],.085,22,LIGM()),
+ cfl:fiberLig1([{n:34,round:true,a:V(.1,-1.4,.62),b:V(-1.88,-3.3,1.06),rad:.3,bul:.22}],.082,22,LIGM()),
+ ptfl:fiberLig1([{n:28,a0:V(-1.3,.5,0),a1:V(-1.3,-.3,.05),b0:V(-2.1,-.15,-2.3),b1:V(-2.05,-.85,-2.25),th:.2,bul:.1}],.078,20,LIGM())};
+// epiligament (doorzichtig vlies) rond elke band
+const sheathM=glass(0xf3e6d6,.26,{map:fibTex});const sh1={atfl:nd(mesh(BAND,sheathM,0,0,0,G1)),cfl:nd(mesh(BAND,sheathM,0,0,0,G1)),ptfl:nd(mesh(BAND,sheathM,0,0,0,G1))};
+// pezen van de kuitbeenspieren (laag), een bloedvaatje en een zenuwtakje op de ATFL
+const pezM=std(0xeee6d4,{roughness:.3});
+const rPL1=rope(40,.3,pezM,G1,BAND),rPB1=rope(40,.26,pezM,G1,BAND);
+const ctlPL1=[V(-1.75,7.5,-.25),V(-1.98,2.6,-.05),V(-1.88,.2,.2),V(-1.3,-1.78,.78),V(),V(),V()],movPL1=[V(.3,-3.42,1.52),V(3,-4.28,1.58),V(6,-4.7,1.3)];
+const ctlPB1=[V(-1.35,7.2,-.62),V(-1.66,2.6,-.42),V(-1.6,.0,-.02),V(-.98,-1.95,.58),V(),V(),V()],movPB1=[V(.6,-3.22,1.22),V(3.2,-3.86,1.24),V(6,-4.2,1.02)];
+const retM=glass(0xe8dcc8,.32);const ret1=nd(mesh(BAND,retM,0,0,0,G1));orient(ret1,V(-.6,-.55,1.05),V(-2.35,-2.55,.75),.42,.05);
+const vesM=std(0xb8322a,{roughness:.35}),nerM=std(0xe9c84a,{roughness:.4});
+const rVes=rope(26,.085,vesM,G1),rNer=rope(20,.05,nerM,G1);
+const ctlV=[V(1.5,3.6,.55),V(1.3,1.9,.66),V(),V(),V(),V(),V()],ctlN=[V(-.1,4.2,.72),V(.5,2.4,.8),V(1.25,1.1,.7),V(),V()];
+const hemaM1=std(0x4a0b0b,{transparent:true,opacity:.92,roughness:.28});
+const HEM1=inst(new THREE.SphereGeometry(1,12,10),hemaM1,18);HEM1.castShadow=false;G1.add(HEM1);
+const hemD=[];for(let i=0;i<18;i++)hemD.push({o:V((R()-.5)*2.4,(R()-.5)*1.2,.2+R()*.4),s:.03+R()*.04,v:R()});
+// het hematoom: één vervormde, doorschijnende vlek die uitloopt langs de buitenkant
+const hemBM=new THREE.MeshStandardMaterial({color:0xffffff,vertexColors:true,roughness:.5,transparent:true,opacity:0,depthWrite:false});
+const hemB=nd(mesh(bruiseCol(blobGeo(1.7,1.15,.42,2,.06,48),V(0,0,1),7),hemBM,[0,0,0],0,0,G1));hemB.visible=false;
+const oedM=glass(0xd98a8a,0);const oed1=nd(blob(2.4,1.8,1.0,oedM,[2.0,-.4,.55],G1,{p:2,nz:.05}));oed1.visible=false;
+const S1={pf:0,inv:0,t:0,tearA:false,tearAT:0,tearC:false,tearCT:0,tearP:false,hema:0,e:strains(0,0)};
+function reset1(n){S1.t=0;S1.tearA=S1.tearC=S1.tearP=false;S1.hema=0;}
+const _m1=V(0,0,0);function mid1(L,i,o){const s=L.strands[i];x1('foot',s.b,_m1);return o.copy(s.a).lerp(_m1,.5);}
+function step1(dt){const st=S.state,g=S.grade;S1.t+=dt;const t=S1.t;let pf=0,inv=0;
+  if(st===1){pf=2*Math.sin(S.clock*.8);inv=1.5*Math.sin(S.clock*.6);}
+  else if(st===2){const T=4.4/TEMPO;S1.ph=(S1.ph||0)+dt/T;const c=.5-.5*Math.cos(S1.ph*TAU);const c2=.5-.5*Math.cos(S1.ph*TAU-.5);pf=27*c;inv=19*c2;}
+  else{const invMax=[0,44,50,56][g],res=[0,4,8,14][g];if(t<.4){pf=0;inv=0;}else if(t<.66){const s=smooth((t-.4)/.26);pf=14*s;inv=invMax*s;}else if(t<1.1){pf=14;inv=invMax;}else{const s=smooth((t-1.1)/.8);pf=lerp(14,5,s);inv=lerp(invMax,res,s);}
+    const e0=strains(pf,inv);if(!S1.tearA&&e0.atfl>TEAR){S1.tearA=true;S1.tearAT=t;K.flash({big:g>=2,a:g===1?.55:1,shake:g===1?.18:.4});}
+    if(S1.tearA&&!S1.tearC&&g>=2&&e0.cfl>(g===3?TEAR:5.5)){S1.tearC=true;S1.tearCT=t;if(g===3)K.flash({big:false,a:.6,shake:.25});else K.SND.rip(false);}
+    if(g===3&&S1.tearC&&!S1.tearP&&t>S1.tearCT+.05){S1.tearP=true;}
+    S1.hema=S1.tearA?smooth((t-S1.tearAT-.15)/3.2)*[0,.35,.75,1][g]:0;}
+  S1.pf=pf;S1.inv=inv;setFoot1(pf,inv);const e=strains(pf,inv);S1.e=e;
+  const tA=S1.tearA?smooth((t-S1.tearAT)/.18):0,tC=S1.tearC?smooth((t-S1.tearCT)/.18):0,tP=S1.tearP?smooth((t-S1.tearCT-.05)/.2):0;
+  ligUpdate1(L1.atfl,e.atfl,[0,.07,.7,1.01][g],tA);ligUpdate1(L1.cfl,e.cfl,[0,0,.14,1.01][g],tC);ligUpdate1(L1.ptfl,e.ptfl,[0,0,0,.25][g],tP);
+  // vliezen
+  [['atfl',0,43,.78,.32],['cfl',null,null,.42,.42],['ptfl',0,27,.52,.22]].forEach(d=>{const L=L1[d[0]];let a,b;if(d[1]===null){_f.copy(L.strands[0].a);x1('foot',L.strands[0].b,_g);a=_f;b=_g;}else{_f.copy(L.strands[d[1]].a).lerp(L.strands[d[2]].a,.5);_g.copy(x1('foot',L.strands[d[1]].b,_e)).lerp(x1('foot',L.strands[d[2]].b,_b),.5);a=_f;b=_g;}
+    const m=sh1[d[0]];orient(m,a,b,d[3],d[4]);m.position.z+=d[0]==='atfl'?.04:d[0]==='cfl'?.12:0;});
+  sheathM.opacity=.17*(1-.6*tA*(g>=2?1:0));
+  // pezen, bloedvat en zenuw
+  movPL1.forEach((p,i)=>x1('foot',p,ctlPL1[4+i]));rPL1.set(ctlPL1);movPB1.forEach((p,i)=>x1('foot',p,ctlPB1[4+i]));rPB1.set(ctlPB1);
+  mid1(L1.atfl,10,_a);mid1(L1.atfl,33,_b);const mA=_f.copy(_a).lerp(_b,.5);
+  x1('foot',L1.atfl.strands[10].b,_e);ctlV[2].copy(L1.atfl.strands[10].a).lerp(_e,.25).add(V(0,.05,.36));ctlV[3].copy(mA).add(V(0,.0,.4));ctlV[4].copy(L1.atfl.strands[10].a).lerp(_e,.75).add(V(0,-.05,.38));x1('foot',_g.set(3.9,-.3,.3),ctlV[5]);x1('foot',_g.set(5.0,-.5,.1),ctlV[6]);
+  rVes.hide=tA>.1&&g>=2?[10,11]:null;rVes.set(ctlV);
+  ctlN[3].copy(L1.atfl.strands[16].a).lerp(x1('foot',L1.atfl.strands[16].b,_e),.18).add(V(0,.05,.34));ctlN[4].copy(L1.atfl.strands[16].a).lerp(_e,.36).add(V(0,0,.3));rNer.set(ctlN);
+  // bloeding en zwelling
+  const hm=S1.hema;HEM1.visible=hm>.01;if(hm>.01){hemD.forEach((h,i)=>{const s=Math.max(.001,h.s*smooth(hm*1.6-h.v*.6));_e.copy(mA).add(_g.copy(h.o).multiplyScalar(.5+hm*.9));_e.y-=hm*h.v*.8;HEM1.setMatrixAt(i,placeMatrix(_e,null,s));});HEM1.instanceMatrix.needsUpdate=true;}
+  hemB.visible=hm>.01;if(hm>.01){const k=smooth(clamp(hm*1.3,0,1));hemB.position.copy(mA).add(V(-.2,-.45*k,-.02));hemB.scale.set(.35+.7*k,.35+.75*k,.6+.5*k);hemB.rotation.z=-.35;hemBM.opacity=.62*k;}
+  oed1.visible=hm>.01;oedM.opacity=.2*hm;oed1.scale.setScalar(.6+.5*hm);
+  // ankers
+  W.atfl1=mid1(L1.atfl,22,W.atfl1||V()).add(V(0,0,.45));W.cfl1=mid1(L1.cfl,0,W.cfl1||V()).add(V(0,0,.5));W.ptfl1=mid1(L1.ptfl,14,W.ptfl1||V()).add(V(0,.25,.2));W.malL=V(-.2,2.1,.85);W.tal1=x1('foot',_a.set(4.2,.15,0),W.tal1||V());W.cal1=x1('foot',_a.set(-2.6,-3.5,1.1),W.cal1||V());W.pez1=rPL1.P[12].clone().add(V(0,0,.4));
+  // HUD
+  const pk=tA>0&&g===1;
+  if(st===3)K.bar(1,clamp(inv/56,0,1),Math.round(Math.max(0,inv))+'° inversie',inv>30?'bad':'');else K.bar(1,clamp((pf+20)/65,0,1),angText(pf));
+  if(st===3){K.bar(2,tA&&g>=2?1:eFrac(e.atfl),tA&&g>=2?'gescheurd':pk?'deels gescheurd':eText(e.atfl),eCls(e.atfl,tA),eBg(e.atfl,tA&&g>=2));
+    K.bar(3,tC&&g===3?1:eFrac(e.cfl),tC&&g===3?'gescheurd':tC?'deels gescheurd':eText(e.cfl),eCls(e.cfl,tC),eBg(e.cfl,tC&&g===3));
+    const tot=L1.atfl.strands.length+L1.cfl.strands.length;let ok=0;L1.atfl.strands.forEach(s=>{if(!(tA>0&&s.rank<[0,.07,.7,1.01][g]))ok++;});L1.cfl.strands.forEach(s=>{if(!(tC>0&&s.rank<[0,0,.14,1.01][g]))ok++;});
+    K.bar(4,ok/tot,Math.round(ok/tot*100)+'% heel',ok/tot<.6?'bad':'ok',ok/tot<.6?'var(--bad)':'var(--ok)');}
+  else{K.bar(2,clamp((inv+20)/55,0,1),invText(inv));K.bar(3,eFrac(e.atfl),eText(e.atfl),eCls(e.atfl),eBg(e.atfl));K.bar(4,eFrac(e.cfl),eText(e.cfl),eCls(e.cfl),eBg(e.cfl));}
+  if(st===1)K.capSoft(K.stateText(),'Drie banden aan de buitenkant. De <b>ATFL</b> loopt naar voren naar het sprongbeen, de <b>CFL</b> naar beneden naar het hielbeen en de <b>PTFL</b> diep naar achteren. De golvende vezels liggen nog los. Blauwwit is kraakbeen.',1);
+  else if(st===2)K.capSoft(K.stateText(),pf>17&&inv>11?'Gestrekt én naar binnen: de vezels van de ATFL trekken glad en kleuren <b>wit</b>. Een band kan niet aanspannen; hij remt alleen als hij strak staat. Bij een verzwikking gaat de voet veel verder: dan kleuren de vezels oranje en rood.':'De voet strekt en kantelt naar binnen. Kijk welke band als eerste strak komt.',1.8);
+  else{const gr=['','<b>Graad 1</b>: de ATFL is overrekt. In het model knappen een paar vezelbundels; in werkelijkheid zijn die scheurtjes vaak alleen onder de microscoop te zien.','<b>Graad 2</b>: het grootste deel van de ATFL is doorgescheurd; een bloedvaatje scheurt mee.','<b>Graad 3</b>: de ATFL en de CFL zijn helemaal kapot. De gescheurde uiteinden trekken terug.'][g];
+    K.capSoft(K.stateText(),!S1.tearA?'De voet klapt naar binnen terwijl hij gestrekt is…':t<S1.tearAT+1.6?gr:gr+' Bloed en vocht hopen zich op: zwelling.',1.4);}}
+const H1={step:step1,reset(n){reset1(n);S1.ph=0;},hud(){return K.bars(S.state===3?['Inversie','Rek ATFL','Rek CFL','Vezels heel']:['Strekken','Inversie','Rek ATFL','Rek CFL']);},
+ ctl(){return S.state===2?`<label for="sT1">Tempo</label><input type="range" id="sT1" min=".25" max="1.5" step=".05" value="${TEMPO}" aria-label="Tempo">`:'';},
+ bind(){const t=K.$('#sT1');if(t)t.addEventListener('input',()=>{TEMPO=+t.value;});},grades:true,
+ sound(api){if(S.state===2){const e=S1.e.atfl;if(e>3&&(!H1._n||api.now>H1._n)){H1._n=api.now+.5+R()*.4;api.noise(.28,'bandpass',160+e*25,9,.04+e*.004,.1);}}}};
+
+/* =====================================================================
+   NIVEAU 2 · Bandweefsel (≈ 0,5 mm)
+   ===================================================================== */
+const colTex=canvasTex(64,16,(x,w,h)=>{x.fillStyle='#f3ebd9';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=4){x.fillStyle=`rgba(150,128,98,${.1+R()*.2})`;x.fillRect(i,0,1.6,h);}},[3,1]);
+const X0=-7,X1=7,N2S=60,LAM=1.9;
+const HP2=K.hexPts(3,.58).filter(p=>Math.hypot(p[0],p[1])<1.8);
+const FIB2=HP2.map(p=>({y:p[0],z:p[1],ph:p[0]*.35+R()*.3,rank:R(),xt:(R()-.5)*1.8,col:.88+R()*.16,torn:false,tt:0}));
+const colM=inst(UCYL,std(0xffffff,{map:colTex,roughness:.42}),FIB2.length*N2S);colM.castShadow=false;G2.add(colM);for(let i=0;i<FIB2.length*N2S;i++)colM.setColorAt(i,_c.setRGB(1,1,1));
+const pts2=[];for(let j=0;j<=N2S;j++)pts2.push(V(0,0,0));
+const zig=a=>{const s=Math.sin(a);return Math.sign(s)*Math.pow(Math.abs(s),.55);};
+nd(mesh(new THREE.CylinderGeometry(2.08,2.08,15.2,64,1,true,.9,TAU-1.8).rotateZ(Math.PI/2),glass(0xf1d9d0,.11),[0,0,0],0,0,G2));
+// fibroblasten in rijen tussen de vezels
+const FBL=[];{const cand=[];HP2.forEach(p=>{[0,1,2].forEach(k=>{const a=k*Math.PI/3+Math.PI/6;cand.push([p[0]+.335*Math.cos(a),p[1]+.335*Math.sin(a)]);});});const front=cand.filter(c=>c[1]>-.2&&Math.hypot(c[0],c[1])<1.85);
+  for(let i=0;i<24;i++){const c=front[(R()*front.length)|0];FBL.push({x:-5.8+11.6*R(),y:c[0],z:c[1],l:.55+R()*.35});}}
+const fblM=std(0xc982c6,{roughness:.45,transparent:true,opacity:.92,emissive:0x7a2a8a,emissiveIntensity:0});
+const nucM=std(0x4a2470,{roughness:.4});
+const FBLM=inst(new THREE.SphereGeometry(1,16,10),fblM,FBL.length),NUCM=inst(new THREE.SphereGeometry(1,12,8),nucM,FBL.length);G2.add(FBLM,NUCM);FBLM.castShadow=NUCM.castShadow=false;
+// Ruffini-lichaampje: kapsel met vertakte zenuwuiteinden
+const RUF=new THREE.Group();RUF.position.set(-2.4,.2,2.1);G2.add(RUF);
+const capG=new THREE.LatheGeometry(Array.from({length:21},(_,i)=>{const t=i/20;return new THREE.Vector2(Math.max(.001,.44*Math.pow(Math.sin(Math.PI*t),.6)),t*2.8);}),36);capG.rotateZ(-Math.PI/2);capG.translate(-1.4,0,0);
+const rufCapM=glass(0xa8dcff,.3,{emissive:0x1d5a86,emissiveIntensity:.5});const rufCap=nd(mesh(capG,rufCapM,0,0,0,RUF));
+const rufTM=glow(0xffd76a,0xffb020,.25);const rufT=[];
+for(let b=0;b<15;b++){let p=V(lerp(-.25,.25,R()),.05+(R()-.5)*.1,(R()-.5)*.1);const pts=[p.clone()];const dir=R()<.5?-1:1;for(let s=0;s<4;s++){p=p.clone().add(V(dir*(.18+R()*.16),(R()-.5)*.2,(R()-.5)*.2));const lim=.36*Math.pow(Math.max(.01,Math.sin(Math.PI*(p.x+1.4)/2.8)),.6);const rr=Math.hypot(p.y,p.z);if(rr>lim){p.y*=lim/rr;p.z*=lim/rr;}pts.push(p);}
+  const tb=K.tube(pts,.028,rufTM,RUF,16,6);tb.castShadow=false;rufT.push(tb);const bl=nd(mesh(new THREE.SphereGeometry(.05,8,6),rufTM,[p.x,p.y,p.z],0,0,RUF));rufT.push(bl);}
+rufT.push(K.tube([V(0,.55,.15),V(0,.3,.08),V(0,.05,0)],.05,rufTM,RUF,10,6));
+// Pacini-lichaampje: een ui van vliesjes rond één zenuwuiteinde
+const PAC=new THREE.Group();PAC.position.set(3.7,-1.15,2.35);G2.add(PAC);const pacL=[];
+for(let k=0;k<6;k++){const s=1-k*.15;const m=nd(mesh(new THREE.SphereGeometry(1,28,18),glass(k%2?0xdcefff:0xbfe0f4,.1+.025*k),[0,0,0],0,[1.05*s,.6*s,.6*s],PAC));pacL.push(m);}
+const pacCoreM=glow(0xffd76a,0xffb020,.3);nd(mesh(new THREE.CylinderGeometry(.05,.05,1.3,10).rotateZ(Math.PI/2),pacCoreM,[0,0,0],0,0,PAC));
+// zenuwvezels met myeline en knopen van Ranvier
+const axM=std(0xe9c84a,{roughness:.4}),myM=std(0xe6edf4,{roughness:.3,transparent:true,opacity:.9});
+function axon(pts,start){const cv=new THREE.CatmullRomCurve3(pts.map(p=>V(...p)));const tb=K.tube(cv.getPoints(60),.045,axM,G2,90,6);tb.castShadow=false;const L=cv.getLength();const nodes=[];for(let s=start;s<L;s+=.66)nodes.push(cv.getPointAt(s/L));return {cv,nodes,tb,L};}
+const AXN=[axon([[-2.4,.75,2.25],[-3.1,1.8,2.6],[-4.5,2.85,2.55],[-6.3,3.6,2.4],[-8.6,4.25,2.2]],.35),axon([[2.62,-1.15,2.35],[1.2,-.3,2.75],[-1.4,1.1,2.95],[-4.1,2.65,2.95],[-6.4,3.45,2.75],[-8.6,4.0,2.5]],.3)];
+const nMy=AXN.reduce((s,a)=>s+a.nodes.length-1,0);const MYM=inst(UCYL,myM,nMy);MYM.castShadow=false;G2.add(MYM);
+{let k=0;AXN.forEach(a=>{for(let i=0;i<a.nodes.length-1;i++){_d.subVectors(a.nodes[i+1],a.nodes[i]).normalize();_a.copy(a.nodes[i]).addScaledVector(_d,.06);_b.copy(a.nodes[i+1]).addScaledVector(_d,-.06);MYM.setMatrixAt(k++,segMatrix(_a,_b,.13));}});MYM.instanceMatrix.needsUpdate=true;}
+const PULM=inst(new THREE.SphereGeometry(.2,14,10),add(0xffd770,1),50);PULM.castShadow=false;G2.add(PULM);for(let i=0;i<50;i++){PULM.setMatrixAt(i,ZERO);PULM.setColorAt(i,_c.setRGB(1,1,1));}
+const PULS=[];
+// haarvat met rode bloedcellen
+const capCv=new THREE.CatmullRomCurve3([V(-7.6,-2.05,1.55),V(-3.5,-1.95,1.7),V(0,-2.15,1.62),V(3.5,-1.95,1.45),V(7.6,-2.2,1.3)]);
+const capVM=glass(0xd04848,.42);const capA=K.tube(Array.from({length:14},(_,i)=>capCv.getPointAt(i/13*.505)),.2,capVM,G2,40,14),capB=K.tube(Array.from({length:14},(_,i)=>capCv.getPointAt(.495+i/13*.505)),.2,capVM,G2,40,14);capA.castShadow=capB.castShadow=false;
+const rbcG=new THREE.SphereGeometry(1,14,8);rbcG.scale(1,.38,1);const rbcM=std(0xc8302a,{roughness:.4});
+const RBC=inst(rbcG,rbcM,34),LEAK=inst(rbcG,rbcM,90);RBC.castShadow=LEAK.castShadow=false;G2.add(RBC,LEAK);
+const rbcD=Array.from({length:34},()=>({u:R(),o:V((R()-.5)*.16,(R()-.5)*.16,(R()-.5)*.16),r:R()*TAU,v:.04+R()*.02}));
+const leakD=Array.from({length:90},()=>({p:V(),v:V(),on:false,r:R()*TAU,t:0}));
+// grondsubstantie (zwevende deeltjes) en nieuw, ongeordend collageen bij herstel
+const gsG=new THREE.BufferGeometry();const gsP=new Float32Array(600*3);for(let i=0;i<600;i++){gsP[i*3]=(R()-.5)*15;gsP[i*3+1]=(R()-.5)*5.5;gsP[i*3+2]=(R()-.5)*5.5;}gsG.setAttribute('position',new THREE.BufferAttribute(gsP,3));
+const gs=new THREE.Points(gsG,new THREE.PointsMaterial({color:0xbfe0ff,size:.05,transparent:true,opacity:.4,depthWrite:false}));G2.add(gs);
+const NEW=inst(UCYL,std(0xf6efe0,{roughness:.5,transparent:true,opacity:.85}),46);NEW.castShadow=false;G2.add(NEW);
+const newD=Array.from({length:46},()=>{const a=R()*TAU,r=Math.sqrt(R())*1.6;const d=V(R()-.5,R()-.5,R()-.5).normalize();return {c:V((R()-.5)*2.4,r*Math.cos(a),r*Math.sin(a)),d,l:.5+R()*.9,v:R()};});
+const S2={man:0,e:0,eP:0,t:0,torn:0,firstTear:-1,rufDam:false,capTorn:false,heal:0,phR:0,phV:0,phP:0,phPV:0,lastClk:0};const spR=[],spP=[];let scopeEl=null;
+function reset2(n){S2.t=0;S2.firstTear=-1;S2.rufDam=false;S2.capTorn=false;S2.heal=0;FIB2.forEach(f=>{f.torn=false;});leakD.forEach(l=>l.on=false);if(n!==1)S2.man=S2.man;}
+function upd2(e,amp,t){const sx=1+e*1.6;let k=0;
+  FIB2.forEach(f=>{const ta=f.torn?smooth((t-f.tt)/.25):0;const iT=Math.max(1,Math.min(N2S-2,Math.round((f.xt-X0)/(X1-X0)*N2S)));
+    for(let j=0;j<=N2S;j++){const X=X0+(X1-X0)*j/N2S;const P=pts2[j];
+      if(!f.torn)P.set(X*sx,f.y+amp*zig(X*TAU/LAM+f.ph),f.z);
+      else{const left=j<=iT;const end=left?X0:X1;const q=left?(X-X0)/(f.xt-X0):(X1-X)/(X1-f.xt);const xx=lerp(end,X,1-ta*.12);const a2=amp+ta*.26*q*q;
+        P.set(xx*sx,f.y+a2*zig(X*TAU/(LAM*(1-.3*ta*q))+f.ph)-ta*.12*q*q,f.z+ta*.14*q*q*Math.sin(f.ph*5+1));}}
+    for(let j=0;j<N2S;j++){if(f.torn&&j===iT){colM.setMatrixAt(k++,ZERO);continue;}_e.subVectors(pts2[j+1],pts2[j]).multiplyScalar(.1);_a.copy(pts2[j]).sub(_e);_b.copy(pts2[j+1]).add(_e);colM.setMatrixAt(k,segMatrix(_a,_b,.2));
+      if(f.torn&&Math.abs(j-iT)<=2)_c.setRGB(.96,.62,.56);else _c.setRGB(.96*f.col,.9*f.col,.8*f.col);colM.setColorAt(k++,_c);}});
+  colM.instanceMatrix.needsUpdate=true;colM.instanceColor.needsUpdate=true;
+  FBL.forEach((c,i)=>{const yAt=x=>c.y+amp*zig(x*TAU/LAM+c.y*.35+.15);const y0=yAt(c.x),sl=(yAt(c.x+.08)-yAt(c.x-.08))/.16;_q.setFromAxisAngle(AXZ,Math.atan(sl*.8));_a.set(c.x*sx,y0,c.z);
+    FBLM.setMatrixAt(i,placeMatrix(_a,_q,[c.l*(1+e*3),.11*(1-e*1.5),.19]));NUCM.setMatrixAt(i,placeMatrix(_a,_q,[c.l*.42*(1+e*2.5),.085,.13]));});
+  FBLM.instanceMatrix.needsUpdate=true;NUCM.instanceMatrix.needsUpdate=true;
+  RUF.scale.set(1+e*2.4,1-e*1.4,1-e*1.4);RUF.position.x=-2.4*sx;PAC.position.x=3.7*sx;}
+function fire(dt){const now=S.clock;// impulsen: echte frequentie voor de scope, een tiende daarvan zichtbaar in 3D
+  const fR=S2.rufDam?(1.2+1.4*Math.abs(Math.sin(now*2.3))):6+18*S2.e*100;S2.fR=fR;
+  S2.phR+=fR*dt;while(S2.phR>=1){S2.phR-=1;spR.push(now);if(now-S2.lastClk>.024){S2.lastClk=now;K.SND.noise(.012,'highpass',3200,.7,.05,.001);}}
+  S2.phV+=fR/9*dt;if(S2.phV>=1){S2.phV-=1;PULS.push({ax:0,i:0,t:0});rufTM.emissiveIntensity=1.6;}
+  const dv=Math.abs(S2.e-S2.eP)/Math.max(dt,1e-4);S2.eP=S2.e;const fP=dv>.004?Math.min(260,dv*3200):0;S2.fP=fP;
+  S2.phP+=fP*dt;while(S2.phP>=1){S2.phP-=1;spP.push(now);}S2.phPV+=fP/9*dt;if(S2.phPV>=1){S2.phPV-=1;PULS.push({ax:1,i:0,t:0});pacCoreM.emissiveIntensity=1.6;}
+  rufTM.emissiveIntensity=Math.max(S2.rufDam?.0:.25,rufTM.emissiveIntensity-dt*5);pacCoreM.emissiveIntensity=Math.max(.3,pacCoreM.emissiveIntensity-dt*5);
+  while(spR.length&&spR[0]<now-1.3)spR.shift();while(spP.length&&spP[0]<now-1.3)spP.shift();
+  for(let i=PULS.length-1;i>=0;i--){const p=PULS[i];p.t+=dt;if(p.t>.05){p.t-=.05;p.i++;}if(p.i>=AXN[p.ax].nodes.length)PULS.splice(i,1);}
+  for(let i=0;i<50;i++){const p=PULS[i];if(!p){PULM.setMatrixAt(i,ZERO);continue;}PULM.setMatrixAt(i,placeMatrix(AXN[p.ax].nodes[p.i],null,1.15-p.t*6));const b=1-p.t*10;PULM.setColorAt(i,p.ax?_c.setRGB(.55*b+.3,.85*b+.15,1):_c.setRGB(1,.95*b+.05,.6*b+.1));}
+  PULM.instanceMatrix.needsUpdate=true;PULM.instanceColor.needsUpdate=true;}
+function scope(){const c=scopeEl;if(!c||!c.isConnected)return;const x=c.getContext('2d'),w=c.width,h=c.height,now=S.clock,win=1.2;x.clearRect(0,0,w,h);
+  x.strokeStyle='rgba(255,255,255,.1)';x.lineWidth=1;x.beginPath();x.moveTo(0,h-7);x.lineTo(w,h-7);x.stroke();
+  x.lineWidth=1.3;x.strokeStyle='#ffd76a';x.beginPath();spR.forEach(t=>{const px=w-(now-t)/win*w;if(px<0)return;x.moveTo(px,h-7);x.lineTo(px,13);});x.stroke();
+  x.strokeStyle='#8fe3ff';x.beginPath();spP.forEach(t=>{const px=w-(now-t)/win*w;if(px<0)return;x.moveTo(px,h-7);x.lineTo(px,24);});x.stroke();
+  x.font='600 10px "JetBrains Mono",monospace';x.fillStyle='rgba(255,215,106,.9)';x.fillText('Ruffini',5,10);x.fillStyle='rgba(143,227,255,.9)';x.fillText('Pacini',62,10);x.fillStyle='rgba(239,227,200,.55)';x.textAlign='right';x.fillText('1,2 s',w-5,10);x.textAlign='left';}
+function step2(dt){const st=S.state;S2.t+=dt;const t=S2.t;let e=0;
+  if(st===1)e=S2.man/100;
+  else if(st===2){S2.ph2=(S2.ph2||0)+dt*TEMPO/3.6;e=.045*(.5-.5*Math.cos(S2.ph2*TAU));}
+  else{e=t<.5?0:t<1.5?.096*smooth((t-.5)/1.0):lerp(.096,.032,smooth((t-1.5)/.9));
+    FIB2.forEach(f=>{if(!f.torn&&e*100>6+5*f.rank&&t<1.6){f.torn=true;f.tt=t;if(S2.firstTear<0){S2.firstTear=t;K.flash({big:false,a:.75,shake:.25});}else if(R()<.3)K.SND.split();}});
+    const tf=FIB2.filter(f=>f.torn).length/FIB2.length;S2.torn=tf;if(!S2.rufDam&&tf>.4){S2.rufDam=true;S2.rufT=t;}if(!S2.capTorn&&tf>.25){S2.capTorn=true;S2.capT=t;}
+    S2.heal=smooth((t-4.6)/3.2);}
+  if(st!==3)S2.torn=0;
+  S2.e=e;const amp=.19*clamp(1-e/.03,0,1)+.01;S2.amp=amp;
+  upd2(e,amp,t);fire(dt);scope();
+  // Ruffini beschadigd
+  rufCapM.opacity=S2.rufDam?.12:.3;rufCapM.color.setHex(S2.rufDam?0xd08a8a:0xbfe3ff);rufTM.color.setHex(S2.rufDam?0x8a7f6a:0xffd76a);rufT.forEach((m,i)=>{m.visible=!(S2.rufDam&&i%3===1);});
+  // haarvat en bloedcellen
+  const ct=S2.capTorn?smooth((t-S2.capT)/.3):0;capA.position.x=-.18*ct;capB.position.x=.18*ct;
+  rbcD.forEach((r,i)=>{r.u+=r.v*dt*(1-.4*ct);if(r.u>1)r.u-=1;let u=r.u;if(ct>0&&u>.47){u=-1;}if(u<0){RBC.setMatrixAt(i,ZERO);if(r.u>.6)r.u=0;return;}
+    capCv.getPointAt(u,_a);_a.add(r.o);_q.setFromAxisAngle(AXX,r.r+S.clock*.8);RBC.setMatrixAt(i,placeMatrix(_a,_q,.12));});RBC.instanceMatrix.needsUpdate=true;
+  if(ct>0){capCv.getPointAt(.5,_b);leakD.forEach((l,i)=>{if(!l.on&&R()<dt*14*(1-S2.heal*.5)){l.on=true;l.t=0;l.p.copy(_b);l.v.set((R()-.5)*2.4,.3+R()*1.8,(R()-.3)*1.6);}if(l.on){l.t+=dt;l.p.addScaledVector(l.v,dt);l.v.multiplyScalar(Math.max(0,1-dt*1.6));l.v.y-=dt*.06;_q.setFromAxisAngle(AXX,l.r+l.t);LEAK.setMatrixAt(i,placeMatrix(l.p,_q,.12));}else LEAK.setMatrixAt(i,ZERO);});}
+  else leakD.forEach((l,i)=>LEAK.setMatrixAt(i,ZERO));LEAK.instanceMatrix.needsUpdate=true;
+  // herstel
+  const hl=S2.heal;NEW.visible=hl>.01;if(hl>.01){newD.forEach((n,i)=>{const s=smooth(hl*1.5-n.v*.5);_a.copy(n.c).addScaledVector(n.d,-n.l*.5*s);_b.copy(n.c).addScaledVector(n.d,n.l*.5*s);NEW.setMatrixAt(i,s>.01?segMatrix(_a,_b,.045):ZERO);});NEW.instanceMatrix.needsUpdate=true;}
+  fblM.emissiveIntensity=hl*(.5+.3*Math.sin(S.clock*3));
+  gs.rotation.x=S.clock*.01;gs.position.x=Math.sin(S.clock*.15)*.2;
+  // ankers
+  const fb=FBL.reduce((b,c)=>(c.z>.7&&Math.abs(c.x-.4)<Math.abs(b.x-.4))||b.z<=.7&&c.z>b.z?c:b,FBL[0]);W.fbl=V(fb.x*(1+e*1.6),fb.y,fb.z+.15);W.col=V(1.0*(1+e*1.6),HP2[0][0]+.9,1.75);W.ruf=RUF.position.clone().add(V(0,.5,.25));W.pac=PAC.position.clone().add(V(0,.65,.3));W.cap=capCv.getPointAt(.38).add(V(0,.12,.3));W.nerve=AXN[0].nodes[Math.min(5,AXN[0].nodes.length-1)];
+  // HUD
+  K.bar(1,clamp(e/.11,0,1),fmt(e*100)+'% rek',e>.06?'bad':e>.03?'ecc':'ok',e>.06?'var(--bad)':e>.03?'#f0a35d':'var(--ok)');
+  const cr=clamp(amp/.19,0,1);K.bar(2,cr,cr>.7?'golvend':cr>.15?'deels glad':'glad',cr<.15?'iso':'', '#e9e4d8');
+  K.bar(3,clamp(S2.fR/90,0,1),Math.round(S2.fR)+' Hz'+(S2.rufDam?' · schade':''),S2.rufDam?'bad':'con','#ffd76a');
+  if(st===1)K.capSoft(K.stateText(),S2.e<.005?'Collageenvezels liggen in een golfpatroon: de <b>crimp</b>. Tussen de vezels liggen fibroblasten (paars) en een <b>Ruffini-lichaampje</b>. Schuif de rek op.':S2.e<.03?'Bij een paar procent rek trekt de golf glad (de teenzone). De Ruffini-sensor vuurt sneller.':'De crimp is weg: nu rekt het collageen zelf. De band wordt stijf en de sensor vuurt snel.',1);
+  else if(st===2)K.capSoft(K.stateText(),S2.e>.03?'De vezels staan strak. Het Ruffini-lichaampje wordt samengedrukt en vuurt veel impulsen: <b>proprioceptie</b>.':'De rek neemt toe en af. Kijk naar de golf, de sensor en de impulsen in de zenuwvezel.',1.8);
+  else K.capSoft(K.stateText(),t<.5?'Een te grote rek komt eraan…':t<1.7?'Boven ongeveer 6 tot 8% rek knappen de eerste vezels. Het haarvat scheurt mee.':t<4.6?'Gescheurde vezels krullen terug. Het Ruffini-lichaampje is beschadigd: de zenuwvezel meldt <b>bijna niets</b> meer. De enkel meldt zijn stand minder goed. Daardoor kunnen de spieren later reageren.':'Herstel: fibroblasten worden actief en leggen nieuw collageen neer, eerst <b>ongeordend</b> en zwakker. Balanstraining helpt het gevoel terug te winnen.',1.4);}
+const H2={step:step2,reset(n){reset2(n);S2.ph2=0;},hud(){return K.bars(['Rek','Crimp','Vuurfrequentie'])+'<canvas id="scope" width="330" height="46" role="img" aria-label="Impulsen van de zenuwvezels van het Ruffini- en het Pacini-lichaampje"></canvas>';},
+ ctl(){const st=S.state;if(st===1)return `<label for="sRek">Rek</label><input type="range" id="sRek" min="0" max="6" step=".1" value="${S2.man}" aria-label="Rek van de band in procent"><output id="oRek">${fmt(S2.man)}%</output>`;if(st===2)return `<label for="sT2">Tempo</label><input type="range" id="sT2" min=".25" max="1.5" step=".05" value="${TEMPO}" aria-label="Tempo">`;return '';},
+ bind(){scopeEl=K.$('#scope');const r=K.$('#sRek');if(r)r.addEventListener('input',()=>{S2.man=+r.value;const o=K.$('#oRek');if(o)o.textContent=fmt(S2.man)+'%';});const t=K.$('#sT2');if(t)t.addEventListener('input',()=>{TEMPO=+t.value;});},
+ onShow(){scopeEl=K.$('#scope');}};
+
+/* =====================================================================
+   punten, labels, lagen, speurtocht en film
+   ===================================================================== */
+const P=[
+ {lv:0,name:'Scheenbeen en binnenenkel',lat:'Tibia · malleolus medialis',at:()=>W.tib,view:[[-.4,6.2,-9.6],[-3.3,4.1,.1]],focus:()=>[tib,medMal,tibCap],tabs:[
+  `<p>Het <b>scheenbeen</b> (tibia) draagt bijna al je lichaamsgewicht naar de voet. Onderaan vormt het het dak van het enkelgewricht. Aan de binnenkant steekt de <b>binnenenkel</b> (malleolus medialis) uit: de knobbel die je aan de binnenkant van je enkel voelt.</p><p>Met de buitenenkel van het kuitbeen vormt het scheenbeen een vork, de <b>enkelvork</b>. Daarin zit het sprongbeen geklemd.</p>`,
+  `<p>Bij een landing vangt het scheenbeen de klap op. Hoe verder je door enkels en knieën zakt, hoe langer die klap duurt en hoe kleiner de piekkracht. Op <a href="landing.html">landing.html</a> reken je dat uit met impuls. Ook de knie vangt een deel van de klap op: zie <a href="knie.html">halte 9, de knie</a>.</p>`,
+  `<p>De binnenenkel eindigt ongeveer 1 cm hoger dan de buitenenkel, en ligt iets meer naar voren. Daarom loopt de draaias van het bovenste spronggewricht (oranje) niet recht van links naar rechts, maar iets schuin.</p>`,
+  `<p class="think">Voel aan je eigen enkel: welke knobbel ligt lager, de binnen- of de buitenenkel? Wat betekent dat voor de kant waarnaar de voet het makkelijkst kantelt?</p>`]},
+ {lv:0,name:'Kuitbeen en buitenenkel',lat:'Fibula · malleolus lateralis',at:()=>W.fib,view:[[-1.9,4.4,8.4],[-3.5,2.9,.4]],focus:()=>[fib,latMal,latMal2,fibCap],tabs:[
+  `<p>Het <b>kuitbeen</b> (fibula) is dun en draagt maar een klein deel van je gewicht. Het onderste uiteinde is de <b>buitenenkel</b> (malleolus lateralis). Die reikt lager dan de binnenenkel en vormt de buitenwand van de enkelvork.</p><p>Op de buitenenkel beginnen de drie buitenbanden: de ATFL naar voren, de CFL naar beneden en de PTFL naar achteren.</p>`,
+  `<p>Na een verzwikking zitten pijn en zwelling meestal vlak vóór en onder de buitenenkel, precies waar de ATFL en de CFL lopen. Jij stelt in de les geen diagnose: twijfel je, laat de sporter dan stoppen en verwijs door.</p>`,
+  `<p>Ongeveer 85% van alle enkelverstuikingen is een <b>inversietrauma</b>: de voet klapt naar binnen en de banden aan de buitenkant raken beschadigd.</p>`,
+  `<p class="think">Waarom kan de voet veel verder naar binnen kantelen (inversie) dan naar buiten (eversie)? Kijk naar de lengte van de twee enkelknobbels.</p>`]},
+ {lv:0,name:'Sprongbeen en bovenste spronggewricht',lat:'Talus · articulatio talocruralis',at:()=>W.tal,view:[[-1.6,2.9,6.4],[-3.4,1.9,.5]],focus:()=>talus.concat([talCart,axTCm]),tabs:[
+  `<p>Het <b>sprongbeen</b> (talus) zit met een rol, de trochlea, in de enkelvork. In dit <b>bovenste spronggewricht</b> beweegt de voet op en neer om de oranje as: <b>plantairflexie</b> (strekken, tenen omlaag) en <b>dorsaalflexie</b> (optrekken).</p><p>Op de talus hecht geen enkele spier. Hij wordt op zijn plek gehouden door botten en banden.</p>`,
+  `<p>De rol is aan de voorkant breder dan aan de achterkant. Trek je de voet op, zoals aan het eind van een landing (hiel neer, knieën gebogen) of bij een squat, dan klemt het brede deel in de vork: stabiel. Strek je de voet, zoals bij de afzet, in de lucht en bij het eerste contact van de landing, dan zit het smalle deel in de vork: meer speling (blauw licht in stand 2).</p>`,
+  `<p>Een gemiddelde enkel haalt ongeveer 20° dorsaalflexie en 40 à 50° plantairflexie.</p>`,
+  `<p class="think">Waarom verzwikken mensen makkelijker op hoge hakken of als ze op hun tenen landen?</p>`]},
+ {lv:0,name:'Hielbeen en onderste spronggewricht',lat:'Calcaneus · articulatio subtalaris',at:()=>W.calc,view:[[-6.4,2.6,6.6],[-4.6,1.3,.3]],focus:()=>calc.concat(fore,[axSTm]),tabs:[
+  `<p>Het <b>hielbeen</b> (calcaneus) is het grootste bot van de voet. Tussen sprongbeen en hielbeen ligt het <b>onderste spronggewricht</b>. Zijn draaias (blauw) loopt schuin: van achter, buiten en onder naar voor, binnen en boven.</p><p>Om die as kantelt de voet naar binnen (<b>inversie</b>) en naar buiten (<b>eversie</b>). De voorvoet draait mee.</p>`,
+  `<p>Op ongelijke grond, zoals een bal of de voet van een tegenstander, past dit gewricht de voet aan. Valt de grondreactiekracht naast die schuine as, dan ontstaat een moment dat de voet doet kantelen (stand 3). Op <a href="evenwicht.html">evenwicht.html</a> zie je hoe dat werkt bij een klein steunvlak.</p>`,
+  `<p>De as van het onderste spronggewricht staat gemiddeld ongeveer 40° schuin omhoog en ongeveer 20° naar binnen ten opzichte van de lengteas van de voet (Inman, 1976).</p>`,
+  `<p class="think">Kantel in stand 1 de voet naar binnen. Kijk naar de tenen: welke bewegingen maakt de voorvoet tegelijk mee? Hoe komt dat door de schuine as?</p>`]},
+ {lv:0,name:'Deltaband',lat:'Lig. collaterale mediale (lig. deltoideum)',at:()=>W.delt,layer:'Banden',view:[[-2.2,2.8,-6.6],[-3.4,1.9,-.4]],focus:()=>[LG0.delt.m,medMal],tabs:[
+  `<p>Aan de binnenkant waaiert de <b>deltaband</b> uit vanaf de binnenenkel naar het sprongbeen, het hielbeen en het os naviculare. Hij is dik en sterk en remt de <b>eversie</b>: het naar buiten kantelen van de voet.</p>`,
+  `<p>Een letsel van de deltaband is veel zeldzamer dan een buitenbandletsel. Draai het model naar de binnenkant en zet in stand 1 de schuif <b>Inversie</b> op een negatieve waarde (eversie): de deltaband kleurt wit.</p>`,
+  `<p>In een klassiek trekonderzoek bezweek de deltaband pas bij ongeveer 714 N, de ATFL al bij ongeveer 139 N (Attarian e.a., 1985).</p>`,
+  `<p class="think">Een volleyballer landt op de buitenrand van haar voet. Welke banden worden gerekt, en welke worden juist slap?</p>`]},
+ {lv:0,name:'Kuitspier en achillespees',lat:'M. triceps surae · tendo calcaneus',at:()=>W.ach,layer:'Spieren',view:[[-10.5,5.4,9],[-4.9,3.7,.2]],focus:()=>[calfM,achM,apon,calfCap],state:2,tabs:[
+  `<p>De <b>kuitspier</b> (de twee koppen van de gastrocnemius en de soleus) trekt via de <b>achillespees</b> aan het hielbeen. Zo strekt hij de voet (plantairflexie). De pees werkt als een veer: bij de landing rekt hij een paar procent op en bij de afzet geeft hij die energie terug.</p>`,
+  `<p>Bij de <b>afzet</b> wordt de spier korter terwijl hij kracht levert: <b>concentrisch</b>. Bij de <b>landing</b> zakt de hiel en wordt de spier langer terwijl hij remt: <b>excentrisch</b>. Kijk in stand 2 naar de kleur van de vezels en naar het rode streepje op het onderbeen van de speler.</p>`,
+  `<p>Bij hardlopen trekt de kuitspier met ongeveer 9 kN aan de achillespees, ruim twaalf keer het lichaamsgewicht (Komi, 1990).</p>`,
+  `<p class="think">Waarom spring je hoger met een korte, snelle tegenbeweging dan vanuit een diepe hurk waarin je eerst stilstaat?</p>`]},
+ {lv:0,name:'Kuitbeenspieren',lat:'Mm. fibulares longus et brevis',at:()=>W.per,layer:'Spieren',view:[[-2.9,4.6,8.4],[-4,3.4,.6]],focus:()=>[perL,perB,rPL.m,rPB.m],tabs:[
+  `<p>Aan de buitenkant van het onderbeen liggen de <b>lange en de korte kuitbeenspier</b>. Hun pezen lopen achter de buitenenkel langs, als over een katrol. De korte hecht aan de basis van het vijfde middenvoetsbeen; de lange loopt onder de voet door naar de binnenrand.</p><p>Ze kantelen de voet naar buiten (eversie): de actieve tegenhangers van een verzwikking.</p>`,
+  `<p>Bij een plotselinge inversie spannen ze reflexmatig aan. Maar de voet kan al binnen ongeveer 50 ms doorgezwikt zijn, en de spieren vuren pas na ongeveer 60 à 80 ms. Daarna duurt het nog tientallen milliseconden voordat de spier echt kracht levert: de elektromechanische vertraging. Spieren die al vóór de landing aanspannen (voorspanning) beschermen beter. Meer over reflexen in <a href="zenuw.html">halte 1</a>.</p>`,
+  `<p>In proeven met een kantelplatform, dat de voet plots naar binnen laat klappen, begint de elektrische activiteit (EMG) van de kuitbeenspieren na ongeveer 50 à 80 ms. Zo’n reactie is te traag om een snelle verzwikking nog te stoppen (bijvoorbeeld Konradsen e.a., 1997).</p>`,
+  `<p class="think">Als de reflex toch te laat komt, waarom helpt balanstraining op één been dan wel tegen verzwikken?</p>`]},
+ {lv:0,name:'De basketballer',lat:'Inversietrauma bij de landing',at:()=>W.sport,layer:'Sporters',view:[[7.4,2.5,8.6],[3.6,1.1,1.7]],focus:()=>[A.root,B.root,ball],state:3,tabs:[
+  `<p>In stand 3 springt de speler om een schot te blokken en landt hij met zijn rechtervoet op de voet van de tegenstander. De voet is gestrekt en kantelt naar binnen. Het hele lichaamsgewicht komt op de buitenrand. Het model links doet precies hetzelfde.</p>`,
+  `<p>Organisatie helpt: genoeg ruimte onder de basket en bij het net, geen losse ballen in het speelveld, en de afspraak dat je niet onder een springende speler doorloopt. Gebeurt het toch: laat de sporter stoppen, ontlast de enkel en schakel hulp in.</p>`,
+  `<p>Bij volleybal ontstaat het grootste deel van de enkelverstuikingen bij het net, vaak bij een landing op de voet van een tegenstander of medespeler (Bahr en Bahr, 1997).</p>`,
+  `<p class="think">Je geeft basketbal aan een klas van 28 leerlingen. Noem drie afspraken of organisatievormen die de kans op een landing op andermans voet kleiner maken.</p>`]},
+ {lv:1,name:'Voorste talofibulaire band',lat:'Lig. talofibulare anterius (ATFL)',at:()=>W.atfl1,view:[[5,1.6,9],[2.2,.2,.2]],focus:()=>[L1.atfl.m,sh1.atfl],tabs:[
+  `<p>De <b>ATFL</b> loopt van de voorkant van de buitenenkel naar de hals van het sprongbeen. Het is een platte verdikking van het gewrichtskapsel, ongeveer 2 cm lang en maar een paar millimeter dik, vaak in twee bundels.</p><p>Bij een gestrekte voet loopt hij bijna in de lengterichting van het been. Juist dan remt hij de inversie.</p>`,
+  `<p>Bij ongeveer twee op de drie verstuikingen is alleen de ATFL beschadigd. Bekijk stand 3 en kies graad 1, 2 of 3: van enkele gescheurde vezelbundels tot een volledig doorgescheurde band.</p>`,
+  `<p>In het trekonderzoek van Attarian e.a. (1985) bezweek de ATFL al bij ongeveer 139 N, de CFL bij ongeveer 346 N. De ATFL is de zwakste van de drie buitenbanden.</p>`,
+  `<p class="think">Waarom is de ATFL juist bij een gestrekte voet zo kwetsbaar? Kijk in stand 2 naar de richting van de band.</p>`]},
+ {lv:1,name:'Calcaneofibulaire band',lat:'Lig. calcaneofibulare (CFL)',at:()=>W.cfl1,view:[[1.2,-1.6,10],[-.8,-2.2,.6]],focus:()=>[L1.cfl.m,sh1.cfl],tabs:[
+  `<p>De <b>CFL</b> is een ronde streng van de punt van de buitenenkel schuin naar achteren en beneden, naar het hielbeen. Hij overbrugt twee gewrichten: het bovenste én het onderste spronggewricht. Hij staat strak bij inversie, vooral als de voet neutraal of opgetrokken is.</p>`,
+  `<p>De CFL scheurt meestal pas na de ATFL, bij meer kracht. Over de CFL heen lopen de pezen van de kuitbeenspieren. Zet de laag <b>Pezen</b> aan: je ziet ze over de band heen lopen, achter de buitenenkel langs.</p>`,
+  `<p>Bij ongeveer één op de vijf verstuikingen scheurt naast de ATFL ook de CFL.</p>`,
+  `<p class="think">Waarom maakt een scheur in de CFL twee gewrichten tegelijk instabieler?</p>`]},
+ {lv:1,name:'Achterste talofibulaire band',lat:'Lig. talofibulare posterius (PTFL)',at:()=>W.ptfl1,view:[[-6.5,1.4,7],[-1.6,-.2,-1.6]],focus:()=>[L1.ptfl.m,sh1.ptfl],tabs:[
+  `<p>De <b>PTFL</b> ligt diep, achter de buitenenkel. Hij loopt vrijwel horizontaal van een groeve aan de binnenkant van de buitenenkel naar het achterste uitsteeksel van het sprongbeen. Hij is dik en sterk en staat strak bij dorsaalflexie.</p>`,
+  `<p>Een scheur in de PTFL is zeldzaam. Die zie je vrijwel alleen bij een zware verstuiking met ontwrichting of een botbreuk. In stand 3 met graad 3 rafelen een paar vezels.</p>`,
+  `<p>In het onderzoek van Attarian e.a. (1985) bezweek de PTFL bij ongeveer 261 N: bijna twee keer zoveel als de ATFL, maar minder dan de CFL (ongeveer 346 N). Andere studies vinden de PTFL juist het sterkst.</p>`,
+  `<p class="think">Waarom staat de PTFL strak als je na de landing diep doorzakt (voet opgetrokken), en is hij slap bij de afzet (voet gestrekt)?</p>`]},
+ {lv:2,name:'Collageenvezels en crimp',lat:'Fibrae collagenosae · collagenum typus I',at:()=>W.col,view:[[6.5,2.4,8.5],[3.4,.4,.6]],focus:()=>[colM],tabs:[
+  `<p>Bandweefsel bestaat vooral uit <b>collageen type I</b> in strakke, evenwijdige bundels. In rust liggen de vezels in een golfpatroon: de <b>crimp</b>.</p><p>Bij rek trekt eerst die golf glad (de teenzone, tot ongeveer 2 à 3% rek). Pas daarna rekt het collageen zelf, en wordt de band stijf.</p>`,
+  `<p>De crimp is een buffer: kleine rekbewegingen kosten weinig kracht. Boven ongeveer 6 à 8% rek ontstaan microscheurtjes; rond 10% scheuren de vezels door. Probeer in stand 1 de schuif <b>Rek</b> en kijk naar stand 3.</p>`,
+  `<p>Bandweefsel bestaat voor ongeveer twee derde uit water. Van de rest is het grootste deel collageen, ongeveer 70 à 80%.</p>`,
+  `<p class="think">Waarom is het handig dat een band bij een snelle landing eerst een stukje ‘gratis’ kan rekken?</p>`]},
+ {lv:2,name:'Fibroblasten',lat:'Fibroblasti · fibrocyti',at:()=>W.fbl,view:[[1.5,2.8,7],[.4,.5,1]],focus:()=>[FBLM,NUCM],tabs:[
+  `<p>Tussen de vezels liggen langgerekte cellen in rijen: <b>fibroblasten</b>. Ze maken het collageen en de grondsubstantie eromheen, en ze vernieuwen de band heel langzaam.</p>`,
+  `<p>Na een scheur leggen fibroblasten eerst ongeordend, dunner collageen neer: littekenweefsel. Door geleidelijk en gecontroleerd te belasten richten de nieuwe vezels zich naar de trekrichting. Wacht in stand 3 even af.</p>`,
+  `<p>Na zes weken is een gescheurde band nog lang niet zo sterk als vroeger. Het weefsel blijft vaak maanden tot meer dan een jaar veranderen.</p>`,
+  `<p class="think">Waarom is ‘het doet geen pijn meer’ geen goed teken dat de band weer sterk genoeg is om te sporten?</p>`]},
+ {lv:2,name:'Mechanoreceptoren',lat:'Corpuscula Ruffini et corpuscula lamellosa (Pacini)',at:()=>W.ruf,view:[[.2,1.4,11],[-2.0,.1,1.4]],focus:()=>[RUF,PAC,MYM,PULM].concat(AXN.map(a=>a.tb)),state:2,tabs:[
+  `<p>In de band zitten sensoren. Het <b>Ruffini-lichaampje</b> past zich traag aan: het meldt hoe ver de band gerekt is, dus hoe je enkel staat. Het <b>Pacini-lichaampje</b> (de ui van vliesjes) past zich snel aan: het meldt plotselinge veranderingen.</p><p>Hun zenuwvezels sturen impulsen naar het ruggenmerg en de hersenen. Zo weet je zonder te kijken hoe je enkel staat: <b>proprioceptie</b>.</p>`,
+  `<p>Bij een scheur raken ook sensoren en zenuwuiteinden beschadigd (stand 3). De enkel ‘voelt’ minder, je spieren reageren later, en je verzwikt makkelijker opnieuw. Balanstraining traint dat systeem opnieuw. Meer in <a href="zenuw.html">halte 1</a> en op <a href="evenwicht.html">evenwicht.html</a>.</p>`,
+  `<p>Een thuisprogramma van acht weken met balansoefeningen verlaagde de kans op een nieuwe verstuiking met ongeveer een derde (Hupperets e.a., 2009). De Nederlandse app ‘Versterk je enkel’ is op dat programma gebaseerd.</p>`,
+  `<p class="think">Sta op één been, eerst met de ogen open en dan dicht. Waarom is het met de ogen dicht moeilijker? Welke informatie moet je enkel dan leveren?</p>`]}];
+const TAGS=[
+ {lv:0,cls:'force',txt:()=>fmt(S0.grf)+' × LG',at:()=>grfTop,show:()=>S0.grf>.08&&S.state>1&&layerOn('Draaiassen')},
+ {lv:0,cls:'',txt:()=>'voet van de tegenstander',at:()=>shoeTag,show:()=>shoe.visible&&S0.t3<2.4},
+ {lv:0,cls:'axtc',txt:()=>'as bovenste spronggewricht',at:()=>W.axTC,show:()=>S.state===1&&layerOn('Draaiassen')&&innerWidth>760&&!document.body.classList.contains('panel-open')},
+ {lv:0,cls:'axst',txt:()=>'as onderste spronggewricht',at:()=>W.axST,show:()=>S.state===1&&layerOn('Draaiassen')&&innerWidth>760&&!document.body.classList.contains('panel-open')},
+ {lv:0,cls:'o2',txt:()=>S.grade===3&&S0.tearC?'ATFL en CFL gescheurd':S.grade===1?'ATFL deels gescheurd':'ATFL gescheurd',at:()=>W.atfl,show:()=>S.state===3&&S0.tearA&&S0.t3>TC_+.25},
+ {lv:0,cls:'co2',txt:()=>'meer speling',at:()=>W.gap,show:()=>S.state===2&&S0.pf>24},
+ {lv:1,cls:'',txt:()=>'kuitbeen (fibula)',at:()=>W.malL,show:()=>true},
+ {lv:1,cls:'',txt:()=>'sprongbeen (talus)',at:()=>W.tal1,show:()=>true},
+ {lv:1,cls:'',txt:()=>'hielbeen (calcaneus)',at:()=>W.cal1,show:()=>true},
+ {lv:1,cls:'',txt:()=>'pezen kuitbeenspieren',at:()=>W.pez1,show:()=>layerOn('Pezen')},
+ {lv:2,cls:'nerve',txt:()=>'zenuwvezel',at:()=>W.nerve,show:()=>true},
+ {lv:2,cls:'',txt:()=>'Pacini',at:()=>W.pac,show:()=>true},
+ {lv:2,cls:'o2',txt:()=>S2.capTorn?'haarvat gescheurd':'haarvat',at:()=>W.cap,show:()=>layerOn('Bloedvat')}];
+const LAYERS=[
+ {name:'Spieren',lv:0,objs:()=>[calfM,achM,apon,calfCap,perL,perB,taM,rPL.m,rPB.m,rTA.m]},
+ {name:'Banden',lv:0,objs:()=>[LG0.atfl.m,LG0.cfl.m,LG0.ptfl.m,LG0.delt.m]},
+ {name:'Draaiassen',lv:0,objs:()=>[axTCm,axSTm].concat(axEnds),set(on){grfMats.forEach((m,i)=>m.opacity=on?(i<2?.96:.85):0);}},
+ {name:'Huid',lv:0,objs:()=>skin,on:false},
+ {name:'Sporters',lv:0,objs:()=>[A.root,B.root,ball]},
+ {name:'Pezen',lv:1,objs:()=>[rPL1.m,rPB1.m,ret1],on:false},
+ {name:'Bloedvaten',lv:1,objs:()=>[rVes.m,rNer.m]},
+ {name:'Bloedvat',lv:2,objs:()=>[capA,capB,RBC,LEAK]},
+ {name:'Grondsubstantie',lv:2,objs:()=>[gs]}];
+function layerOn(n){const l=LAYERS.find(x=>x.name===n);return !l||l.on!==false;}
+const QUIZ=[
+ {t:'R',type:'find',lv:0,state:1,get view(){return innerWidth<760?[[-1.9,2.2,10.8],[-3.4,1.0,.6]]:[[-1.7,4.3,9.9],[-3.4,2.75,.6]];},q:'Klik op de band die bij een verzwikking het <b>vaakst als eerste</b> scheurt.',opts:[()=>W.cfl,()=>W.ach,()=>W.atfl,()=>W.perT],ok:2,
+  fb:['Dat is de calcaneofibulaire band (CFL). Die scheurt meestal pas ná de ATFL, bij meer kracht.','Dat is de achillespees. Die kan scheuren bij een explosieve afzet, maar niet bij verzwikken.','Goed! Het lig. talofibulare anterius (ATFL), de voorste talofibulaire band, is de zwakste buitenband en scheurt als eerste.','Dat zijn de pezen van de kuitbeenspieren. Die beschermen juist tegen verzwikken.']},
+ {t:'R',type:'mc',lv:0,state:1,q:'Welk gewricht maakt vooral <b>inversie en eversie</b> van de voet mogelijk?',opts:['Het bovenste spronggewricht (articulatio talocruralis), tussen de enkelvork en het sprongbeen (talus)','Het onderste spronggewricht (articulatio subtalaris), tussen het sprongbeen (talus) en het hielbeen (calcaneus)','Het kniegewricht, via de draaiing van het onderbeen','De gewrichten tussen de tenen'],ok:1,
+  ex:'Het onderste spronggewricht (articulatio subtalaris) ligt tussen talus en calcaneus en heeft een schuine draaias. Om die as kantelt de voet naar binnen en naar buiten.',why:['Het bovenste spronggewricht (articulatio talocruralis) maakt vooral plantairflexie en dorsaalflexie: de voet op en neer.',null,'De knie kan alleen een beetje draaien als hij gebogen is, en dat kantelt de voet niet.','De tenen buigen en strekken; ze kantelen de voet niet.']},
+ {t:'R',type:'find',lv:2,state:1,get view(){return innerWidth<760?[[0.4,.6,14.5],[-.4,-1.6,.8]]:[[0.6,1.5,12.8],[0.3,-.75,.8]];},q:'Klik op een <b>Ruffini-lichaampje</b>: een sensor die meldt hoe ver de band gerekt is.',opts:[()=>W.fbl,()=>W.col,()=>W.cap,()=>W.ruf],ok:3,
+  fb:['Dat is een fibroblast, de cel die collageen maakt.','Dat is een collageenvezel met zijn golfpatroon.','Dat is een haarvat met rode bloedcellen.','Goed! Een kapseltje met vertakte zenuwuiteinden tussen de collageenvezels.']},
+ {t:'T1',type:'mc',lv:0,state:2,q:'Zet stand 2 aan. Wat doet de kuitspier bij de <b>afzet</b>?',opts:['Hij wordt langer en remt af: excentrisch','Hij wordt korter en levert kracht: concentrisch','Hij blijft even lang: isometrisch','Hij is ontspannen; de achillespees doet het werk alleen'],ok:1,
+  ex:'Bij de afzet strekt de voet en trekt de kuitspier het hielbeen omhoog. Hij wordt korter terwijl hij kracht levert. Bij de landing gebeurt het omgekeerde: excentrisch.',why:['Dat gebeurt bij de landing, als de hiel zakt.',null,'Isometrisch is kracht zonder lengteverandering. Bij de afzet verandert de enkelhoek juist snel.','De pees geeft wel energie terug, maar alleen omdat de spier hem strak trekt.']},
+ {t:'T1',type:'mc',lv:1,state:2,q:'Zet op het niveau <b>Banden</b> stand 2 aan. In welke voetstand staat de ATFL het strakst?',opts:['Opgetrokken (dorsaalflexie) en naar buiten (eversie)','Neutraal, als je gewoon staat','Gestrekt (plantairflexie) en naar binnen (inversie)','Opgetrokken en naar binnen'],ok:2,
+  ex:'De ATFL loopt van de buitenenkel naar voren. Bij een gestrekte voet komt hij in de lengterichting te liggen, en bij inversie wordt hij extra gerekt. Dat is precies de stand van een verzwikking.',why:['In die stand is de ATFL juist slap; de deltaband en de PTFL spannen dan.','In neutrale stand is de ATFL vrijwel slap.',null,'Opgetrokken en naar binnen spant vooral de CFL, niet de ATFL.']},
+ {t:'T2',type:'mc',lv:0,state:2,q:'Waarom zit de enkel <b>losser</b> in de enkelvork als de voet gestrekt is, zoals vlak voor de landing?',opts:['Omdat de kuitspier dan ontspannen is','Omdat de banden aan de binnenkant dan slap staan','Omdat het kuitbeen dan omhoog schuift','Omdat het sprongbeen aan de achterkant smaller is, en dat deel dan in de vork zit'],ok:3,
+  ex:'De rol van het sprongbeen is voor breder dan achter. Bij plantairflexie draait het smalle achterste deel tussen de enkelknobbels: er is meer speling, en de banden moeten het meeste werk doen.',why:['De kuitspier is bij de afzet juist sterk actief, en toch zit de enkel losser.','De deltaband is bij strekken niet slap; het gaat om de vorm van het bot.','Het kuitbeen beweegt maar een heel klein beetje mee; dat verklaart de speling niet.',null]},
+ {t:'T2',type:'mc',lv:2,state:3,q:'Bekijk stand 3 op het niveau <b>Bandweefsel</b>. Waarom verzwikt iemand na een eerste verstuiking vaker opnieuw, ook als de pijn al weg is?',opts:['Beschadigde sensoren en zenuwuiteinden melden minder, waardoor de spieren later kunnen reageren','De band is na herstel korter geworden en scheurt daardoor sneller','Het kuitbeen wordt zwakker na een verstuiking','De kuitspier wordt te sterk en trekt de voet naar binnen'],ok:0,
+  ex:'Na een scheur zijn ook mechanoreceptoren en zenuwuiteinden beschadigd. De enkel meldt zijn stand minder goed (minder proprioceptie), en de spieren kunnen later reageren. Daarnaast geneest de band vaak iets te lang en te slap, en is het nieuwe weefsel eerst ongeordend en zwakker. Balanstraining traint het samenspel van sensoren, zenuwstelsel en spieren opnieuw.',why:[null,'Een gescheurde band geneest eerder te lang en te slap dan te kort.','Het bot is bij een verstuiking niet het probleem.','De kuitspier strekt de voet en draait hem niet naar binnen.']},
+ {t:'I',type:'open',q:'In je les basketbal landt een leerling na een blok op de voet van een tegenstander en zwikt door de enkel. Leg met de drie zoomniveaus uit wat er gebeurt. Bedenk daarna twee maatregelen voor je lessen: één in de organisatie en één in de training.',
+  model:'<p><b>Enkel</b>: de voet is gestrekt (plantairflexie). Daardoor zit het smalle achterste deel van het sprongbeen in de enkelvork en zit de enkel losser. De voet landt op de voet van de tegenstander en klapt binnen ongeveer 50 ms naar binnen (inversie). De reflex van de kuitbeenspieren komt pas na ongeveer 70 ms: te laat.</p><p><b>Banden</b>: in gestrekte en ingekantelde stand staat de ATFL het strakst. Die scheurt als eerste; bij meer kracht volgt de CFL. Bloedvaatjes scheuren mee: zwelling.</p><p><b>Bandweefsel</b>: eerst trekt de crimp glad, daarna rekt het collageen tot de vezels knappen. Ook mechanoreceptoren raken beschadigd, dus de enkel ‘voelt’ minder.</p><p><b>Maatregelen</b>: organisatie, zoals ruimte onder de basket, geen losse ballen in het veld en niet onder een springer doorlopen. Training, zoals een balanscircuit op één been en landingsoefeningen, vooral voor leerlingen die eerder verzwikten. En bij een blessure: stoppen, ontlasten en hulp inschakelen; jij stelt geen diagnose.</p>'}];
+// ---- de film ----
+const CAM={wide:CFG.levels[0].view,model:[[-1.4,4.4,10.6],[-3.3,2.7,.3]],ankle:[[-1.2,2.7,6.6],[-3.3,1.9,.6]],players:[[6.6,2.6,9.4],[3.5,1.15,1.7]],both:[[1.6,3.4,11.5],[0,1.7,.8]],back:[[-10.5,5.4,9],[-4.9,3.7,.2]],
+ front:[[5.5,5.2,6.5],[-3.2,2.2,.2]],
+ b1:CFG.levels[1].view,atfl:[[5.2,1.8,9.4],[2.2,.2,.2]],cfl:[[1.4,-1.8,10.5],[-.7,-2.2,.6]],b2:CFG.levels[2].view,ruf:[[.2,1.4,11],[-2.0,.1,1.4]],nerve:[[-3.6,3.4,9.8],[-4.4,2.4,1.8]],tear2:[[2.2,1.6,9.2],[0,.0,.4]]};
+// standpunten bij het model schuiven in de film mee met de hoogte van de enkel
+const FOLLOW=['model','ankle','front','back'],CAMY={};FOLLOW.forEach(k=>{CAM[k]=[CAM[k][0].slice(),CAM[k][1].slice()];CAMY[k]=[CAM[k][0][1],CAM[k][1][1]];});
+const steps0={names:['Aanzet','Afzet','Vlucht','Landing'],cur:()=>S0.phase,lv:0},steps3={names:['Sprong','Landing','Scheur','Zwelling'],cur:()=>S0.phase,lv:0};
+const SCENES=[
+ {chap:'',lv:0,st:1,view:CAM.wide,title:['Hoe een enkel verzwikt','Van sprong tot collageenvezel · twee keer inzoomen'],lines:[
+  {t:'Een sprong, een blok, en een verkeerde landing. Een enkelverstuiking is de meest voorkomende blessure in de zaalsport.'},
+  {t:'We kijken hoe het gebeurt: van de enkel tot in het bandweefsel.',do:()=>{K.FILM.title=null;}}]},
+ {chap:'1 · De enkel',lv:0,st:1,view:CAM.model,lines:[
+  {t:'Dit is een vergrote rechterenkel. Scheenbeen en kuitbeen vormen samen een vork, en daarin zit het sprongbeen.',cam:CAM.ankle},
+  {t:'In dat bovenste spronggewricht beweegt de voet op en neer, om de oranje as.',do:()=>{S0.demo='pf';},min:4.5},
+  {t:'Daaronder ligt het onderste spronggewricht. Om die schuine, blauwe as kantelt de voet naar binnen en naar buiten.',do:()=>{S0.demo='inv';},min:5},
+  {t:'Aan de buitenkant houden drie banden het sprongbeen en het hielbeen vast. Bij een gestrekte en ingekantelde voet staat de voorste band het strakst.',do:()=>{S0.demo='lig';},end:()=>{S0.demo=null;}}]},
+ {chap:'2 · Afzet en landing',lv:0,st:2,view:CAM.both,steps:steps0,setup:()=>{TEMPO=.7;},lines:[
+  {t:'Bij de afzet strekt de voet. De kuitspier wordt korter en levert kracht: concentrisch.',cam:CAM.model},
+  {t:'Bij de landing zakt de hiel. De kuitspier remt af terwijl hij langer wordt: excentrisch.'},
+  {t:'Let op de vlucht. Met gestrekte voet zit het smalle deel van het sprongbeen in de vork. Dan zit de enkel losser.',cam:CAM.ankle},
+  {t:'En juist in die stand komt de voet neer.',cam:CAM.both,end:()=>{TEMPO=1;}}]},
+ {chap:'3 · Verzwikken',lv:0,st:3,view:CAM.players,steps:steps3,setup:()=>{K.S.grade=2;},lines:[
+  {t:'Een blok onder de basket. De speler landt met zijn rechtervoet op de voet van de tegenstander.',min:5},
+  {t:'Nog een keer, van voren. De voet klapt naar binnen, binnen ongeveer vijftig milliseconden.',cam:CAM.front,do:()=>{K.S.grade=2;K.setState(3);},min:5.5},
+  {t:'De voorste talofibulaire band wordt overrekt en scheurt. Bij nog meer kracht scheurt ook de band naar het hielbeen.'},
+  {t:'De kuitbeenspieren spannen wel aan, maar pas na zo’n zeventig milliseconden. Te laat.',cam:CAM.ankle},
+  {t:'Daarna loopt de buitenkant van de enkel vol met bloed en vocht.',cam:CAM.model,min:4}]},
+ {chap:'4 · De banden',lv:1,st:1,view:CAM.b1,lines:[
+  {t:'We zoomen in op de buitenkant van de enkel: ongeveer drie centimeter.'},
+  {t:'De voorste band loopt naar het sprongbeen, de middelste naar het hielbeen en de achterste diep naar achteren.'},
+  {t:'Strek de voet en kantel hem naar binnen. Nu trekken de vezels van de voorste band glad en kleuren ze wit.',do:()=>K.setState(2),cam:CAM.atfl,min:5},
+  {t:'Een band kan niet aanspannen zoals een spier. Hij remt alleen als hij strak staat.',min:3}]},
+ {chap:'5 · De scheur',lv:1,st:3,view:CAM.atfl,setup:()=>{K.S.grade=2;},lines:[
+  {t:'Gaat de voet verder dan de band kan rekken, dan scheuren de vezelbundels. Bij graad twee is een groot deel van de band kapot.',min:5},
+  {t:'Bij graad drie scheurt de hele band, en vaak ook de band naar het hielbeen.',do:()=>{K.S.grade=3;K.setState(3);},cam:CAM.b1,min:5},
+  {t:'Bloedvaatjes scheuren mee. Daarom zwelt een enkel zo snel op.'}]},
+ {chap:'6 · Bandweefsel',lv:2,st:1,view:CAM.b2,lines:[
+  {t:'Nog dieper: een halve millimeter bandweefsel.'},
+  {t:'De collageenvezels liggen in een golfpatroon, de crimp. Daartussen liggen fibroblasten: de cellen die het collageen maken.'},
+  {t:'Bij rek trekt eerst de golf glad. Pas daarna wordt de band echt stijf.',do:()=>K.setState(2),min:4.5},
+  {t:'Tussen de vezels zitten sensoren. Hoe verder de band rekt, hoe sneller ze impulsen afvuren.',cam:CAM.ruf},
+  {t:'Zo weten je hersenen zonder te kijken hoe je enkel staat. Dat heet proprioceptie.',cam:CAM.nerve}]},
+ {chap:'7 · Minder gevoel',lv:2,st:3,view:CAM.tear2,lines:[
+  {t:'Bij een scheur knappen de vezels. Het haarvat scheurt mee, en ook de sensoren raken beschadigd.',min:4.5},
+  {t:'De zenuwvezel meldt minder. De spieren reageren later, en de enkel zwikt makkelijker opnieuw.',cam:CAM.ruf},
+  {t:'Fibroblasten herstellen de band, maar dat duurt maanden. Het nieuwe weefsel is eerst rommelig en zwakker.',cam:CAM.b2,min:5}]},
+ {chap:'Tot slot',lv:0,st:2,view:CAM.wide,lines:[
+  {t:'Wat helpt? Balanstraining op één been traint de sensoren en de reactie van de spieren opnieuw.'},
+  {t:'En in de les: ruimte onder de basket en bij het net, en geen losse ballen in het speelveld.',cam:CAM.players},
+  {t:'Van sprong tot collageenvezel: zo hangt het samen.',cam:CAM.wide},
+  {t:'',min:5,do:()=>{K.FILM.title=['Verken het zelf','De Bewegingsatlas · zoom in, van enkel tot bandweefsel'];}}]}];
+// het inzoompunt van niveau 0 ligt op de ATFL van het model
+{setFoot(0,0);AK.position.y=AY0=contact0();const s=LG0.atfl.strands[4];xTC(s.b,_b);const p=toW(_a.copy(s.a).lerp(_b,.5),V());CFG.levels[0].zoomTo=[p.x,p.y,p.z+.15];}
+return {levels:[H0,H1,H2],points:P,tags:TAGS,quiz:QUIZ,layers:LAYERS,film:{scenes:SCENES,stop(){S0.demo=null;TEMPO=1;S.grade=2;}}};
+ }};
+Atlas3D(CFG);
+</script>
+</body>
+</html>

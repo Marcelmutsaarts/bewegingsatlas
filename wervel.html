@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wervelkolom · Bewegingsatlas</title>
+<meta name="description" content="3D-zoomreis door de onderrug voor de propedeuse ALO: tillen bij de zaalopbouw als hefboom, een bewegingssegment met facetgewrichten, banden en zenuwwortel, en de tussenwervelschijf met vezelring en kern.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="atlas3d.css">
+<style>
+/* extra's voor de wervelkolom: rekenstrook onder de balkjes, hefboomlabels en waterlabels */
+#hudMid .calc{font:11.5px "JetBrains Mono",monospace;color:#d7cfc1;margin-top:6px;line-height:1.55;max-width:440px}
+#hudMid .calc b{color:var(--gold);font-weight:600}
+#hudMid .calc i{font-style:normal;color:#ffb36b}
+#hudMid .calc u{text-decoration:none;color:#9cc8ff}
+#hudMid .calc small{display:block;color:var(--muted);font-size:10.5px;margin-top:2px}
+#hudMid #steps{margin-bottom:6px}
+#ctl .val{font:11px "JetBrains Mono",monospace;color:#d7cfc1;min-width:30px}
+#ctl input[type=range]{width:80px}
+.tg.lev{color:#ffe08a;border-color:rgba(255,220,110,.55);background:rgba(10,14,16,.62)}
+.tg.water{color:#9fe6ff;border-color:rgba(120,210,255,.5)}
+.tg.pg{color:#d9b8ff;border-color:rgba(190,140,255,.5)}
+.pb .calc{font:12.5px "JetBrains Mono",monospace;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:8px;padding:8px 10px;line-height:1.6}
+@media (max-width:820px){#hudMid .calc{font-size:10.5px;max-width:none}#hudMid .calc small{display:none}#ctl input[type=range]{width:70px}
+  body.panel-open #hudMid,body.panel-open #ctl,body.panel-open #capX{display:none}
+  #info.panel{max-height:min(calc(100% - var(--hudH,150px) - 170px),46vh)}
+  body.panel-open #markers .mk:not(.on):not(.q),body.panel-open #markers .tg{display:none!important}}
+/* bij een aanwijsopdracht verraden de labels het antwoord niet */
+body.quiz-on:has(.mk.q) .tg{display:none}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="atlas3d.js"></script>
+<script>
+// op een smal scherm zet de motor de camera verder weg: begin daarom wat dichterbij
+const NARROW=innerWidth<700;
+// het model op de standaard: midden van de bovenkant van het heiligbeen (S1) in wereldcoördinaten
+const SX=-4.4,SZ=-2.3,Y0=3.25,S0=.46;
+// op een smal scherm staan de letters van een aanwijsopdracht in de bovenste helft (boven het paneel)
+const QV=(v,dy)=>NARROW?[[v[0][0],v[0][1]-dy,v[0][2]],[v[1][0],v[1][1]-dy,v[1][2]]]:v;
+const MX=.7,FZ=1.9,LB=4.2,FS=1.32;
+Atlas3D({
+ id:'wervel',halte:6,name:'Wervelkolom',docTitle:'Wervelkolom · Bewegingsatlas',
+ aria:'3D-zoomreis door de onderrug: van tillen bij de zaalopbouw via twee wervels tot in de tussenwervelschijf',
+ loader:['De wervelkolom wordt opgebouwd…','Van tillen tot tussenwervelschijf'],
+ seed:6,
+ shadow:{left:-11,right:11,top:12,bottom:-5},
+ levels:[
+  {name:'Rug',scale:'40 cm',sc:'ONDERRUG · TILLEN',title:'De onderrug',sub:'<i>Columna vertebralis, pars lumbalis</i> · tillen bij de zaalopbouw',
+   view:NARROW?[[1.4,4.6,13.5],[-1.8,1.9,-.2]]:[[6.4,5.9,19.6],[-.8,2.25,-.6]],zoomTo:[SX+.15,Y0+1.0,SZ+.25],s1:'Rust',s2:'Tillen',s3:'Hernia',
+   bg:['#34403e','#1a2322','#0b1010'],fog:0x1a2322,hemi:.62,shadows:true},
+  {name:'Segment',scale:'5 cm',sc:'BEWEGINGSSEGMENT',title:'Twee wervels en een schijf',sub:'<i>Vertebrae L4 en L5 · discus intervertebralis</i> · facetgewrichten, banden en zenuwwortel',
+   view:NARROW?[[8.5,1.4,11.5],[-.6,-1.7,0]]:[[11.2,4.8,15.2],[-.7,.25,0]],zoomTo:[-.95,.05,1.05],s1:'Rust',s2:'Buigen',s3:'Hernia',
+   bg:['#2b3447','#141a26','#07090e'],fog:0x141a26,hemi:.55,drone:true},
+  {name:'Schijf',scale:'5 mm',sc:'TUSSENWERVELSCHIJF',title:'In de tussenwervelschijf',sub:'<i>Anulus fibrosus · nucleus pulposus</i> · lamellen, kern en eindplaat',
+   view:NARROW?[[5.5,7,17],[0,-2.6,0]]:[[6.4,8.2,18.5],[.2,-.7,0]],s1:'Rust',s2:'Druk',s3:'Scheurtjes',
+   bg:['#1f3a41','#0f1d22','#050b0d'],fog:0x0f1d22,hemi:.8,drone:true}],
+ help:{title:'Zo werkt de zoomreis',
+  html:'<p>Je reist in twee stappen de onderrug in: van een <b>leerling die tilt</b> bij de zaalopbouw (40 cm), via <b>twee wervels met hun schijf</b> (5 cm), tot <b>in de tussenwervelschijf</b> (5 mm). Zoom in met <b>+</b> en uit met <b>−</b>, of klik op de ladder links.</p><ul><li>Klik op een genummerd punt of direct op het model voor uitleg in vier tabjes.</li><li>In stand 2 van de rug kies je hoe ver de leerling voorover buigt, hoe ver de last van het lichaam is en hoe zwaar de last is. De HUD rekent het moment, de kracht van de rugstrekkers en de druk op de onderste schijf uit.</li><li>Kleuren van de hefboom: <b style="color:#ffd36a">geel</b> is het draaipunt en de momentarm, <b style="color:#9cc8ff">blauw</b> de last, <b style="color:#ffb36b">oranje</b> de rugstrekkers. Banden zijn grijs als ze slap zijn, wit als ze gespannen zijn en rood als ze sterk gerekt zijn.</li><li>Met de laag <b>Schijven open</b> snijd je de tussenwervelschijven open, zodat je de kern ziet.</li></ul><h3>Drie standen</h3><p><b>1 Rust</b>: vrij verkennen. <b>2 Belasting</b>: tillen, buigen en strekken, of druk op de schijf. <b>3 Blessure</b>: een hernia na heel veel herhalingen, of scheurtjes in de vezelring. Bij de hernia kies je de ernst met Graad 1–3: uitpuiling, hernia en een losgeraakt stukje.</p>',
+  states:'Rust · belasting · hernia of scheurtjes',
+  note:'Vereenvoudigd didactisch model: verhoudingen en vervormingen zijn vergroot om ze zichtbaar te maken. De krachten in de HUD zijn modelwaarden voor een leerling van 60 kg, met een momentarm van de rugstrekkers van 5 cm. Echte waarden verschillen per persoon en per houding; lees ze als ‘ongeveer’.'},
+ film:{brand:'WERVELKOLOM',blurb:'Hoe je rug tillen opvangt · ca. 3,5 minuut · met stem en ondertitels',file:'wervelkolom-uitleg'},
+ quizEnd:'<p>Bespreek de slotvraag met je groep. Bouw daarna in de gymzaal samen een toestel op. Wie tilt, houdt de last dicht bij het lichaam en draait niet onder de last. Laat een medestudent filmen en vergelijk de houding met de hefboom uit stand 2.</p>',
+ build(K){
+const {THREE,V,AX,AY,AZ,R,clamp,lerp,smooth,ease,bump,D2R,TAU,mesh,std,glass,glow,add,BAND,UCYL,orient,segMatrix,placeMatrix,ZERO,inst,tube,lathe,CART,MUSC,TEND,ENV,canvasTex,groups,W,S}=K;
+const SND=K.SND;
+const G0=groups[0],G1=groups[1],G2=groups[2];
+const _a=V(),_b=V(),_c=V(),_d=V(),_e=V(),_t=V(),_n=V(),_x=V(),_col=new THREE.Color(),_m4=new THREE.Matrix4(),_o=new THREE.Object3D(),_q=new THREE.Quaternion();
+const fmt=(v,d)=>(+v).toFixed(d===undefined?1:d).replace('.',',');
+const nf=v=>(Math.round(v/10)*10).toLocaleString('nl-NL');
+const angD=(a,b)=>Math.atan2(Math.sin(a-b),Math.cos(a-b));
+const SPH=new THREE.SphereGeometry(1,18,12);
+const ovm=(c,o)=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o===undefined?.95:o,depthTest:false,depthWrite:false,toneMapped:false});
+const noShadow=m=>{m.castShadow=false;m.receiveShadow=false;return m;};
+
+/* ================= gedeelde materialen ================= */
+const boneTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#ece0c4';x.fillRect(0,0,w,h);for(let i=0;i<2600;i++){x.fillStyle=`rgba(${140+R()*60|0},${110+R()*50|0},${70+R()*40|0},${R()*.16})`;x.beginPath();x.arc(R()*w,R()*h,R()*2.4,0,TAU);x.fill();}for(let i=0;i<50;i++){x.strokeStyle=`rgba(150,120,80,${R()*.12})`;x.beginPath();const y=R()*h;x.moveTo(0,y);x.bezierCurveTo(w*.3,y+R()*20-10,w*.6,y+R()*20-10,w,y+R()*10-5);x.stroke();}},[2,2]);
+const boneM=std(0xffffff,{map:boneTex,roughness:.55});
+const rimM=std(0xf7efde,{roughness:.38});
+const cartM=std(0x9fd0e6,{roughness:.2,transparent:true,opacity:.75,emissive:0x0a2a3a,emissiveIntensity:.4});
+const annTex=canvasTex(512,128,(x,w,h)=>{x.fillStyle='#e8e1cf';x.fillRect(0,0,w,h);x.lineWidth=2;for(let i=-24;i<40;i++){x.strokeStyle='rgba(150,138,110,.38)';x.beginPath();x.moveTo(i*14,0);x.lineTo(i*14+h*1.7,h);x.stroke();x.strokeStyle='rgba(120,135,150,.28)';x.beginPath();x.moveTo(i*14+7,h);x.lineTo(i*14+7+h*1.7,0);x.stroke();}});
+const cutTex=canvasTex(512,64,(x,w,h)=>{x.fillStyle='#86c2da';x.fillRect(0,0,w*.44,h);for(let i=0;i<260;i++){x.fillStyle=`rgba(255,255,255,${R()*.35})`;x.fillRect(R()*w*.44,R()*h,2,2);}
+  const n=9;for(let k=0;k<n;k++){const a=w*.44+k*(w*.56/n);x.fillStyle=k%2?'#d6ccb3':'#ece4d0';x.fillRect(a,0,w*.56/n,h);x.fillStyle='rgba(90,80,60,.35)';x.fillRect(a,0,2,h);for(let i=0;i<30;i++){x.fillStyle=k%2?'rgba(120,110,90,.35)':'rgba(140,150,160,.3)';x.fillRect(a+R()*w*.56/n,R()*h,2,2);}}});
+cutTex.wrapS=cutTex.wrapT=THREE.ClampToEdgeWrapping;
+const annM=std(0xffffff,{map:annTex,roughness:.45,side:THREE.DoubleSide});
+const cutM=std(0xffffff,{map:cutTex,roughness:.4,side:THREE.DoubleSide});
+const nucM=std(0x86c4de,{roughness:.18,emissive:0x1a5a78,emissiveIntensity:.5});
+const nerveM=std(0xe9c84a,{roughness:.4,emissive:0x3a2a00,emissiveIntensity:.3});
+const duraM=glass(0xf1e8cc,.28);
+const ligTex=canvasTex(64,128,(x,w,h)=>{x.fillStyle='#ffffff';x.fillRect(0,0,w,h);for(let i=0;i<w;i+=4){x.fillStyle=`rgba(150,140,120,${.15+R()*.25})`;x.fillRect(i,0,1.5,h);}});
+const ligM=()=>std(0xf1ece0,{map:ligTex,roughness:.35});
+const fibTex=(ang,col)=>canvasTex(128,128,(x,w,h)=>{x.fillStyle=col;x.fillRect(0,0,w,h);x.strokeStyle='rgba(90,30,20,.35)';x.lineWidth=2;for(let i=-10;i<20;i++){x.beginPath();x.moveTo(i*12,0);x.lineTo(i*12+Math.tan(ang)*h,h);x.stroke();}},[2,2]);
+
+/* ================= een lendenwervel (eenheid: straal van het wervellichaam) ================= */
+const H=1.15,D=.42;
+const BODYGEO=new THREE.LatheGeometry([[.001,0],[.86,0],[.97,.04],[1,.12],[.93,.36],[.9,.575],[.93,.8],[1,1.03],[.97,1.11],[.86,1.15],[.001,1.15]].map(p=>new THREE.Vector2(p[0],p[1])),40);
+const RIMGEO=new THREE.TorusGeometry(.93,.05,8,40);
+const ARCHGEO=new THREE.TorusGeometry(.58,.15,10,28,Math.PI);
+const FACGEO=new THREE.CylinderGeometry(.16,.16,.035,16);
+// een plat botstuk: een vorm in het sagittale vlak (X = afstand naar achteren, Y = hoogte), uitgetrokken in de breedte
+function sagGeo(pts,th,bev){const sh=new THREE.Shape();sh.moveTo(pts[0][0],pts[0][1]);sh.splineThru(pts.slice(1).concat([pts[0]]).map(p=>new THREE.Vector2(p[0],p[1])));
+  const g=new THREE.ExtrudeGeometry(sh,{depth:th,bevelEnabled:true,bevelThickness:bev,bevelSize:bev*.8,bevelSegments:5,curveSegments:40,steps:1});g.translate(0,0,-th/2);g.rotateY(Math.PI/2);
+  // ExtrudeGeometry geeft uv in wereldmaat; schaal ze voor de bottextuur
+  const uv=g.attributes.uv;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*.5,uv.getY(i)*.5);g.computeVertexNormals();return g;}
+// doornuitsteeksel: een bijlvormig blad naar achteren
+const SPINGEO=sagGeo([[1.3,.98],[1.9,1.0],[2.45,.95],[2.66,.74],[2.64,.42],[2.45,.27],[1.95,.26],[1.5,.4],[1.28,.62]],.1,.1);
+// gewrichtsuitsteeksels: omhoog (processus articularis superior, met vlak gewrichtsvlak naar binnen) en omlaag
+const SUPGEO=sagGeo([[1.06,.8],[1.04,1.32],[1.16,1.6],[1.42,1.66],[1.66,1.46],[1.7,1.0],[1.45,.8]],.08,.07);
+const INFGEO=sagGeo([[1.14,.55],[1.1,.05],[1.2,-.28],[1.44,-.34],[1.66,-.12],[1.68,.3],[1.55,.56]],.07,.07);
+// kraakbeen van een facetgewricht: een licht gebogen schaaltje
+const FCGEO=(()=>{const g=new THREE.CylinderGeometry(.3,.3,.04,28,1);g.rotateX(Math.PI/2);const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i)/.3,y=p.getY(i)/.3;p.setZ(i,p.getZ(i)+.035*(1-x*x-y*y));}g.computeVertexNormals();return g;})();
+// dwarsuitsteeksel: taps, iets afgeplat, met een afgeronde punt
+const PRONG=new THREE.LatheGeometry([[1,0],[.97,.3],[.85,.65],[.72,.88],[.5,.97],[.001,1]].map(p=>new THREE.Vector2(p[0],p[1])),12);
+const facM=std(0x2f8fd6,{roughness:.22,emissive:0x1a60c0,emissiveIntensity:.45,side:THREE.DoubleSide});
+function rod(a,b,r,mat,p){const m=mesh(BAND,mat,0,0,0,p);orient(m,V(...a),V(...b),r);const t=mesh(SPH,mat,b,0,[r*1.25,r*1.25,r*1.25],p);return [m,t];}
+function prong(a,b,w,d,mat,p){const m=mesh(PRONG,mat,0,0,0,p);orient(m,V(...a),V(...b),w,d);return m;}
+function vertebra(parent){const g=new THREE.Group();parent.add(g);
+  const body=mesh(BODYGEO,boneM,[0,0,0],0,[1,1,.74],g);
+  const rims=[mesh(RIMGEO,rimM,[0,H-.035,0],[Math.PI/2,0,0],[1,.74,1],g),mesh(RIMGEO,rimM,[0,.035,0],[Math.PI/2,0,0],[1,.74,1],g)];
+  const ped=[-1,1].map(s=>rod([s*.48,.72,-.5],[s*.56,.72,-1.12],.19,boneM,g)).flat();
+  const arch=mesh(ARCHGEO,boneM,[0,.62,-1.15],[-Math.PI/2,0,0],[1,1,2.3],g);
+  const spin=mesh(SPINGEO,boneM,[0,0,0],0,0,g);
+  const tr=[-1,1].map(s=>prong([s*.55,.74,-1.0],[s*1.66,.82,-1.3],.15,.1,boneM,g));
+  const sup=[-1,1].map(s=>mesh(SUPGEO,boneM,[s*.71,0,0],0,0,g));
+  const inf=[-1,1].map(s=>mesh(INFGEO,boneM,[s*.37,0,0],0,0,g));
+  // gewrichtsvlakken met kraakbeen: bovenste naar binnen, onderste naar buiten gericht; de spleet ertussen is het facetgewricht
+  const supF=[-1,1].map(s=>mesh(FCGEO,facM,[s*.585,1.3,-1.38],[0,-s*Math.PI/2,0],[1.05,1.15,1],g));
+  const infF=[-1,1].map(s=>mesh(FCGEO,facM,[s*.495,.08,-1.4],[0,s*Math.PI/2,0],[1,1.1,1],g));
+  return {g,body,rims,ped,arch,spin,tr,sup,inf,supF,infF,bodyParts:[body,...rims],archParts:[arch,spin,...ped,...tr],facParts:[...sup,...inf,...supF,...infF]};}
+// keten van wervels: elke wervel hangt aan een gewricht midden in de schijf eronder
+function chain(parent,n){const base=new THREE.Group();parent.add(base);const J=[],Vt=[];let prev=base,top=0;
+  for(let i=0;i<n;i++){const j=new THREE.Group();j.position.set(0,top+D/2,-.15);prev.add(j);const vt=vertebra(j);vt.g.position.set(0,D/2,.15);J.push(j);Vt.push(vt);prev=vt.g;top=H;}
+  return {base,J,V:Vt};}
+
+/* ---------- een vervormbare tussenwervelschijf tussen twee eindplaten ---------- */
+function discPart(parent,mat,o){const uv=[],idx=[],par=[];
+  const grid=(nu,nv,f)=>{const b=par.length/3;for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const q=f(i/nu,j/nv);par.push(q[0],q[1],q[2]);uv.push(q[3],q[4]);}for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=b+j*(nu+1)+i,c=a+nu+1;idx.push(a,c,a+1,a+1,c,c+1);}};
+  if(o.side)grid(o.NS,o.NH,(u,v)=>[lerp(o.a0,o.a1,u),1,v,u*(o.a1-o.a0)/TAU*5,v]);
+  else{grid(o.NR,o.NH,(u,v)=>[o.a0,1-u,v,1-u,v]);grid(o.NR,o.NH,(u,v)=>[o.a1,u,v,u,v]);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(par.length),3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);
+  const m=mesh(g,mat,0,0,0,parent);m.frustumCulled=false;return {m,g,par:new Float32Array(par)};}
+function discUpd(p,M,yA,Rx,Rz,bul){const P=p.g.attributes.position.array,q=p.par;
+  for(let k=0,n=q.length/3;k<n;k++){const th=q[3*k],rho=q[3*k+1],h=q[3*k+2];const sx=Math.sin(th),cz=Math.cos(th);const lx=rho*Rx*sx,lz=rho*Rz*cz;
+    _a.set(lx,yA,lz);_b.set(lx,0,lz).applyMatrix4(M);const gap=_a.distanceTo(_b);_c.lerpVectors(_a,_b,h);
+    const b=bul(th,gap)*rho*Math.sin(Math.PI*h);P[3*k]=_c.x+sx*Rx*b;P[3*k+1]=_c.y;P[3*k+2]=_c.z+cz*Rz*b;}
+  p.g.attributes.position.needsUpdate=true;p.g.computeVertexNormals();}
+// de wig die je wegsnijdt kijkt naar de camera (lokaal −x en voorkant +z)
+const CUT0=-1.75,CUT1=.2,THH=-2.45;
+function makeDisc(parent){const d={parent,Rx:1,Rz:.74,open:false,hern:0,TH:THH,mid:V(),rim:V(),dir:V()};
+  d.full=discPart(parent,annM,{side:true,a0:0,a1:TAU,NS:48,NH:6});
+  d.cs=discPart(parent,annM,{side:true,a0:CUT1,a1:CUT0+TAU,NS:40,NH:6});
+  d.cf=discPart(parent,cutM,{side:false,a0:CUT1,a1:CUT0+TAU,NR:6,NH:6});
+  d.nuc=noShadow(mesh(SPH,nucM,0,0,0,parent));
+  d.setOpen=v=>{d.open=v;d.full.m.visible=!v;d.cs.m.visible=d.cf.m.visible=v;};d.setOpen(false);
+  d.parts=()=>[d.full.m,d.cs.m,d.cf.m,d.nuc];
+  return d;}
+function discStep(d,M,yA,rotX,comp,tot){const bul=(th,gap)=>.05+1.3*Math.max(0,(D-gap)/D)+.3*comp+d.hern*Math.exp(-Math.pow(angD(th,d.TH)/.34,2));
+  if(d.open){discUpd(d.cs,M,yA,d.Rx,d.Rz,bul);discUpd(d.cf,M,yA,d.Rx,d.Rz,bul);}else discUpd(d.full,M,yA,d.Rx,d.Rz,bul);
+  _b.set(0,0,0).applyMatrix4(M);const gap=Math.hypot(_b.x,_b.y-yA,_b.z);
+  // de kern schuift bij buigen naar achteren (−z) en bij strekken naar voren
+  d.shift=-rotX*.95;d.nuc.position.set(_b.x*.5,(yA+_b.y)/2,_b.z*.5+d.shift);d.nuc.rotation.set((tot===undefined?rotX:tot)*.5,0,0);d.nuc.scale.set(.44*(1+.12*comp),gap*.4,.31*(1+.12*comp));
+  d.mid.copy(d.nuc.position);
+  // rand van de schijf achter-opzij, waar een hernia uitpuilt
+  const sx=Math.sin(d.TH),cz=Math.cos(d.TH);_a.set(sx,yA,cz*.74);_c.set(sx,0,cz*.74).applyMatrix4(M);d.rim.lerpVectors(_a,_c,.5);d.dir.set(sx,0,cz).normalize();}
+
+/* ================================================================
+   NIVEAU 0 · de onderrug op een standaard, en tillen bij de zaalopbouw
+   ================================================================ */
+K.base({parent:G0,floor:'gym',plaque:['COLUMNA VERTEBRALIS LUMBALIS','L1 tot heiligbeen · tillen bij de zaalopbouw'],plaqueX:-1.5});
+// decor van de gymzaal: wandrek, een stapel matten en de springkast
+const woodTex=canvasTex(256,64,(x,w,h)=>{x.fillStyle='#c79a62';x.fillRect(0,0,w,h);for(let i=0;i<40;i++){x.strokeStyle=`rgba(110,70,30,${.1+R()*.2})`;x.lineWidth=1+R()*2;x.beginPath();const y=R()*h;x.moveTo(0,y);x.bezierCurveTo(w*.3,y+R()*8-4,w*.7,y+R()*8-4,w,y+R()*6-3);x.stroke();}},[2,1]);
+const woodM=std(0xffffff,{map:woodTex,roughness:.6}),woodD=std(0x9a6a3a,{roughness:.6});
+(function(){const wb=new THREE.Group();wb.position.set(2.6,.08,-5.55);G0.add(wb);
+  for(let i=0;i<4;i++){mesh(new THREE.BoxGeometry(.14,3.9,.14),woodD,[i*1.25,1.95,0],0,0,wb);}
+  for(let c=0;c<3;c++)for(let k=0;k<14;k++)mesh(new THREE.CylinderGeometry(.035,.035,1.11,8),woodM,[c*1.25+.625,.3+k*.26,0],[0,0,Math.PI/2],0,wb);
+  const matM=std(0x2f5f9a,{roughness:.85}),matE=std(0x274e80,{roughness:.85});
+  for(let i=0;i<3;i++)mesh(new THREE.BoxGeometry(2.7,.1,1.35),[matE,matE,matM,matM,matE,matE],[-.2+i*.03,.13+i*.105,-4.05+i*.02],[0,.04*i,0],0,G0);
+  const kast=new THREE.Group();kast.position.set(6.6,.08,-3.4);kast.rotation.y=-.35;G0.add(kast);
+  for(let i=0;i<4;i++){const w=1.5-i*.08,d=.95-i*.05;mesh(new THREE.BoxGeometry(w,.32,d),woodM,[0,.16+i*.33,0],0,0,kast);mesh(new THREE.BoxGeometry(w+.02,.03,d+.02),woodD,[0,.33+i*.33,0],0,0,kast);}
+  mesh(new THREE.BoxGeometry(1.24,.16,.8),std(0x6b3a22,{roughness:.7}),[0,1.45,0],0,0,kast);
+  [[-3.2,4.2],[-2.4,4.7]].forEach(p=>{mesh(new THREE.ConeGeometry(.16,.42,18),std(0xe8742c,{roughness:.6}),[p[0],.29,p[1]],0,0,G0);mesh(new THREE.BoxGeometry(.36,.03,.36),std(0xe8742c),[p[0],.095,p[1]],0,0,G0);});})();
+
+// standaard met een beugel tegen de achterkant van het heiligbeen
+const ST=K.stand({parent:G0,x:SX-1.9,z:SZ,h:Y0-.4-.28,foot:1.15});
+mesh(new THREE.CylinderGeometry(.07,.07,1.3,12),ENV.metal,[SX-1.3,Y0-.4,SZ],[0,0,Math.PI/2],0,G0);
+mesh(new THREE.BoxGeometry(.12,.42,.5),ENV.dark,[SX-.6,Y0-.4,SZ],0,0,G0);
+
+// het model: één groep met de oriëntatie van de patiënt (voorkant naar +x), schaal S0 (eenheid = straal wervellichaam)
+const SPW=new THREE.Group();SPW.position.set(SX,Y0,SZ);SPW.scale.setScalar(1.04);G0.add(SPW);
+const SP=new THREE.Group();SP.rotation.y=Math.PI/2;SP.scale.setScalar(S0);SPW.add(SP);
+const lum=chain(SP,5);lum.base.rotation.x=38*D2R;
+const LORD=[-14,-10,-7,-4,-3].map(v=>v*D2R),WF=[.25,.24,.21,.17,.13];
+// heiligbeen en stuitje (in het gekantelde frame van de bovenkant van S1)
+const sacG=new THREE.Group();lum.base.add(sacG);
+mesh(new THREE.LatheGeometry([[.001,-3.9],[.26,-3.7],[.52,-3.25],[.83,-2.4],[1.08,-1.4],[1.24,-.55],[1.22,-.13],[1.05,0],[.001,0]].map(p=>new THREE.Vector2(p[0],p[1])),36),boneM,[0,0,-.28],0,[1.32,1,.5],sacG);
+mesh(BODYGEO,boneM,[0,-1.15,0],0,[1,1,.74],sacG);mesh(RIMGEO,rimM,[0,-.035,0],[Math.PI/2,0,0],[1,.74,1],sacG);
+const foraM=std(0x3a2a1c,{roughness:.8});
+[[-1.5,.62],[-2.2,.55],[-2.8,.45],[-3.3,.33]].forEach(f=>[-1,1].forEach(s=>mesh(SPH,foraM,[s*f[1],f[0],.0],0,[.13,.11,.4],sacG)));
+[[-1.5],[-2.2],[-2.8]].forEach(f=>mesh(SPH,boneM,[0,f[0],-.62],0,[.12,.24,.18],sacG));
+[[0,-4.1,.1,.2],[0,-4.45,.28,.16],[0,-4.72,.46,.12]].forEach(c=>mesh(SPH,boneM,[c[0],c[1],c[2]],0,[c[3]*1.3,c[3],c[3]],sacG));
+[-1,1].forEach(s=>{rod([s*.5,-.1,-.75],[s*.62,.55,-1.0],.13,boneM,sacG);mesh(FACGEO,cartM,[s*.6,.45,-.95],[0,0,Math.PI/2],0,sacG);});
+// bekken (in wereldmaat, groep met schaal 1/S0)
+const PV=new THREE.Group();PV.scale.setScalar(1/S0);SP.add(PV);
+function sheetGeo(fn,nu,nv){const pos=[],uv=[],idx=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const p=fn(i/nu,j/nv);pos.push(p.x,p.y,p.z);uv.push(i/nu,j/nv);}for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,c=a+nu+1;idx.push(a,c,a+1,a+1,c,c+1);}const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;}
+const pelvM=std(0xffffff,{map:boneTex,bumpMap:boneTex,bumpScale:.03,roughness:.55,side:THREE.DoubleSide});
+const pelvB=std(0xffffff,{map:boneTex,bumpMap:boneTex,bumpScale:.02,roughness:.55});
+const pelvParts=[];
+[-1,1].forEach(s=>{const C=new THREE.CatmullRomCurve3([V(s*.78,.25,-.6),V(s*1.25,1.02,-.42),V(s*1.62,1.22,.25),V(s*1.45,.6,1.05)]);
+  const Bc=new THREE.CatmullRomCurve3([V(s*.66,-.5,-.4),V(s*1.0,-.62,-.1),V(s*1.25,-.72,.4),V(s*1.3,-.3,.95)]);
+  // darmbeenvleugel met dikte: een holle binnenkant (fossa iliaca) en een bolle buitenkant, die naar de randen dun uitlopen
+  const wing=(side)=>sheetGeo((u,v)=>{const a=Bc.getPoint(u),c=C.getPoint(u);const bow=s*.16*Math.sin(Math.PI*v)*(.4+.6*Math.sin(Math.PI*u));const th=.085*Math.pow(Math.sin(Math.PI*clamp(u,.001,.999)),.5)*(.45+.55*v);
+    return a.lerp(c,v).add(V(bow+side*s*th,0,0));},26,12);
+  pelvParts.push(mesh(wing(1),pelvM,0,0,0,PV),mesh(wing(-1),pelvM,0,0,0,PV));
+  // dikke bekkenkam (crista iliaca) en de spina's aan voor- en achterkant
+  pelvParts.push(tube(C.points,.1,pelvB,PV,48,10));[C.points[0],C.points[3]].forEach(p=>pelvParts.push(mesh(SPH,pelvB,[p.x,p.y,p.z],0,[.13,.13,.13],PV)));
+  pelvParts.push(tube(Bc.points,.085,pelvB,PV,40,8));
+  const ac=V(s*1.32,-.88,.45);pelvParts.push(mesh(new THREE.SphereGeometry(.31,20,12,0,TAU,0,Math.PI/2),pelvM,[ac.x,ac.y,ac.z],[0,0,s>0?Math.PI/2:-Math.PI/2],0,PV));
+  pelvParts.push(mesh(SPH,pelvB,[ac.x+s*.03,ac.y,ac.z],0,[.26,.26,.26],PV));
+  pelvParts.push(...rod([ac.x,ac.y,ac.z],[s*1.72,-1.2,.42],.12,pelvB,PV));pelvParts.push(mesh(SPH,pelvB,[s*1.82,-1.1,.38],0,[.18,.2,.16],PV));
+  pelvParts.push(...rod([s*1.74,-1.25,.42],[s*1.6,-2.45,.5],.13,pelvB,PV));pelvParts.push(mesh(new THREE.CylinderGeometry(.135,.135,.02,16),std(0x8a2a22,{roughness:.6}),[s*1.6,-2.47,.5],0,0,PV));
+  pelvParts.push(tube([V(s*1.12,-.82,.78),V(s*.62,-.92,1.12),V(s*.12,-1.02,1.22)],.1,pelvB,PV,24,8));
+  pelvParts.push(tube([V(s*.12,-1.2,1.15),V(s*.45,-1.5,.85),V(s*.85,-1.72,.3),V(s*1.0,-1.6,-.05),V(s*1.15,-1.15,.15)],.11,pelvB,PV,30,8));
+  pelvParts.push(mesh(SPH,pelvB,[s*.95,-1.72,.08],0,[.16,.13,.18],PV));
+  pelvParts.push(mesh(new THREE.BoxGeometry(.05,.55,.34),cartM,[s*.69,-.3,-.45],[0,0,s*.12],0,PV));});
+pelvParts.push(mesh(new THREE.BoxGeometry(.14,.3,.16),cartM,[0,-1.1,1.22],0,0,PV));
+// spieren rond de lendenwervelkolom
+const glutM=std(0xffffff,{map:fibTex(.05,'#b8473a'),roughness:.5,emissive:0xff4020,emissiveIntensity:0,side:THREE.DoubleSide});
+const glut=[-1,1].map(s=>{const O0=V(s*.62,-.05,-.98),O1=V(s*.42,-1.3,-.78),I0=V(s*1.78,-1.2,-.1),I1=V(s*1.62,-1.85,.05);return mesh(sheetGeo((u,v)=>{const o=O0.clone().lerp(O1,u),i=I0.clone().lerp(I1,u);return o.lerp(i,v).add(V(s*.05*Math.sin(Math.PI*v),0,-(.28*Math.sin(Math.PI*v)+.06)*Math.sin(Math.PI*(.15+.7*u))));},10,12),glutM,0,0,0,PV);});
+const ERN=34,ERK=10;
+const erCS=K.sunflower(ERN).map(p=>({u:p[0],v:p[1],c:.86+R()*.24}));
+const ER=inst(UCYL,std(0xffffff,{roughness:.5}),2*ERN*ERK);G0.add(ER);
+const ERsh=noShadow(inst(SPH,glass(0xeab3a2,.14),2*(ERK+1)));G0.add(ERsh);
+const erCv=[0,1].map(()=>new THREE.CatmullRomCurve3([0,1,2,3,4,5,6].map(()=>V())));
+const erC=[],erT=[],erN=[],erX=[];for(let j=0;j<=ERK;j++){erC.push(V());erT.push(V());erN.push(V());erX.push(V());}
+const LZ=V(0,0,1);
+const MF=inst(UCYL,std(0x9a3a30,{roughness:.5,emissive:0xff4020,emissiveIntensity:0}),20);G0.add(MF);
+// de eigen materialen vasthouden: bij een geopend punt (focus) hangt de motor tijdelijk een doorzichtige kopie aan de mesh
+const erMat=ER.material,erShMat=ERsh.material,mfMat=MF.material;
+const rectM=std(0xffffff,{map:canvasTex(64,128,(x,w,h)=>{x.fillStyle='#c4584a';x.fillRect(0,0,w,h);x.strokeStyle='rgba(90,20,15,.4)';for(let i=0;i<w;i+=6){x.beginPath();x.moveTo(i,0);x.lineTo(i,h);x.stroke();}}),roughness:.5,emissive:0xff4020,emissiveIntensity:0});
+const rect=[],taMeshes=[];
+// dwarse buikspier: een doorschijnend korset aan de verre kant, met dwarse vezels die naar de randen vervagen
+const taTex=canvasTex(256,64,(x,w,h)=>{for(let i=0;i<w;i++){const e=Math.min(1,i/40,(w-i)/40);x.fillStyle=`rgba(216,132,116,${.75*e})`;x.fillRect(i,0,1,h);}
+  for(let j=1;j<h;j+=4){x.strokeStyle='rgba(120,40,30,.55)';x.lineWidth=1.2;x.beginPath();x.moveTo(0,j);for(let i=0;i<=w;i+=16)x.lineTo(i,j+Math.sin(i*.05+j)*.8);x.stroke();}
+  x.globalCompositeOperation='destination-in';const gr=x.createLinearGradient(0,0,w,0);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.12,'rgba(0,0,0,1)');gr.addColorStop(.88,'rgba(0,0,0,1)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,w,h);});
+taTex.wrapS=taTex.wrapT=THREE.ClampToEdgeWrapping;
+const taM=std(0xffffff,{map:taTex,transparent:true,opacity:.42,roughness:.45,depthWrite:false,side:THREE.DoubleSide,emissive:0xff4020,emissiveIntensity:0});
+lum.V.forEach((vt,i)=>{const m=noShadow(mesh(sheetGeo((u,v)=>{const th=lerp(.42,Math.PI-.62,u),y=lerp(-D/2-.03,H+D/2+.03,v);return V(3.05*Math.sin(th),y,2.15+3.05*Math.cos(th));},20,2),taM,0,0,0,vt.g));taMeshes.push(m);});
+// snijvlakken: de spieren lopen boven L1 verder, het model is daar ‘doorgesneden’
+const cutMusTex=canvasTex(128,128,(x,w,h)=>{x.fillStyle='rgba(0,0,0,0)';x.clearRect(0,0,w,h);x.save();x.beginPath();x.arc(w/2,h/2,w/2-2,0,TAU);x.clip();x.fillStyle='#8a2a22';x.fillRect(0,0,w,h);
+  for(let i=0;i<70;i++){const a=R()*TAU,r=Math.sqrt(R())*(w/2-8);const cx=w/2+r*Math.cos(a),cy=h/2+r*Math.sin(a),rr=5+R()*6;x.fillStyle=`rgb(${190+R()*30|0},${70+R()*25|0},${58+R()*20|0})`;x.beginPath();x.ellipse(cx,cy,rr,rr*(.7+R()*.3),R()*3,0,TAU);x.fill();x.strokeStyle='rgba(250,225,205,.7)';x.lineWidth=1.3;x.stroke();}
+  x.restore();x.strokeStyle='rgba(245,225,210,.9)';x.lineWidth=4;x.beginPath();x.arc(w/2,h/2,w/2-3,0,TAU);x.stroke();});
+const cutMusM=std(0xffffff,{map:cutMusTex,transparent:true,alphaTest:.3,roughness:.6,side:THREE.DoubleSide});
+const CUTG=new THREE.CircleGeometry(1,28);
+const erCut=[0,1].map(()=>noShadow(mesh(CUTG,cutMusM,0,0,0,G0))),raCut=[0,1].map(()=>noShadow(mesh(CUTG,cutMusM,0,0,0,G0)));
+const rectLow=[];
+// rechte buikspier: twee platte strengen vezels van schaambeen naar boven, met tussenpezen
+const RAN=18,RAK=10;const raCS=[...Array(RAN)].map((_,i)=>({u:(i/(RAN-1))*2-1+(R()-.5)*.05,v:(R()-.5)*1.6,c:.86+R()*.24}));
+const RA=inst(UCYL,std(0xffffff,{roughness:.5}),2*RAN*RAK);G0.add(RA);rect.push(RA);
+const raCv=[0,1].map(()=>new THREE.CatmullRomCurve3([0,1,2,3,4,5,6].map(()=>V())));
+// ruggenmerg, cauda equina, zenuwwortels en de heupzenuw
+const nerve0=[];
+const cordM=std(0xf0d470,{roughness:.4});
+lum.V.forEach((vt,i)=>{const g=vt.g;nerve0.push(noShadow(mesh(new THREE.CylinderGeometry(.44,.44,H+D,16,1,true),duraM,[0,H*.5,-1.18],0,0,g)));
+  if(i>=3){const top=i===4;nerve0.push(mesh(new THREE.CylinderGeometry(.24,top?.24:.13,H+D,12),cordM,[0,H*.5,-1.18],0,0,g));}
+  else{for(let k=0;k<7;k++){const a=k/7*TAU;nerve0.push(mesh(new THREE.CylinderGeometry(.05,.05,H+D,6),nerveM,[.2*Math.cos(a),H*.5,-1.18+.2*Math.sin(a)],0,0,g));}}
+  [-1,1].forEach(s=>{nerve0.push(tube([V(s*.3,.1,-1.05),V(s*.68,-.2,-.78),V(s*1.25,-.6,-.25),V(s*1.85,-1.35,.25)],.11,nerveM,g,24,8));nerve0.push(mesh(SPH,nerveM,[s*.72,-.2,-.76],0,[.2,.18,.24],g));});});
+const rootHotM=std(0xe9c84a,{roughness:.4,emissive:0xff3010,emissiveIntensity:0});
+const root0=tube([V(-.28,H+D*.6,-1.0),V(-.42,H*.6,-.97),V(-.6,.05,-.82),V(-1.2,-.5,-.3),V(-1.75,-1.25,.15)],.15,rootHotM,lum.V[0].g,40,8);nerve0.push(root0);
+const sciM=std(0xe9c84a,{roughness:.4,emissive:0xff3010,emissiveIntensity:0});
+const sci=[-1,1].map(s=>tube([V(s*.72,-.68,-.05),V(s*1.0,-1.2,-.3),V(s*1.32,-1.9,-.2),V(s*1.45,-2.6,.08),V(s*1.45,-3.0,.16)],.075,s<0?sciM:nerveM,PV,60,8));nerve0.push(...sci);
+// impulsen bij ischias: ze ontstaan bij de geprikkelde wortel en lopen via het wervelkanaal omhoog, naar ruggenmerg en hersenen
+const IMP0=[0,1,2,3,4,5,6].map(()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.045,10,8),add(0xffb060,0));m.renderOrder=22;G0.add(m);return m;});
+const impPath=new THREE.CatmullRomCurve3([0,1,2,3,4,5,6,7].map(()=>V()));
+// een materiaal tijdelijk doorzichtig maken (alleen opnieuw compileren als ‘transparent’ wisselt)
+function fadeMat(m,a){const t=a<.995;if(m.transparent!==t){m.transparent=t;m.depthWrite=!t;m.needsUpdate=true;}m.opacity=a;}
+// alle schijven en de hernia tussen L4 en L5
+const discs0=lum.V.map((vt,i)=>makeDisc(i===0?lum.base:lum.V[i-1].g));
+const hernM=std(0x4fb3e0,{roughness:.2,emissive:0x1a6a90,emissiveIntensity:.9});
+const hern0=noShadow(mesh(SPH,hernM,0,0,0,lum.V[0].g)),frag0=noShadow(mesh(SPH,hernM,0,0,0,lum.V[0].g));
+const crackM=std(0x8a1a12,{emissive:0x5a0a05,emissiveIntensity:.6,roughness:.5});
+const haloM=add(0xff7a2a,0);haloM.blending=THREE.NormalBlending;haloM.depthTest=false;haloM.toneMapped=false;const halo0=new THREE.Mesh(new THREE.SphereGeometry(1,20,14),haloM);halo0.renderOrder=21;lum.V[0].g.add(halo0);
+const crack0=noShadow(mesh(new THREE.BoxGeometry(.05,.2,1),crackM,0,0,0,lum.V[0].g));
+const Mrel=new THREE.Matrix4();
+
+/* ---------- de leerlingen, de bank, het kastdeel en de getekende hefboom ---------- */
+const F1=K.figure({parent:G0,pos:[MX,.08,FZ],rotY:Math.PI/2,scale:FS,shirt:0x2f8a78});
+const F2=K.figure({parent:G0,pos:[MX+LB+1,.08,FZ],rotY:-Math.PI/2,scale:FS,shirt:0x3d7fc2,skin:0x8d5b3e,hair:0x5a3a22,sole:0xd8642a});
+const backM=new THREE.MeshStandardMaterial({color:0xff6a30,emissive:0xff3a10,emissiveIntensity:0,roughness:.4});
+const backGl=[-1,1].map(s=>noShadow(mesh(new THREE.CapsuleGeometry(.035,.2,4,8),backM,[s*.06,.2,-.105],0,0,F1.torso)));
+const sciFM=new THREE.MeshStandardMaterial({color:0xffb060,emissive:0xff5a10,emissiveIntensity:0,roughness:.4});
+const sciF=[noShadow(mesh(new THREE.CapsuleGeometry(.03,.34,4,8),sciFM,[0,-.32,-.075],0,0,F1.lR.hip)),noShadow(mesh(new THREE.CapsuleGeometry(.026,.3,4,8),sciFM,[0,-.28,-.065],0,0,F1.lR.kn))];
+const bench=new THREE.Group();G0.add(bench);
+mesh(new THREE.BoxGeometry(LB,.06,.3),woodM,[LB/2,-.03,0],0,0,bench);
+[.38,LB-.38].forEach(x=>{mesh(new THREE.BoxGeometry(.06,.34,.3),woodD,[x,-.23,0],0,0,bench);mesh(new THREE.BoxGeometry(.08,.04,.46),woodD,[x,-.38,0],0,0,bench);});
+mesh(new THREE.BoxGeometry(LB-.76,.06,.08),woodD,[LB/2,-.27,0],0,0,bench);
+const box=new THREE.Group();G0.add(box);
+[[0,.42,1.1,.06],[0,-.42,1.1,.06]].forEach(b=>mesh(new THREE.BoxGeometry(b[2],.32,b[3]),woodM,[b[0],0,b[1]],0,0,box));
+[-.53,.53].forEach(x=>mesh(new THREE.BoxGeometry(.06,.32,.84),woodM,[x,0,0],0,0,box));
+[-.53,.53].forEach(x=>[-.42,.42].forEach(z=>mesh(new THREE.BoxGeometry(.08,.34,.08),woodD,[x,0,z],0,0,box)));
+const LEV=new THREE.Group();G0.add(LEV);
+const levM=ovm(0xffcc33),loadM=ovm(0x5aa8ff),eM=ovm(0xff5a1e);
+const levPiv=mesh(SPH,levM,0,0,0,LEV),levBar=mesh(BAND,levM,0,0,0,LEV),levDrop=mesh(BAND,ovm(0x8cc0ff,.55),0,0,0,LEV),levW=mesh(BAND,loadM,0,0,0,LEV),levWh=mesh(new THREE.ConeGeometry(1,1,16).translate(0,-.5,0),loadM,0,0,0,LEV),levE=mesh(BAND,eM,0,0,0,LEV),levEh=mesh(new THREE.ConeGeometry(1,1,16).translate(0,-.5,0),eM,0,0,0,LEV);
+const levRing=mesh(new THREE.TorusGeometry(.14,.018,6,24),levM,0,0,0,LEV);
+LEV.traverse(o=>{if(o.isMesh){o.renderOrder=20;noShadow(o);}});
+
+/* ---------- toestand en rekenwerk van niveau 0 ---------- */
+const L0={auto:true,phiMax:50,reach:.45,kg:15,levOn:true,cyc:0,lam:0,phi:0,tw:0,dL:0,dT:0,M:0,Mb:0,Fe:0,C:450,WL:0,act:0,dmg:0,reps:0,hern:0,hurt:false,hurtT:0,last:null,boxFrom:V(),boxQ:0,lev:false,lastLam:0,impT:0,imp:0,heat:0,sndLift:false,sndRep:-1,sndImp:false};
+const FA=.62,FB=.6,LARM=.61,MFAC=1.75/2.29/FS,G=9.81,YB=(.53-.08)/FS;
+const pyOf=t=>.09+FA*Math.cos(t)+FB*Math.cos(.55*t)+.02;
+const yHand=(t,phi,rho)=>pyOf(t)+.04+.55*Math.cos(phi)-LARM*Math.cos(rho);
+function solveT(phi,rho,y){if(yHand(0,phi,rho)<=y)return 0;let a=0,b=1.7;if(yHand(b,phi,rho)>y)return b;for(let i=0;i<18;i++){const m=(a+b)/2;if(yHand(m,phi,rho)>y)a=m;else b=m;}return (a+b)/2;}
+function liftPose(t,phi,rho,tw){const s=.55*t;return {py:pyOf(t),pz:-(FA*Math.sin(t)-FB*Math.sin(s)),lean:phi,twist:tw||0,hipR:-t,hipL:-t,kneeR:t+s,kneeL:t+s,ankR:-s,ankL:-s,shR:[-(phi+rho),0,-.06],shL:[-(phi+rho),0,.06],elbR:-.1,elbL:-.1,head:-phi*.55,side:0};}
+const HURT={py:F1.standY-.07,pz:0,lean:.3,side:.12,twist:0,hipR:-.25,hipL:-.06,kneeR:.38,kneeL:.12,ankR:-.14,ankL:-.05,shR:[.8,0,-.32],elbR:-1.75,shL:[.1,0,.16],elbL:-.35,head:.18};
+const piv=V(),ubp=V(),wR=V(),wL=V(),ldp=V(),shM=V(),armC=V(),loadP=V(),fwd=V();
+const hd=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
+function measure(){F1.root.updateMatrixWorld(true);F1.torso.getWorldPosition(piv);F1.torso.localToWorld(ubp.set(0,.33,0));F1.aR.wr.getWorldPosition(wR);F1.aL.wr.getWorldPosition(wL);ldp.addVectors(wR,wL).multiplyScalar(.5);F1.aR.sh.getWorldPosition(_a);F1.aL.sh.getWorldPosition(_b);shM.addVectors(_a,_b).multiplyScalar(.5);armC.lerpVectors(shM,ldp,.45);}
+// statisch momentenmodel rond L5–S1: romp ≈ 290 N, armen ≈ 60 N, momentarm rugstrekkers 5 cm
+function mech(phi,load,WL){L0.dT=hd(ubp,piv)*MFAC;const dA=hd(armC,piv)*MFAC;L0.dL=load?hd(load,piv)*MFAC:0;L0.Mb=290*L0.dT+60*dA;L0.M=L0.Mb+WL*L0.dL;L0.Fe=L0.M/.05;L0.C=L0.Fe+120+(350+WL)*Math.cos(phi*.85);L0.WL=WL;}
+function updSpine(flex,tw,comp,side){for(let i=0;i<5;i++){const j=lum.J[i];j.rotation.set(LORD[i]+flex*WF[i],tw*.2,side*.2);j.position.y=(i===0?0:H)+D/2-comp*.07;j.updateMatrix();lum.V[i].g.updateMatrix();}
+  SPW.updateMatrixWorld(true);
+  for(let i=0;i<5;i++){const d=discs0[i];Mrel.multiplyMatrices(lum.J[i].matrix,lum.V[i].g.matrix);discStep(d,Mrel,i===0?0:H,flex*WF[i],comp,LORD[i]+flex*WF[i]);}}
+function updMuscles(act,abd,gl){let k=0,ks=0;
+  for(let si=0;si<2;si++){const s=si?1:-1;const cv=erCv[si],P=cv.points;
+    PV.localToWorld(P[0].set(s*.45,-.45,-.75));for(let i=0;i<5;i++)lum.V[i].g.localToWorld(P[i+1].set(s*1.05,.6,-2.05));lum.V[4].g.localToWorld(P[6].set(s*1.05,H+.45,-2.05));
+    cv.arcLengthDivisions=60;cv.updateArcLengths();if(si===0)cv.getPointAt(.55,W.erW||(W.erW=V()));
+    for(let j=0;j<=ERK;j++){const t=j/ERK;cv.getPointAt(t,erC[j]);cv.getTangentAt(t,erT[j]);erN[j].crossVectors(erT[j],LZ).normalize();erX[j].crossVectors(erN[j],erT[j]).normalize();}
+    // dun en peesachtig bij het heiligbeen, vol bij L1, waar het model de spier doorsnijdt
+    const pr=t=>.4+.6*Math.pow(Math.sin(Math.PI*clamp(t*.62,0,.5)),.6);const rx=.25,ry=.23;
+    for(const f of erCS){for(let j=0;j<ERK;j++){const p0=pr(j/ERK),p1=pr((j+1)/ERK);
+      _a.copy(erC[j]).addScaledVector(erX[j],f.u*rx*p0).addScaledVector(erN[j],f.v*ry*p0);_b.copy(erC[j+1]).addScaledVector(erX[j+1],f.u*rx*p1).addScaledVector(erN[j+1],f.v*ry*p1);
+      _d.subVectors(_b,_a).multiplyScalar(.04);_a.sub(_d);_b.add(_d);ER.setMatrixAt(k,segMatrix(_a,_b,.034*(j===0||j===ERK-1?.8:1)));
+      _col.setRGB(.6*f.c+.38*act,.17*f.c+.1*act,.13*f.c+.03*act);ER.setColorAt(k++,_col);}}
+    for(let j=0;j<=ERK;j++){const p=pr(j/ERK);if(j===ERK){ERsh.setMatrixAt(ks++,ZERO);continue;}_m4.makeBasis(erX[j],erT[j],erN[j]);_m4.scale(_x.set(rx*p*1.2,.3,ry*p*1.2));_m4.setPosition(erC[j]);ERsh.setMatrixAt(ks++,_m4);}
+    {const p=pr(1),c=erCut[si];_m4.makeBasis(erX[ERK],erN[ERK],erT[ERK]);c.quaternion.setFromRotationMatrix(_m4);c.position.copy(erC[ERK]).addScaledVector(erT[ERK],.035);c.scale.set(rx*p*1.08,ry*p*1.08,1);}}
+  ER.instanceMatrix.needsUpdate=true;ER.instanceColor.needsUpdate=true;ERsh.instanceMatrix.needsUpdate=true;
+  let m=0;for(let i=0;i<5;i++)for(const s of [-1,1])for(const o of [-.12,.12]){lum.V[i].g.localToWorld(_a.set(s*.22,.48,-2.1+o));if(i===0)lum.base.localToWorld(_b.set(s*.5,-.55,-1.0+o));else lum.V[i-1].g.localToWorld(_b.set(s*.45,1.0,-1.55+o));MF.setMatrixAt(m++,segMatrix(_a,_b,.05));}
+  MF.instanceMatrix.needsUpdate=true;mfMat.emissiveIntensity=abd*.9;
+  let kr=0;for(let si=0;si<2;si++){const s=si?1:-1;const cv=raCv[si],P=cv.points;PV.localToWorld(P[0].set(s*.3,-1.0,1.28));for(let i=0;i<5;i++)lum.V[i].g.localToWorld(P[i+1].set(s*1.25,H*.45,4.7+.1*i));lum.V[4].g.localToWorld(P[6].set(s*1.3,H+.4,5.2));
+    cv.arcLengthDivisions=60;cv.updateArcLengths();for(let j=0;j<=RAK;j++){const t=j/RAK;cv.getPointAt(t,erC[j]);cv.getTangentAt(t,erT[j]);erN[j].crossVectors(erT[j],LZ).normalize();erX[j].crossVectors(erN[j],erT[j]).normalize();}
+    {const c=raCut[si];_m4.makeBasis(erX[RAK],erN[RAK],erT[RAK]);c.quaternion.setFromRotationMatrix(_m4);c.position.copy(erC[RAK]).addScaledVector(erT[RAK],.02);c.scale.set(.25*1.06,.06,1);}
+    for(const f of raCS){for(let j=0;j<RAK;j++){const tend=j===3||j===6;const w=.25*(.85+.15*Math.sin(Math.PI*j/RAK));
+      _a.copy(erC[j]).addScaledVector(erX[j],f.u*w).addScaledVector(erN[j],f.v*.035);_b.copy(erC[j+1]).addScaledVector(erX[j+1],f.u*w).addScaledVector(erN[j+1],f.v*.035);RA.setMatrixAt(kr,segMatrix(_a,_b,tend?.026:.032));
+      if(tend)_col.setRGB(.78,.5,.44);else _col.setRGB(.66*f.c+.32*abd,.2*f.c+.08*abd,.16*f.c+.03*abd);RA.setColorAt(kr++,_col);}}}
+  RA.instanceMatrix.needsUpdate=true;RA.instanceColor.needsUpdate=true;
+  rectM.emissiveIntensity=abd*.8;taM.emissiveIntensity=abd*.9;taM.opacity=(.34+.3*abd)*(1-.75*(L0.xr||0));glutM.emissiveIntensity=gl*.9;}
+function levUpd(load){const on=L0.lev&&L0.levOn;LEV.visible=on;if(!on)return;
+  levPiv.position.copy(piv);levPiv.scale.setScalar(.085);levRing.position.copy(piv);levRing.lookAt(_a.copy(piv).add(V(0,0,1)));
+  _b.set(load.x,piv.y,load.z);orient(levBar,piv,_b,.03);orient(levDrop,load,_b,.012);
+  const wl=.25+L0.WL/420;_c.copy(load).add(V(0,-wl,0));orient(levW,load,_c,.034);levWh.position.copy(_c);levWh.scale.set(.09,.2,.09);levWh.quaternion.setFromUnitVectors(AY,V(0,-1,0));
+  F1.torso.localToWorld(_a.set(0,.08,-.17));const el=.12+clamp(L0.Fe/6000,0,1)*.5;F1.torso.localToWorld(_d.set(0,.08+el,-.17));orient(levE,_d,_a,.034);levEh.position.copy(_a);_t.subVectors(_d,_a).normalize();levEh.quaternion.setFromUnitVectors(AY,_t.negate());levEh.scale.set(.09,.2,.09);
+  // labels: d bij het eind van de balk (nooit boven op het draaipunt), het draaipunt eronder, de rugstrekkers achter de rug
+  _t.subVectors(_b,piv);const bl=_t.length();if(bl<.55)_t.setLength(.55);W.levMid=piv.clone().add(_t).add(V(0,.2,0));W.load=load.clone().add(V(0,-wl-.12,0));
+  W.eArrow=F1.torso.localToWorld(V(0,.25,-.45));W.pivot=piv.clone().add(V(-.35,-.24,0));}
+function placeRest(){bench.position.set(MX+.55,.48,FZ);bench.rotation.set(0,0,0);F2.root.position.x=MX+LB+1.1;}
+function capL0(){const st=S.state,C=L0.C;
+  if(st===1)K.capSet(K.stateText(),'De leerlingen staan klaar bij de bank. Het model laat de vijf lendenwervels zien, met de holling van de <b>lordose</b>. Klik op een punt, of zoom in met <b>+</b>.');
+  else if(st===2){
+    // automatisch: tekst bij de piek van de tilbeweging (de last hangt stil); met de schuiven: de huidige waarden
+    // vóór de eerste piek is er nog geen tilwaarde: dan een neutrale uitleg, zodat de tekst de balkjes niet tegenspreekt
+    if(L0.auto&&!L0.pk){K.capSoft(K.stateText(),'De leerlingen tillen de bank op en zetten hem weer neer. <b>Geel</b> is het draaipunt en de momentarm, <b>blauw</b> de last, <b>oranje</b> de rugstrekkers.',2.2);return;}
+    const pk=L0.auto&&L0.pk?L0.pk:{dL:L0.dL,C:L0.C,phi:L0.phi};const C2=pk.C,far=pk.dL>.4,bent=pk.phi>55*D2R,close=pk.dL<.32;const pre=L0.auto?'Bij het optillen: ':'';
+    K.capSoft(K.stateText(),pre+(C2<3400?(close?'de last is dicht bij het lichaam. Korte momentarm, dus weinig kracht van de rugstrekkers nodig.':'de drukkracht op de schijf blijft onder ongeveer 3.400 N. Kijk hoe hij oploopt als je de last verder weg houdt.'):C2<6400?(far?'<b>lange momentarm</b>. De last is ver van de onderrug. De rugstrekkers moeten veel harder trekken, en dat drukt de wervels op elkaar.':(bent?'diep voorover gebogen. Ook het gewicht van je eigen romp hangt nu ver voor het draaipunt.':'een zware last. Kijk hoe snel de drukkracht oploopt.')):'zeer hoge drukkracht. Haal de last dichter naar je toe, kom meer rechtop, of til hem met z’n tweeën.'),2.2);}
+  else{const g=S.grade;if(!S.tearFired)K.capSoft(K.stateText(),'<b>Versneld</b>: elke beweging staat voor honderden tilbewegingen, verspreid over maanden. Steeds ver voorover, met de last ver van het lichaam én draaiend.');
+    else K.capSoft(K.stateText(),['','<b>Graad 1 · uitpuiling</b>: binnenin is de vezelring ingescheurd, maar de buitenste lagen zijn heel. De kern duwt de ring tussen L4 en L5 bol. Vaak alleen rugpijn, of helemaal geen klachten.','<b>Graad 2 · hernia</b>: kernmateriaal is door de vezelring gedrukt en drukt op de zenuwwortel van L5. De wortel stuurt zelf signalen naar de hersenen, en die plaatsen de pijn in het been: <b>ischias</b>.','<b>Graad 3 · losgeraakt stukje</b>: een stukje kern ligt los in het wervelkanaal. Vaak heftige uitstraling, soms krachtverlies. Zulke stukjes ruimt het lichaam vaak juist goed op.'][g],.8);}}
+function hudL0(){const st=S.state;
+  if(st===1){K.bar(1,0,'0°');K.bar(2,0,'geen last');K.bar(3,.02,'≈ 0 N','');K.bar(4,L0.C/7000,'≈ '+nf(L0.C)+' N','ok','var(--ok)');const c=K.$('#calc0');if(c)c.innerHTML='Rechtop staan zonder last: de romp staat boven het draaipunt, dus bijna geen moment.<small>Drukkracht ≈ gewicht van het bovenlichaam plus wat spierspanning (modelwaarde).</small>';return;}
+  const phiD=Math.round(L0.phi/D2R),C=L0.C,cls=C<3400?'ok':C<6400?'':'bad',bg=C<3400?'var(--ok)':C<6400?'#e6a03a':'var(--bad)';
+  K.bar(1,phiD/90,phiD+'°');K.bar(2,L0.dL/.8,L0.WL?Math.round(L0.dL*100)+' cm':'geen last');
+  if(st===2){K.bar(3,L0.Fe/7000,'≈ '+nf(L0.Fe)+' N','con');K.bar(4,C/7000,'≈ '+nf(C)+' N',cls,bg);}
+  else{const g=S.grade;K.bar(3,C/7000,'≈ '+nf(C)+' N',cls,bg);K.bar(4,L0.dmg,L0.hurt?SEV[g]:Math.round(L0.dmg*100)+'%',L0.hurt&&g>=2?'bad':'',L0.dmg>.7&&(g>=2||!L0.hurt)?'var(--bad)':'#e6a03a');}
+  const c=K.$('#calc0');if(!c)return;
+  if(st===3&&L0.hurt){c.innerHTML=`In dit versnelde model duurt het een paar tellen. In het echt gaat het om duizenden zware herhalingen, over maanden of jaren.<small>In het lab scheurden varkensschijven pas na 22.000 tot 86.000 buigingen onder druk (Callaghan en McGill, 2001).</small>`;return;}
+  c.innerHTML=`M = <u>${Math.round(L0.WL)} N</u> × <u>${fmt(L0.dL,2)} m</u> + romp en armen ${Math.round(L0.Mb)} Nm = <b>${Math.round(L0.M)} Nm</b><br>rugstrekkers ≈ M ÷ 0,05 m ≈ <i>${nf(L0.Fe)} N</i>`+(st===3?' · versneld':'')+(st===3?'<small>De drukkracht op L4–L5 is bijna even groot als op L5–S1.</small>':'<small>Modelwaarden, ongeveer. NIOSH-richtwaarde voor de drukkracht op L5–S1: 3.400 N.</small>');}
+const SEV=['','uitgebold, buiten heel','doorgescheurd','doorgescheurd + los stukje'];
+
+/* ================================================================
+   NIVEAU 1 · een bewegingssegment: L4 op L5
+   ================================================================ */
+const s1=1.55;
+const L1root=new THREE.Group();L1root.rotation.y=Math.PI/2;L1root.scale.setScalar(s1);L1root.position.y=-(D+H+D/2)*s1;G1.add(L1root);
+const seg=chain(L1root,2);const V5=seg.V[0],V4=seg.V[1],J4=seg.J[1];
+const disc1=makeDisc(V5.g);
+// stukjes van de schijven erboven en eronder, met een snijvlak
+[[seg.base,0],[V4.g,H+D*.02]].forEach(a=>{const g=new THREE.CylinderGeometry(1.02,1.02,D*.55,40);const m=mesh(g,[annM,std(0xb9d6e2,{roughness:.4}),std(0xb9d6e2,{roughness:.4})],[0,a[1]+D*.27,0],0,[1,1,.74],a[0]);m.userData.noDim=true;});
+const hern1=noShadow(mesh(SPH,hernM,0,0,0,V5.g)),frag1=noShadow(mesh(SPH,hernM,0,0,0,V5.g));
+const crack1=noShadow(mesh(new THREE.BoxGeometry(.04,.22,1),crackM,0,0,0,V5.g));
+// banden
+const LIG=[];
+function lig(name,a,b,w,d,mat){const m=mesh(BAND,mat||ligM(),0,0,0,G1);const L={name,m,a:V(...a),b:V(...b),w,d,L0:0,e:0};LIG.push(L);return L;}
+// voorste lengteband: één brede, gebogen strook over de voorkant (lokaal: y langs de band, z de breedte, x de bolling naar voren)
+const ALLGEO=(()=>{const A=.6,c0=Math.cos(A);return sheetGeo((u,v)=>{const a=(u*2-1)*A;return V((Math.cos(a)-c0)/(1-c0),v,Math.sin(a)/Math.sin(A));},16,4);})();
+const ALL=[lig('voorste lengteband',[0,H-.1,.8*Math.cos(.6)],[0,.1,.8*Math.cos(.6)],.8*(1-Math.cos(.6))+.03,1.06*Math.sin(.6))];
+ALL[0].m.geometry=ALLGEO;ALL[0].m.material.side=THREE.DoubleSide;
+const PLL=[-.18,0,.18].map(t=>lig('achterste lengteband',[1.03*Math.sin(t+Math.PI),H-.12,.78*Math.cos(t+Math.PI)],[1.03*Math.sin(t+Math.PI),.12,.78*Math.cos(t+Math.PI)],.06,.06));
+const flavM=std(0xe6c35a,{roughness:.45});
+const FLV=[-1,1].map(s=>lig('gele band',[s*.3,.98,-1.62],[s*.3,.26,-1.62],.1,.26,flavM));
+const ISP=lig('band tussen de doornuitsteeksels',[0,.86,-2.35],[0,.18,-2.35],.55,.04);
+const SSP=lig('band over de doornuitsteeksels',[0,.6,-2.86],[0,.42,-2.86],.1,.13);
+const capM=std(0xeef2f0,{transparent:true,opacity:.32,roughness:.3,depthWrite:false,emissive:0xff6020,emissiveIntensity:0});
+const facCap=[-1,1].map(s=>noShadow(mesh(SPH,capM,[s*.53,1.45,-1.4],0,[.28,.42,.34],V5.g)));
+// zenuwen in het segment
+const nerve1=[];
+[V5.g,V4.g].forEach((g,i)=>{nerve1.push(noShadow(mesh(new THREE.CylinderGeometry(.43,.43,H+D+.2,20,1,true),duraM,[0,H*.5,-1.18],0,0,g)));
+  for(let k=0;k<9;k++){const a=k/9*TAU,r=k%3?.24:.1;nerve1.push(mesh(new THREE.CylinderGeometry(.028,.028,H+D+.2,6),nerveM,[r*Math.cos(a),H*.5,-1.18+r*Math.sin(a)],0,0,g));}});
+[-1,1].forEach(s=>{nerve1.push(tube([V(s*.32,.1,-1.05),V(s*.64,-.18,-.8),V(s*1.2,-.55,-.35),V(s*1.9,-1.25,.15),V(s*2.4,-2.1,.45)],.12,nerveM,V4.g,40,8));nerve1.push(mesh(SPH,nerveM,[s*.7,-.2,-.78],0,[.2,.18,.26],V4.g));});
+const rootHot1=std(0xe9c84a,{roughness:.4,emissive:0xff3010,emissiveIntensity:0});
+const trav=[-1,1].map(s=>tube([V(s*.28,H+D*.6,-1.02),V(s*.42,H*.55,-.98),V(s*.58,.02,-.84),V(s*1.15,-.5,-.35),V(s*1.8,-1.3,.1),V(s*2.2,-2.2,.4)],.13,s<0?rootHot1:nerveM,V5.g,50,8));nerve1.push(...trav);
+const IMP1=[0,1,2,3,4,5].map(()=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.1,10,8),add(0xffb060,0));V5.g.add(m);return m;});
+const impPath1=new THREE.CatmullRomCurve3([0,1,2,3,4].map(()=>V()));
+// bloedvaten voor de wervels: aorta met splitsing ter hoogte van L4, onderste holle ader, lendenslagaders rond de wervellichamen
+const artM=std(0xc0392b,{roughness:.32,emissive:0x3a0505,emissiveIntensity:.5}),venM=std(0x3b5bab,{roughness:.35,emissive:0x060c2a,emissiveIntensity:.5});
+const vess1=[];const yTop=D+H+D+H+.9,yBif=D+H+D+H*.25;
+vess1.push(tube([V(.62,yTop,1.42),V(.62,yBif+.9,1.42),V(.62,yBif+.2,1.4),V(.62,yBif,1.38)],.24,artM,seg.base,40,16));
+[-1,1].forEach(s=>vess1.push(tube([V(.62,yBif+.05,1.38),V(.62+s*.45,yBif-.7,1.42),V(.62+s*.85,yBif-1.9,1.36),V(.62+s*1.1,-.4,1.2)],.16,artM,seg.base,40,12)));
+[V5,V4].forEach(vt=>[-1,1].forEach(s=>{const pts=[];for(let k=0;k<=9;k++){const th=s*lerp(.42,2.25,k/9);pts.push(V(1.0*Math.sin(th),H*.48+.04*Math.sin(k),.8*Math.cos(th)+.08));}pts.push(V(s*.82,H*.4,-1.0));vess1.push(tube(pts,.06,artM,vt.g,40,6));
+  const pv=pts.map(p=>p.clone().add(V(0,-.17,0)).multiplyScalar(1.02));vess1.push(tube(pv,.055,venM,vt.g,40,6));}));
+// de grote lendenspier (m. psoas major) aan de verre kant, langs de wervellichamen naar beneden
+const psoM=std(0xffffff,{map:fibTex(.02,'#b4483b'),roughness:.5});
+// bovenaan afgesneden (de spier loopt door tot de borstwervels), onderaan taps naar de pees
+const psoG=new THREE.LatheGeometry([new THREE.Vector2(.001,0),...[...Array(15)].map((_,i)=>{const t=i/14;return new THREE.Vector2(Math.max(.02,.62*Math.pow(Math.sin(Math.PI*clamp(.32+t*.7,0,1)),.7)),t);})],24);
+const pso=mesh(psoG,psoM,0,0,0,seg.base);orient(pso,V(1.22,2*D+2*H+.12,-.15),V(1.9,-1.6,.55),1,1.1);
+const L1={auto:true,ang:8,a:0,rot:0,comp:0,crack:0,hern:0,heat:0,frag:0,sndClick:0,lastA:0,impT:0};
+
+/* ================================================================
+   NIVEAU 2 · in de tussenwervelschijf: een opengesneden stuk
+   ================================================================ */
+const A1=1.4,A2=TAU-.2,NLAM=9,LH=1.6;
+function defL2(r,th,y){const prof=Math.cos(Math.PI/2*Math.min(1,Math.abs(y)/1.8));let r2=r;if(r>2.45)r2=r+(.04+.42*Math.pow((r-2.45)/3.5,1.2))*prof;else r2=r*(1+.05*prof);return [r2,y*(1-.11)];}
+const defId=(r,th,y)=>[r,y];
+function sectorGeo(o){const pos=[],mor=[],uv=[],idx=[];const def=o.def||defId;
+  function grid(nu,nv,f){const b=pos.length/3;for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const q=f(i/nu,j/nv);const r=q[0],th=q[1],y=q[2];pos.push(r*Math.sin(th),y,r*Math.cos(th));const d=def(r,th,y);mor.push(d[0]*Math.sin(th),d[1],d[0]*Math.cos(th));uv.push(q[3],q[4]);}
+    for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=b+j*(nu+1)+i,c=a+nu+1;idx.push(a,a+1,c,a+1,c+1,c);}}
+  const {ri,ro,y0,y1,a0,a1}=o,na=o.na||40,nr=o.nr||3,ny=o.ny||6,fa=o.faces||'oitbse';
+  if(fa.includes('o'))grid(na,ny,(u,v)=>[ro,lerp(a0,a1,u),lerp(y0,y1,v),u*(a1-a0)*ro/3,v]);
+  if(fa.includes('i')&&ri>0)grid(na,ny,(u,v)=>[ri,lerp(a0,a1,u),lerp(y0,y1,v),u*(a1-a0)*ri/3,v]);
+  if(fa.includes('t'))grid(na,nr,(u,v)=>[lerp(ri,ro,v),lerp(a0,a1,u),y1,u*(a1-a0)*ro/3,v]);
+  if(fa.includes('b'))grid(na,nr,(u,v)=>[lerp(ri,ro,v),lerp(a0,a1,u),y0,u*(a1-a0)*ro/3,v]);
+  if(fa.includes('s'))grid(nr,ny,(u,v)=>[lerp(ri,ro,u),a0,lerp(y0,y1,v),u*(ro-ri)/3,v]);
+  if(fa.includes('e'))grid(nr,ny,(u,v)=>[lerp(ri,ro,u),a1,lerp(y0,y1,v),u*(ro-ri)/3,v]);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();
+  if(o.def)g.morphAttributes.position=[new THREE.Float32BufferAttribute(mor,3)];return g;}
+const lamTex=[1,-1].map(sg=>canvasTex(128,128,(x,w,h)=>{x.fillStyle=sg>0?'#efe5cf':'#cfdbe2';x.fillRect(0,0,w,h);x.lineWidth=1.5;for(let i=-12;i<24;i++){x.strokeStyle=sg>0?'rgba(150,125,90,.5)':'rgba(80,105,130,.45)';x.beginPath();x.moveTo(i*9,sg>0?h:0);x.lineTo(i*9+h*1.73,sg>0?0:h);x.stroke();}},[1,1]));
+const lamM=lamTex.map(t=>std(0xffffff,{map:t,roughness:.5,side:THREE.DoubleSide}));
+const LAM=[];
+for(let j=0;j<NLAM;j++){const ri=2.5+j*.39,ro=ri+.33,ye=ro>5.3?1.78:LH,ae=A2-j*.2,sg=j%2?1:-1;
+  const m=mesh(sectorGeo({ri,ro,y0:-ye,y1:ye,a0:A1,a1:ae,na:56,nr:2,ny:8,def:defL2}),lamM[j%2],0,0,0,G2);noShadow(m);LAM.push({ri,ro,ye,ae,sg,m});}
+const gelM=std(0x6cc0e8,{transparent:true,opacity:.5,roughness:.12,emissive:0x1a6a90,emissiveIntensity:.55,depthWrite:false,side:THREE.DoubleSide});
+const NUC2=noShadow(mesh(sectorGeo({ri:0,ro:2.45,y0:-LH,y1:LH,a0:A1,a1:A2,na:48,nr:4,ny:8,faces:'otbse',def:defL2}),gelM,0,0,0,G2));
+const epM=std(0xa9d8ea,{transparent:true,opacity:.55,roughness:.2,emissive:0x0a3040,emissiveIntensity:.4,side:THREE.DoubleSide,depthWrite:false});
+const trabTex=canvasTex(256,256,(x,w,h)=>{x.fillStyle='#e9dcbf';x.fillRect(0,0,w,h);for(let i=0;i<170;i++){const cx=R()*w,cy=R()*h,rr=4+R()*11;x.fillStyle=`rgba(${150+R()*40|0},${70+R()*30|0},${55+R()*20|0},.75)`;x.beginPath();x.ellipse(cx,cy,rr,rr*(.5+R()*.6),R()*3,0,TAU);x.fill();x.strokeStyle='rgba(255,248,230,.6)';x.lineWidth=1.5;x.stroke();}},[2,2]);
+const trabM=std(0xffffff,{map:trabTex,roughness:.6,side:THREE.DoubleSide});
+const ghostM=std(0xffffff,{map:trabTex,roughness:.6,transparent:true,opacity:.3,depthWrite:false,side:THREE.DoubleSide});
+const upG=new THREE.Group(),loG=new THREE.Group();G2.add(upG,loG);
+const EPu=noShadow(mesh(sectorGeo({ri:0,ro:5.3,y0:LH,y1:1.8,a0:A1,a1:A2,na:48,nr:3,ny:1}),epM,0,0,0,upG));
+const EPl=noShadow(mesh(sectorGeo({ri:0,ro:5.3,y0:-1.8,y1:-LH,a0:A1,a1:A2,na:48,nr:3,ny:1}),epM,0,0,0,loG));
+const BNl=noShadow(mesh(sectorGeo({ri:0,ro:6.15,y0:-3.5,y1:-1.8,a0:A1,a1:A2,na:56,nr:4,ny:3,faces:'otbse'}),trabM,0,0,0,loG));
+const BNu=noShadow(mesh(sectorGeo({ri:0,ro:6.15,y0:1.8,y1:3.1,a0:A1,a1:A2,na:56,nr:4,ny:3,faces:'otbse'}),ghostM,0,0,0,upG));
+const capiM=std(0xc0392b,{roughness:.35,emissive:0x400808,emissiveIntensity:.4});
+const capi=[];[[1.2,A1+.15],[2.4,A1+.25],[3.6,A1+.12],[4.6,A1+.3],[1.6,A2-.25],[3.0,A2-.15],[4.2,A2-.35]].forEach(c=>[-1,1].forEach(sy=>{const g=sy<0?loG:upG,y=sy*2.25;const pts=[0,1,2,3,4].map(i=>{const th=c[1]+(i-2)*.07,yy=y-sy*(.35*Math.sin(Math.PI*i/4));return V(c[0]*Math.sin(th),yy,c[0]*Math.cos(th));});capi.push(tube(pts,.07,capiM,g,20,6));}));
+// collageenvezels op de buitenkant van elke lamel: zichtbaar waar de lamel uitsteekt (de trap)
+const FL=[];
+LAM.forEach((L,j)=>{const r=L.ro+.015,run=1/(r*Math.tan(30*D2R));const strips=[[j<NLAM-1?LAM[j+1].ae:L.ae-1.3,L.ae]];if(j===NLAM-1)strips.push([A1,A1+1.1]);
+  strips.forEach(([A,B])=>{const span=2*L.ye*run;const t0=L.sg>0?A-span:A,t1=L.sg>0?B:B+span;for(let th0=t0;th0<=t1;th0+=.42/r){
+    const yAt=th=>(th-th0)/(L.sg*run)-L.ye;let ya=yAt(A),yb=yAt(B);const lo=Math.max(-L.ye,Math.min(ya,yb)),hi=Math.min(L.ye,Math.max(ya,yb));if(hi-lo<.08)continue;FL.push({r,th0,sg:L.sg,run,ye:L.ye,lo,hi,j,front:j===NLAM-1&&A===A1});}});});
+const FIBM=std(0xffffff,{roughness:.4});
+const FIB2=inst(UCYL,FIBM,FL.length*3);noShadow(FIB2);G2.add(FIB2);
+FL.forEach((f,i)=>{for(let s=0;s<3;s++){if(f.sg>0)_col.setRGB(1,.93,.78);else _col.setRGB(.72,.86,1);FIB2.setColorAt(i*3+s,_col);}});FIB2.instanceColor.needsUpdate=true;
+// scheurtjes: een donkerrode spleet per lamel op het snijvlak, van binnen naar buiten
+// een smalle, gekartelde donkere spleet die plat in het snijvlak ligt, met kern-blauw dat erin kruipt
+const slitM=new THREE.MeshStandardMaterial({color:0x1a0605,roughness:.9,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+const slitInM=new THREE.MeshStandardMaterial({color:0x2f8fc4,emissive:0x1a6a90,emissiveIntensity:.9,roughness:.3,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-4,polygonOffsetUnits:-4});
+function slitGeo(w,h,seed){const r=K.rand(seed),sh=new THREE.Shape(),n=7,top=[],bot=[];for(let i=0;i<=n;i++){const x=-w/2+w*i/n,e=Math.sin(Math.PI*i/n);top.push([x,(h/2)*e*(.55+.45*r())+(i%2?.02:-.01)]);bot.push([x,-(h/2)*e*(.55+.45*r())+(i%2?-.01:.02)]);}
+  sh.moveTo(top[0][0],0);top.forEach(p=>sh.lineTo(p[0],p[1]));for(let i=n;i>=0;i--)sh.lineTo(bot[i][0],bot[i][1]);sh.closePath();return new THREE.ShapeGeometry(sh);}
+const _rad=V(Math.sin(A1),0,Math.cos(A1)),_nrm=V(-Math.cos(A1),0,Math.sin(A1)),slitQ=new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(_rad,AY,_nrm));
+const SLIT=LAM.map((L,j)=>{const rm=(L.ri+L.ro)/2;const m=noShadow(mesh(slitGeo(L.ro-L.ri+.1,.34,30+j),slitM,0,0,0,G2));m.quaternion.copy(slitQ).multiply(new THREE.Quaternion().setFromAxisAngle(AZ,.22*Math.sin(j*1.7)));m.userData.rm=rm;
+  const k=noShadow(mesh(slitGeo((L.ro-L.ri)*.9,.14,60+j),slitInM,[0,0,.003],0,0,m));m.userData.kern=k;return m;});
+// water, proteoglycanen en voedingsstoffen in de kern
+const NW=220;const waterM=std(0xbfefff,{roughness:.2,emissive:0x3ab8f0,emissiveIntensity:.8});
+const WAT=noShadow(inst(new THREE.SphereGeometry(.06,8,6),waterM,NW));G2.add(WAT);
+const WD=[];for(let i=0;i<NW;i++){const r=Math.sqrt(R())*2.25,th=R()<.5?A1+.04+R()*.6:A2-.04-R()*.6,y=(R()*2-1)*1.35,sy=R()<.5?-1:1;WD.push({r,th,y,oy:sy*(2.05+R()*1.2),or:r*(.6+R()*.5),p:0,ph:R()*TAU,k:R()});}
+const PGN=16,PGB=10;const pgM=std(0xb58ad8,{roughness:.4,emissive:0x3a1a5a,emissiveIntensity:.4});
+const PGc=noShadow(inst(UCYL,pgM,PGN)),PGb=noShadow(inst(UCYL,std(0xd6b4f0,{roughness:.4}),PGN*PGB));G2.add(PGc,PGb);
+const PGD=[];for(let i=0;i<PGN;i++){const r=.4+Math.sqrt(R())*1.75,th=R()<.5?A1+.1+R()*.45:A2-.1-R()*.45,y=(R()*2-1)*1.1;const dir=V(R()-.5,R()-.5,R()-.5).normalize();PGD.push({r,th,y,dir,ph:R()*TAU});}
+const NUT=[...Array(14)].map((_,i)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(.07,8,6),add(0xd8ff6a,.9));G2.add(m);const c=i%2?1:-1;return {m,c,th:i<7?A1+.08+R()*.5:A2-.08-R()*.5,r:.8+R()*3.2,ph:R()};});
+const kernM=std(0x1f78c0,{roughness:.25,emissive:0x0a3a70,emissiveIntensity:.9});
+const KERN=[...Array(34)].map(()=>{const m=noShadow(new THREE.Mesh(new THREE.SphereGeometry(.085,10,8),kernM));G2.add(m);return {m,ph:R(),y:(R()*2-1)*.1,o:R()*.05};});
+// druppelvorm langs y van 0 (nek in de vezelring) tot 1 (bolle kop buiten de schijf)
+const DROPGEO=new THREE.LatheGeometry([[.001,0],[.32,0],[.34,.2],[.48,.38],[.82,.56],[1,.72],[.92,.88],[.6,.97],[.001,1]].map(p=>new THREE.Vector2(p[0],p[1])),28);
+const EXT2=noShadow(mesh(DROPGEO,std(0x1f78c0,{roughness:.25,metalness:0,emissive:0x0a3a70,emissiveIntensity:.9}),0,0,0,G2));EXT2.visible=false;
+const ARW=[-1,1].map(sy=>{const g=new THREE.Group();G2.add(g);const m=ovm(0xffd36a,.85);mesh(BAND,m,[0,0,0],0,[.07,.9,.07],g);const h=mesh(new THREE.ConeGeometry(.22,.45,16),m,[0,-.2,0],[Math.PI,0,0],0,g);g.traverse(o=>{if(o.isMesh){o.renderOrder=20;noShadow(o);}});g.position.set(-1.4,sy*4.6,2.5);g.rotation.x=sy>0?0:Math.PI;return g;});
+
+const L2={c:.3,hyd:0,step:-1,cracked:0,ext:0,leak:0,sp:1,t:0,sndC:0,slowK:1};
+function wpos(r,th,y,c,out){const q=defL2(r,th,y);const rr=lerp(r,q[0],c),yy=lerp(y,q[1],c);return out.set(rr*Math.sin(th),yy,rr*Math.cos(th));}
+
+/* ---------- niveau 2 bijwerken ---------- */
+function updL2(c,outFrac,dt){const sh=.11*1.78*c;upG.position.y=-sh;loG.position.y=sh;
+  LAM.forEach(L=>{L.m.morphTargetInfluences[0]=c;});NUC2.morphTargetInfluences[0]=c;
+  let k=0;const crackR=2.5+L2.cracked*.39;
+  FL.forEach(f=>{for(let s=0;s<3;s++){const y0=lerp(f.lo,f.hi,s/3),y1=lerp(f.lo,f.hi,(s+1)/3);const th0=f.th0+f.sg*(y0+f.ye)*f.run,th1=f.th0+f.sg*(y1+f.ye)*f.run;
+      const torn=f.front&&L2.cracked>=NLAM&&Math.abs((y0+y1)/2)<.25&&Math.min(th0,th1)<A1+.35;
+      if(torn){FIB2.setMatrixAt(k++,ZERO);continue;}
+      wpos(f.r,th0,y0,c,_a);wpos(f.r,th1,y1,c,_b);FIB2.setMatrixAt(k++,segMatrix(_a,_b,.04));}});
+  FIB2.instanceMatrix.needsUpdate=true;FIBM.emissive.setRGB(.3*c,.14*c,.03*c);
+  // water: een deel wordt door de eindplaten de wervel in geperst
+  WD.forEach((w,i)=>{const tgt=w.k<outFrac?1:0;w.p+=clamp(tgt-w.p,-dt*.9,dt*.9);const e=ease(w.p);const j=.05;
+    const r=lerp(w.r,w.or,e),y=lerp(w.y,w.oy,e);wpos(r,lerp(w.th,w.th<Math.PI?A1-.035:A2+.035,smooth(e*2.5)),y,c*(1-e),_a);_a.x+=Math.sin(S.clock*2.1+w.ph)*j;_a.y+=Math.cos(S.clock*1.7+w.ph)*j;if(e>.5)_a.y+=w.oy>0?-sh:sh;
+    WAT.setMatrixAt(i,placeMatrix(_a,null,1));});WAT.instanceMatrix.needsUpdate=true;
+  let b=0;PGD.forEach((p,i)=>{wpos(p.r,p.th,p.y,c,_a);_d.copy(p.dir).applyAxisAngle(AY,Math.sin(S.clock*.5+p.ph)*.2);_b.copy(_a).addScaledVector(_d,-.45);_c.copy(_a).addScaledVector(_d,.45);PGc.setMatrixAt(i,segMatrix(_b,_c,.035));
+    _t.set(_d.y,-_d.x,0);if(_t.lengthSq()<.01)_t.set(0,_d.z,-_d.y);_t.normalize();_n.crossVectors(_d,_t);
+    for(let q=0;q<PGB;q++){const u=(q+.5)/PGB;_e.lerpVectors(_b,_c,u);const a=q*1.3;_x.copy(_t).multiplyScalar(Math.cos(a)).addScaledVector(_n,Math.sin(a));_x.multiplyScalar(.22);_x.add(_e);PGb.setMatrixAt(b++,segMatrix(_e,_x,.016));}});
+  PGc.instanceMatrix.needsUpdate=true;PGb.instanceMatrix.needsUpdate=true;
+  W.lam=V(5.95*Math.sin(A2-1.45),.6,5.95*Math.cos(A2-1.45));W.nuc=V(1.2*Math.sin(A2-.02),.4,1.2*Math.cos(A2-.02));W.ep=V(3.4*Math.sin(A1+.2),1.7-sh,3.4*Math.cos(A1+.2));
+  W.pg=(wpos(PGD[0].r,PGD[0].th,PGD[0].y,c,V()));W.wat=(wpos(WD[0].r,WD[0].th,WD[0].y,c,V()));W.cutF=V(4.2*Math.sin(A1),-.9,4.2*Math.cos(A1));W.bone=V(3*Math.sin(A1+.5),-2.7+sh,3*Math.cos(A1+.5));}
+
+/* ================================================================
+   handlers per niveau
+   ================================================================ */
+const H0={
+ step(dt){const st=S.state,T=S.stT;let lam=0,phi=0,rho=0,tw=0,load=null,WL=0,side=0,act=0;
+  F2.root.visible=bench.visible=st!==3;box.visible=st===3;
+  if(st===1){F1.pose({lean:.02*Math.sin(S.clock*.9)});F2.pose({lean:.02*Math.sin(S.clock*.9+1)});placeRest();measure();mech(0,null,0);L0.lev=false;L0.phi=0;}
+  else if(st===2){
+    if(L0.auto){L0.cyc=(L0.cyc+dt/3.8)%1;const u=L0.cyc;lam=u<.1?0:u<.42?ease((u-.1)/.32):u<.52?1:u<.86?1-ease((u-.52)/.34):0;}else lam=1;
+    const pm=L0.phiMax*D2R,rm=L0.reach*52*D2R;phi=lerp(5*D2R,pm,lam);rho=lerp(rm*.55,rm,lam);
+    const t=solveT(phi,rho,lerp(yHand(0,phi,rho),YB,lam));const p=liftPose(t,phi,rho,0);F1.pose(p);F2.pose(p);measure();
+    F2.root.position.x=ldp.x+LB+(ldp.x-F1.root.position.x);bench.position.set(ldp.x,ldp.y-.05,FZ);
+    WL=L0.kg*G;loadP.copy(ldp);load=loadP;mech(phi,load,WL);L0.lev=true;
+    if(L0.lastLam>=.999&&lam<.999)L0.sndLift=true;L0.lastLam=lam;
+    // de piek van de tilbeweging (de last hangt stil): het bijschrift volgt in de automatische stand deze waarden
+    if(lam>=.999){L0.pk={dL:L0.dL,C:L0.C,phi};}
+    act=clamp(L0.Fe/4200,0,1);}
+  else{
+    if(!L0.hurt){const P=2.3,u=(T/P)%1;
+      if(u<.33){lam=ease(u/.33);tw=0;}else if(u<.58){const q=ease((u-.33)/.25);lam=lerp(1,.4,q);tw=lerp(0,.8,q);}else if(u<.72){lam=.4;tw=.8;}else{const q=ease((u-.72)/.28);lam=lerp(.4,0,q);tw=lerp(.8,0,q);}
+      phi=lerp(5*D2R,80*D2R,lam);rho=lerp(.5,.85,lam);const t=solveT(phi,rho,lerp(yHand(0,phi,rho),YB-.04,lam));const p=liftPose(t,phi,rho,tw);F1.pose(p);measure();
+      fwd.subVectors(ldp,piv);fwd.y=0;fwd.normalize();loadP.copy(ldp).addScaledVector(fwd,.36);loadP.y-=.06;
+      box.position.copy(loadP);box.rotation.set(0,Math.atan2(fwd.x,fwd.z),0);
+      WL=15*G;load=loadP;mech(phi,load,WL);L0.lev=true;
+      const rep=Math.floor(T/P*12);if(rep!==L0.reps)L0.sndRep=rep;L0.reps=rep;
+      L0.dmg=Math.min(1,L0.dmg+dt*(.05+.11*Math.pow(L0.C/4000,2)*(.4+1.4*Math.abs(tw))));
+      if(!S.tearFired&&((L0.dmg>=1&&u>.36&&u<.62)||T>14)){S.tearFired=true;L0.hurt=true;L0.hurtT=T;L0.last=p;L0.boxFrom.copy(box.position);L0.boxQ=box.rotation.y;K.flash({big:S.grade>=2});
+        // buiten de film vliegt de camera naar de schijf L4–L5, van boven-achter
+        if(!K.FILM.on&&window.__atlas&&window.__atlas.flyTo){const c=CAM.hern;window.__atlas.flyTo(c[0],c[1],1.8);}}
+      act=clamp(L0.Fe/4200,0,1);L0.tw=tw;}
+    else{const u2=T-L0.hurtT;const k=smooth(u2/1.2);const p=K.mixPose(L0.last,HURT,k);F1.pose(p);measure();phi=p.lean;tw=p.twist;side=p.side*k;
+      const dr=clamp(u2/.5,0,1);box.position.set(L0.boxFrom.x+fwd.x*.2*dr,lerp(L0.boxFrom.y,.24,dr*dr),L0.boxFrom.z+fwd.z*.2*dr);box.rotation.set(.12*dr,L0.boxQ,.08*dr);
+      mech(phi,null,0);L0.lev=false;act=.25;
+      const g=S.grade;L0.hern=smooth((u2-.05)/.8);L0.heat=L0.hern*[0,.15,1,1.15][g];}}
+  // na de scheur worden bekken, bilspieren en rugstrekkers doorzichtig, zodat je de schijf L4–L5 ziet
+  const xr=st===3&&L0.hurt?smooth((S.stT-L0.hurtT-.3)/1.2):0;
+  if(xr!==L0.xr){L0.xr=xr;const a=1-.86*xr;erShMat.opacity=.14*(1-xr);
+    // veel vezels over elkaar stapelen hun doorzichtigheid: laat de rugstrekkers daarom helemaal verdwijnen
+    erMat.visible=mfMat.visible=cutMusM.visible=xr<.55;[pelvM,pelvB,glutM,erMat,mfMat,cutMusM].forEach(m=>fadeMat(m,a));}
+  // een doorzichtige focuskopie volgt de zichtbaarheid van het eigen materiaal
+  [[ER,erMat],[MF,mfMat],[erCut[0],cutMusM],[erCut[1],cutMusM]].forEach(([o,m])=>{if(o.material!==m)o.material.visible=m.visible;});
+  L0.phi=phi;
+  // het model doet synchroon mee: de lendenwervels nemen ongeveer 40% van de rompbuiging
+  const flex=phi*.42+(L0.hurt?.05:0);updSpine(flex,tw*.6,clamp(L0.C/7000,0,1),side);
+  const abd=st===1?.08:.15+.4*act,gl=st===1?0:clamp(lam*1.3,0,1)*act;updMuscles(act,abd,gl);
+  backM.emissiveIntensity=act*1.6+(L0.hurt?.8+.5*Math.sin(S.clock*6):0);
+  // hernia tussen L4 en L5 (schijf 1)
+  const d1=discs0[1],g=S.grade;const hs=st===3&&L0.hurt?L0.hern:0;
+  d1.hern=hs*[0,.25,.45,.45][g]+(st===3&&!L0.hurt?L0.dmg*.12:0);
+  hern0.visible=hs>.01&&g>=2;if(hern0.visible){const sz=.56*hs;hern0.position.copy(d1.rim).addScaledVector(d1.dir,.46*hs);hern0.quaternion.setFromUnitVectors(AX,d1.dir);hern0.scale.set(sz*1.35,sz*.62,sz*.85);}
+  // de gloed wijst de plek aan; bij een echte hernia (graad 2 en 3) is de uitpuiling zelf groot genoeg en blijft alleen een zwakke rand
+  halo0.visible=hs>.01;if(halo0.visible){halo0.position.copy(d1.rim).addScaledVector(d1.dir,.36);halo0.scale.setScalar((g>=2?.62:.4)+.06*Math.sin(S.clock*5));haloM.opacity=(g>=2?.16:.45)*hs*(.65+.35*Math.sin(S.clock*5));}
+  frag0.visible=hs>.3&&g===3;if(frag0.visible){const f=smooth((S.stT-L0.hurtT-.8)/1.4);frag0.position.copy(d1.rim).addScaledVector(d1.dir,.75).add(_a.set(-.05,-.55*f,-.08*f));frag0.scale.setScalar(.24);}
+  crack0.visible=st===3&&(L0.dmg>.25||L0.hurt);if(crack0.visible){crack0.position.copy(d1.rim).addScaledVector(d1.dir,-.4+.4*L0.dmg);crack0.rotation.set(0,Math.atan2(d1.dir.x,d1.dir.z),0);crack0.scale.set(1,1,.2+.6*L0.dmg);}
+  // ischias: de geprikkelde wortel stuurt zelf impulsen omhoog naar ruggenmerg en hersenen; die plaatsen de pijn in het been
+  const heat=st===3?L0.heat:0;rootHotM.emissiveIntensity=heat*1.8;rootHotM.color.setRGB(.95,.78-.55*clamp(heat,0,1),.29-.25*clamp(heat,0,1));sciM.emissiveIntensity=heat*.6;
+  if(heat>.2){const rc=root0.userData.curve,ip=impPath.points,g0=lum.V[0].g;rc.getPointAt(.42,ip[0]);rc.getPointAt(.22,ip[1]);rc.getPointAt(.03,ip[2]);[ip[0],ip[1],ip[2]].forEach(p=>g0.localToWorld(p));
+    for(let i=1;i<5;i++)lum.V[i].g.localToWorld(ip[i+2].set(-.12,H*.5,-1.16));lum.V[4].g.localToWorld(ip[7].set(-.05,H+D+.35,-1.18));impPath.updateArcLengths();}
+  L0.impT+=dt*(.5+.5*heat);IMP0.forEach((m,i)=>{const u=(L0.impT*.5+i/IMP0.length)%1;m.visible=heat>.2;if(!m.visible)return;impPath.getPointAt(u,m.position);m.material.opacity=clamp(heat,0,1)*(1-u*.6);m.scale.setScalar(1+.7*Math.sin(u*Math.PI));if(u<.02)L0.sndImp=true;});
+  sciFM.emissiveIntensity=heat>.2?heat*(.7+.5*Math.sin(S.clock*2.5)):0;
+  levUpd(load||ldp);
+  // ankerpunten
+  lum.V[2].g.localToWorld(_a.set(0,.6,.9));W.l3=_a.clone();W.erect=W.erW.clone().add(V(0,0,.28));lum.V[1].g.localToWorld(_a.set(-.3,.55,-2.35));W.multi=_a.clone();PV.localToWorld(_a.set(-.69,-.3,-.45));W.si=_a.clone();
+  lum.V[2].g.localToWorld(_a.set(-1.3,.6,5.4));W.rectus=_a.clone();PV.localToWorld(_a.set(-1.1,-.9,-1.35));W.glut=_a.clone();lum.base.localToWorld(_a.set(-.4,-2.3,.75));W.sacrum=_a.clone();
+  W.fig=piv.clone().add(V(0,.55,.3));W.disc=lum.V[0].g.localToWorld(d1.rim.clone().addScaledVector(d1.dir,1.3)).add(_a.set(0,.42,0));W.sciTag=F1.lR.kn.localToWorld(V(0,-.05,-.12));W.impTag=IMP0[0].position.clone();impPath.getPointAt(.85,_a);W.impTop=_a.clone();
+  capL0();hudL0();},
+ reset(n){L0.cyc=0;L0.lam=0;L0.pk=null;L0.dmg=0;L0.reps=0;L0.hern=0;L0.heat=0;L0.hurt=false;L0.lastLam=1;F1.pose({});F2.pose({});box.rotation.set(0,0,0);},
+ hud(){const st=S.state;return K.bars(st===3?['Rompbuiging','Afstand last','Drukkracht L5–S1','Schade L4–L5']:['Rompbuiging','Afstand last','Rugstrekkers','Drukkracht L5–S1'])+'<div class="calc" id="calc0"></div>';},
+ ctl(){if(S.state!==2)return '';return `<button id="bAuto" class="${L0.auto?'on':''}" title="Automatisch tillen en neerzetten">Automatisch</button><label>Buiging</label><input type="range" id="sPhi" min="15" max="85" step="1" value="${L0.phiMax}" aria-label="Rompbuiging"><span class="val" id="vPhi">${L0.phiMax}°</span><label>Afstand</label><input type="range" id="sRho" min="0" max="1" step=".02" value="${L0.reach}" aria-label="Afstand van de last tot het lichaam"><label>Last</label>${[10,15,25].map(k=>`<button data-kg="${k}" class="${L0.kg===k?'on':''}">${k}${k===25?' kg':''}</button>`).join('')}`;},
+ bind(){const ba=K.$('#bAuto');if(!ba)return;ba.addEventListener('click',()=>{L0.auto=!L0.auto;ba.classList.toggle('on',L0.auto);});
+  const off=()=>{L0.auto=false;ba.classList.remove('on');};
+  K.$('#sPhi').addEventListener('input',e=>{L0.phiMax=+e.target.value;K.$('#vPhi').textContent=L0.phiMax+'°';off();});
+  K.$('#sRho').addEventListener('input',e=>{L0.reach=+e.target.value;off();});
+  K.$$('#ctl [data-kg]').forEach(b=>b.addEventListener('click',()=>{L0.kg=+b.dataset.kg;K.$$('#ctl [data-kg]').forEach(x=>x.classList.toggle('on',x===b));}));},
+ stepOnce(){if(S.state!==2)return;L0.auto=false;L0.phiMax=Math.min(85,L0.phiMax+10);const b=K.$('#sPhi');if(b){b.value=L0.phiMax;K.$('#vPhi').textContent=L0.phiMax+'°';K.$('#bAuto').classList.remove('on');}},
+ grades:true,
+ sound(api){if(L0.sndLift){L0.sndLift=false;api.thump(80,.2,.3);api.noise(.12,'lowpass',500,1,.08,.01);}
+  if(L0.sndRep>=0){if(L0.sndRep%3===0)api.click(.8);L0.sndRep=-1;}
+  if(L0.sndImp){L0.sndImp=false;api.tone(880,.05,.025,'square');}}
+};
+const H1={
+ step(dt){const st=S.state,T=S.stT;let a=0,rot=0,comp=.2;
+  if(st===1){a=.6*Math.sin(S.clock*.6);L1.crack=0;L1.hern=0;L1.heat=0;}
+  else if(st===2){if(L1.auto){const v=Math.sin(S.clock*.95);a=v>0?11*v:5*v;}else a=L1.ang;comp=.25+.25*Math.abs(a)/12;L1.crack=0;L1.hern=0;L1.heat=0;}
+  else{const fire=3.6;if(T<fire){const w=.5-.5*Math.cos(T*5.2);a=4+8*w;rot=.06*w;comp=.4+.5*w;L1.crack=smooth(T/fire);}
+    else{if(!S.tearFired){S.tearFired=true;K.flash({big:S.grade>=2});}const u=T-fire;a=lerp(12,4,smooth(u/1.2));rot=lerp(.06,0,smooth(u/1.2));comp=.35;L1.crack=1;const g=S.grade;L1.hern=smooth(u/.7)*[0,.45,1,1][g];L1.heat=smooth((u-.2)/1)*[0,.12,1,1.2][g];L1.frag=g===3?smooth((u-.9)/1.6):0;}}
+  L1.a=a;J4.rotation.set(a*D2R,rot,0);J4.position.y=H+D/2-comp*.05;J4.updateMatrix();V4.g.updateMatrix();Mrel.multiplyMatrices(J4.matrix,V4.g.matrix);
+  disc1.hern=L1.hern*.5+L1.crack*.06;discStep(disc1,Mrel,H,a*D2R,comp);L1root.updateMatrixWorld(true);
+  // banden: lengte ten opzichte van rust bepaalt de kleur
+  let post=0;LIG.forEach(L=>{V5.g.localToWorld(_a.copy(L.a));V4.g.localToWorld(_b.copy(L.b));const len=orient(L.m,_a,_b,L.w*s1,L.d*s1);if(!L.L0)L.L0=len;L.e=(len-L.L0)/L.L0;
+    const e=L.e;if(L.m.material!==flavM||true){const c=L.m.material.color;if(L.name==='gele band'){c.setRGB(.9+.1*clamp(e*3,0,1),.76-.4*clamp(e*3,0,1),.35-.2*clamp(e*3,0,1));}else if(e<-.03)c.setRGB(.56,.55,.51);else{const k=clamp((e-.04)/.3,0,1);c.setRGB(.95,.93-.6*k,.89-.66*k);}}
+    if(L===ISP||L.name==='gele band')post=Math.max(post,e);});
+  const fl=clamp(-a/5,0,1);capM.emissiveIntensity=fl*1.2+(st===3?.2:0);capM.opacity=.22+.18*fl;
+  // het kraakbeen van de facetten licht op als ze bij strekken op elkaar worden gedrukt
+  facM.emissiveIntensity=.45+.9*fl;facM.emissive.setRGB(.08+.22*fl,.35+.25*fl,.75+.2*fl);
+  // hernia achter-opzij, tegen de zenuwwortel van L5
+  const sz=.42*L1.hern;hern1.visible=sz>.01;if(hern1.visible){hern1.position.copy(disc1.rim).addScaledVector(disc1.dir,.34*L1.hern);hern1.quaternion.setFromUnitVectors(AX,disc1.dir);const wob=1+.04*Math.sin(S.clock*3);hern1.scale.set(sz*1.35*wob,sz*.62,sz*.85/wob);}
+  frag1.visible=L1.frag>.01;if(frag1.visible){const f=L1.frag;frag1.position.copy(disc1.rim).addScaledVector(disc1.dir,.85).add(_a.set(-.05,-1.0*f,-.12*f));frag1.scale.setScalar(.2);}
+  crack1.visible=L1.crack>.05;if(crack1.visible){crack1.position.copy(disc1.rim).addScaledVector(disc1.dir,-.45+.42*L1.crack);crack1.rotation.set(0,Math.atan2(disc1.dir.x,disc1.dir.z),0);crack1.scale.set(1,1,.15+.75*L1.crack);}
+  rootHot1.emissiveIntensity=L1.heat*1.5;rootHot1.color.setRGB(.91,.78-.4*clamp(L1.heat,0,1),.29-.2*clamp(L1.heat,0,1));trav[0].scale.set(1,1,1);
+  // de geprikkelde wortel stuurt impulsen omhoog door het wervelkanaal, naar ruggenmerg en hersenen
+  if(L1.heat>.15){const rc=trav[0].userData.curve,ip=impPath1.points;rc.getPointAt(.42,ip[0]);rc.getPointAt(.24,ip[1]);rc.getPointAt(.04,ip[2]);V4.g.localToWorld(ip[3].set(-.14,H*.5,-1.16));V5.g.worldToLocal(ip[3]);V4.g.localToWorld(ip[4].set(-.08,H+D+.4,-1.18));V5.g.worldToLocal(ip[4]);impPath1.updateArcLengths();}
+  L1.impT+=dt*(.6+.4*L1.heat);IMP1.forEach((m,i)=>{const u=(L1.impT*.4+i/IMP1.length)%1;m.visible=L1.heat>.15;if(!m.visible)return;impPath1.getPointAt(u,m.position);m.material.opacity=clamp(L1.heat,0,1)*(1-.6*u);m.scale.setScalar(.8+.8*Math.sin(u*Math.PI));if(u<.02)L1.sndImp=true;});
+  if(st===2&&L1.lastA>-5.5&&a<=-5.5)L1.sndClick=1;if(st===2&&L1.lastA<10.5&&a>=10.5)L1.sndClick=2;L1.lastA=a;
+  // ankerpunten
+  V5.g.localToWorld(_a.set(-.2,H*.5,.75));W.body=_a.clone();V4.g.localToWorld(_a.set(-.05,.6,-2.75));W.spin=_a.clone();V5.g.localToWorld(_a.set(-.56,1.45,-1.4));W.facet=_a.clone();
+  V4.g.localToWorld(_a.set(-1.6,.8,-1.25));W.tr=_a.clone();V5.g.localToWorld(_a.set(-.3,.62,-1.62));W.flav=_a.clone();trav[0].userData.curve.getPointAt(.45,_a);W.root=V5.g.localToWorld(_a.clone());
+  W.nuc1=V5.g.localToWorld(disc1.nuc.position.clone().add(V(-.3,0,0)));V5.g.localToWorld(_a.set(0,H*.6,.85));W.all=_a.clone();W.l4=V4.g.localToWorld(V(-.1,H*.5,1));W.l5=V5.g.localToWorld(V(-.1,H*.4,1));W.hern1=V5.g.localToWorld(hern1.position.clone());
+  // HUD
+  if(st<3){K.bar(1,(a+6)/20,a>.5?'buigen '+Math.round(a)+'°':a<-.5?'strekken '+Math.round(-a)+'°':'neutraal');const mm=Math.abs(disc1.shift)/1*22.5*.1;K.bar(2,clamp(Math.abs(disc1.shift)/.25,0,1),Math.abs(a)<.6?'midden':fmt(Math.abs(a)*.12,1)+' mm naar '+(a>0?'achteren':'voren'),'');
+    K.bar(3,clamp(post/.6,0,1),post<-.02?'slap':Math.round(post*100)+'% rek (vergroot)',post>.45?'bad':'');K.bar(4,fl,fl>.6?'dragen mee':fl>.1?'meer belast':a>6?'glijden open':'licht belast (≈ 20%)','');}
+  else{const g=S.grade;K.bar(1,(a+6)/20,'buigen '+Math.round(a)+'° + draaien');K.bar(2,clamp(comp,0,1),fmt(lerp(.5,2.3,clamp(comp,0,1)),1)+' MPa','');K.bar(3,L1.crack,S.tearFired?SEV[g]:Math.round(L1.crack*100)+'% ingescheurd',S.tearFired&&g>=2?'bad':'',S.tearFired&&g<2?'#e6a03a':'var(--bad)');K.bar(4,clamp(L1.heat,0,1),L1.heat>.6?'bekneld · ischias':L1.heat>.1?'geprikkeld':'vrij',L1.heat>.6?'bad':'');}
+  if(st===1)K.capSet(K.stateText(),'Een <b>bewegingssegment</b>: de wervels L4 en L5 met de schijf ertussen. Voorin dragen de wervellichamen, achterin sturen de facetgewrichten. Opzij loopt de zenuwwortel naar buiten.');
+  else if(st===2)K.capSoft(K.stateText(),a>4?'<b>Buigen</b>: de schijf wordt voorin dunner en achterin dikker. De kern schuift iets naar achteren, en de banden achterin komen op spanning.':a<-2?'<b>Strekken</b>: de kern schuift naar voren en de facetgewrichten worden op elkaar gedrukt. Zij dragen nu een groter deel van de last.':'Kijk naar de kern (blauw) en de kleur van de banden.',1.6);
+  else K.capSoft(K.stateText(),!S.tearFired?'Steeds weer buigen en draaien onder druk: de vezelring scheurt achter-opzij van binnen naar buiten in.':['','<b>Graad 1 · uitpuiling</b>: de vezelring bolt uit, maar is nog heel. De wortel van L5 wordt hooguit geprikkeld.','<b>Graad 2 · hernia</b>: de kern drukt door de vezelring tegen de zenuwwortel van L5. De wortel raakt geprikkeld en ontstoken en stuurt zelf signalen naar de hersenen. Die plaatsen de pijn in het gebied van die zenuw: het been (<b>ischias</b>).','<b>Graad 3 · losgeraakt stukje</b>: een stukje kern zakt langs de wortel naar beneden. Sterke uitstraling; soms ook gevoelloosheid of krachtverlies in het been.'][S.grade],.8);},
+ reset(){L1.crack=0;L1.hern=0;L1.heat=0;L1.frag=0;},
+ hud(){return K.bars(S.state===3?['Beweging','Druk op de kern','Vezelring','Zenuwwortel']:['Hoek','Kern','Banden achter','Facetten']);},
+ ctl(){if(S.state!==2)return '';return `<button id="bAuto1" class="${L1.auto?'on':''}">Automatisch</button><label>Strekken</label><input type="range" id="sAng" min="-6" max="12" step=".5" value="${L1.ang}" aria-label="Buigen of strekken"><label>Buigen</label>`;},
+ bind(){const b=K.$('#bAuto1');if(!b)return;b.addEventListener('click',()=>{L1.auto=!L1.auto;b.classList.toggle('on',L1.auto);});K.$('#sAng').addEventListener('input',e=>{L1.ang=+e.target.value;L1.auto=false;b.classList.remove('on');});},
+ stepOnce(){if(S.state!==2)return;L1.auto=false;L1.ang=L1.ang>=12?-6:L1.ang+2;const s=K.$('#sAng');if(s){s.value=L1.ang;K.$('#bAuto1').classList.remove('on');}},
+ grades:true,
+ sound(api){if(L1.sndClick){api.noise(.07,'bandpass',L1.sndClick===1?1500:700,5,.09,.004);L1.sndClick=0;}if(L1.sndImp){L1.sndImp=false;api.tone(1000,.05,.025,'square');}}
+};
+const H2={
+ step(dt){const st=S.state,T=S.stT,T2=T/(L2.slowK||1);let c=.3,out=0;
+  if(st===1){c=.3+.03*Math.sin(S.clock*1.2);out=0;L2.step=-1;L2.cracked=0;L2.ext=0;}
+  else if(st===2){L2.t+=dt*L2.sp;const t=L2.t%11;let ph;
+    if(t<1.2){ph=0;c=lerp(.3,1,smooth(t/1.2));out=0;}else if(t<5){ph=1;c=1;out=.34*smooth((t-1.2)/3.6);}else if(t<6.2){ph=2;c=lerp(1,0,smooth((t-5)/1.2));out=.34;}else{ph=3;c=0;out=.34*(1-smooth((t-6.2)/4.4));}
+    L2.step=ph;K.stepOn(ph);if(ph===0&&t<.05)L2.sndC=1;L2.out=out;}
+  else{const w=.5-.5*Math.cos(T*4.5);c=.45+.45*w;out=.1;let n=0;for(let j=0;j<NLAM;j++)if(T2>.5+j*.42)n=j+1;
+    if(n>L2.cracked){L2.cracked=n;L2.sndCr=1;}if(n>=NLAM&&!S.tearFired){S.tearFired=true;K.flash({big:false});}
+    if(S.tearFired){const u=T2-(.5+8*.42);c=lerp(c,.5,smooth(u));L2.ext=smooth(u/1.6);}}
+  L2.c=c;updL2(c,out,dt);
+  ARW.forEach((g,i)=>{const s=i?1:-1;g.visible=st===2&&L2.step<2;g.position.y=s*(4.7-.4*c);});
+  SLIT.forEach((m,j)=>{const on=st===3&&j<L2.cracked;const sc=on?clamp((T2-(.5+j*.42))/.35,0,1):0;m.visible=sc>0;if(!m.visible)return;m.scale.set(.25+.75*sc,.35+.65*sc,1);
+    const rr=lerp(m.userData.rm,defL2(m.userData.rm,A1,0)[0],c);m.position.set(rr*Math.sin(A1),.09*Math.sin(j*2.3),rr*Math.cos(A1)).addScaledVector(_nrm,.012);
+    // de kern kruipt de spleet in zodra de volgende laag ook scheurt
+    const kf=S.tearFired?1:clamp((T2-(.5+(j+1)*.42))/.4,0,1);m.userData.kern.visible=kf>0;m.userData.kern.scale.set(.3+.7*kf,.5+.5*kf+.15*Math.sin(S.clock*3+j),1);});
+  // uitgelekt kernmateriaal: een druppel met een nek door de buitenste laag, die meegroeit
+  {const rIn=lerp(5.55,defL2(5.55,A1,0)[0],c),th=A1+.035;_a.set(rIn*Math.sin(th),.02,rIn*Math.cos(th));_b.set(Math.sin(th),0,Math.cos(th));const len=.3+.95*L2.ext;_c.copy(_a).addScaledVector(_b,len);
+    EXT2.visible=L2.ext>.01;if(EXT2.visible){const wob=1+.05*Math.sin(S.clock*2.2);orient(EXT2,_a,_c,(.14+.36*L2.ext)*wob,(.13+.3*L2.ext)/wob);}}
+  const front=2.5+L2.cracked*.39+(S.tearFired?.6+1.2*L2.ext:0);
+  KERN.forEach(k=>{k.m.visible=st===3&&L2.cracked>0;if(!k.m.visible)return;const u=(k.ph+S.clock*.25)%1;const r=lerp(2.2,front,u);const th=A1-.016-k.o*.3;k.m.position.set(r*Math.sin(th),k.y+.06*Math.sin(S.clock*3+k.ph*9),r*Math.cos(th));k.m.scale.setScalar(.7+.4*Math.sin(u*Math.PI));});
+  NUT.forEach(n=>{n.m.visible=st===1;if(!n.m.visible)return;const u=(n.ph+S.clock*.18)%1;const y=n.c*lerp(2.25,.9,u);const r=lerp(n.r,n.r*.5,u);n.m.position.set(r*Math.sin(n.th),y,r*Math.cos(n.th));n.m.material.opacity=.9*Math.sin(u*Math.PI);});
+  gelM.color.setRGB(.24-.06*(st===3?1:0),.6-.1*(st===3?1:0),.86-.08*(st===3?1:0));gelM.emissiveIntensity=.75+.15*Math.sin(S.clock*1.3);
+  const mpa=lerp(.5,2.3,clamp((c-.3)/.7,0,1));
+  if(st===1){K.bar(1,mpa/2.5,fmt(mpa,1)+' MPa','');K.bar(2,.8,'ongeveer 80%','ok');K.bar(3,1,'100%','ok');K.capSet(K.stateText(),'Een opengesneden stuk schijf. Buiten ligt de <b>vezelring</b>: lagen met schuine vezels, elke laag de andere kant op. Binnenin de <b>kern</b>: water, vastgehouden door proteoglycanen. Geel: voedingsstoffen die vanuit de haarvaten in het bot de schijf in sijpelen.');}
+  else if(st===2){const p=c>.05?lerp(.1,2.3,c):.1;K.bar(1,p/2.5,fmt(p,1)+' MPa',c>.8?'con':'');K.bar(2,.8-.2*(L2.out||0)/.34*.4,'ongeveer '+Math.round(80-6*(L2.out||0)/.34)+'%','');K.bar(3,1-.12*(L2.out||0)/.34-.04*c,Math.round(100-12*(L2.out||0)/.34-4*c)+'%','');
+    K.capSoft(K.stateText(),['<b>Belasten</b>: de druk in de kern stijgt, van ongeveer 0,5 MPa bij staan tot ruim 2 MPa bij zwaar tillen.','<b>Water eruit</b>: de kern duwt naar alle kanten. De vezelring spant op en bolt iets uit, en water wordt langzaam door de eindplaten de wervel in geperst.','<b>Ontlasten</b>: liggen haalt de druk eraf (ongeveer 0,1 MPa).','<b>Water erin</b>: de proteoglycanen trekken het water weer aan. Zo pompt de schijf voedingsstoffen in en afvalstoffen uit.'][Math.max(0,L2.step)],1.4);}
+  else{K.bar(1,L2.cracked/NLAM,L2.cracked+' van '+NLAM+' lagen',L2.cracked>=NLAM?'bad':'','var(--bad)');K.bar(2,L2.ext,L2.ext>.05?'naar buiten':L2.cracked?'in de scheur':'nee',L2.ext>.05?'bad':'');K.bar(3,mpa/2.5,fmt(mpa,1)+' MPa','');
+    K.capSoft(K.stateText(),S.tearFired?'De <b>buitenste laag</b> is ook ingescheurd: kernmateriaal lekt naar buiten. Op het niveau Segment zie je wat dat betekent voor de zenuwwortel.':'Herhaald buigen, draaien en zware druk: de binnenste lagen scheuren het eerst. Kernmateriaal (blauw) dringt laag voor laag de scheur in.',1);}
+  },
+ reset(){L2.t=0;L2.cracked=0;L2.ext=0;L2.out=0;L2.step=-1;},
+ hud(){const st=S.state;return (st===2?K.stepsHTML(['1 Belasten','2 Water eruit','3 Ontlasten','4 Water erin']):'')+K.bars(st===3?['Gescheurde lagen','Kern lekt','Druk in de kern']:['Druk in de kern','Water in de kern','Schijfhoogte']);},
+ ctl(){if(S.state!==2)return '';return `<label>Tempo</label><input type="range" id="sSp2" min=".3" max="2.5" step=".05" value="${L2.sp}" aria-label="Tempo">`;},
+ bind(){const s=K.$('#sSp2');if(s)s.addEventListener('input',e=>L2.sp=+e.target.value);},
+ sound(api){if(L2.sndC){L2.sndC=0;api.noise(1.4,'lowpass',260,.8,.18,.25);}if(L2.sndCr){L2.sndCr=0;api.noise(.06,'highpass',3500,.7,.12,.002);api.thump(140,.08,.08);}
+  if(S.state===2&&L2.step===1&&R()<.03)api.tone(420+R()*300,.06,.018,'sine');if(S.state===2&&L2.step===3&&R()<.03)api.tone(700+R()*300,.05,.015,'sine');}
+};
+
+/* ================================================================
+   punten (13), labels, lagen, speurtocht en film
+   ================================================================ */
+const vertAll=()=>[lum.base];
+const fig1=()=>[F1.root,LEV,bench,box];
+const P=[
+ {lv:0,name:'Lendenwervelkolom',lat:'Vertebrae lumbales L1–L5 · lordosis lumbalis',at:()=>W.l3,view:[[SX+8.8,Y0+3.6,SZ+12.8],[SX+.2,Y0+1.6,SZ]],focus:()=>[lum.base],pick:()=>lum.V.map(v=>v.body),tabs:[
+  `<p>De onderrug heeft vijf <b>lendenwervels</b>, L1 tot en met L5. Ze zijn de grootste wervels van de wervelkolom, want ze dragen het gewicht van alles erboven. Daaronder ligt het <b>heiligbeen</b>.</p><p>Van opzij zie je een holle boog naar voren: de <b>lordose</b>. Met de borstkyfose en de halslordose maakt die van de wervelkolom een veer die schokken opvangt.</p>`,
+  `<p>Kijk in stand 2 naar het model: buigt de leerling voorover, dan wordt de lordose platter, en bij diep bukken bijna recht. Maar het meeste buigen komt uit de <b>heupen</b>. Het model laat alleen het deel van de lendenwervels zien, ongeveer 40% van de rompbuiging.</p>`,
+  `<p>De lendenwervelkolom van een volwassene is ongeveer 18 cm lang, en ongeveer een derde daarvan is tussenwervelschijf. Over de hele wervelkolom word je tussen ochtend en avond ongeveer 1 tot 2 cm korter, vooral doordat de schijven water verliezen.</p>`,
+  `<p class="think">Waarom zijn de wervellichamen onderin de rug groter dan bovenin de nek?</p>`]},
+ {lv:0,name:'Rugstrekkers',lat:'M. erector spinae',at:()=>W.erect,view:[[SX+.8,Y0+4.0,SZ+15.5],[SX-.5,Y0+1.1,SZ]],layer:'Spieren',focus:()=>[ER,ERsh],tabs:[
+  `<p>De <b>rugstrekkers</b> zijn twee dikke spierstrengen links en rechts van de doornuitsteeksels. Ze lopen van het heiligbeen en de bekkenkam tot aan de nek. Ze strekken de rug en houden hem tegen als je voorover buigt.</p><p>Ze zitten maar ongeveer <b>5 cm</b> achter het draaipunt in de schijf. Daardoor moeten ze heel hard trekken om een last voor je lichaam in evenwicht te houden.</p>`,
+  `<p>Zet stand 2 aan en schuif de last ver van het lichaam. Kijk naar het balkje <b>Rugstrekkers</b>: bij een last van 15 kg op een halve meter trekken ze al gauw met meer dan 2.000 N. Dichtbij en rechtop is het minder dan de helft. Op de rug van de leerling zie je de spieren mee oplichten.</p>`,
+  `<p>Bij krachtsporters zijn drukkrachten op L4–L5 berekend van meer dan 17.000 N (Cholewicki e.a., 1991). Hun wervels en schijven zijn door jaren training ook sterker geworden: je rug past zich aan belasting aan.</p>`,
+  `<p class="think">Waarom moeten de rugstrekkers bij tillen veel harder trekken dan de last zwaar is? Gebruik het woord momentarm.</p>`]},
+ {lv:0,name:'Diepe rompspieren',lat:'M. multifidus · m. transversus abdominis',at:()=>W.multi,view:[[SX+7,Y0+3,SZ+13],[SX+.6,Y0+1.2,SZ]],layer:'Spieren',focus:()=>[MF,...taMeshes,...rect,...rectLow],tabs:[
+  `<p>Dicht tegen de wervels liggen korte spiertjes die van wervel naar wervel lopen: de <b>m. multifidus</b>. Ze sturen elk segment apart. Rondom de buik ligt de <b>dwarse buikspier</b> (m. transversus abdominis) als een korset, met voorin de rechte buikspier (m. rectus abdominis).</p><p>Spannen ze samen aan, dan wordt de romp een stevige koker. Dat verdeelt de last en maakt de wervelkolom stabieler.</p>`,
+  `<p>In de warming-up train je dit met planken, zijwaartse planken en ‘bird dogs’. Leerlingen voelen het bij het optillen van een bank: eerst de buik aanspannen, dan pas tillen. Je hoeft niet bang te zijn voor je rug. Maak hem vooral sterk.</p>`,
+  `<p>Bij mensen met langdurige lage rugpijn is de multifidus op MRI-beelden vaak kleiner en vetter. Of dat oorzaak of gevolg is, weten onderzoekers nog niet zeker.</p>`,
+  `<p class="think">Waarom helpt het om je buikspieren aan te spannen voordat je een zware mat optilt?</p>`]},
+ {lv:0,name:'Heiligbeen en SI-gewricht',lat:'Os sacrum · articulatio sacroiliaca',at:()=>W.si,view:[[SX+6.5,Y0+1.2,SZ+11],[SX+.2,Y0-.6,SZ]],focus:()=>[sacG,PV],pick:()=>[sacG,...pelvParts],tabs:[
+  `<p>Het <b>heiligbeen</b> bestaat uit vijf vergroeide wervels (S1–S5). Het zit als een wig tussen de twee bekkenhelften. De verbindingen heten de <b>SI-gewrichten</b> (sacro-iliacaal). Via die gewrichten gaat het gewicht van de romp naar de benen.</p><p>Het SI-gewricht beweegt maar een paar graden en wordt bijeengehouden door zeer sterke banden.</p>`,
+  `<p>Bij tillen werken de <b>bilspieren</b> (grote bilspier, m. gluteus maximus) mee: zij strekken de heup en brengen de romp omhoog. Een goede tiller gebruikt zijn benen en billen, niet alleen zijn rug. Zie ook <a href="heup.html">halte 7 Heup en bekken</a>.</p>`,
+  `<p>De bovenkant van het heiligbeen staat ongeveer 30 tot 40 graden schuin naar voren. Daarom ligt L5 op een helling en houden banden en de facetgewrichten hem tegen.</p>`,
+  `<p class="think">Waarom is het handig dat het SI-gewricht bijna niet beweegt, terwijl de heup juist heel beweeglijk is?</p>`]},
+ {lv:0,name:'Tillen als hefboom',lat:'M = F · d · rond L5–S1',at:()=>W.fig,view:[[MX-2.4,2.7,FZ+6.6],[MX+1.3,.95,FZ]],state:2,focus:fig1,pick:()=>[F1.root,bench],tabs:[
+  `<p>Een tillende romp is een <b>hefboom</b>. Het draaipunt (geel) ligt in de onderrug, ongeveer bij de schijf tussen L5 en het heiligbeen. De last (blauw) hangt op afstand <b>d</b> voor dat draaipunt. Het moment is <b>M = F · d</b>.</p><p>De rugstrekkers (oranje) maken het tegenmoment, maar met een arm van maar 5 cm. Daarom geldt ongeveer: spierkracht = M ÷ 0,05 m.</p><div class="calc">15 kg ≈ 150 N op 0,50 m → 75 Nm<br>75 Nm ÷ 0,05 m = 1.500 N extra spierkracht<br>op 0,25 m: maar 750 N</div>`,
+  `<p>Bij de zaalopbouw: <b>houd de last dicht bij je lichaam</b>, sta stevig en draai niet met een zware last in je handen; verplaats je voeten. Zware of lange spullen (banken, kasten, matten) til je met z’n tweeën. Probeer het in stand 2 met de schuif <b>Afstand</b>.</p><p>Door de knieën gaan helpt alleen als de last daardoor dichterbij komt. Past een bank of kastdeel niet tussen je knieën, dan levert diep hurken weinig op (van Dieën e.a., 1999).</p>`,
+  `<p>Het Amerikaanse NIOSH gebruikt sinds 1981 een richtwaarde van 3.400 N drukkracht op de schijf L5–S1 en een grens van 6.400 N. De HUD kleurt de balk met dezelfde grenzen: groen, oranje en rood. Het zijn modelwaarden: echte waarden hangen af van lichaamsbouw en houding.</p>`,
+  `<p class="think">Zet beide schuiven eens op hun uiterste. Welke verlaagt de drukkracht het meest? Kijk in de rekenstrook welke afstanden veranderen: die van de last en die van je romp. Zie ook het lab <a href="evenwicht.html">Evenwicht</a>.</p>`]},
+ {lv:1,name:'Wervellichaam',lat:'Corpus vertebrae',at:()=>W.body,view:[[9,3,11],[0,0,0]],focus:()=>[V5.g,V4.g].map(g=>g.children[0]).concat(V5.rims,V4.rims),pick:()=>[V5.body,V4.body],tabs:[
+  `<p>Het <b>wervellichaam</b> is het dikke, ronde voorste deel van de wervel. Het draagt in een neutrale houding ongeveer 80% van de druk. Van binnen is het sponsachtig bot (trabeculair), met een stevig randje bovenaan en onderaan.</p>`,
+  `<p>Sponsbot is licht én sterk: de balkjes lopen in de richting waarin de kracht loopt. Door te springen, landen en tillen wordt het steviger. Daarom is bewegen in de jeugd belangrijk voor sterke botten later.</p>`,
+  `<p>Een lendenwervel kan in het lab een drukkracht van ongeveer 5.000 tot 10.000 N verdragen voordat de eindplaat breekt (jonge volwassenen). Bij jonge, getrainde mensen is dat meer dan bij ouderen met botontkalking.</p>`,
+  `<p class="think">Waarom is het wervellichaam van binnen sponsachtig en niet massief?</p>`]},
+ {lv:1,name:'Wervelboog en uitsteeksels',lat:'Arcus vertebrae · processus spinosus · processus costiformis',at:()=>W.spin,view:[[1.5,4.5,13],[-2,.4,0]],focus:()=>[...V5.archParts,...V4.archParts],tabs:[
+  `<p>Achter het wervellichaam zit de <b>wervelboog</b>. Samen omsluiten ze het <b>wervelkanaal</b>, waarin de zenuwen liggen. Aan de boog zitten uitsteeksels: het <b>doornuitsteeksel</b> naar achteren (dat voel je op je rug) en de <b>dwarsuitsteeksels</b> opzij. Bij lendenwervels heten die processus costiformis: ze zijn een overblijfsel van ribben.</p><p>Aan de uitsteeksels hechten spieren en banden. Ze werken als hefboompjes.</p>`,
+  `<p>Turners die vaak overstrekken (brug achterover, flikflak, overslag) krijgen soms een vermoeiingsbreukje in de boog van L5, in het smalle deel tussen de gewrichtsuitsteeksels: <b>spondylolyse</b>. Dat komt vaker voor bij turnen, ballet en werpsporten dan bij andere jongeren. Leer overstrekking daarom geleidelijk op te bouwen.</p>`,
+  `<p>Spondylolyse komt bij ongeveer 6% van alle volwassenen voor, vaak zonder klachten. Bij sommige groepen topturnsters is het percentage meer dan twee keer zo hoog.</p>`,
+  `<p class="think">Waarom zou overstrekken (zoals bij een brug achterover) juist de wervelboog belasten en niet het wervellichaam?</p>`]},
+ {lv:1,name:'Facetgewrichten',lat:'Articulationes zygapophysiales',at:()=>W.facet,view:[[-9.5,3.4,8.8],[-1.5,.8,.4]],focus:()=>[...V5.supF,...V4.infF,...V4.inf,...V5.infF,...V4.supF,...facCap],pick:()=>[...V5.facParts,...V4.facParts],state:2,tabs:[
+  `<p>Elke wervel heeft achterin vier kleine gewrichtsuitsteeksels: twee omhoog en twee omlaag. Die van de wervel erboven en eronder vormen samen de <b>facetgewrichten</b>, met kraakbeen (blauw) en een gewrichtskapsel. In de onderrug staan ze bijna verticaal, als een rails van voor naar achter.</p><p>Daardoor kun je de onderrug goed buigen en strekken, maar nauwelijks draaien.</p>`,
+  `<p>Kijk in stand 2. Bij <b>strekken</b> worden de facetten op elkaar gedrukt en lichten ze op: ze dragen dan een flink deel van de last. Bij <b>buigen</b> glijden ze open. Draaien gebeurt vooral in de borstwervelkolom en de heupen, niet in de onderrug.</p>`,
+  `<p>Per lendensegment kun je maar ongeveer 1 à 2 graden draaien, de hele onderrug samen ongeveer 10 graden. Bij draaien botsen de facetten aan één kant tegen elkaar en remmen ze de beweging. Ben je ook voorover gebogen, dan staan de facetten meer open en komt het draaien meer op de vezelring terecht.</p>`,
+  `<p class="think">Een leerling draait met een kastdeel in zijn handen. Waarom is het beter dat hij zijn voeten verplaatst?</p>`]},
+ {lv:1,name:'Banden',lat:'Lig. longitudinale anterius et posterius · lig. flavum · lig. interspinale',at:()=>W.flav,view:[[3,4,13],[-1.2,.3,0]],layer:'Banden',state:2,focus:()=>LIG.map(l=>l.m),tabs:[
+  `<p>Banden houden de wervels bij elkaar. Voor op de wervellichamen loopt de brede <b>voorste lengteband</b>, achterop in het kanaal de smallere <b>achterste lengteband</b>. Tussen de bogen ligt de elastische <b>gele band</b> (lig. flavum), en tussen en over de doornuitsteeksels lopen nog twee banden.</p><p>Kleur: grijs is slap, wit is gespannen, rood is sterk gerekt.</p>`,
+  `<p>Buig je voorover, dan komen de banden achterin op spanning: ze vangen een deel van het moment op. Bij een volledig gebogen rug, zoals bij je tenen aanraken met gestrekte benen, nemen banden en fascie het over en ontspannen de rugstrekkers zelfs even. Dat heet het flexie-relaxatiefenomeen.</p>`,
+  `<p>De gele band bestaat voor ongeveer twee derde uit elastine. Dat maakt hem rekbaar en zorgt dat hij bij strekken niet in het wervelkanaal plooit.</p>`,
+  `<p class="think">De achterste lengteband is in de onderrug smal en dekt alleen het midden van de schijf. Wat betekent dat voor de plek waar een hernia meestal naar buiten komt?</p>`]},
+ {lv:1,name:'Zenuwwortel en cauda equina',lat:'Radix nervi spinalis · cauda equina · ganglion sensorium',at:()=>W.root,view:[[-6,3,12],[-1.5,-.6,.6]],layer:'Zenuwen',focus:()=>nerve1,tabs:[
+  `<p>Het <b>ruggenmerg</b> stopt bij volwassenen ter hoogte van L1–L2. Daaronder loopt een bundel zenuwwortels door het wervelkanaal: de <b>cauda equina</b> (paardenstaart), in een vlies (dura). Op elk niveau verlaat links en rechts een wortel het kanaal door een gat tussen de wervels. Het knobbeltje is het spinale ganglion met de gevoelscellen.</p><p>De wortel van L5 loopt achter de schijf tussen L4 en L5 langs naar beneden. Precies daar drukt een hernia meestal op.</p>`,
+  `<p>De wortels van L4 tot S3 vormen samen de <b>heupzenuw</b> (n. ischiadicus) naar het been. Bij een geprikkelde wortel voelen sporters de pijn in het been: dat heet <b>ischias</b>. Lees ook halte 1 <a href="zenuw.html">Zenuwstelsel</a> over hoe een zenuw prikkels geleidt.</p>`,
+  `<p>Bij ongeveer 9 van de 10 mensen met lage rugpijn is er geen duidelijke oorzaak aan te wijzen. Dat heet aspecifieke lage rugpijn (Maher e.a., 2017). Een uitpuilende schijf zie je op een MRI ook bij ongeveer 30% van de twintigers zonder klachten (Brinjikji e.a., 2015).</p>`,
+  `<p class="think">Waarom voel je de pijn van een beknelde zenuwwortel in je been, terwijl het probleem in je rug zit?</p>`]},
+ {lv:2,name:'Vezelring',lat:'Anulus fibrosus',at:()=>W.lam,view:[[-5.5,5.2,15.5],[-2.6,-.2,2.8]],focus:()=>[...LAM.map(l=>l.m),FIB2],tabs:[
+  `<p>De <b>vezelring</b> bestaat uit 15 tot 25 concentrische lagen (lamellen) van collageen. Het model toont er negen. In elke laag lopen de vezels schuin, ongeveer 30 graden ten opzichte van de horizontaal, en in elke volgende laag de andere kant op. Aan de trap links zie je die wisselende richting.</p><p>Door die kruislingse bouw kan de ring druk, buigen en een beetje draaien weerstaan, zoals de lagen van een autoband.</p>`,
+  `<p>Bij een discusworp, of als je wegdraait met een kastdeel in je handen, draait je romp onder last. Bij draaien wordt telkens maar de helft van de lagen gerekt: die met de vezels in de draairichting. Draaien onder een zware last en tegelijk buigen belast de ring daarom het meest. Zie stand 3.</p>`,
+  `<p>De buitenste lagen van de vezelring hebben zenuwuiteinden; de binnenste niet. Een scheurtje van binnen voel je daardoor vaak niet, tot het de buitenkant bereikt.</p>`,
+  `<p class="think">Waarom lopen de vezels in de lagen niet allemaal dezelfde kant op?</p>`]},
+ {lv:2,name:'Kern',lat:'Nucleus pulposus',at:()=>W.nuc,view:[[4.5,7,13],[.3,-.2,1]],layer:'Water',state:2,focus:()=>[NUC2,WAT,PGc,PGb],tabs:[
+  `<p>De <b>kern</b> is een gel van ongeveer 80% water. Het water wordt vastgehouden door <b>proteoglycanen</b> (paars): grote moleculen die als een flessenborstel water aantrekken. Daardoor staat de kern onder druk, ook in rust.</p><p>Druk je op de schijf, dan duwt de kern naar alle kanten. De vezelring vangt die druk op als een hoepel die gespannen wordt.</p>`,
+  `<p>Vlak na het opstaan zijn je schijven vol water en stijver. Diep bukken en zwaar tillen belasten ze dan meer. Begin een vroege training of een ochtend op schoolkamp daarom met rustig bewegen.</p>`,
+  `<p>Een bekende meting (Wilke e.a., 1999) in de schijf L4–L5: liggen ongeveer 0,1 MPa, staan 0,5 MPa, voorover gebogen staan 1,1 MPa, en 20 kg tillen met een ronde rug 2,3 MPa. Met de knieën gebogen en de last dichtbij was het 1,7 MPa.</p><p>Druk is kracht per oppervlak: 2 MPa is 2 N per mm². Op een schijf van ongeveer 15 cm² (1.500 mm²) hoort daar een drukkracht van ongeveer 3.000 N bij: dezelfde orde als de HUD op het niveau Rug.</p>`,
+  `<p class="think">Waarom meet je de lengte van een leerling voor een groeicurve het beste steeds op hetzelfde moment van de dag?</p>`]},
+ {lv:2,name:'Eindplaat',lat:'Lamina cartilaginea · facies intervertebralis',at:()=>W.ep,view:[[10,5,10.5],[2.4,0,.8]],focus:()=>[EPu,EPl,BNl,BNu,...capi],tabs:[
+  `<p>Boven en onder de schijf ligt een dunne laag kraakbeen: de <b>eindplaat</b>. Daarachter ligt het sponsachtige bot van het wervellichaam, met haarvaten (rood). De volwassen schijf heeft zelf <b>geen bloedvaten</b>: het is het grootste orgaan zonder eigen bloedvoorziening.</p><p>Voedingsstoffen (geel) sijpelen vanuit de haarvaten door de eindplaat de schijf in. Afvalstoffen gaan de andere kant op.</p>`,
+  `<p>Afwisselend belasten en ontlasten pompt vocht in en uit de schijf. Bewegen is dus goed voor de schijf: lang stilzitten of stilstaan is dat minder. Wissel daarom houdingen af, ook in een lange theorieles.</p>`,
+  `<p>Omdat de voedingsstoffen ver moeten diffunderen, zit midden in de schijf heel weinig zuurstof. De cellen van de kern leven grotendeels zonder zuurstof.</p>`,
+  `<p class="think">Waarom zou een schijf slecht herstellen na een scheurtje, terwijl een spier dat wel goed doet?</p>`]},
+];
+const near=()=>K.camera.position.distanceTo(piv)<12;
+const tags=[
+ {lv:0,cls:'lev',txt:()=>'d = '+fmt(L0.dL,2)+' m',at:()=>W.levMid,show:()=>L0.lev&&L0.levOn&&near()},
+ // van ver: één samenvattend label bij de tiller
+ {lv:0,cls:'lev',txt:()=>'d = '+fmt(L0.dL,2)+' m · rugstrekkers ≈ '+nf(L0.Fe)+' N',at:()=>W.levMid,show:()=>L0.lev&&L0.levOn&&!near()},
+ {lv:0,cls:'co2',txt:()=>'last ≈ '+Math.round(L0.WL)+' N',at:()=>W.load,show:()=>L0.lev&&L0.levOn&&near()},
+ {lv:0,cls:'force',txt:()=>'rugstrekkers ≈ '+nf(L0.Fe)+' N',at:()=>W.eArrow,show:()=>L0.lev&&L0.levOn&&near()},
+ {lv:0,cls:'nerve',txt:()=>'draaipunt L5–S1',at:()=>W.pivot,show:()=>L0.lev&&L0.levOn&&near()},
+ {lv:0,cls:'o2',txt:()=>'ischias · voel je in het been',at:()=>W.sciTag,show:()=>S.state===3&&L0.heat>.4},
+ {lv:0,cls:'nerve',txt:()=>'signaal naar de hersenen',at:()=>W.impTop,show:()=>S.state===3&&L0.heat>.4&&K.camera.position.distanceTo(W.impTop)<11},
+ {lv:0,cls:'',txt:()=>'L4–L5',at:()=>W.disc,show:()=>S.state===3&&L0.hurt},
+ {lv:1,cls:'',txt:()=>'L4',at:()=>W.l4,show:()=>true},{lv:1,cls:'',txt:()=>'L5',at:()=>W.l5,show:()=>true},
+ {lv:1,cls:'co2',txt:()=>'kern',at:()=>W.nuc1,show:()=>disc1.open},
+ {lv:1,cls:'nerve',txt:()=>'wortel L5',at:()=>W.root,show:()=>S.state===3},
+ {lv:1,cls:'o2',txt:()=>'voel je in het been',at:()=>V5.g.localToWorld(V(-2.2,-2.3,.45)),show:()=>L1.heat>.3},
+ {lv:1,cls:'nerve',txt:()=>'signaal naar de hersenen',at:()=>V4.g.localToWorld(V(-.1,H+.2,-1.2)),show:()=>L1.heat>.3},
+ {lv:2,cls:'water',txt:()=>'H₂O',at:()=>W.wat,show:()=>S.state!==3},
+ {lv:2,cls:'pg',txt:()=>'proteoglycaan',at:()=>W.pg,show:()=>S.state===1},
+ {lv:2,cls:'band',txt:()=>'eindplaat',at:()=>W.ep&&W.ep.clone().add(V(1.6,.25,-.6)),show:()=>true},
+ {lv:2,cls:'',txt:()=>'bot',at:()=>W.bone,show:()=>true},
+ {lv:2,cls:'o2',txt:()=>'scheur',at:()=>W.cutF&&V(4.3*Math.sin(A1-.05),.25,4.3*Math.cos(A1-.05)),show:()=>S.state===3&&L2.cracked>2},
+];
+const layers=[
+ {name:'Spieren',lv:0,objs:()=>[ER,ERsh,MF,...rect,...rectLow,...glut]},
+ {name:'Buikwand',lv:0,objs:()=>taMeshes},
+ {name:'Zenuwen',lv:0,objs:()=>nerve0},
+ {name:'Schijven open',lv:0,on:false,set(on){discs0.forEach(d=>d.setOpen(on));}},
+ {name:'Hefboom',lv:0,set(on){L0.levOn=on;}},
+ {name:'Banden',lv:1,objs:()=>[...LIG.map(l=>l.m),...facCap]},
+ {name:'Zenuwen',lv:1,objs:()=>nerve1},
+ {name:'Schijf open',lv:1,on:true,set(on){disc1.setOpen(on);}},
+ {name:'Water',lv:2,objs:()=>[WAT,PGc,PGb]},
+ {name:'Bovenste wervel',lv:2,objs:()=>[BNu]},
+];
+// de lagen ‘Zenuwen’ hebben dezelfde naam op twee niveaus: geef ze een eigen naam
+layers[6].name='Zenuwen ';
+P[9].layer='Zenuwen ';
+// Op een smal scherm (tot 820 px) ligt het infopaneel over de onderste helft van het beeld. Schuif camera en doel dan zo ver omlaag
+// dat het ankerpunt van het geopende punt midden in de vrije strook tussen de kop en het paneel staat.
+// De motor zet de camera op een staand scherm verder weg (tot 1,9×) en kijkt dan met 48° in plaats van 36°: daar rekent dit mee.
+const _pc=new THREE.PerspectiveCamera(48,1,.05,300),_pv=V();
+// k: camera zoveel keer verder weg (voor een punt dat na het openen veel beweegt)
+function liftView(v,anchor,k){const w=innerWidth,h=innerHeight,asp=w/h;if(w>820)return v;
+  const T=V(...v[1]),P0=V(...v[0]).sub(T).multiplyScalar(k||1).add(T),P1=P0.clone().sub(T).multiplyScalar(asp<1?Math.min(1.9,1/Math.pow(asp,.85)):1).add(T);
+  // vrije strook: onder de kop, boven het paneel (paneel: 46% van de hoogte, boven de ingeklapte HUD van ongeveer 93 px)
+  const tb=K.$('#top'),top=tb?tb.getBoundingClientRect().bottom:.19*h,pTop=h-117-Math.min(.46*h,h-93-170),f=clamp((top+pTop)/2/h,.15,.5);
+  const A=anchor&&anchor.isVector3?anchor:T,want=1-2*f;_pc.fov=asp<1?48:36;_pc.aspect=asp;_pc.updateProjectionMatrix();
+  const yAt=d=>{_pc.position.set(P1.x,P1.y-d,P1.z);_pc.lookAt(T.x,T.y-d,T.z);_pc.updateMatrixWorld(true);return _pv.copy(A).project(_pc).y;};
+  let lo=-30,hi=30;for(let i=0;i<26;i++){const m=(lo+hi)/2;if(yAt(m)<want)lo=m;else hi=m;}
+  const L=P1.distanceTo(T),d=clamp((lo+hi)/2,-.6*L,.6*L);return [[P0.x,P0.y-d,P0.z],[T.x,T.y-d,T.z]];}
+// De tiller gaat na het openen op en neer: richt bij hem op het midden van die beweging (borst tussen rechtop en gebukt),
+// en kijk iets verder weg, zodat het punt in de strook blijft.
+P[4].mobAt=V(MX-.14,1.9,FZ+.3);P[4].mobK=1.5;
+P.forEach(p=>{if(!p.view)return;const v0=p.view;Object.defineProperty(p,'view',{configurable:true,enumerable:true,get(){let a=p.mobAt||null;if(!a){try{a=p.at();}catch(e){}}return liftView(v0,a,p.mobK);}});});
+
+const quiz=[
+ {t:'R',type:'find',lv:0,state:1,view:QV([[SX+7.2,Y0+3,SZ+14],[SX+1.4,Y0+.6,SZ]],2.1),q:'Klik op de <b>rugstrekkers</b> (m. erector spinae).',
+  opts:[()=>W.rectus,()=>W.glut,()=>W.erect,()=>W.sacrum],ok:2,fb:['Dat is de rechte buikspier, aan de voorkant van de romp.','Dat is de grote bilspier: die strekt de heup en helpt bij tillen, maar het is geen rugstrekker.','Goed! De dikke streng naast de doornuitsteeksels, van het heiligbeen omhoog.','Dat is het heiligbeen.']},
+ {t:'R',type:'find',lv:1,state:1,view:QV([[-9.5,4.0,11.5],[-1.6,.5,.2]],1.2),q:'Klik op een <b>facetgewricht</b>.',
+  opts:[()=>W.body,()=>W.facet,()=>W.spin,()=>W.tr],ok:1,fb:['Dat is het wervellichaam: het dragende voorste deel.','Goed! Achterin, waar de gewrichtsuitsteeksels van twee wervels met kraakbeen op elkaar passen.','Dat is het doornuitsteeksel, aan de achterkant.','Dat is een dwarsuitsteeksel (processus costiformis).']},
+ {t:'R',type:'mc',lv:2,state:2,q:'Bekijk stand 2 in de schijf. Hoe vangt de tussenwervelschijf een drukkracht op?',
+  opts:['De vezelring is van bot en draagt alles alleen','De kern wordt platgedrukt en verdwijnt','De kern duwt naar alle kanten en spant de vezelring op als een hoepel','De eindplaten veren door als een springveer'],ok:2,
+  ex:'De kern is een gel onder druk. Die geeft de druk door naar alle kanten, en de schuine vezels van de vezelring worden opgespannen. Zo verdeelt de schijf de druk over de hele eindplaat.',
+  why:['De vezelring is van collageen, niet van bot. Hij vangt de druk op samen met de kern.','De kern verliest langzaam een beetje water, maar blijft er. Hij duwt juist naar alle kanten.',null,'De eindplaten zijn dun en stug; ze geven de druk door aan het bot, maar veren niet.']},
+ {t:'T1',type:'mc',lv:0,state:2,q:'Zet stand 2 van de rug aan en zet <b>Automatisch</b> uit. Welke verandering verlaagt de drukkracht op de schijf bij tillen het meest?',
+  opts:['Langzamer tillen','De last dicht tegen het lichaam houden','Je hoofd rechtop houden','Op je tenen gaan staan'],ok:1,
+  ex:'Hoe dichter de last bij het draaipunt, hoe korter de momentarm d. Dan is het moment kleiner, hoeven de rugstrekkers minder hard te trekken en daalt de druk op de schijf.',
+  why:['Rustig tillen is prettig, maar de momentarm blijft even lang. In een statisch model verandert de druk niet.',null,'Het hoofd weegt weinig en de houding van je hoofd verandert de momentarm van de last nauwelijks.','Op je tenen sta je wankel; de last komt er niet dichter door bij je onderrug.']},
+ {t:'T1',type:'mc',lv:1,state:2,q:'Kijk op het niveau <b>Segment</b> naar stand 2. Wat doet de kern als je vooroverbuigt?',
+  opts:['Hij schuift een stukje naar achteren','Hij schuift naar voren','Hij blijft precies op zijn plek','Hij komt uit de schijf'],ok:0,
+  ex:'Bij buigen wordt de schijf voorin dunner en achterin dikker. De kern wordt naar achteren geduwd, richting het wervelkanaal. Daarom belast herhaald zwaar buigen vooral de achterkant van de vezelring.',
+  why:[null,'Naar voren schuift hij bij strekken, niet bij buigen.','De kern is een gel: hij beweegt mee met de vorm van de schijf.','Dat gebeurt pas als de vezelring is doorgescheurd (een hernia), niet bij gewoon buigen.']},
+ {t:'T2',type:'mc',lv:0,state:2,q:'Een leerling houdt een last van 15 kg (ongeveer 150 N) op 0,50 m voor de onderrug. De rugstrekkers hebben een momentarm van 5 cm. Hoeveel kracht moeten ze leveren alleen voor de last?',
+  opts:['75 N','150 N','750 N','1.500 N'],ok:3,
+  ex:'Moment van de last: 150 N × 0,50 m = 75 Nm. De rugstrekkers moeten 75 Nm leveren met een arm van 0,05 m: 75 ÷ 0,05 = 1.500 N. Tien keer de last. Daar komt het moment van de eigen romp nog bij.',
+  why:['75 is het moment in Nm, nog niet de kracht. Deel het moment door de momentarm van de spier.','Dat zou alleen kloppen als de spier even ver van het draaipunt zat als de last.','Je hebt waarschijnlijk door 0,1 m gedeeld in plaats van door 0,05 m.',null]},
+ {t:'T2',type:'mc',lv:1,state:3,q:'Zet op het niveau Segment stand 3 aan. Waarom komt een hernia meestal <b>achter-opzij</b> naar buiten, en waarom voelt de sporter dan pijn in het been?',
+  opts:['Omdat de kern bij buigen naar voren schuift en daar de buikorganen raakt','Omdat de vezelring achterin dunner is, de achterste lengteband opzij smal is en daar de zenuwwortel naar het been loopt','Omdat de facetgewrichten de kern opzij duwen en zelf pijn doen in het been','Omdat het ruggenmerg op die hoogte in het been eindigt'],ok:1,
+  ex:'Bij buigen schuift de kern naar achteren. Achterin is de vezelring dunner en de achterste lengteband dekt alleen het midden. Achter-opzij loopt de zenuwwortel van L5 (of S1) langs. Raakt de kern die wortel, dan voel je de pijn in het gebied van die zenuw: het been.',
+  why:['Bij buigen schuift de kern juist naar achteren. Voor de wervel ligt de stevige voorste lengteband.',null,'De facetgewrichten sturen de beweging, maar duwen de kern niet weg. Facetpijn straalt bovendien zelden tot in de voet uit.','Het ruggenmerg stopt al bij L1–L2; daaronder lopen alleen zenuwwortels.']},
+ {t:'I',type:'open',q:'Je bent stagedocent en laat een klas de zaal opbouwen met banken, matten en een kast. Schrijf een korte tilinstructie voor de leerlingen en leg uit waarom die werkt. Gebruik het moment (M = F · d), de schijf en de spieren. Praat de leerlingen geen angst aan.',
+  model:'<p><b>Instructie</b>: ‘Til zware of lange spullen met z’n tweeën. Ga dicht bij de last staan, houd hem tegen je lichaam, span je buik aan en til met benen en billen. Draai niet met de last in je handen: verplaats je voeten.’</p><p><b>Waarom</b>: het moment op de onderrug is last × afstand. Dichtbij is de momentarm kort, dus hoeven de rugstrekkers (arm van maar 5 cm) minder hard te trekken en drukt dat de schijven minder op elkaar. Draaien onder een zware last, vooral gebogen, belast de vezelring achterin het meest. Herhaald, zwaar en ver van het lichaam is wat de schijf op den duur kan beschadigen, niet één keer bukken.</p><p><b>Zonder angst</b>: je rug is sterk en mag buigen. Of je precies met een rechte rug tilt, blijkt in onderzoek minder belangrijk dan vaak gedacht. Vertel leerlingen vooral wat wél helpt: dichtbij, samen, niet draaien, en sterk worden door te bewegen.</p>'},
+];
+
+// de hernia L4–L5 in wereldcoördinaten (rustpositie), voor het standpunt van boven-achter
+const HERN=(()=>{updSpine(0,0,0,0);const d=discs0[1];return lum.V[0].g.localToWorld(d.rim.clone().addScaledVector(d.dir,.3));})();
+const CAM={wide:[[7.4,5.2,21],[.0,2.5,.6]],model:[[SX+10,Y0+3,SZ+15],[SX+.3,Y0+.8,SZ]],hern:[[HERN.x-2.9,HERN.y+1.7,HERN.z+8.4],[HERN.x+.3,HERN.y-.5,HERN.z]],
+  lifter:[[MX-3.2,3.3,FZ+8.6],[MX+2.2,.85,FZ]],lifterClose:[[MX-2.7,2.7,FZ+6.2],[MX+.6,1.2,FZ]],back:[[SX-2.2,Y0+3.0,SZ+9.5],[SX-.5,Y0+1.4,SZ]],
+  seg:[[11.2,4.8,15.2],[-.7,.25,0]],segBack:[[-9.4,2.5,14.2],[-1.3,-1.2,.6]],disc:[[6.4,8.2,18.5],[.2,-.7,0]],crack:[[7.5,3.8,9],[3.2,-.1,1.4]],stair:[[-5.5,5.2,15.5],[-2.6,-.2,2.8]]};
+const filmSet=v=>{Object.assign(L0,v);};
+// live getallen van de hefboom als kaartjes in de film (de labels in 3D staan in de film uit)
+const LEVSTEPS=cur=>({get names(){return ['d = '+fmt(L0.dL,2)+' m','M ≈ '+Math.round(L0.M)+' Nm','spieren ≈ '+nf(L0.Fe)+' N','schijf ≈ '+nf(L0.C)+' N'];},cur});
+const scenes=[
+ {chap:'',lv:0,st:1,view:CAM.wide,title:['Je rug als hefboom','Van tillen tot tussenwervelschijf · twee keer inzoomen'],lines:[
+  {t:'In bijna elke gymles sjouwen leerlingen met matten, banken en kasten.'},
+  {t:'Wat gebeurt er dan in je onderrug?'},
+  {t:'We zoomen in: van de tiller tot in de tussenwervelschijf.',do:()=>{K.FILM.title=null;}}]},
+ {chap:'1 · De onderrug',lv:0,st:1,view:CAM.model,lines:[
+  {t:'Dit zijn de vijf lendenwervels, L1 tot L5, met daaronder het heiligbeen.'},
+  {t:'Tussen de wervels liggen de tussenwervelschijven. Samen vormen ze een holle boog: de lordose.'},
+  {t:'Achter de wervels lopen de rugstrekkers. Voorin en opzij liggen de buikspieren.'}]},
+ {chap:'2 · Tillen is een hefboom',lv:0,st:2,view:CAM.lifter,steps:LEVSTEPS(()=>[-1,-1,1,0,3][K.FILM.li]),setup:()=>{filmSet({auto:false,phiMax:72,reach:.9,kg:15});},lines:[
+  {t:'Twee leerlingen tillen samen een bank. Kijk naar de getekende hefboom.'},
+  {t:'Het draaipunt ligt in de onderrug, tussen L5 en het heiligbeen.',cam:CAM.lifterClose},
+  {t:'De last hangt op afstand d voor dat draaipunt. Het moment is kracht maal arm.'},
+  {t:'Nu met de bank dicht bij het lichaam, en de romp meer rechtop.',do:()=>filmSet({phiMax:38,reach:.1}),min:4,cam:CAM.lifter},
+  {t:'Beide armen worden korter: die van de last en die van je romp. De drukkracht op de schijf daalt flink.'}]},
+ {chap:'3 · Spieren dragen mee',lv:0,st:2,view:CAM.lifterClose,steps:LEVSTEPS(()=>[2,2,3,-1][K.FILM.li]),setup:()=>{filmSet({auto:true,phiMax:55,reach:.5,kg:15});},lines:[
+  {t:'De rugstrekkers zitten maar een paar centimeter achter het draaipunt. Kijk naar de oranje pijl.'},
+  {t:'Daarom moeten ze veel harder trekken dan de last zwaar is: vaak tien tot twintig keer zo hard.',cam:CAM.back},
+  {t:'Die spierkracht drukt de wervels op elkaar. Zo ontstaat de drukkracht op de schijf.'},
+  {t:'De buikspieren en de diepe rompspieren maken van de romp een stevige koker.',cam:CAM.model}]},
+ {chap:'4 · Het segment',lv:1,st:1,view:CAM.seg,lines:[
+  {t:'We zoomen in op twee wervels en de schijf ertussen: een bewegingssegment.'},
+  {t:'Voorin dragen de wervellichamen het gewicht. Achterin sturen de facetgewrichten de beweging.'},
+  {t:'Banden houden alles bij elkaar, en tussen de wervels loopt een zenuwwortel naar buiten.'}]},
+ {chap:'5 · Buigen en strekken',lv:1,st:2,view:CAM.seg,setup:()=>{L1.auto=true;},lines:[
+  {t:'Buig je voorover, dan wordt de schijf voorin dunner.'},
+  {t:'De kern schuift een klein stukje naar achteren, en de banden achterin komen op spanning.'},
+  {t:'Strek je, dan gebeurt het omgekeerde. De facetgewrichten dragen dan meer.'}]},
+ {chap:'6 · De schijf',lv:2,st:1,view:CAM.disc,lines:[
+  {t:'Nu de schijf zelf. Aan de buitenkant ligt de vezelring.'},
+  {t:'Die bestaat uit vijftien tot vijfentwintig lagen; het model toont er negen. In elke laag lopen de vezels schuin, en in de volgende laag de andere kant op.',cam:CAM.stair},
+  {t:'In het midden zit de kern: een gel die vooral uit water bestaat, vastgehouden door proteoglycanen.',cam:CAM.disc}]},
+ {chap:'7 · Onder druk',lv:2,st:2,view:CAM.disc,steps:{names:['Belasten','Water eruit','Ontlasten','Water erin'],cur:()=>L2.step},setup:()=>{L2.t=0;L2.sp=1;},lines:[
+  {t:'Belast je de rug, dan stijgt de druk in de kern.'},
+  {t:'De kern duwt naar alle kanten. De vezelring wordt opgespannen en bolt een beetje uit.'},
+  {t:'Langzaam wordt er water uit de schijf geperst. Daardoor ben je aan het eind van de dag iets korter.'},
+  {t:'Als je ligt, zuigt de schijf weer water op. De schijf heeft geen bloedvaten en leeft van dit pompen.',min:4}]},
+ {chap:'8 · Scheurtjes',lv:2,st:3,view:CAM.crack,setup:()=>{L2.slowK=4.1;},end:()=>{L2.slowK=1;},lines:[
+  {t:'Wordt een schijf heel vaak tegelijk gebogen, gedraaid en zwaar belast, dan kunnen de binnenste lagen inscheuren.',min:3},
+  {t:'Kernmateriaal dringt de scheurtjes in, laag voor laag naar buiten.',min:3},
+  {t:'Scheurt ook de buitenste laag, dan kan de kern naar buiten lekken.',min:3}]},
+ {chap:'9 · Hernia',lv:1,st:3,view:CAM.segBack,setup:()=>{if(!L1.gPrev)L1.gPrev=S.grade;S.grade=2;K.setState(3);},lines:[
+  {t:'Dat heet een hernia. Meestal gebeurt het achter-opzij, tussen L4 en L5 of tussen L5 en het heiligbeen.',min:5},
+  {t:'Precies daar loopt een zenuwwortel. Drukt de kern erop, dan stuurt de wortel signalen naar de hersenen. Die plaatsen de pijn in het been: ischias.'},
+  {t:'Goed om te weten: veel hernia’s geven geen klachten, en de meeste klachten gaan binnen weken tot maanden over.'},
+  {t:'En bij de meeste mensen met lage rugpijn is er geen duidelijke oorzaak, ook geen hernia.'}]},
+ {chap:'Tot slot',lv:0,st:2,view:CAM.wide,setup:()=>{filmSet({auto:true,phiMax:40,reach:.12,kg:15});},lines:[
+  {t:'Je rug is sterk en mag buigen. Het gaat om de optelsom van last, afstand en herhaling.'},
+  {t:'Houd de last dicht bij je lichaam, draai niet onder een zware last, en til zware spullen met z’n tweeën.'},
+  {t:'Zo bouw je samen de gymzaal op, en zo leer je het je leerlingen.'},
+  {t:'',min:5,do:()=>{K.FILM.title=['Verken het zelf','De Bewegingsatlas · zoom in, van tillen tot tussenwervelschijf'];}}]}];
+
+// beginstand van de lagen en de rustlengte van de banden
+discs0.forEach(d=>d.setOpen(false));disc1.setOpen(true);
+J4.rotation.set(0,0,0);J4.updateMatrix();V4.g.updateMatrix();L1root.updateMatrixWorld(true);
+LIG.forEach(L=>{V5.g.localToWorld(_a.copy(L.a));V4.g.localToWorld(_b.copy(L.b));L.L0=_a.distanceTo(_b);});
+return {levels:[H0,H1,H2],points:P,tags,quiz,layers,
+  film:{scenes,stop(){Object.assign(L0,{auto:true,phiMax:50,reach:.45,kg:15});L1.auto=true;L2.sp=1;L2.slowK=1;
+    // de film zet de hernia op graad 2: zet de keuze van de gebruiker terug
+    if(L1.gPrev){S.grade=L1.gPrev;L1.gPrev=0;}}}};
+ }});
+</script>
+</body>
+</html>

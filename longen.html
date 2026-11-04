@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Longen en ademhaling · Bewegingsatlas</title>
+<meta name="description" content="Halte 3 van De Bewegingsatlas: zoom in op de longen bij inspanning. Van borstkas en middenrif via de luchtwegen en het longblaasje tot de gaswisseling in de rode bloedcel, met spirogram, speurtocht en uitlegfilm.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="atlas3d.css">
+<style>
+#lgHud{display:flex;gap:12px;align-items:center}
+#spiro{width:230px;height:64px;border-radius:8px;background:rgba(0,0,0,.28);border:1px solid var(--line);display:block}
+#lgVals{display:grid;grid-template-columns:auto auto;gap:1px 10px;font:11.5px "JetBrains Mono",monospace;color:var(--muted);white-space:nowrap}
+#lgVals b{color:var(--ink);font-weight:600}
+#lgVals .warn b{color:var(--bad)}
+#ctl b.wv{font:600 12px "JetBrains Mono",monospace;color:var(--gold);min-width:52px}
+#ctl button#bPuff{background:rgba(106,166,220,.18);border-color:rgba(106,166,220,.6);color:#cfe6ff}
+#ctl button#bPuff.on{background:#6aa6dc;color:#0d1820}
+.tg.air{color:#cfeeff;border-color:rgba(160,220,255,.45)}
+.tg.puf{color:#e3d4ff;border-color:rgba(200,170,255,.55)}
+.tg.zone{color:#cfe3ef;background:rgba(10,14,16,.5);border-color:rgba(160,200,230,.35)}
+#capX a,.pb a,.fb a{color:var(--gold);font-weight:600}
+/* bij een aanwijsopdracht wijken de zwevende labels: ze zitten de letters A–D niet in de weg en verklappen niets */
+body.quiz-on:has(.mk.q) .tg{display:none}
+@media (max-width:820px){#spiro{width:150px;height:52px}#lgHud{gap:8px}#lgVals{font-size:10.5px}
+ /* speurtocht op een smal scherm: de HUD wijkt en het paneel zakt naar onder, zodat de letters A–D vrij in beeld liggen */
+ body.quiz-on #hud{display:none}
+ body.quiz-on #quiz{bottom:max(8px,env(safe-area-inset-bottom));max-height:46%}}
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="atlas3d.js"></script>
+<script>
+Atlas3D({
+ id:'longen',halte:3,name:'Longen en ademhaling',docTitle:'Longen en ademhaling · Bewegingsatlas',
+ aria:'3D-zoomreis door de longen: van borstkas en middenrif via de luchtwegen en het longblaasje tot de gaswisseling',
+ loader:['De borstkas wordt opgebouwd…','Van ademteug tot hemoglobine'],seed:3,
+ shadow:{left:-12,right:12,top:12,bottom:-5},
+ levels:[
+  {name:'Borstkas',scale:'30 cm',sc:'BORSTKAS EN LONGEN',title:'Longen en ademhaling',sub:'<i>Thorax, pulmones et diaphragma</i> · op de fietsergometer',
+   view:(innerWidth<innerHeight?[[3.0,6.4,20],[.0,3.5,0]]:[[6.4,6.9,19.5],[.5,4.0,0]]),zoomTo:[-4.75,5.55,.35],s1:'Rust',s2:'Inspanning',s3:'Inspanningsastma',
+   bg:['#2c3a42','#18232a','#0d1316'],fog:0x17222a,hemi:.62,shadows:true},
+  {name:'Luchtwegen',scale:'1 cm',sc:'BRONCHUS EN BRONCHIOLI',title:'De luchtwegen',sub:'<i>Bronchus en bronchioli</i> · kraakbeen, gladde spier en trilhaartjes',
+   view:(innerWidth<innerHeight?[[-1.6,3.6,16.5],[.8,-.1,-.3]]:[[-2.4,3.2,13.8],[1.0,-.2,-.3]]),zoomTo:[7.1,2.75,-.35],s1:'Rust',s2:'Inspanning',s3:'Astma-aanval',
+   bg:['#3a2a2e','#1e1517','#0c0809'],fog:0x1e1517,hemi:.8,drone:true},
+  {name:'Longblaasje',scale:'0,3 mm',sc:'ALVEOLI EN HAARVATEN',title:'Het longblaasje',sub:'<i>Sacculus alveolaris</i> · een druiventros met een net van haarvaten',
+   view:(innerWidth<innerHeight?[[4,2.8,18.5],[.3,0,0]]:[[5.4,3.8,16.5],[.3,0,0]]),zoomTo:[.35,2.6,2.2],s1:'Rust',s2:'Inspanning',s3:'Astma',
+   bg:['#2e2a40','#171523','#09080f'],fog:0x171523,hemi:.85,drone:true},
+  {name:'Gaswisseling',scale:'1 µm',sc:'BLOED-LUCHTBARRIÈRE',title:'De gaswisseling',sub:'<i>Membrana alveolocapillaris</i> · zuurstof naar hemoglobine, koolzuurgas naar buiten',
+   view:(innerWidth<innerHeight?[[.4,1.4,17.5],[0,-.8,0]]:[[1.0,2.2,15.5],[0,-.4,0]]),s1:'Rust',s2:'Inspanning',s3:'Astma',
+   bg:['#1e2c44','#101827','#060910'],fog:0x121a28,hemi:.9,drone:true}],
+ help:{title:'Zo werkt de zoomreis',
+  html:'<p>Je begint bij een <b>borstkas</b> op een standaard in het inspanningslab, vergroot. Ernaast fietst een sporter met een ademmasker. Model en sporter ademen precies gelijk. Met <b>+</b> zoom je in: eerst op de <b>luchtwegen</b> (één centimeter), dan op een <b>longblaasje</b> (0,3 mm) en ten slotte op de <b>gaswisseling</b> (1 µm).</p><ul><li>Het <b>spirogram</b> onderin tekent het longvolume boven de rustpositie: blauw is inademen, oranje is uitademen, rood is uitademen door vernauwde luchtwegen. Zakt de lijn niet meer terug naar de nullijn, dan blijft er lucht achter in de longen. Ernaast zie je ademfrequentie (AF), teugvolume (VT), ademminuutvolume (V̇E) en hartfrequentie (HF).</li><li>Spieren gloeien op als ze werken: middenrif en tussenribspieren bij inademen, buikspieren bij actief uitademen, hulpademhalingsspieren bij zware ademarbeid.</li><li>Kleurcode: <b style="color:#ff9d8c">O₂</b> is rood-oranje, <b style="color:#9cc8ff">CO₂</b> is blauw. Zuurstofarm bloed is donker paarsrood, zuurstofrijk bloed helderrood.</li><li>Klik op een genummerd punt of op het model voor uitleg in vier tabjes.</li></ul><h3>Drie standen</h3><p><b>1 Rust</b>: rustig ademen, uitademen gaat vanzelf. <b>2 Inspanning</b>: kies het vermogen met de schuif (25 tot 350 watt). <b>3 Inspanningsastma</b>: hard fietsen in koude, droge lucht. Na een paar seconden vernauwen de luchtwegen. In het echt duurt dat minuten, en vaak komt het pas na het stoppen. Met de knop <b>Puffer</b> gaan ze weer open. Druk je vóór de aanval op Puffer, dan zie je wat preventief gebruik doet.</p>',
+  states:'Rust · inspanning · inspanningsastma',keys:[['<kbd>M</kbd>','Slow motion']],
+  note:'Vereenvoudigd didactisch model: aantallen, kleuren, verhoudingen en de bewegingen van de ribben zijn aangepast om ze zichtbaar te maken. Waarden zijn ordegroottes voor een getrainde jongvolwassene. Deze halte geeft geen medisch advies: volg bij astma altijd het astmaplan van de leerling en de ouders.'},
+ film:{brand:'LONGEN EN ADEMHALING',blurb:'Hoe je longen inspanning bijhouden · ca. 4 minuten · met stem en ondertitels',file:'longen-uitleg'},
+ quizEnd:'<p>Bespreek de slotvraag met je groep. Probeer daarna in de gymzaal de <b>praattest</b>: laat een tweetal tijdens een duurloop om de beurt een zin hardop zeggen. Lukt dat niet meer, dan zit je boven de ventilatoire drempel. Kijk in <a href="hart.html">het hart</a> waar het bloed uit de longen naartoe gaat, en in <a href="spier.html">de spier</a> waarvoor de zuurstof nodig is.</p>',
+ build(K){
+const {THREE,V,AX,AY,AZ,clamp,lerp,smooth,ease,bump,D2R,TAU,mesh,std,glass,glow,add,orient,segMatrix,placeMatrix,ZERO,inst,tube,lathe,groups,W,S,R,BAND,UCYL,sunflower}=K;
+const _c=new THREE.Color(),_c2=new THREE.Color(),_v=V(0,0,0),_w=V(0,0,0),_a=V(0,0,0),_b=V(0,0,0),_q=new THREE.Quaternion(),_m=new THREE.Matrix4();
+const G0=groups[0],G1=groups[1],G2=groups[2],G3=groups[3];
+const nd=m=>{m.castShadow=false;return m;};
+const fmt=(v,d)=>v.toFixed(d===undefined?1:d).replace('.',',');
+/* ---------- geometrie samenvoegen (voor haarvatnetten) ---------- */
+function merge(geos){let nv=0,ni=0;geos.forEach(g=>{nv+=g.attributes.position.count;ni+=g.index?g.index.count:g.attributes.position.count;});
+  const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3),col=new Float32Array(nv*3),idx=new Uint32Array(ni);let o=0,oi=0;
+  geos.forEach(g=>{const p=g.attributes.position,n=g.attributes.normal,c=g.attributes.color;pos.set(p.array,o*3);nor.set(n.array,o*3);if(c)col.set(c.array,o*3);else col.fill(1,o*3,(o+p.count)*3);
+    if(g.index){for(let i=0;i<g.index.count;i++)idx[oi++]=g.index.array[i]+o;}else{for(let i=0;i<p.count;i++)idx[oi++]=i+o;}o+=p.count;g.dispose();});
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));return g;}
+function tubeColored(pts,r,seg,rs,colFn){const cv=new THREE.CatmullRomCurve3(pts);const g=new THREE.TubeGeometry(cv,seg,r,rs);const n=g.attributes.position.count,col=new Float32Array(n*3);
+  for(let i=0;i<=seg;i++){const c=colFn(i/seg);for(let j=0;j<=rs;j++){const k=(i*(rs+1)+j)*3;col[k]=c.r;col[k+1]=c.g;col[k+2]=c.b;}}g.setAttribute('color',new THREE.BufferAttribute(col,3));return {g,cv};}
+const UB=V(0,1,.25).normalize();
+// een doorgesneden buis waarvan de straal per frame kan veranderen (luchtwegwand)
+function pipe(curve,nS,nT,th0,th1,mat,parent){const fr=[];for(let i=0;i<=nS;i++){const s=i/nS;const P=curve.getPointAt(s),T=curve.getTangentAt(s);const u1=UB.clone().addScaledVector(T,-T.dot(UB)).normalize();const u2=V(0,0,0).crossVectors(T,u1);fr.push({P,T,u1,u2,s});}
+  const pos=new Float32Array((nS+1)*(nT+1)*3),uv=new Float32Array((nS+1)*(nT+1)*2),idx=[];
+  const col=new Float32Array((nS+1)*(nT+1)*3);for(let i=0;i<=nS;i++)for(let j=0;j<=nT;j++){const k=i*(nT+1)+j;uv[k*2]=i/nS;uv[k*2+1]=j/nT;const th=th0+(th1-th0)*j/nT;const sh=.42+.58*Math.pow(Math.abs(Math.cos((th-Math.PI)/2)),.0)*smooth(Math.abs(th-Math.PI)/(Math.PI*.62));col[k*3]=col[k*3+1]=col[k*3+2]=sh;}
+  for(let i=0;i<nS;i++)for(let j=0;j<nT;j++){const a=i*(nT+1)+j,b=a+nT+1;idx.push(a,b,a+1,b,b+1,a+1);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(idx);
+  const m=mesh(g,mat,0,0,0,parent);m.castShadow=false;m.frustumCulled=false;
+  function upd(rf){let k=0;for(let i=0;i<=nS;i++){const F=fr[i];for(let j=0;j<=nT;j++){const th=th0+(th1-th0)*j/nT;const r=rf(F.s,th);const c=Math.cos(th),sn=Math.sin(th);
+      pos[k++]=F.P.x+r*(c*F.u1.x+sn*F.u2.x);pos[k++]=F.P.y+r*(c*F.u1.y+sn*F.u2.y);pos[k++]=F.P.z+r*(c*F.u1.z+sn*F.u2.z);}}
+    g.attributes.position.needsUpdate=true;g.computeVertexNormals();}
+  return {m,upd,fr,curve};}
+function frameAt(curve,s){const P=curve.getPointAt(clamp(s,0,1)),T=curve.getTangentAt(clamp(s,0,1));const u1=UB.clone().addScaledVector(T,-T.dot(UB)).normalize();const u2=V(0,0,0).crossVectors(T,u1);return {P,T,u1,u2};}
+function onRing(F,th,r,out){const c=Math.cos(th),s=Math.sin(th);return out.copy(F.P).addScaledVector(F.u1,r*c).addScaledVector(F.u2,r*s);}
+
+/* ================= het ademmodel (gedeeld door alle niveaus) =================
+   B.vol is het longvolume boven de rustpositie (FRC) in liters. Inademen is een halve cosinus,
+   uitademen een exponentiële terugveer met tijdconstante. Bij vernauwde luchtwegen (B.c) wordt
+   die tijdconstante groot: de uitademing is niet af als de volgende teug begint (air trapping). */
+const NH=420;
+const B={watt:200,f:0,ft:0,rr:12,vt:.5,ve:6,ti:.4,k:4,ph:0,v0:0,v1:0,vol:0,flow:0,insp:true,c:0,cMax:1,attack:false,attT:-1,puffT:-1,prevent:false,hr:65,vo2:.3,cad:0,crank:0,
+  hist:new Float32Array(NH),histIn:new Uint8Array(NH),histC:new Float32Array(NH),hi:0,hAcc:0,ev:{}, hbT:0,tAtt:7,pef:0,pefNow:0,vePeak:6,ext:0,act:{dia:0,ext:0,int:0,abs:0,acc:0}};
+const watt3=260;
+function resetB(n){B.attack=false;B.attT=-1;B.puffT=-1;B.prevent=false;B.cMax=1;if(n!==3)B.c=0;}
+function puffer(){if(S.state!==3||B.puffT>=0)return;B.puffT=S.stT;if(!B.attack)B.prevent=true;SND_puff=true;K.capSet(K.stateText(),B.attack?'<b>Puffer</b>: de luchtwegverwijder wordt ingeademd. Hij ontspant de gladde spiertjes rond de luchtwegen.':'<b>Puffer vooraf</b>: zo gebruiken veel leerlingen hun luchtwegverwijder volgens hun astmaplan, vóór de inspanning.');const b=K.$('#bPuff');if(b)b.classList.add('on');}
+let SND_puff=false;
+function breath(dt){
+  B.ev={};
+  const st=S.state,t=S.stT;
+  // doel-intensiteit
+  if(st===1)B.ft=0;else if(st===2)B.ft=B.watt/350;
+  else{B.ft=watt3/350;
+    if(!B.attack&&t>=B.tAtt){B.attack=true;B.attT=t;B.cMax=B.prevent?.22:1;B.ev.attack=true;K.flash({sound:false,a:.45,shake:.14});}
+    if(B.attack){const u=t-B.attT;let c=B.cMax*smooth(u/5);let p=0;if(B.puffT>=0)p=smooth((t-Math.max(B.puffT,B.attT)-1.2)/5.5);c*=1-.88*p;B.c=c;
+      B.ft=lerp(watt3/350,.5,smooth(u/4)*(B.prevent?.25:1));if(p>0)B.ft=lerp(B.ft,.28,p);}
+    else B.c=0;}
+  if(dt<=0)return;
+  B.f+=(B.ft-B.f)*Math.min(1,dt/2.4);
+  const f=B.f,c=B.c;
+  const vtN=.5+2.3*(1-Math.exp(-2.6*f)),rrN=12+8*f+26*Math.pow(f,2.2);
+  B.vt=vtN*(1-.5*c);B.rr=rrN*(1+.35*c);B.ve=B.vt*B.rr;
+  B.ti=(.4+.1*f)*(1-.3*c);B.k=(4+2*f)*(1-c)+1.1*c;
+  const prev=B.vol;B.ph+=dt*B.rr/60;
+  if(B.ph>=1){B.ph-=1;B.v0=B.vol;B.insp=true;B.ev.in=true;B.pef=B.pefNow;B.pefNow=0;}
+  if(B.ph<B.ti){if(!B.insp){B.insp=true;B.ev.in=true;}B.vol=B.v0+B.vt*(1-Math.cos(Math.PI*B.ph/B.ti))/2;B.v1=B.vol;}
+  else{if(B.insp){B.insp=false;B.ev.out=true;B.v1=B.vol;}B.vol=B.v1*Math.exp(-B.k*(B.ph-B.ti)/(1-B.ti));}
+  B.flow=(B.vol-prev)/dt;if(-B.flow>B.pefNow)B.pefNow=-B.flow;
+  B.ext=Math.max(0,B.v0);// ingesloten lucht (air trapping)
+  B.hr=65+125*f+12*c;B.vo2=.3+3.65*f*(1-.15*c);
+  // spieractiviteit
+  const ins=B.insp?Math.sin(Math.PI*clamp(B.ph/B.ti,0,1)):0,ex=B.insp?0:Math.exp(-3*(B.ph-B.ti)/(1-B.ti));
+  B.act.dia=B.insp?(.3+.7*f)*(.35+.65*ins):.04;B.act.ext=B.insp?(.12+.88*f)*(.3+.7*ins):0;
+  const actEx=clamp((f-.35)/.65,0,1)+.75*c;B.act.int=B.insp?0:clamp(actEx,0,1)*(.3+.7*ex);B.act.abs=B.act.int;
+  B.act.acc=B.insp?clamp(clamp((f-.5)/.5,0,1)+.9*c,0,1)*(.3+.7*ins):0;
+  // trapper
+  let cadT=st===1?0:st===2?70+22*f:(!B.attack?88:lerp(88,0,smooth((t-B.attT-3)/3.5)));if(st===3&&B.puffT>=0&&B.attack)cadT=Math.max(cadT,lerp(0,45,smooth((t-Math.max(B.puffT,B.attT)-4)/4)));
+  B.cad+=(cadT-B.cad)*Math.min(1,dt*1.5);B.crank=(B.crank+dt*B.cad/60*TAU)%TAU;
+  B.hbT+=dt*B.hr/60;if(B.hbT>=1){B.hbT-=1;B.ev.beat=true;}
+  // spirogram
+  B.hAcc+=dt;while(B.hAcc>=1/30){B.hAcc-=1/30;B.hist[B.hi]=B.vol;B.histIn[B.hi]=B.insp?1:0;B.histC[B.hi]=c;B.hi=(B.hi+1)%NH;}
+}
+// geluid van de adem: gedeeld door de niveaus
+function breathSound(api,vol){const f=B.f;if(B.ev.in){const Ti=B.ti*60/B.rr;api.noise(Math.max(.2,Ti*.75),'bandpass',700+500*f,.8,vol*(.05+.12*f),Math.max(.08,Ti*.3),0,1300+500*f);}
+  if(B.ev.out){const Te=(1-B.ti)*60/B.rr;api.noise(Math.max(.25,Te*(.45+.4*B.c)),'bandpass',520+300*f,.7,vol*(.045+.1*f),.06,0,260);}
+  if(B.c>.25&&!B.insp){B._wz=(B._wz||0)+1;if(B._wz%5===0)api.tone(560+90*Math.sin(S.clock*7)+120*B.c,.16,.012+.03*B.c*vol,'triangle');}
+  if(B.ev.attack)api.noise(.5,'highpass',2200,.6,.08,.01);
+  if(SND_puff){SND_puff=false;api.noise(.45,'highpass',3500,.5,.22,.005,0,6000);api.noise(.3,'bandpass',1800,1,.08,.02);}}
+/* ================= NIVEAU 0 · borstkas in het inspanningslab ================= */
+K.base({parent:G0,floor:'lab',plaque:['PULMONES ET THORAX','ademhaling bij inspanning'],plaqueX:-1.2});
+const SX=-3.6;
+const _sd=V(0,0,0),_so=new THREE.Object3D();
+function segM(a,b,w,d){_sd.subVectors(b,a);const L=_sd.length()||1e-5;_sd.divideScalar(L);_so.quaternion.setFromUnitVectors(AY,_sd);_so.position.copy(a);_so.scale.set(w,L,d===undefined?w:d);_so.updateMatrix();return _so.matrix;}
+function bez(a,c,b,t,o){const u=1-t;return o.set(u*u*a.x+2*u*t*c.x+t*t*b.x,u*u*a.y+2*u*t*c.y+t*t*b.y,u*u*a.z+2*u*t*c.z+t*t*b.z);}
+const BM=K.BONE(),CM=std(0xc9e2ea,{roughness:.3}),GHOST=glass(0xefe3c8,.22,{roughness:.5});
+const st0=K.stand({parent:G0,x:SX,z:-.6,h:1.5});
+// bekken als ondergrens van het model: heiligbeen, twee darmbeenschoepen, de bekkenring en de schaambeenderen
+const pelM=std(0xeadcc0,{roughness:.55,side:THREE.DoubleSide});
+{const sh=new THREE.Shape();sh.moveTo(-.38,0);sh.quadraticCurveTo(0,.06,.38,0);sh.quadraticCurveTo(.3,-.45,.1,-.86);sh.quadraticCurveTo(0,-.93,-.1,-.86);sh.quadraticCurveTo(-.3,-.45,-.38,0);
+  const g=new THREE.ExtrudeGeometry(sh,{depth:.26,bevelEnabled:true,bevelThickness:.04,bevelSize:.04,bevelSegments:2,curveSegments:10});g.translate(0,0,-.13);
+  const sac=mesh(g,BM,[SX,2.62,-1.02],[.42,0,0],0,G0);
+  // sacrale foramina als donkere puntjes
+  for(let i=0;i<4;i++)for(const s of [-1,1])mesh(new THREE.SphereGeometry(.035,8,6),std(0x6b5a48,{roughness:.8}),[SX+s*(.15-.02*i),2.5-.17*i,-.83+.075*i],0,[1,1,.4],G0);}
+// darmbeenschoepen: een uitwaaierende schelp per kant, hoog achter en lager voor
+[-1,1].forEach(s=>{const g=new THREE.LatheGeometry([[.5,2.05],[.6,2.2],[.82,2.45],[1.08,2.72],[1.26,2.94],[1.3,3.02]].map(p=>new THREE.Vector2(p[0],p[1])),12,s>0?.12*Math.PI:1.1*Math.PI,.78*Math.PI);
+  const p=g.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);const fr=clamp(z/1.2,-1,1);// voorkant lager
+    p.setY(i,y-(y-2.05)*.32*Math.max(0,fr));p.setZ(i,z*.78);}g.computeVertexNormals();
+  mesh(g,pelM,[SX,0,-.42],0,0,G0);
+  const crest=[];for(let j=0;j<=16;j++){const ph=(s>0?.12:1.1)*Math.PI+.78*Math.PI*j/16;const z=1.3*Math.cos(ph),fr=clamp(z/1.2,-1,1);crest.push(V(SX+1.3*Math.sin(ph),3.02-(3.02-2.05)*.32*Math.max(0,fr),-.42+z*.78));}
+  tube(crest,.055,BM,G0,40,8);
+  // heupkom en schaambeen
+  mesh(new THREE.SphereGeometry(.2,18,12,0,TAU,0,Math.PI/2),pelM,[SX+s*.92,2.0,.02],[0,0,s*Math.PI/2],0,G0);
+  tube([[SX+s*.9,2.12,.12],[SX+s*.62,2.0,.55],[SX+s*.16,1.96,.8]],.075,BM,G0,20,8);
+  tube([[SX+s*.16,1.9,.78],[SX+s*.4,1.74,.5],[SX+s*.55,1.7,.12],[SX+s*.8,1.9,-.08]],.06,BM,G0,20,8);});
+// bekkeningang (linea terminalis) als gesloten ring
+{const cv=new THREE.CatmullRomCurve3([V(SX,2.6,-.92),V(SX+.55,2.42,-.76),V(SX+.82,2.2,-.22),V(SX+.62,2.03,.42),V(SX+.16,1.97,.8),V(SX-.16,1.97,.8),V(SX-.62,2.03,.42),V(SX-.82,2.2,-.22),V(SX-.55,2.42,-.76)],true);mesh(new THREE.TubeGeometry(cv,80,.05,8,true),BM,0,0,0,G0);}
+mesh(new THREE.BoxGeometry(.1,.14,.12),CM,[SX,1.97,.82],0,0,G0);// schaambeenvoeg
+// houder: de standaard draagt het bekken bij het heiligbeen
+{const m=mesh(BAND,K.ENV.metal,0,0,0,G0);orient(m,V(SX,1.76,-.6),V(SX,2.2,-1.05),.05);mesh(new THREE.CylinderGeometry(.16,.16,.05,20),K.ENV.dark,[SX,1.79,-.6],0,0,G0);}
+// wervelkolom: lende, borst, hals. Wervellichaam, tussenwervelschijf, wervelboog, doornuitsteeksel en dwarsuitsteeksels
+const VERT=[];for(let i=0;i<5;i++)VERT.push({y:2.72+i*.27,r:.3,h:.2,z:-.95,k:'L'});for(let i=0;i<12;i++){const y=4.08+i*.335;VERT.push({y,r:.22,h:.22,z:-1.18-.16*Math.sin(Math.PI*i/11),k:'T'});}for(let i=0;i<7;i++)VERT.push({y:8.1+i*.19,r:.15,h:.13,z:-1.0+.08*Math.sin(Math.PI*i/6),k:'C'});
+const coneG=new THREE.ConeGeometry(1,1,10).translate(0,.5,0),archG=new THREE.TorusGeometry(1,.3,6,14,Math.PI);
+const VB=inst(new THREE.CylinderGeometry(1,1,1,18),BM,VERT.length),VS=inst(coneG,BM,VERT.length),VTP=inst(coneG,BM,VERT.length*2),VA=inst(archG,BM,VERT.length),VD=inst(new THREE.CylinderGeometry(1,1,1,18),CM,VERT.length);
+{const qd=new THREE.Quaternion();VERT.forEach((v,i)=>{VB.setMatrixAt(i,placeMatrix(V(SX,v.y,v.z),[0,0,0],[v.r,v.h,v.r*.85]));
+  const ar=v.r*.55,az=v.z-v.r*.55;VA.setMatrixAt(i,placeMatrix(V(SX,v.y,az),[-Math.PI/2,0,0],[ar,ar,v.h*1.6]));
+  const dS=v.k==='L'?V(0,-.12,-1):v.k==='T'?V(0,-.62,-.78):V(0,-.3,-.95),lS=v.k==='L'?.3:v.k==='T'?.36:.16;qd.setFromUnitVectors(AY,dS.normalize());
+  _so.position.set(SX,v.y,az-ar*.9);_so.quaternion.copy(qd);_so.scale.set(v.k==='C'?.035:.05,lS,v.k==='L'?.11:.07);_so.updateMatrix();VS.setMatrixAt(i,_so.matrix);
+  [-1,1].forEach((s,j)=>{const dT=V(s*.85,v.k==='T'?.05:-.05,-.5).normalize();qd.setFromUnitVectors(AY,dT);_so.position.set(SX+s*ar*.8,v.y,az-ar*.2);_so.quaternion.copy(qd);_so.scale.set(.05,v.k==='L'?.34:v.k==='T'?.26:.12,.05);_so.updateMatrix();VTP.setMatrixAt(i*2+j,_so.matrix);});
+  VD.setMatrixAt(i,placeMatrix(V(SX,v.y+v.h*.5+.025,v.z),[0,0,0],[v.r*.92,.05,v.r*.8]));});}
+[VB,VS,VTP,VA,VD].forEach(m=>{m.instanceMatrix.needsUpdate=true;G0.add(m);});
+// schedel als spookbeeld (aanhechting van de m. sternocleidomastoideus)
+// ribben: een buis per rib die draait rond een as door de rib-wervelgewrichten
+const RA=[.85,1.3,1.62,1.85,2.0,2.1,2.15,2.15,2.08,1.95,1.7,1.45],RBb=[.75,.95,1.1,1.22,1.3,1.36,1.4,1.42,1.4,1.36,1.25,1.1];
+const RIB=[];
+function ribLoc(Rb,phi,o,sc){sc=sc||1;return o.set(Rb.s*Rb.a*sc*Math.sin(phi),-Rb.d*Math.pow(phi/Math.PI,1.4),Rb.b*sc*(1-Math.cos(phi)));}
+function ribPt(Rb,phi,o,sc){ribLoc(Rb,phi,o,sc).applyQuaternion(Rb.q);return o.add(Rb.P);}
+const ribGrp=new THREE.Group();G0.add(ribGrp);
+for(let i=0;i<12;i++)for(const s of [-1,1]){const Rb={i,s,a:RA[i]-.24,b:RBb[i],d:.35+.07*i,pe:(i<7?.8:i<10?.72:.55)*Math.PI,P:V(SX+s*.24,7.75-i*.335,-1.3),q:new THREE.Quaternion()};
+  const k=.05+.85*i/11;Rb.axis=V(-(1-k),0,s*k).normalize();const g=new THREE.Group();g.position.copy(Rb.P);ribGrp.add(g);Rb.g=g;
+  const pts=[];for(let j=0;j<=24;j++)pts.push(ribLoc(Rb,Rb.pe*j/24,V(0,0,0)));tube(pts,.062+.012*Math.sin(Math.PI*i/11),BM,g,40,7);RIB.push(Rb);}
+const ribOf=(i,s)=>RIB[i*2+(s>0?1:0)];
+// borstbeen en kraakbeen
+const SP=[];for(let i=0;i<7;i++)SP.push(V(SX,7.75-i*.335-(.35+.07*i)*1.05-.04,-1.3+2*RBb[i]*.99+.06));
+// borstbeen als één gebogen plaat: schildvormig handvat (manubrium), taps lichaam (corpus) en een puntig zwaardvormig aanhangsel
+const STN={P:Array.from({length:9},()=>V(0,0,0)),L:new Float32Array(9)};
+function sternPath(src){const P=STN.P;P[0].copy(src[0]).add(_w.set(0,.34,-.07));for(let i=0;i<7;i++)P[i+1].copy(src[i]);P[8].copy(src[6]).add(_w.set(0,-.46,.06));STN.L[0]=0;for(let i=1;i<9;i++)STN.L[i]=STN.L[i-1]+P[i].distanceTo(P[i-1]);}
+sternPath(SP);const sA0=STN.L[2]-.03,s60=STN.L[7],sE0=STN.L[8];
+function sternHW(s){if(s<sA0){const u=s/sA0;return lerp(.37,.19,smooth((u-.3)/.7));}if(s<s60){const u=(s-sA0)/(s60-sA0);return .17+.09*Math.pow(Math.sin(Math.PI*clamp(u*1.05,0,1)),.8);}const u=clamp((s-s60)/(sE0-s60),0,1);return .1*Math.pow(1-u,.7)+.012;}
+const sternGeo=(()=>{const sh=new THREE.Shape(),N=44;const R=[];for(let i=0;i<=N;i++){const s=.02+(sE0-.02)*i/N;R.push([sternHW(s),-s]);}
+  sh.moveTo(-.37,-.02);sh.quadraticCurveTo(-.12,-.02,0,-.1);sh.quadraticCurveTo(.12,-.02,.37,-.02);R.forEach(p=>sh.lineTo(p[0],p[1]));sh.lineTo(0,-sE0-.03);for(let i=R.length-1;i>=0;i--)sh.lineTo(-R[i][0],R[i][1]);
+  const g=new THREE.ExtrudeGeometry(sh,{depth:.08,bevelEnabled:true,bevelThickness:.025,bevelSize:.025,bevelSegments:2,curveSegments:6});return g;})();
+const stBase=sternGeo.attributes.position.array.slice();
+const stern=mesh(sternGeo,BM,0,0,0,G0);stern.frustumCulled=false;
+const _sT=V(0,0,0),_sN=V(0,0,0),_sP=V(0,0,0);
+function sternAt(s,P,T){const L=STN.L;let i=1;while(i<8&&L[i]<s)i++;const u=clamp((s-L[i-1])/Math.max(1e-4,L[i]-L[i-1]),0,1);P.lerpVectors(STN.P[i-1],STN.P[i],u);
+  const a=Math.max(1,i-1),b=Math.min(8,i);T.subVectors(STN.P[b],STN.P[a-1]).normalize();return P;}
+function updStern(){sternPath(spD);const p=sternGeo.attributes.position.array,k=STN.L[8]/sE0;
+  for(let i=0;i<p.length;i+=3){const x=stBase[i],s=clamp(-stBase[i+1],0,sE0)*k,z=stBase[i+2];sternAt(s,_sP,_sT);_sN.set(0,_sT.z,-_sT.y).normalize();
+    p[i]=_sP.x+x;p[i+1]=_sP.y+_sN.y*(z-.04-.1*x*x);p[i+2]=_sP.z+_sN.z*(z-.04-.1*x*x);}
+  sternGeo.attributes.position.needsUpdate=true;sternGeo.computeVertexNormals();}
+const CART=inst(UCYLg(),CM,10*2*7);G0.add(CART);
+function UCYLg(){return new THREE.CylinderGeometry(1,1,1,8,1).translate(0,.5,0);}
+const spD=SP.map(()=>V(0,0,0)),cartB=[];for(let i=0;i<10;i++)for(const s of [-1,1])cartB.push({i,s,a:V(0,0,0),c:V(0,0,0),b:V(0,0,0)});
+// tussenribspieren (extern en intern), middenrifkoepel, longen
+const IEXT=inst(UCYLg(),glow(0xa5402f,0xff3a1a,0),11*2*9),IINT=inst(UCYLg(),glow(0x8a3428,0xff5a2a,0),11*2*9);G0.add(IEXT);G0.add(IINT);
+const DIA={nr:16,np:56,cx:SX,cz:-.1,ax:2.05,az:1.35};
+const diaGeo=new THREE.BufferGeometry();const diaPos=new Float32Array((DIA.nr+1)*(DIA.np+1)*3),diaCol=new Float32Array((DIA.nr+1)*(DIA.np+1)*3);const diaIdx=[];
+for(let i=0;i<DIA.nr;i++)for(let j=0;j<DIA.np;j++){const a=i*(DIA.np+1)+j,b=a+DIA.np+1;diaIdx.push(a,b,a+1,b,b+1,a+1);}
+for(let i=0;i<=DIA.nr;i++)for(let j=0;j<=DIA.np;j++){const rho=i/DIA.nr,ph=j/DIA.np*TAU,k=(i*(DIA.np+1)+j)*3;const x=Math.sin(ph)*rho,z=Math.cos(ph)*rho;
+  const tri=rho<.42+.12*Math.cos(3*ph+.4);const fib=.86+.14*Math.sin(ph*70);if(tri){diaCol[k]=.86;diaCol[k+1]=.84;diaCol[k+2]=.8;}else{diaCol[k]=.68*fib;diaCol[k+1]=.24*fib;diaCol[k+2]=.19*fib;}}
+diaGeo.setAttribute('position',new THREE.BufferAttribute(diaPos,3));diaGeo.setAttribute('color',new THREE.BufferAttribute(diaCol,3));diaGeo.setIndex(diaIdx);
+const diaMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.5,side:THREE.DoubleSide,emissive:0xff3010,emissiveIntensity:0});
+const diaM=mesh(diaGeo,diaMat,0,0,0,G0);diaM.frustumCulled=false;
+const crura=[-1,1].map(s=>{const m=mesh(BAND,std(0x9c3a2c,{roughness:.5}),0,0,0,G0);orient(m,V(SX+s*.32,3.75,-.95),V(SX+s*.14,3.0,-.82),.1,.07);return m;});
+function updDia(desc){let k=0;for(let i=0;i<=DIA.nr;i++)for(let j=0;j<=DIA.np;j++){const rho=i/DIA.nr,ph=j/DIA.np*TAU;const x=DIA.ax*rho*Math.sin(ph),z=DIA.az*rho*Math.cos(ph);
+  const e=3.85+.38*Math.cos(ph),w=1-rho*rho;let y=e+.95*Math.pow(w,.8)+.22*Math.exp(-((x+.95)*(x+.95)+z*z)/.5)+.12*Math.exp(-((x-.95)*(x-.95)+z*z)/.5)-desc*Math.pow(w,.6);
+  diaPos[k++]=DIA.cx+x;diaPos[k++]=y;diaPos[k++]=DIA.cz+z;}diaGeo.attributes.position.needsUpdate=true;diaGeo.computeVertexNormals();}
+const lungTex=K.canvasTex(512,256,(x,w,h)=>{x.fillStyle='#e7a6a2';x.fillRect(0,0,w,h);for(let i=0;i<2600;i++){const r=2+R()*7;x.fillStyle=`rgba(${150+R()*60|0},${70+R()*40|0},${80+R()*40|0},${.12+R()*.18})`;x.beginPath();x.arc(R()*w,R()*h,r,0,TAU);x.fill();}
+  x.strokeStyle='rgba(120,60,70,.35)';x.lineWidth=1;for(let i=0;i<120;i++){x.beginPath();let px=R()*w,py=R()*h;x.moveTo(px,py);for(let j=0;j<4;j++){px+=(R()-.5)*40;py+=(R()-.5)*40;x.lineTo(px,py);}x.stroke();}});
+const LUNG=[-1,1].map(s=>{const g=new THREE.SphereGeometry(1,44,30);const p=g.attributes.position;const base=new Float32Array(p.array.length);const hil=5.55,cx=SX+s*1.12,cz=-.15;
+  for(let i=0;i<p.count;i++){const ux=p.getX(i),uy=p.getY(i),uz=p.getZ(i);let y=uy>0?hil+uy*2.35:hil-1.75*Math.pow(-uy,.55)+1.2*Math.pow(Math.max(0,-uy),3);
+    let x=ux*.94*(uy>0?1-.66*Math.pow(uy,1.15):1),z=uz*1.22*(uy>0?1-.45*Math.pow(uy,1.3):1);if(ux*s<0)x*=s>0?.42:.55;if(s>0&&ux<0&&uz>0&&uy<.2)x*=.6;
+    base[i*3]=cx+x;base[i*3+1]=y;base[i*3+2]=cz+z;}p.array.set(base);g.computeVertexNormals();
+  const mat=std(0xffffff,{map:lungTex,roughness:.75,transparent:true,opacity:.62,depthWrite:false,emissive:0x3a0a12,emissiveIntensity:.25});
+  const m=mesh(g,mat,0,0,0,G0);m.castShadow=false;m.renderOrder=2;m.frustumCulled=false;
+  const pl=new THREE.Mesh(g,glass(0xcfe8f2,.14));pl.scale.setScalar(1.05);pl.position.set(-cx*.05,-hil*.05,-cz*.05);pl.renderOrder=3;G0.add(pl);
+  return {s,g,base,m,pl,cx,cz,hil};});
+function updLungs(kx,kz,ky){LUNG.forEach(L=>{const p=L.g.attributes.position.array,b=L.base;for(let i=0;i<p.length;i+=3){const y0=b[i+1];const lo=clamp((L.hil-y0)/1.8,0,1),hi=clamp((y0-L.hil+1)/3.2,0,1);
+  p[i]=L.cx+(b[i]-L.cx)*(1+kx*(.35+.65*lo));p[i+2]=L.cz+(b[i+2]-L.cz)*(1+kz*(.45+.55*hi));p[i+1]=y0<L.hil?L.hil+(y0-L.hil)*(1+ky):y0+(y0-L.hil)*ky*.08;}L.g.attributes.position.needsUpdate=true;});}
+// luchtpijp met C-vormige kraakbeenringen, hoofdbronchiën en bronchiënboom
+const TR={top:V(SX,9.15,-.42),car:V(SX,6.55,-.5)};
+const trachea=mesh(new THREE.CylinderGeometry(.19,.2,TR.top.y-TR.car.y,20,1,true),glass(0xf0d6cc,.55),[SX,(TR.top.y+TR.car.y)/2,-.46],0,0,G0);
+const ringG=new THREE.TorusGeometry(.215,.035,6,24,1.5*Math.PI);const TRR=inst(ringG,CM,16);G0.add(TRR);
+{const qX=new THREE.Quaternion().setFromAxisAngle(AX,-Math.PI/2),qY=new THREE.Quaternion().setFromAxisAngle(AY,3*Math.PI/4);const q=new THREE.Quaternion().multiplyQuaternions(qY,qX);for(let i=0;i<16;i++)TRR.setMatrixAt(i,placeMatrix(V(SX,6.75+i*.15,-.46),q,1));TRR.instanceMatrix.needsUpdate=true;}
+const airMat=std(0xead2c8,{roughness:.4,emissive:0xff2a10,emissiveIntensity:0});
+const treeGeos=[];
+function branch(a,dir,len,r,depth,s){const b=a.clone().addScaledVector(dir,len);const cv=new THREE.LineCurve3(a,b);treeGeos.push(new THREE.TubeGeometry(cv,1,r,6,false));
+  if(depth<=0)return;for(const sg of [-1,1]){const d=dir.clone();const ax=V(0,0,1).cross(d).normalize();if(ax.lengthSq()<.01)ax.set(1,0,0);d.applyAxisAngle(ax,sg*(.42+R()*.25));d.applyAxisAngle(dir,(R()-.5)*1.6);
+    d.y-=.25;d.x+=s*.12;d.normalize();branch(b,d,len*(.72+R()*.12),r*.7,depth-1,s);}}
+const hila=[V(SX-1.0,5.95,-.4),V(SX+1.08,6.02,-.45)];
+[-1,1].forEach((s,j)=>{const h=hila[j];const mb=mesh(BAND,airMat,0,0,0,G0);orient(mb,TR.car,h,.13);
+  branch(h,V(s*.3,-.8,.15).normalize(),.75,.1,3,s);branch(h,V(s*.55,.75,.1).normalize(),.6,.085,2,s);branch(h,V(s*.75,-.25,.45).normalize(),.6,.085,3,s);});
+const treeM=mesh(merge(treeGeos),airMat,0,0,0,G0);treeM.castShadow=false;
+// hart met grote vaten (de kleine bloedsomloop begint hier)
+// hart: kegelvormig met de punt naar linksonder-voor; boezems donkerder, vetrijke groeven met kransvaten
+const heartG=(()=>{const g=new THREE.SphereGeometry(.7,40,28),p=g.attributes.position,col=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const u=y/.7;const tap=.36+.64*smooth((u+1.08)/1.4);
+    const ax=x/.7,az=z/.7;x*=tap*(1+.08*Math.max(0,u));z*=tap*.86;y*=1.28;if(u>.45){x*=1+.12*(u-.45);}
+    p.setXYZ(i,x,y,z);
+    let r=.46,gg=.1,b=.09;if(u>.42){r=.36;gg=.08;b=.13;}// boezems
+    const cg=Math.exp(-Math.pow((u-.4)/.045,2)),ig=az>0?Math.exp(-Math.pow((ax-(.12-.3*(u-.4)))/.07,2))*(u<.42?1:0):0;
+    const fat=Math.max(cg,ig*.9);r=lerp(r,.86,fat);gg=lerp(gg,.68,fat);b=lerp(b,.38,fat);
+    const art=Math.exp(-Math.pow((ax-(.12-.3*(u-.4)))/.022,2))*(az>0&&u<.4?1:0)+Math.exp(-Math.pow((u-.4)/.012,2));if(art>.4){r=.72;gg=.12;b=.08;}
+    col[i*3]=r;col[i*3+1]=gg;col[i*3+2]=b;}
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();return g;})();
+const heartM=mesh(heartG,std(0xffffff,{vertexColors:true,roughness:.38,emissive:0x3a0604,emissiveIntensity:.3}),[SX+.4,5.0,.42],[-.35,.25,.55],[1,1,.9],G0);
+const aorta=tube([[SX+.25,5.5,.4],[SX+.1,6.6,.1],[SX+.35,6.85,-.55],[SX+.38,6.2,-1.0],[SX+.32,4.2,-1.02]],.13,std(0xc0392b,{roughness:.35}),G0,40);
+const pulmT=tube([[SX+.55,5.45,.7],[SX+.3,6.05,.35],[SX-.1,6.12,-.1],[SX-.85,5.85,-.25]],.11,std(0x4a5bb0,{roughness:.35}),G0,30);
+const pulmL=tube([[SX+.3,6.05,.35],[SX+.75,6.15,-.05],[SX+1.0,5.95,-.25]],.1,std(0x4a5bb0,{roughness:.35}),G0,20);
+// sleutelbeenderen
+const CLAV=[-1,1].map(s=>tube([[SX+s*.28,7.62,.24],[SX+s*.9,7.82,.18],[SX+s*1.75,8.0,-.3]],.07,BM,G0,20));
+// hulpademhalingsspieren en buikspieren (dynamisch, glimmen als ze werken)
+const accMat=glow(0xae4535,0xff4a1a,0);
+const SCM=[-1,1].map(()=>mesh(BAND,accMat,0,0,0,G0)),SCAL=[[-1,0],[-1,1],[1,0],[1,1]].map(()=>mesh(BAND,accMat,0,0,0,G0));
+// rechte buikspier: één doorlopende band per kant, met drie peesopschriften (de 'six-pack') en de witte lijn aan de binnenrand
+const rectTex=K.canvasTex(128,512,(x,w,h)=>{x.fillStyle='#a8574a';x.fillRect(0,0,w,h);for(let i=0;i<220;i++){const px=R()*w;x.strokeStyle=`rgba(${R()<.5?110:215},${R()<.5?50:130},${R()<.5?45:115},${.12+R()*.16})`;x.lineWidth=1+R()*2;x.beginPath();x.moveTo(px,0);x.lineTo(px+(R()-.5)*8,h);x.stroke();}
+  x.fillStyle='rgba(240,226,206,.95)';[.2,.38,.56].forEach(t=>{x.beginPath();x.moveTo(0,t*h-5);for(let k=0;k<=8;k++)x.lineTo(k/8*w,t*h-5+Math.sin(k*1.3+t*9)*4);for(let k=8;k>=0;k--)x.lineTo(k/8*w,t*h+5+Math.sin(k*1.1+t*7)*4);x.fill();});
+  x.fillStyle='rgba(245,236,220,.95)';x.fillRect(0,0,9,h);x.fillStyle='rgba(0,0,0,.18)';x.fillRect(w-6,0,6,h);});
+const absMat=std(0xffffff,{map:rectTex,roughness:.5,side:THREE.DoubleSide,emissive:0xff4a1a,emissiveIntensity:0});
+const RNU=24,RNV=6;const rectGeo=new THREE.BufferGeometry();{const n=2*(RNU+1)*(RNV+1),uv=new Float32Array(n*2),idx=[];
+  for(let s=0;s<2;s++)for(let i=0;i<=RNU;i++)for(let j=0;j<=RNV;j++){const k=s*(RNU+1)*(RNV+1)+i*(RNV+1)+j;uv[k*2]=j/RNV;uv[k*2+1]=1-i/RNU;if(i<RNU&&j<RNV){const a=k,b=k+RNV+1;idx.push(a,b,a+1,b,b+1,a+1);}}
+  rectGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(n*3),3));rectGeo.setAttribute('uv',new THREE.BufferAttribute(uv,2));rectGeo.setIndex(idx);}
+const RECT=mesh(rectGeo,absMat,0,0,0,G0);RECT.frustumCulled=false;
+const TAB=mesh(new THREE.CylinderGeometry(1.75,1.55,1.85,44,1,true,-Math.PI*.55,Math.PI*1.1),glass(0xd88a7c,.2,{emissive:0xff4a1a,emissiveIntensity:0}),[SX,3.35,-.35],0,[1,1,1],G0);TAB.castShadow=false;
+/* ---------- de fietsergometer en de sporter ---------- */
+const ERG=new THREE.Group();ERG.position.set(3.3,.08,-1.1);ERG.rotation.y=-Math.PI/2;G0.add(ERG);
+const EM=K.ENV.metal,ED=K.ENV.dark,ER=std(0xc8452e,{roughness:.45,metalness:.3});
+const eb=(a,b,r,m)=>{const x=mesh(BAND,m||ER,0,0,0,ERG);orient(x,V(...a),V(...b),r);return x;};
+eb([0,.05,-.6],[0,.05,.75],.05,ED);eb([-.3,.05,-.6],[.3,.05,-.6],.045,ED);eb([-.3,.05,.75],[.3,.05,.75],.045,ED);
+eb([0,.05,-.35],[0,1.0,-.18],.055);eb([0,.05,.5],[0,1.18,.6],.055);eb([0,.42,.22],[0,.62,.55],.05);eb([0,.42,.22],[0,.55,-.25],.05);
+mesh(new THREE.BoxGeometry(.22,.06,.34),std(0x1d1f24,{roughness:.8}),[0,1.04,-.17],0,0,ERG);
+eb([-.24,1.22,.64],[.24,1.22,.64],.03,ED);eb([0,1.18,.6],[0,1.22,.64],.04,EM);
+const fly=mesh(new THREE.CylinderGeometry(.3,.3,.07,32),EM,[0,.42,.62],[0,0,Math.PI/2],0,ERG);
+mesh(new THREE.BoxGeometry(.1,.5,.62),ER,[0,.45,.62],0,0,ERG);
+const crank=new THREE.Group();crank.position.set(0,.42,.22);ERG.add(crank);
+mesh(new THREE.CylinderGeometry(.12,.12,.04,24),EM,[0,0,0],[0,0,Math.PI/2],0,crank);
+const crA=[-1,1].map(s=>{const g=new THREE.Group();g.position.x=s*.13;crank.add(g);mesh(new THREE.BoxGeometry(.03,.04,.17),EM,[0,0,.085],0,0,g);const pd=mesh(new THREE.BoxGeometry(.1,.025,.08),ED,[s*.05,0,.17],0,0,g);return {g,pd};});
+// display op de ergometer
+const ergTex=K.canvasTex(128,64,(x,w,h)=>{x.fillStyle='#10241c';x.fillRect(0,0,w,h);});
+mesh(new THREE.BoxGeometry(.2,.13,.04),ED,[0,1.32,.6],[-.5,0,0],0,ERG);mesh(new THREE.PlaneGeometry(.17,.1),std(0xffffff,{map:ergTex,emissive:0x2a6a4a,emissiveIntensity:.6}),[0,1.33,.585],[-.5+Math.PI,0,Math.PI],0,ERG);
+const F=K.figure({parent:G0,pos:[3.3,.08,-1.1],rotY:-Math.PI/2,shirt:0x2f7377,shorts:0x1d1f24});
+// ademmasker
+const maskM=std(0x2b2f33,{roughness:.6});mesh(new THREE.CylinderGeometry(.045,.085,.12,16),maskM,[0,-.05,.13],[Math.PI/2,0,0],0,F.head);
+mesh(new THREE.TorusGeometry(.13,.012,6,24),maskM,[0,-.01,0],[Math.PI/2-.3,0,0],[1,1.1,1],F.head);
+mesh(new THREE.CylinderGeometry(.03,.03,.06,10),std(0x6aa6dc),[0,-.06,.2],[Math.PI/2,0,0],0,F.head);
+const chest=F.torso.children[1];
+// metabole kar met scherm (ademgasanalyse)
+const CART0=new THREE.Group();CART0.position.set(7.35,.08,-2.6);CART0.rotation.y=-.55;G0.add(CART0);
+mesh(new THREE.BoxGeometry(1.0,.9,.7),std(0xdfe3e6,{roughness:.45}),[0,.75,0],0,0,CART0);mesh(new THREE.BoxGeometry(1.06,.06,.76),ED,[0,.28,0],0,0,CART0);
+[[-.4,-.28],[.4,-.28],[-.4,.28],[.4,.28]].forEach(p=>mesh(new THREE.CylinderGeometry(.08,.08,.06,14),ED,[p[0],.1,p[1]],[Math.PI/2,0,0],0,CART0));
+mesh(new THREE.CylinderGeometry(.05,.05,1.0,10),EM,[0,1.7,-.25],0,0,CART0);
+mesh(new THREE.BoxGeometry(1.15,.75,.06),ED,[0,2.25,-.2],[-.12,0,0],0,CART0);
+const scrC=document.createElement('canvas');scrC.width=320;scrC.height=200;const scrX=scrC.getContext('2d');const scrT=new THREE.CanvasTexture(scrC);scrT.encoding=THREE.sRGBEncoding;
+const screen=mesh(new THREE.PlaneGeometry(1.05,.66),new THREE.MeshBasicMaterial({map:scrT,toneMapped:false}),[0,2.25,-.165],[-.12,0,0],0,CART0);screen.castShadow=false;
+mesh(new THREE.CylinderGeometry(.13,.13,1.5,20),std(0xd9dde0,{metalness:.4,roughness:.35}),[.75,.8,.15],0,0,CART0);mesh(new THREE.CylinderGeometry(.06,.08,.12,14),EM,[.75,1.6,.15],0,0,CART0);
+const HOSE=inst(UCYLg(),std(0x6aa6dc,{roughness:.4,transparent:true,opacity:.85}),16);G0.add(HOSE);
+const VAP=new THREE.InstancedMesh(new THREE.SphereGeometry(1,10,8),new THREE.MeshBasicMaterial({color:0xf4f8ff,transparent:true,opacity:.2,depthWrite:false}),40);VAP.frustumCulled=false;VAP.castShadow=false;G0.add(VAP);
+const vapD=[];for(let i=0;i<40;i++)vapD.push({t:9,p:V(0,0,0),v:V(0,0,0),s:.05});let vapI=0;
+const hoseEnd=V(0,0,0);CART0.updateMatrixWorld(true);CART0.localToWorld(hoseEnd.set(-.45,1.05,.36));
+// vaste ankerpunten
+W.trach=V(SX+.24,8.2,-.3);W.dia=V(SX-1.25,4.6,.6);W.ic=V(SX-1.9,5.9,.6);W.pleura=V(SX+1.95,6.2,.3);W.acc=V(SX-.5,8.75,-.4);W.abs=V(SX+.3,3.3,1.6);W.sport=V(4.3,1.9,.7);W.heart=V(SX+.6,5.3,1.0);
+/* ---------- niveau 0 bijwerken ---------- */
+const CRK={y:.42,z:.22,r:.17},PY=1.17,PZ=-.13;
+function ik2(dz,dy,A,Bl){const L=clamp(Math.hypot(dz,dy),.25,A+Bl-.005);const be=Math.atan2(dz,-dy);const ga=Math.acos(clamp((A*A+L*L-Bl*Bl)/(2*A*L),-1,1));const ka=Math.acos(clamp((A*A+Bl*Bl-L*L)/(2*A*Bl),-1,1));return {be,ga,ka};}
+function legIK(c){const pz=CRK.z+CRK.r*Math.cos(c),py=CRK.y-CRK.r*Math.sin(c);const r=ik2(pz-.03-PZ,py+.11-(PY-.02),F.A,F.B);const hip=-(r.be+r.ga),kn=Math.PI-r.ka;return {hip,kn,an:-(hip+kn)+.12*Math.sin(c)};}
+function armIK(lean,s){// stuur in romp-assen
+  const tz=.62-PZ,ty=1.24-(PY+.04);const cz=Math.cos(lean),sz=Math.sin(lean);const lz=tz*cz-ty*sz,ly=tz*sz+ty*cz;const r=ik2(lz,ly-.55,.32,.33);return {sh:[-(r.be-r.ga),0,s*-.12],el:-(Math.PI-r.ka)};}
+let scrN=0,ergN=0;
+function drawSpiro(x,w,h,big){x.clearRect(0,0,w,h);if(big){x.fillStyle='#0b1820';x.fillRect(0,0,w,h);}
+  const top=big?34:6,bot=h-(big?24:6),vmax=4.2,Y=v=>bot-(bot-top)*clamp(v/vmax,0,1);
+  x.strokeStyle='rgba(255,255,255,.09)';x.lineWidth=1;x.fillStyle='rgba(241,233,218,.5)';x.font=(big?'600 13px':'600 18px')+' "JetBrains Mono",monospace';
+  for(let l=1;l<=4;l++){const y=Y(l)|0;x.beginPath();x.moveTo(0,y+.5);x.lineTo(w,y+.5);x.stroke();if(big||l%2===0)x.fillText(l+' L',3,y-2);}
+  x.lineWidth=big?3:3.5;x.lineJoin='round';let cur=-1;x.beginPath();
+  for(let i=0;i<NH;i++){const k=(B.hi+i)%NH;const col=B.histIn[k]?0:B.histC[k]>.3?2:1;const px=i/(NH-1)*w,py=Y(B.hist[k]);
+    if(col!==cur){if(cur>=0){x.lineTo(px,py);x.stroke();}x.strokeStyle=['#7cc8ff','#f0b060','#ff6a55'][col];x.beginPath();x.moveTo(px,py);cur=col;}else x.lineTo(px,py);}
+  x.stroke();
+  if(big){x.fillStyle='#e6b65e';x.font='600 15px "JetBrains Mono",monospace';x.fillText('V̇E '+Math.round(B.ve)+' L/min',8,20);x.fillStyle='#cfe6ff';x.fillText('AF '+Math.round(B.rr)+'  VT '+fmt(B.vt)+' L',150,20);
+    x.fillStyle='rgba(241,233,218,.6)';x.font='600 11px "JetBrains Mono",monospace';x.fillText('VO₂ '+fmt(B.vo2)+' L/min   HF '+Math.round(B.hr),8,h-7);}}
+function updL0(dt){const f=B.f,vol=Math.max(0,B.vol);
+  const th=.035*vol+.032*vol*f,desc=Math.min(1.15,.27*vol);
+  RIB.forEach(Rb=>{Rb.q.setFromAxisAngle(Rb.axis,th*(.75+.45*Rb.i/11));Rb.g.quaternion.copy(Rb.q);});
+  for(let i=0;i<7;i++){const rR=ribOf(i,-1),rL=ribOf(i,1);_a.copy(SP[i]).sub(rR.P).applyQuaternion(rR.q).add(rR.P);_b.copy(SP[i]).sub(rL.P).applyQuaternion(rL.q).add(rL.P);spD[i].copy(_a).add(_b).multiplyScalar(.5);}
+  updStern();
+  let k=0;cartB.forEach(cb=>{const Rb=ribOf(cb.i,cb.s);ribPt(Rb,Rb.pe,cb.a);if(cb.i<7)cb.b.copy(spD[cb.i]).add(_w.set(cb.s*.1,0,0));else{const pv=cartB[(cb.i-1)*2+(cb.s>0?1:0)];bez(pv.a,pv.c,pv.b,.42,cb.b);cb.b.y-=.05;}
+    cb.c.copy(cb.a).add(cb.b).multiplyScalar(.5);cb.c.y=Math.min(cb.a.y,cb.b.y)-.05-(cb.i>6?.08:0);cb.c.z+=.1;
+    for(let j=0;j<7;j++){bez(cb.a,cb.c,cb.b,j/7,_v);bez(cb.a,cb.c,cb.b,(j+1)/7+.02,_w);CART.setMatrixAt(k++,segMatrix(_v,_w,cb.i<7?.055:.045));}});CART.instanceMatrix.needsUpdate=true;
+  let ke=0;for(let i=0;i<11;i++)for(const s of [-1,1]){const r1=ribOf(i,s),r2=ribOf(i+1,s);const pm=Math.min(r1.pe,r2.pe)-.06*Math.PI;
+    for(let j=0;j<9;j++){const ph=.1*Math.PI+(pm-.1*Math.PI)*j/8,ph2=Math.min(ph+.07*Math.PI,r2.pe);
+      ribPt(r1,ph,_v,1.035);ribPt(r2,ph2,_w,1.035);IEXT.setMatrixAt(ke,segMatrix(_v,_w,.034));ribPt(r1,Math.min(ph+.07*Math.PI,r1.pe),_v,.965);ribPt(r2,ph,_w,.965);IINT.setMatrixAt(ke,segMatrix(_v,_w,.03));ke++;}}
+  IEXT.instanceMatrix.needsUpdate=true;IINT.instanceMatrix.needsUpdate=true;
+  const A=B.act;IEXT.material.emissiveIntensity=A.ext*1.7;IINT.material.emissiveIntensity=A.int*1.7;diaMat.emissiveIntensity=A.dia*.75;accMat.emissiveIntensity=A.acc*1.8;absMat.emissiveIntensity=A.abs*.75;airMat.emissiveIntensity=B.c*(.75+.25*Math.sin(S.clock*5));TAB.material.emissiveIntensity=A.abs*.7;
+  updDia(desc);updLungs(th*1.2,th*1.35,desc/1.55);
+  [-1,1].forEach((s,j)=>{orient(SCM[j],V(SX+s*.62,9.55,-.72),_a.copy(spD[0]).add(_w.set(s*.15,.32,.03)),.075,.06);
+    [0,1].forEach(q=>{ribPt(ribOf(0,s),(.28+.16*q)*Math.PI,_b);orient(SCAL[j*2+q],V(SX+s*(.2+.06*q),9.05-.3*q,-1.02),_b,.05,.04);});});
+  const bulge=desc*.5-A.abs*.32;const rp=rectGeo.attributes.position.array;let kr=0;[-1,1].forEach(s=>{const top=_a.copy(spD[5]).add(_w.set(s*.3,-.1,.1)),bot=_b.set(SX+s*.15,2.02,.86);const c=_v.copy(top).add(bot).multiplyScalar(.5);c.z=1.5+bulge;c.x=SX+s*.3;
+    for(let i=0;i<=RNU;i++){const t=i/RNU;bez(top,c,bot,t,_sP);const hw=lerp(.21,.11,t)*(1+.1*Math.sin(Math.PI*t));
+      for(let j=0;j<=RNV;j++){const q=2*j/RNV-1;rp[kr++]=_sP.x+s*hw*q;rp[kr++]=_sP.y;rp[kr++]=_sP.z+.04*(1-q*q)+.02;}}
+    if(s>0){W.abs.copy(bez(top,c,bot,.36,_sT)).add(_w.set(.05,0,.06));}});rectGeo.attributes.position.needsUpdate=true;rectGeo.computeVertexNormals();
+  TAB.scale.set(1+bulge*.12,1,1+bulge*.3);
+  const hb=Math.exp(-Math.pow((B.hbT-.12)/.08,2));heartM.scale.set(1+.07*hb,1+.05*hb,.9*(1+.07*hb));
+  // de sporter
+  const c3=S.state===3&&B.attack?smooth((S.stT-B.attT-3)/3)*(1-(B.puffT>=0?smooth((S.stT-Math.max(B.puffT,B.attT)-3)/4):0))*(B.prevent?.3:1):0;
+  const lean=S.state===1?.22:lerp(.38+.12*f,.78,c3);const cr=B.crank;crank.rotation.x=cr;crA[0].g.rotation.x=0;crA[1].g.rotation.x=Math.PI;crA[0].pd.rotation.x=-cr;crA[1].pd.rotation.x=-cr-Math.PI;fly.rotation.x=cr*3;
+  const lr=legIK(cr),ll=legIK(cr+Math.PI),ar=armIK(lean,-1),al=armIK(lean,1);const shUp=A.acc*.12;
+  F.pose({py:PY+.012*Math.sin(cr*2)*f,pz:PZ,lean,twist:.03*Math.sin(cr)*f,head:-lean*.55+.1*c3,hipR:lr.hip,kneeR:lr.kn,ankR:lr.an,hipL:ll.hip,kneeL:ll.kn,ankL:ll.an,shR:[ar.sh[0],0,-.12-shUp],shL:[al.sh[0],0,.12+shUp],elbR:ar.el,elbL:al.el});
+  chest.scale.set(1,1.05,.72*(1+.07*vol));
+  F.root.updateMatrixWorld(true);const mask=F.head.localToWorld(_a.set(0,-.06,.22));W.sport.copy(F.torso.localToWorld(_b.set(0,.45,.15)));
+  const hc=_v.copy(mask).add(hoseEnd).multiplyScalar(.5);hc.y=Math.min(mask.y,hoseEnd.y)-.75;for(let j=0;j<16;j++){bez(mask,hc,hoseEnd,j/16,_w);bez(mask,hc,hoseEnd,(j+1)/16+.01,_b);HOSE.setMatrixAt(j,segMatrix(_w,_b,.03));}HOSE.instanceMatrix.needsUpdate=true;
+  // adem-wolkjes uit het masker (koude lucht in stand 3)
+  if(B.ev.out){const n=S.state===3?6:S.state===2?3:1;for(let i=0;i<n;i++){const d=vapD[vapI++%vapD.length];d.t=0;d.p.copy(mask);d.v.set(-.35-.5*f-R()*.2,.08+R()*.12,(R()-.5)*.25);d.s=.02+R()*.02;}}
+  const vk=S.state===3?.34:.13;vapD.forEach((d,i)=>{if(d.t>2){VAP.setMatrixAt(i,ZERO);return;}d.t+=dt;d.p.addScaledVector(d.v,dt);d.v.multiplyScalar(1-dt*.6);const s=(d.s+d.t*.07)*(1-smooth((d.t-1.3)/.7));VAP.setMatrixAt(i,placeMatrix(d.p,0,Math.max(.001,s)));});VAP.material.opacity=vk;
+  VAP.instanceMatrix.needsUpdate=true;
+  if((scrN++)%3===0){drawSpiro(scrX,320,200,true);scrT.needsUpdate=true;}
+  if((ergN++)%20===0){const x=ergTex.image.getContext('2d');x.fillStyle='#10241c';x.fillRect(0,0,128,64);x.fillStyle='#7cf0b0';x.font='700 26px "JetBrains Mono",monospace';x.fillText((S.state===1?0:Math.round(S.state===2?B.watt:B.cad>5?watt3*B.cad/88:0))+' W',8,30);x.font='600 16px "JetBrains Mono",monospace';x.fillText(Math.round(B.cad)+' rpm',8,54);ergTex.needsUpdate=true;}
+  // ankerpunten
+  ribPt(ribOf(5,-1),.5*Math.PI,W.ic,1.05);W.ic.y-=.15;W.dia.set(SX-1.0,4.75-desc*.8,.75);W.acc.copy(SCM[0].position).lerp(_a.copy(spD[0]),.35).add(_w.set(-.1,0,.1));
+  W.trach.set(SX+.3,8.3,-.35);W.pleura.set(SX+2.05+th*1.4,5.7,.35);}
+/* ================= NIVEAU 1 · bronchus en bronchioli ================= */
+const TH0=.55*Math.PI,TH1=1.45*Math.PI;
+const inSec=th=>{th=((th%TAU)+TAU)%TAU;return th>TH0+.04&&th<TH1-.04;};
+const cvP=new THREE.CatmullRomCurve3([V(-7.6,.4,0),V(-5,.3,0),V(-2.6,.15,0),V(-.55,0,0)]);
+const cvA=new THREE.CatmullRomCurve3([V(-1.0,.06,0),V(.8,.62,-.1),V(3.2,1.72,-.25),V(5.6,2.5,-.35),V(7.0,2.75,-.35)]);
+const cvB=new THREE.CatmullRomCurve3([V(-1.0,-.06,0),V(.8,-.62,.1),V(3.2,-1.72,.25),V(5.6,-2.45,.35),V(7.5,-2.68,.4)]);
+const AW=[{cv:cvP,r0:s=>1.05-.1*s,kc:.12,cart:true},{cv:cvA,r0:s=>.78-.26*s,kc:.5},{cv:cvB,r0:s=>.78-.26*s,kc:.5}];
+const mucTex=K.canvasTex(512,256,(x,w,h)=>{x.fillStyle='#cf7a78';x.fillRect(0,0,w,h);for(let i=0;i<1400;i++){const px=R()*w,py=R()*h,r=3+R()*5;x.fillStyle=`rgba(${190+R()*40|0},${100+R()*30|0},${105+R()*30|0},.55)`;x.beginPath();x.ellipse(px,py,r*1.6,r,0,0,TAU);x.fill();x.strokeStyle='rgba(120,50,60,.25)';x.stroke();}
+},[3,2]);
+const mucoMat=std(0xffffff,{map:mucTex,roughness:.45,side:THREE.DoubleSide,vertexColors:true});
+const advMat=glass(0xf2c7bd,.15,{roughness:.4});
+const mucusMat=glass(0xd8dd8a,.22,{roughness:.2});
+const smMat=glow(0xa82418,0xd01000,.2),ciMat=std(0xf3dcd2,{roughness:.5}),cartMat=std(0x5c9ce0,{roughness:.3,emissive:0x0a3070,emissiveIntensity:.45});
+// snijvlak van de wand: lagen van binnen naar buiten (slijmvlies, gladde spier, bindweefsel)
+const cutMat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,side:THREE.DoubleSide});
+const CUTC=[[.93,.62,.6],[.93,.62,.6],[.82,.16,.12],[.82,.16,.12],[.95,.85,.8],[.95,.85,.8]];
+function cutFace(a,ai,th){const nS=48,nR=5;const pos=new Float32Array((nS+1)*(nR+1)*3),col=new Float32Array((nS+1)*(nR+1)*3),idx=[];
+  for(let i=0;i<nS;i++)for(let j=0;j<nR;j++){const p=i*(nR+1)+j,q=p+nR+1;idx.push(p,q,p+1,q,q+1,p+1);}
+  for(let i=0;i<=nS;i++)for(let j=0;j<=nR;j++){const k=(i*(nR+1)+j)*3,cc=CUTC[j];const cart=a.cart&&j>=4&&(i%7)<4;col[k]=cart?.45:cc[0];col[k+1]=cart?.68:cc[1];col[k+2]=cart?.92:cc[2];}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(idx);const m=mesh(g,cutMat,0,0,0,G1);m.castShadow=false;m.frustumCulled=false;
+  const s0=ai?.1:0,s1=ai?1:.93;const fr=[];for(let i=0;i<=nS;i++)fr.push(frameAt(a.cv,s0+(s1-s0)*i/nS));
+  return {m,upd(){let k=0;for(let i=0;i<=nS;i++){const F=fr[i],s=s0+(s1-s0)*i/nS;const ri=rEff(ai,s),ro=a.r0(s)*(1.42-(ai?.16:.05)*B.c);for(let j=0;j<=nR;j++){const u=j/nR;const r=j<=1?lerp(ri,ri*1.06+.03,u*2):lerp(ri*1.06+.03,ro,(u-.2)/.8);onRing(F,th,r,_v);pos[k++]=_v.x;pos[k++]=_v.y;pos[k++]=_v.z;}}g.attributes.position.needsUpdate=true;g.computeVertexNormals();}};}
+AW.forEach(a=>{a.muc=pipe(a.cv,56,30,TH0,TH1,mucoMat,G1);a.adv=pipe(a.cv,40,30,TH0,TH1,advMat,G1);a.mu=pipe(a.cv,40,30,TH0,TH1,mucusMat,G1);a.mu.m.renderOrder=2;a.adv.m.renderOrder=3;
+  a.len=a.cv.getLength();a.tab=[];a.cuts=[cutFace(a,AW.indexOf(a),TH0),cutFace(a,AW.indexOf(a),TH1)];for(let i=0;i<=160;i++)a.tab.push(frameAt(a.cv,i/160));});
+const ft=(ai,s)=>AW[ai].tab[Math.round(clamp(s,0,1)*160)];
+// kraakbeenplaten in de bronchus (buiten de gladde spier); de bronchioli hebben geen kraakbeen
+const cartG=new THREE.TorusGeometry(1,.06,6,18,.55*Math.PI);const NCP=26;const CP=inst(cartG,cartMat,NCP);G1.add(CP);
+{let k=0;for(let i=0;i<13;i++)for(let j=0;j<2;j++){const s=.06+i*.07+j*.035+R()*.015,F=frameAt(cvP,s);const a0=(j?.89:.57)*Math.PI+(R()-.5)*.06;const x1=F.u1.clone().multiplyScalar(Math.cos(a0)).addScaledVector(F.u2,Math.sin(a0)),y1=F.u1.clone().multiplyScalar(-Math.sin(a0)).addScaledVector(F.u2,Math.cos(a0));
+  _m.makeBasis(x1,y1,F.T);const r=AW[0].r0(s)*1.22;_m.scale(V(r,r,r*.9));_m.setPosition(F.P);CP.setMatrixAt(k++,_m);}CP.instanceMatrix.needsUpdate=true;}
+// gladde spier: spiraalbanden; trilhaartjes; slijmklontjes
+const SM=[],CIL=[];
+AW.forEach((a,ai)=>{const nb=a.cart?3:4;for(let b=0;b<nb;b++)for(let i=0;i<70;i++){const s=i/70;const th=b*TAU/nb+s*TAU*(a.cart?3.2:4.5);const s2=(i+1)/70,th2=b*TAU/nb+s2*TAU*(a.cart?3.2:4.5);if(!inSec(th)||!inSec(th2))continue;SM.push({ai,s,th,s2,th2,F:frameAt(a.cv,s),F2:frameAt(a.cv,s2)});}
+  for(let i=0;i<(a.cart?340:300);i++){const s=.02+R()*.96,th=TH0+.1+R()*(TH1-TH0-.2);CIL.push({ai,s,th,F:frameAt(a.cv,s),ph:R()*.6});}});
+const SMI=inst(UCYLg(),smMat,SM.length);G1.add(SMI);const CII=inst(UCYLg(),ciMat,CIL.length);CII.castShadow=false;G1.add(CII);
+const MUC=[];for(let i=0;i<70;i++)MUC.push({ai:i%3,s:R(),th:TH0+.2+R()*(TH1-TH0-.4),sz:.6+R()*.6,on:i<30});
+const MUI=inst(new THREE.SphereGeometry(1,12,9),std(0xd6dc7a,{roughness:.15,transparent:true,opacity:.78}),MUC.length);MUI.castShadow=false;G1.add(MUI);
+// luchtdeeltjes en de nevel van de puffer
+const NAIR=260;const AIRP=[];for(let i=0;i<NAIR;i++)AIRP.push({p:R()<.5?1:2,u:R(),rho:Math.sqrt(R())*.72,th:R()*TAU,sp:.8+R()*.4});
+const airMat1=add(0x9fe0ff,.85);const AIRI=new THREE.InstancedMesh(new THREE.SphereGeometry(.045,8,6),airMat1,NAIR);AIRI.frustumCulled=false;G1.add(AIRI);
+const NAER=110;const AER=[];for(let i=0;i<NAER;i++)AER.push({p:R()<.5?1:2,u:-R()*.35,tu:.55+R()*.45,rho:Math.sqrt(R())*.6,th:R()*TAU,dep:0});
+const AERI=new THREE.InstancedMesh(new THREE.SphereGeometry(.06,8,6),add(0xc9b2ff,.9),NAER);AERI.frustumCulled=false;G1.add(AERI);
+const aerS={on:false,t:0,k:-1};
+// bloedvaten naast de luchtweg (longslagader, zuurstofarm) en een bronchiaal slagadertje
+const vesB=std(0x4a58b0,{roughness:.35}),vesR=std(0xc0392b,{roughness:.35});
+const VES1=[tube([[-7.6,1.75,-1.7],[-4.5,1.6,-1.75],[-1.6,1.45,-1.6],[.9,1.85,-1.55],[3.4,2.95,-1.6],[5.8,3.7,-1.6],[7.2,3.95,-1.55]],.38,vesB,G1,90,14)];VES1.push(
+tube([[-1.6,1.45,-1.6],[.6,.4,-1.7],[2.4,-1.0,-1.5],[4.6,-1.7,-1.25],[7.4,-1.85,-1.0]],.27,vesB,G1,70,12));
+VES1.push(tube([[-7.6,-.55,-1.18],[-6,-.8,-1.0],[-4.6,-1.15,-.55],[-3.2,-1.05,-1.05],[-1.8,-.7,-1.2],[.5,-.95,-.9],[2.4,-1.95,-.55]],.07,vesR,G1,90,8));
+// longblaasjes aan het einde: daar zoom je straks in
+const sacM=glass(0xf0a5a5,.5,{roughness:.35});const SAC=[];[[7.25,2.85,-.35],[7.85,-2.72,.42]].forEach(c=>{for(let i=0;i<10;i++){const d=V(R()-.2,R()-.5,R()-.5).normalize();const m=mesh(new THREE.SphereGeometry(.3,16,12),sacM,[c[0]+d.x*.38,c[1]+d.y*.4,c[2]+d.z*.4],0,0,G1);m.castShadow=false;SAC.push(m);}});
+const l1={c:-1,cc:-1};
+function rEff(ai,s){const a=AW[ai];return a.r0(s)*(1-a.kc*B.c*(ai?(.55+.45*s):1));}
+function updL1(dt){const c=B.c,t=S.clock;
+  if(Math.abs(c-l1.c)>.002||l1.c<0){l1.c=c;AW.forEach((a,ai)=>{a.muc.upd((s,th)=>rEff(ai,s)*(1+(.025+.07*c)*Math.sin(th*(ai?11:15)+1.3)+.01*Math.sin(s*60)));a.mu.upd(s=>rEff(ai,s)*.955);a.adv.upd(s=>a.r0(s)*(1.42-(ai?.16:.05)*c));a.cuts.forEach(q=>q.upd());});
+    let k=0;SM.forEach(m=>{const r1=rEff(m.ai,m.s)*1.08+.05+(m.ai?0:.02),r2=rEff(m.ai,m.s2)*1.08+.05;onRing(m.F,m.th,r1,_v);onRing(m.F2,m.th2,r2,_w);SMI.setMatrixAt(k++,segMatrix(_v,_w,m.ai?.07:.06));});SMI.instanceMatrix.needsUpdate=true;}
+  smMat.emissiveIntensity=.2+1.0*c+(S.state===2?.08:0);
+  // trilhaartjes slaan in een golf richting de keel
+  const om=S.state===3?9:12;let k=0;CIL.forEach(ci=>{const r=rEff(ci.ai,ci.s)*1.0;onRing(ci.F,ci.th,r,_v);const be=.75*Math.sin(om*t-ci.s*28+ci.ph);
+    _w.copy(ci.F.P).sub(_v).normalize().multiplyScalar(Math.cos(be)).addScaledVector(ci.F.T,-Math.sin(be)).multiplyScalar(.15).add(_v);CII.setMatrixAt(k++,segMatrix(_v,_w,.014));});CII.instanceMatrix.needsUpdate=true;
+  // slijm schuift naar boven (naar de keel); bij astma meer en dikker slijm
+  const nOn=Math.round(26+44*c);MUC.forEach((m,i)=>{m.on=i<nOn;if(!m.on){MUI.setMatrixAt(i,ZERO);return;}const sp=(.018+.01*(1-c))*dt*(m.ai?1.3:1);m.s-=sp;if(m.s<0){if(m.ai){m.ai=0;m.s=1;}else{m.ai=1+(R()*2|0);m.s=1;}}
+    const F2=ft(m.ai,m.s);onRing(F2,m.th,rEff(m.ai,m.s)*.93,_v);const sz=(.05+.09*c)*m.sz*(m.ai?1:1.2);MUI.setMatrixAt(i,placeMatrix(_v,0,[sz*1.5,sz,sz*1.5]));});MUI.instanceMatrix.needsUpdate=true;
+  // lucht stroomt mee met de adem: in = blauw, uit = warm
+  const fl=B.flow;airMat1.color.set(fl>=0?0x9fe0ff:0xffcf9a);airMat1.opacity=.35+.55*clamp(Math.abs(fl)/2,0,1);
+  AIRP.forEach((p,i)=>{const inP=p.u<.45,s=inP?p.u/.45:(p.u-.45)/.55,ai=inP?0:p.p;const re=rEff(ai,s),rel=re/AW[ai].r0(0);p.u+=dt*fl*.07*p.sp/Math.max(.25,rel*rel)*(inP?1:.9);
+    if(p.u>1){p.u-=1;p.p=R()<.5?1:2;}if(p.u<0){p.u+=1;p.p=R()<.5?1:2;}const u2=p.u<.45?p.u/.45:(p.u-.45)/.55;const a2=p.u<.45?0:p.p;const F2=ft(a2,u2);
+    onRing(F2,p.th+t*.4*(fl>0?1:-1)*(B.c>.3?3:.3),rEff(a2,u2)*p.rho,_v);AIRI.setMatrixAt(i,placeMatrix(_v,0,1));});AIRI.instanceMatrix.needsUpdate=true;
+  // pufferdeeltjes reizen mee met de inademing en slaan neer op de wand
+  if(B.puffT>=0&&!aerS.on){aerS.on=true;aerS.t=0;AER.forEach(a=>{a.u=-R()*.35;a.dep=0;});}
+  let aerP=null,aerB=-9;AER.forEach((a,i)=>{if(!aerS.on){AERI.setMatrixAt(i,ZERO);return;}if(a.u<a.tu){a.u+=dt*(.16+.25*Math.max(0,fl));}else a.dep+=dt;
+    if(a.u<0||a.dep>7){AERI.setMatrixAt(i,ZERO);return;}const inP=a.u<.45,s=inP?a.u/.45:(a.u-.45)/.55,ai=inP?0:a.p;const F2=ft(ai,s);
+    onRing(F2,a.th,rEff(ai,s)*lerp(a.rho,.9,smooth(a.dep/1.2)),_v);AERI.setMatrixAt(i,placeMatrix(_v,0,1-smooth((a.dep-4)/3)));a.pos=(a.pos||V(0,0,0)).copy(_v);const sc=-Math.abs(a.u-.3)-(a.dep>0?.5:0);if(a.u>0&&sc>aerB){aerB=sc;aerP=i;}});AERI.instanceMatrix.needsUpdate=true;
+  {const k=aerS.k,a=k>=0?AER[k]:null;if(!aerS.on)aerS.k=-1;else if(!a||a.u<0||a.dep>2.5)aerS.k=aerP===null?-1:aerP;}
+  W.l1Aer=aerS.on&&aerS.k>=0?AER[aerS.k].pos:null;
+  // ankerpunten
+  W.l1Musc=onRing(ft(1,.5),.7*Math.PI,rEff(1,.5)*1.12+.05,W.l1Musc||V(0,0,0));
+  W.l1Cil=onRing(ft(2,.42),1.12*Math.PI,rEff(2,.42)*.9,W.l1Cil||V(0,0,0));W.l1Ves=W.l1Ves||V(3.4,3.0,-1.35);W.l1Cart=onRing(ft(0,.6),.74*Math.PI,1.3,W.l1Cart||V(0,0,0));
+  W.l1Sac=W.l1Sac||V(7.25,3.2,-.1);W.l1Muc=onRing(ft(0,.72),1.05*Math.PI,rEff(0,.72)*.9,W.l1Muc||V(0,0,0));
+  W.l1Tag=W.l1Tag||{};W.l1Tag.cart=onRing(ft(0,.8),.8*Math.PI,1.36,W.l1Tag.cart||V(0,0,0));W.l1Tag.sm=onRing(ft(1,.3),.66*Math.PI,rEff(1,.3)*1.12+.08,W.l1Tag.sm||V(0,0,0));}
+/* ================= NIVEAU 2 · longblaasjes met haarvatnet ================= */
+const RA2=1.08,DEOXY=new THREE.Color(.36,.2,.52),OXY=new THREE.Color(.9,.13,.1),ELAS=new THREE.Color(.96,.84,.42);
+const ALV=[];{const n=26;for(let i=0;i<n;i++){const y=1-2*(i+.5)/n,r=Math.sqrt(1-y*y),a=i*2.39996;const d=V(r*Math.cos(a),y,r*Math.sin(a));if(d.x<-.45)continue;ALV.push({d,c:d.clone().multiplyScalar(2.5)});}}
+const alvMat=glass(0xf4a6a2,.55,{roughness:.3,emissive:0x8a3040,emissiveIntensity:.42,side:THREE.FrontSide}),capMat=std(0xffffff,{vertexColors:true,roughness:.4,emissive:0x220000,emissiveIntensity:.3});
+// kleur van het haarvatnet op positie in de tros: van het slagadertje (boven, zuurstofarm) naar het adertje (onder, zuurstofrijk)
+const UA2=V(.8,3.55,-.4),UAX2=V(1.2,-3.3,1.3).sub(UA2),UAL2=UAX2.lengthSq();
+const uW=p=>clamp(_b.copy(p).sub(UA2).dot(UAX2)/UAL2,0,1);
+const capCol=(u,o)=>o.copy(DEOXY).lerp(OXY,smooth((u-.2)/.42));
+const NCAP=9;
+ALV.forEach((A,ai)=>{const g=new THREE.Group();g.position.copy(A.c);G2.add(g);A.g=g;const sp=mesh(new THREE.SphereGeometry(RA2,32,22),alvMat,0,0,0,g);sp.castShadow=false;sp.renderOrder=2;A.sp=sp;
+  A.curves=[];const geos=[];for(let j=0;j<NCAP;j++){const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(R()*TAU,R()*TAU,R()*TAU));let pts=[];const a0=-1.75+R()*.3,a1=1.75-R()*.3;
+    for(let k=0;k<=22;k++){const a=lerp(a0,a1,k/22);const rr=RA2*(1.03+.02*Math.sin(k*1.7+j));pts.push(V(Math.cos(a)*rr,Math.sin(a)*rr*.98,.14*Math.sin(a*3+j)*rr).normalize().multiplyScalar(rr).applyQuaternion(q));}
+    if(uW(_a.copy(pts[0]).add(A.c))>uW(_w.copy(pts[pts.length-1]).add(A.c)))pts.reverse();
+    const cv=new THREE.CatmullRomCurve3(pts);const tg=new THREE.TubeGeometry(cv,40,.036,5);const col=new Float32Array(tg.attributes.position.count*3);
+    for(let i=0;i<=40;i++){cv.getPointAt(i/40,_v).add(A.c);capCol(uW(_v),_c2);for(let r=0;r<=5;r++){const k=(i*6+r)*3;col[k]=_c2.r;col[k+1]=_c2.g;col[k+2]=_c2.b;}}
+    tg.setAttribute('color',new THREE.BufferAttribute(col,3));geos.push(tg);A.curves.push(cv);}
+  for(let j=0;j<3;j++){const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(R()*TAU,R()*TAU,R()*TAU));const pts=[];for(let k=0;k<=14;k++){const a=-1+2*k/14;pts.push(V(Math.cos(a),Math.sin(a),0).multiplyScalar(RA2*1.01).applyQuaternion(q));}geos.push(tubeColored(pts,.02,24,4,()=>ELAS).g);}
+  const cm=mesh(merge(geos),capMat,0,0,0,g);cm.castShadow=false;A.cap=cm;});
+const front=ALV.slice().sort((a,b)=>b.c.z-a.c.z)[0],top2=ALV.slice().sort((a,b)=>b.c.y-a.c.y)[0];
+// twee goed zichtbare plekken op het net (voor opdracht 3 en punt 12): het begin van een haarvat (paars) en het eind (rood)
+function capPick(hi){const cam=V(1.6,2.6,15.5),p=V(0,0,0),n=V(0,0,0),d=V(0,0,0);let best=null,bv=-1e9;
+  ALV.forEach(A=>{if(A.d.z<.2)return;A.curves.forEach(cv=>{for(let t=.04;t<=.96;t+=.04){cv.getPoint(t,p);n.copy(p).normalize();p.add(A.c);d.copy(cam).sub(p).normalize();
+    if(n.dot(d)<.6||p.y>3.0||p.y<-1.6||p.x<-2.6||p.x>3.0)continue;const u=uW(p);const v=(hi?u:-u)-.03*Math.abs(p.x+.6);if(v>bv){bv=v;best={A,cv,t};}}});});return best;}
+const CAP0=capPick(false),CAP1=capPick(true);
+// alveolaire buis (aanvoer) met een ring van gladde spier
+const ductCv=new THREE.CatmullRomCurve3([V(-7.6,-1.25,0),V(-5,-.95,0),V(-3,-.55,0),V(-1.3,-.2,0)]);
+const duct=mesh(new THREE.TubeGeometry(ductCv,60,.62,20,false),glass(0xf0a8a4,.34,{roughness:.35}),0,0,0,G2);duct.castShadow=false;duct.renderOrder=2;
+const ringM2=glow(0xb02a1e,0xff1800,.15);ringM2.transparent=true;ringM2.opacity=1;const dRing=mesh(new THREE.TorusGeometry(.66,.1,10,36),ringM2,[-2.2,-.42,0],[0,Math.PI/2-.2,0],0,G2);const dRing2=mesh(new THREE.TorusGeometry(.66,.1,10,36),ringM2,[-4.2,-.8,0],[0,Math.PI/2-.12,0],0,G2);const dRing3=mesh(new THREE.TorusGeometry(.66,.09,10,36),ringM2,[-6.2,-1.1,0],[0,Math.PI/2-.08,0],0,G2);
+[dRing,dRing2,dRing3].forEach(m=>{m.renderOrder=3;m.castShadow=false;});
+// aanvoerend slagadertje (zuurstofarm, blauw) en afvoerend adertje (zuurstofrijk, rood)
+const artCv=tube([[-7.6,1.6,-1.4],[-5,1.75,-1.5],[-2.6,2.3,-1.7],[-.6,3.1,-1.3],[.8,3.55,-.4]],.22,std(0x4f4aa8,{roughness:.35}),G2,60,12);
+tube([[-2.6,2.3,-1.7],[-1.0,1.2,-2.7],[.8,.2,-3.2]],.15,std(0x4f4aa8,{roughness:.35}),G2,30,10);
+const venCv=tube([[1.2,-3.3,1.3],[3.2,-3.1,1.9],[5.4,-2.6,2.0],[7.6,-2.4,1.6]],.25,std(0xc4352a,{roughness:.35}),G2,60,12);
+tube([[2.6,-1.3,3.0],[3.6,-2.3,2.4],[4.4,-2.8,2.0]],.15,std(0xc4352a,{roughness:.35}),G2,30,10);
+// rode bloedcellen (dubbel-holle schijfjes)
+const rbcProf=[];for(let i=0;i<=16;i++){const a=-Math.PI/2+Math.PI*i/16,r=Math.cos(a);rbcProf.push(new THREE.Vector2(Math.max(.001,r),Math.sin(a)*.34*(.24+1.6*r*r-1.38*r*r*r*r)));}
+const rbcGeo=new THREE.LatheGeometry(rbcProf,18);
+const NRBC=150;const RBC2=inst(rbcGeo,std(0xffffff,{roughness:.4}),NRBC);RBC2.castShadow=false;G2.add(RBC2);
+const rbcD=[];for(let i=0;i<NRBC;i++){const ai=R()*ALV.length|0;rbcD.push({ai,j:R()*NCAP|0,u:R(),sp:.85+R()*.3});}
+// O₂ en CO₂ als gekleurde bolletjes
+const NO2=110,NCO2=80;const O2I=new THREE.InstancedMesh(new THREE.SphereGeometry(.13,12,9),new THREE.MeshBasicMaterial({color:0xff8a30,transparent:true,opacity:.96}),NO2),CO2I=new THREE.InstancedMesh(new THREE.SphereGeometry(.13,12,9),new THREE.MeshBasicMaterial({color:0x3f7dff,transparent:true,opacity:.96}),NCO2);O2I.frustumCulled=CO2I.frustumCulled=false;O2I.renderOrder=CO2I.renderOrder=5;G2.add(O2I);G2.add(CO2I);
+const o2D=[],co2D=[];for(let i=0;i<NO2;i++)o2D.push({t:R(),ai:R()*ALV.length|0,a:V(0,0,0),b:V(0,0,0),sp:.7+R()*.6});for(let i=0;i<NCO2;i++)co2D.push({t:R(),ai:R()*ALV.length|0,a:V(0,0,0),b:V(0,0,0),sp:.7+R()*.6});
+function o2Spawn(d){d.ai=R()*ALV.length|0;const A=ALV[d.ai];d.a.set((R()-.5)*.9,(R()-.5)*.9,(R()-.5)*.9).addScaledVector(A.c,-.62);const dir=_v.set(R()-.5,R()-.5,R()-.5).normalize();if(dir.dot(A.d)<0)dir.addScaledVector(A.d,1.2).normalize();d.b.copy(dir).multiplyScalar(RA2*.98);}
+function co2Spawn(d){d.ai=R()*ALV.length|0;const A=ALV[d.ai];const dir=_v.set(R()-.5,R()-.5,R()-.5).normalize();if(dir.dot(A.d)<0)dir.addScaledVector(A.d,1.2).normalize();d.a.copy(dir).multiplyScalar(RA2*.98);d.b.set(-1.4+(R()-.5)*.6,-.25+(R()-.5)*.6,(R()-.5)*.6);}
+o2D.forEach(o2Spawn);co2D.forEach(co2Spawn);
+// lucht in de buis en een afweercel die rondkruipt
+const DAIR=new THREE.InstancedMesh(new THREE.SphereGeometry(.05,8,6),add(0x9fe0ff,.7),60);DAIR.frustumCulled=false;G2.add(DAIR);const dairD=[];for(let i=0;i<60;i++)dairD.push({u:R(),rho:Math.sqrt(R())*.45,th:R()*TAU});
+const macG=new THREE.Group();G2.add(macG);const macM=std(0xd9c7a0,{roughness:.6});mesh(new THREE.SphereGeometry(.24,16,12),macM,[0,0,0],0,[1,.75,1],macG);for(let i=0;i<5;i++){const a=i*TAU/5;mesh(new THREE.SphereGeometry(.09,10,8),macM,[Math.cos(a)*.24,-.04,Math.sin(a)*.24],0,[1.6,.6,1],macG);}
+mesh(new THREE.SphereGeometry(.1,10,8),std(0x6a4c9c),[0,.06,0],0,0,macG);
+const macA=ALV.slice().sort((a,b)=>(b.c.z+b.c.y*.3)-(a.c.z+a.c.y*.3))[1];
+let l2ct=.75;
+function updL2(dt){const f=B.f,c=B.c,vol=Math.max(0,B.vol);const sA=1+.05*vol;
+  ALV.forEach(A=>A.g.scale.setScalar(sA));
+  const rr=1-.42*c;dRing.scale.setScalar(rr);dRing2.scale.setScalar(1-.34*c);dRing3.scale.setScalar(1-.3*c);ringM2.emissiveIntensity=.12+.95*c*(.8+.2*Math.sin(S.clock*5));
+  alvMat.emissive.setRGB(.54-.2*c,.19-.05*c,.25+.12*c);
+  l2ct=.75-.45*f;const ctV=l2ct*6;const sat=clamp(1-.5*c,0,1);
+  RBC2.instanceMatrix.needsUpdate=true;rbcD.forEach((d,i)=>{d.u+=dt*d.sp/ctV;if(d.u>1){d.u-=1;d.ai=R()*ALV.length|0;d.j=R()*NCAP|0;}const A=ALV[d.ai],cv=A.curves[d.j];cv.getPoint(d.u,_v);_w.copy(_v).normalize();
+    _v.multiplyScalar(sA).add(A.c);_q.setFromUnitVectors(AY,_w);RBC2.setMatrixAt(i,placeMatrix(_v,_q,.1));RBC2.setColorAt(i,_c.copy(DEOXY).lerp(OXY,smooth((uW(_v)-.2)/.42)*(.55+.45*sat)));});if(RBC2.instanceColor)RBC2.instanceColor.needsUpdate=true;
+  const nO=Math.round(NO2*clamp(.18+.82*B.vo2/3.9,0,1)*(1-.55*c)),rO=.5+1.6*f;
+  o2D.forEach((d,i)=>{if(i>=nO){O2I.setMatrixAt(i,ZERO);return;}d.t+=dt*rO*d.sp*.5;if(d.t>1){d.t=0;o2Spawn(d);}const A=ALV[d.ai];_v.lerpVectors(d.a,d.b,ease(d.t)).multiplyScalar(sA).add(A.c);
+    O2I.setMatrixAt(i,placeMatrix(_v,0,d.t>.85?1-(d.t-.85)/.15:1));});O2I.instanceMatrix.needsUpdate=true;
+  const nC=Math.round(NCO2*clamp(.2+.8*f,0,1)),rC=(.45+1.4*f)*(1-.5*c);
+  co2D.forEach((d,i)=>{if(i>=nC){CO2I.setMatrixAt(i,ZERO);return;}d.t+=dt*rC*d.sp*.5;if(d.t>1){d.t=0;co2Spawn(d);}const A=ALV[d.ai];_v.copy(d.a).multiplyScalar(sA).add(A.c);_w.copy(d.b);_v.lerp(_w,ease(d.t));if(d.t>.7)_v.lerp(_w.set(-5.5,-.9,0),smooth((d.t-.7)/.3)*(B.flow<0?1:.25));
+    CO2I.setMatrixAt(i,placeMatrix(_v,0,d.t<.1?d.t/.1:1));});CO2I.instanceMatrix.needsUpdate=true;
+  dairD.forEach((p,i)=>{p.u+=dt*B.flow*.09*(1+.8*c);if(p.u>1)p.u-=1;if(p.u<0)p.u+=1;ductCv.getPointAt(p.u,_v);_v.y+=Math.cos(p.th)*p.rho*(1-.4*c);_v.z+=Math.sin(p.th)*p.rho*(1-.4*c);DAIR.setMatrixAt(i,placeMatrix(_v,0,1));});DAIR.instanceMatrix.needsUpdate=true;
+  DAIR.material.color.set(B.flow>=0?0x9fe0ff:0xffcf9a);
+  const ma=S.clock*.12;_v.set(Math.cos(ma),.35+.3*Math.sin(ma*.7),Math.sin(ma)).normalize();macG.position.copy(_v).multiplyScalar(RA2*.82*sA).add(macA.c);macG.quaternion.setFromUnitVectors(AY,_w.copy(_v).negate());
+  // ankerpunten
+  W.l2Alv=(W.l2Alv||V(0,0,0)).copy(front.d).multiplyScalar(RA2*sA*1.05).add(front.c).add(_w.set(-.3,.3,0));
+  W.l2Cap=CAP1.cv.getPoint(CAP1.t,W.l2Cap||V(0,0,0)).multiplyScalar(sA).add(CAP1.A.c);
+  W.l2Cap0=CAP0.cv.getPoint(CAP0.t,W.l2Cap0||V(0,0,0)).multiplyScalar(sA).add(CAP0.A.c);
+  W.l2Art=W.l2Art||V(-2.6,2.35,-1.5);W.l2Ven=W.l2Ven||V(4.4,-2.7,2.05);W.l2Duct=W.l2Duct||V(-4.6,-.85,.5);W.l2Mac=(W.l2Mac||V(0,0,0)).copy(macG.position).add(_w.set(0,.15,0));W.l2Ring=W.l2Ring||V(-2.2,-.3,.7);}
+/* ================= NIVEAU 3 · de bloed-luchtbarrière ================= */
+const wav=(x,z)=>.12*Math.sin(.45*x+.6)+.035*Math.sin(1.9*x+1.1)+.03*Math.sin(1.4*(z||0)+.7*x);
+// een laag van de wand; rel geeft de bovenkant extra reliëf (kleine plooien)
+function slab(y0,y1,mat,parent,segs,rel){const g=new THREE.BoxGeometry(16.4,y1-y0,5.2,segs||90,1,rel?14:1);g.translate(0,(y0+y1)/2,0);const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),top=p.getY(i)>(y0+y1)/2;let y=p.getY(i)+wav(x,z);if(top&&rel)y+=rel*(Math.sin(x*4.1+z*2.3)*Math.sin(z*3.7-x*1.3));p.setY(i,y);}g.computeVertexNormals();const m=mesh(g,mat,0,0,0,parent);m.castShadow=false;return m;}
+const fibTex3=K.canvasTex(512,64,(x,w,h)=>{x.fillStyle='#b5a3c6';x.fillRect(0,0,w,h);x.strokeStyle='rgba(240,230,250,.55)';for(let i=0;i<160;i++){x.lineWidth=1+R()*1.5;x.beginPath();const y=R()*h;x.moveTo(R()*w,y);x.bezierCurveTo(R()*w,R()*h,R()*w,R()*h,R()*w,y);x.stroke();}},[4,1]);
+// celgrenzen en korrels als textuur én als reliëf (bumpMap)
+function cellTex(base,dot,line){return K.canvasTex(512,256,(x,w,h)=>{x.fillStyle=base;x.fillRect(0,0,w,h);for(let i=0;i<1400;i++){x.fillStyle=dot(R());x.beginPath();x.arc(R()*w,R()*h,1+R()*2.6,0,TAU);x.fill();}
+  x.strokeStyle=line;x.lineWidth=2.2;for(let i=0;i<60;i++){let px=R()*w,py=R()*h;x.beginPath();x.moveTo(px,py);for(let j=0;j<5;j++){px+=(R()-.5)*90;py+=(R()-.5)*50;x.lineTo(px,py);}x.stroke();}},[3,1]);}
+const epiTex=cellTex('#e8948c',r=>`rgba(${200+r*40|0},${120+r*30|0},${120+r*30|0},.4)`,'rgba(150,70,80,.45)');
+const endoTex=cellTex('#f2b48a',r=>`rgba(${220+r*30|0},${150+r*30|0},${100+r*30|0},.4)`,'rgba(160,90,50,.45)');
+const L3M={surf:glass(0xf4d54a,.55,{roughness:.15,emissive:0x6a5200,emissiveIntensity:.4}),epi:std(0xffffff,{map:epiTex,bumpMap:epiTex,bumpScale:.04,roughness:.5}),bm:std(0xc6b2e6,{map:fibTex3,bumpMap:fibTex3,bumpScale:.05,roughness:.6,emissive:0x2a1a50,emissiveIntensity:.35}),endo:std(0xffffff,{map:endoTex,bumpMap:endoTex,bumpScale:.04,roughness:.5}),plasma:glass(0xf6d9a0,.07,{roughness:.2}),deep:std(0x5a3b48,{roughness:.7})};
+const L3S=[slab(.64,.7,L3M.surf,G3,160,.025),slab(.4,.64,L3M.epi,G3,160,.03),slab(.27,.4,L3M.bm,G3),slab(.07,.27,L3M.endo,G3)];L3S[0].renderOrder=2;
+slab(-5.05,-4.87,std(0x9a6a64,{roughness:.7}),G3);slab(-6.2,-5.05,L3M.deep,G3);
+const plas=slab(-4.87,.07,L3M.plasma,G3,30);plas.renderOrder=1;
+// kernen: type I-cel (boven) en endotheelcel (onder); type II-cel met lamellaire lichaampjes
+mesh(new THREE.SphereGeometry(1,28,16),L3M.epi,[-4.6,.62+wav(-4.6),0],0,[1.25,.42,.9],G3);mesh(new THREE.SphereGeometry(1,20,12),std(0x6a4c9c,{roughness:.45}),[-4.6,.78+wav(-4.6),0],0,[.85,.24,.62],G3);
+mesh(new THREE.SphereGeometry(1,28,16),L3M.endo,[3.6,.1+wav(3.6),0],0,[1.2,.4,.85],G3);mesh(new THREE.SphereGeometry(1,20,12),std(0x6a4c9c,{roughness:.45}),[3.6,-.02+wav(3.6),0],0,[.8,.22,.6],G3);
+const t2=mesh(new THREE.SphereGeometry(1,28,18),std(0xe7a6a0,{roughness:.5}),[6.7,.95+wav(6.7),-.4],0,[1.05,.85,.95],G3);
+for(let i=0;i<6;i++)mesh(new THREE.SphereGeometry(.16,12,10),glass(0xf4e27a,.75),[6.7+(R()-.5)*1.1,1.15+wav(6.7)+R()*.35,-.4+(R()-.5)*.9],0,0,G3);
+// de rode bloedcel met hemoglobine
+const rbc3=new THREE.Group();G3.add(rbc3);const RR3=2.3;
+const rbcShell=mesh(rbcGeo,glass(0xc8362c,.36,{roughness:.3,emissive:0x400000,emissiveIntensity:.3}),[0,0,0],[Math.PI/2,0,0],[RR3,RR3*1.25,RR3],rbc3);rbcShell.renderOrder=2;
+const NHB=24,HEM=[];const hbP=sunflower(NHB).map(p=>V(p[0]*RR3*.74,p[1]*RR3*.74,(R()-.5)*.5).applyAxisAngle(AY,.5));rbc3.rotation.y=.5;
+const GLO=inst(new THREE.SphereGeometry(.145,12,10),std(0xffffff,{roughness:.45}),NHB*4),HEMI=inst(new THREE.SphereGeometry(.085,10,8),glow(0xffffff,0xff2a10,.0),NHB*4);GLO.castShadow=HEMI.castShadow=false;G3.add(GLO);G3.add(HEMI);
+const tet=[V(1,1,1),V(-1,-1,1),V(-1,1,-1),V(1,-1,-1)].map(v=>v.normalize());
+for(let h=0;h<NHB;h++)for(let j=0;j<4;j++)HEM.push({h,j,bound:false});
+const HCOL=[new THREE.Color(0xc24a4a),new THREE.Color(0x9a3a5e)],HDE=new THREE.Color(0x3a1838),HOX=new THREE.Color(0xff3a22);
+const R3={x:-10.5,vis:7.5,bound:0};
+function rbcReset(){const sIn=clamp(.75-.4*B.f-.1*B.c,.3,.8);HEM.forEach(e=>{e.bound=R()<sIn;e.claim=false;});R3.bound=HEM.filter(e=>e.bound).length;L3.St=R3.bound/HEM.length;}
+// zuurstof (O=O) en koolzuurgas (O=C=O) als moleculen; plasmadeeltjes
+const NO3=72,NC3=30;const O3=inst(new THREE.SphereGeometry(.1,12,10),glow(0xff7a5a,0xff3a1a,.55),NO3*2),C3c=inst(new THREE.SphereGeometry(.1,12,10),glow(0x5a6a80,0x203050,.3),NC3),C3o=inst(new THREE.SphereGeometry(.088,12,10),glow(0x6fa8ff,0x2a5aff,.7),NC3*2);
+[O3,C3c,C3o].forEach(m=>{m.castShadow=false;G3.add(m);});
+const o3=[];for(let i=0;i<NO3;i++)o3.push({st:'air',p:V((R()-.5)*16,1.2+R()*3.3,(R()-.5)*4),v:V(0,0,0),ax:V(R()-.5,R()-.5,R()-.5).normalize(),tg:-1,t:0});
+const c3=[];for(let i=0;i<NC3;i++)c3.push({st:'off',p:V(0,0,0),ax:V(R()-.5,R()-.5,R()-.5).normalize(),t:0});
+const PLN=110;const PLI=new THREE.InstancedMesh(new THREE.SphereGeometry(.035,6,5),add(0xffe2a8,.5),PLN);PLI.frustumCulled=false;G3.add(PLI);const plD=[];for(let i=0;i<PLN;i++)plD.push(V((R()-.5)*16.4,-4.7+R()*4.6,(R()-.5)*4.6));
+const hemW=(e,o)=>o.copy(tet[e.j]).multiplyScalar(.27).add(hbP[e.h]).add(rbc3.position);
+const L3={PA:100,Pc:40,S:.75,St:.75,bindN:0,clickT:0};rbcReset();
+function updL3(dt){const f=B.f,c=B.c;
+  L3.PA=100-35*c;const ct=.75-.45*f;R3.vis=ct*10;const vx=21/R3.vis;
+  R3.x+=dt*vx;if(R3.x>10.5){R3.x=-10.5;rbcReset();o3.forEach(o=>{if(o.st==='plasma'){o.st='free';o.tg=-1;}});}
+  rbc3.position.set(R3.x,-2.45,0);
+  const Sx=clamp(R3.bound/HEM.length,.01,.995);L3.S=Sx;L3.Pc=26.8*Math.pow(Sx/(1-Sx),1/2.7);
+  // hemoglobine: vier subeenheden, vier hemgroepen; elke binding maakt de volgende makkelijker
+  let k=0;for(let h=0;h<NHB;h++){let nb=0;for(let j=0;j<4;j++)if(HEM[h*4+j].bound)nb++;const sc=1+.03*nb;for(let j=0;j<4;j++){_v.copy(tet[j]).multiplyScalar(.15*sc).add(hbP[h]).add(rbc3.position);GLO.setMatrixAt(k,placeMatrix(_v,0,sc));GLO.setColorAt(k,HCOL[j%2]);k++;}}
+  GLO.instanceMatrix.needsUpdate=true;if(GLO.instanceColor)GLO.instanceColor.needsUpdate=true;
+  HEM.forEach((e,i)=>{hemW(e,_v);HEMI.setMatrixAt(i,placeMatrix(_v,0,e.bound?1.25:1));HEMI.setColorAt(i,e.bound?HOX:HDE);});HEMI.instanceMatrix.needsUpdate=true;if(HEMI.instanceColor)HEMI.instanceColor.needsUpdate=true;
+  HEMI.material.emissiveIntensity=.35;
+  // zuurstof: aantal in de lucht volgt de PO₂ van het longblaasje; oversteken gaat sneller bij een groter drukverschil
+  const nAir=Math.round(62*L3.PA/100);let inAir=0;o3.forEach(o=>{if(o.st==='air')inAir++;});
+  L3.bindN=0;const Seq=Math.pow(L3.PA,2.7)/(Math.pow(L3.PA,2.7)+Math.pow(26.8,2.7));L3.St+=(Seq-L3.St)*Math.min(1,dt/(R3.vis/11));
+  let need=Math.round(L3.St*HEM.length)-R3.bound-HEM.filter(e=>e.claim).length;let tries=0;
+  while(need>0&&tries++<4){const free=HEM.filter(e=>!e.bound&&!e.claim);if(!free.length)break;let o=null,by=9;o3.forEach(q=>{if(q.st==='air'&&Math.abs(q.p.x-R3.x)<3.2&&q.p.y<by){by=q.p.y;o=q;}});if(!o||by>2.6){o=o3.find(q=>q.st==='off');if(!o)break;o.p.set(clamp(R3.x+(R()-.5)*4,-8,8),1.3,(R()-.5)*3);}
+    let best=free[0],bd=1e9;free.forEach(e=>{const d=Math.abs(hbP[e.h].x+R3.x-o.p.x);if(d<bd){bd=d;best=e;}});best.claim=true;o.tg=HEM.indexOf(best);o.st='cross';o.t=0;o.p.y=1.0;need--;}
+  o3.forEach((o,i)=>{if(o.st==='off'){if(inAir<nAir){o.st='air';o.p.set((R()-.5)*16,4.6,(R()-.5)*4);inAir++;}}
+    else if(o.st==='air'){if(inAir>nAir+2&&o.p.y>3.5){o.st='off';inAir--;}o.v.x+=(R()-.5)*dt*3;o.v.z+=(R()-.5)*dt*3;o.v.y+=(R()-.5)*dt*3-dt*.9;o.v.multiplyScalar(1-dt*1.2);o.p.addScaledVector(o.v,dt);
+      if(o.p.y>4.8)o.v.y=-Math.abs(o.v.y);if(Math.abs(o.p.x)>8){o.p.x=clamp(o.p.x,-8,8);o.v.x*=-1;}if(Math.abs(o.p.z)>2.2){o.p.z=clamp(o.p.z,-2.2,2.2);o.v.z*=-1;}
+      if(o.p.y<1.2){if(R()<dt*.05){o.st='cross';o.t=0;o.p.y=1.0;o.tg=-1;}else{o.p.y=1.2;o.v.y=Math.abs(o.v.y)*.5;}}}
+    else if(o.st==='cross'){o.t+=dt/.38;o.p.y=lerp(1.0,-.15,o.t)+wav(o.p.x)*o.t;o.p.x+=(R()-.5)*dt*.4;if(o.t>=1){o.st=o.tg>=0?'plasma':'free';}}
+    else if(o.st==='plasma'||o.st==='free'){
+      if(o.tg>=0){const e=HEM[o.tg];hemW(e,_w);_v.subVectors(_w,o.p);const d=_v.length();if(d<.14){e.bound=true;e.claim=false;R3.bound++;L3.bindN++;o.st='off';o.tg=-1;}else{o.p.addScaledVector(_v,Math.min(1,dt*(4.5+vx)/d));o.p.x+=vx*dt;}}
+      else{o.p.x+=vx*dt;o.p.y=Math.max(-4.6,o.p.y-dt*.3);if(o.p.x>8.3){o.st='off';}}}
+    if(o.st==='off'){O3.setMatrixAt(i*2,ZERO);O3.setMatrixAt(i*2+1,ZERO);return;}
+    o.ax.applyAxisAngle(AY,dt*1.5);_w.copy(o.ax).multiplyScalar(.085);_v.copy(o.p).add(_w);O3.setMatrixAt(i*2,placeMatrix(_v,0,1));_v.copy(o.p).sub(_w);O3.setMatrixAt(i*2+1,placeMatrix(_v,0,1));});
+  O3.instanceMatrix.needsUpdate=true;
+  HEM.forEach(e=>{if(e.claim&&!o3.some(o=>o.tg>=0&&HEM[o.tg]===e))e.claim=false;});
+  // koolzuurgas gaat de andere kant op
+  const rateC=(5+15*f)*(1-.45*c);c3.forEach((m,i)=>{if(m.st==='off'){if(R()<dt*rateC/NC3*3){m.st='up';m.t=0;const fromRbc=R()<.6&&Math.abs(R3.x)<8;m.p.set(fromRbc?R3.x+(R()-.5)*3:(R()-.5)*15,fromRbc?-.55:-.6-R()*2.5,(R()-.5)*3.5);}}
+    else{m.t+=dt;m.p.y+=dt*(m.p.y<.75?1.1:.6+.3*(1-c));m.p.x+=(R()-.5)*dt*.6+dt*.15;if(m.p.y>4.8||m.t>9)m.st='off';}
+    if(m.st==='off'){C3c.setMatrixAt(i,ZERO);C3o.setMatrixAt(i*2,ZERO);C3o.setMatrixAt(i*2+1,ZERO);return;}
+    m.ax.applyAxisAngle(AZ,dt);_w.copy(m.ax).multiplyScalar(.17);C3c.setMatrixAt(i,placeMatrix(m.p,0,1));_v.copy(m.p).add(_w);C3o.setMatrixAt(i*2,placeMatrix(_v,0,1));_v.copy(m.p).sub(_w);C3o.setMatrixAt(i*2+1,placeMatrix(_v,0,1));});
+  C3c.instanceMatrix.needsUpdate=true;C3o.instanceMatrix.needsUpdate=true;
+  plD.forEach((p,i)=>{p.x+=vx*dt*(.8+.2*Math.sin(i));if(p.x>8.2)p.x-=16.4;PLI.setMatrixAt(i,placeMatrix(p,0,1));});PLI.instanceMatrix.needsUpdate=true;
+  // ankerpunten
+  W.l3Mem=(W.l3Mem||V(0,0,0)).set(-1.6,.5+wav(-1.6),2.6);W.l3Rbc=(W.l3Rbc||V(0,0,0)).set(R3.x+1.8,-.95,1.4);W.l3Hb=(W.l3Hb||V(0,0,0)).copy(hbP[3]).add(rbc3.position).add(_w.set(0,0,.5));
+  W.l3Air=W.l3Air||V(-5.5,3.2,0);W.l3T2=W.l3T2||V(6.7,1.9,.3);W.l3Endo=W.l3Endo||V(3.6,.2,2.6);W.l3Pl=W.l3Pl||V(-6.4,-3.8,1.6);
+  const oc=o3.find(o=>o.st==='cross')||o3.find(o=>o.st==='plasma');W.l3O2=oc?oc.p:null;const cc=c3.find(m=>m.st==='up'&&m.p.y>1.2&&m.p.y<3.4&&Math.abs(m.p.x)<4.5);W.l3CO2=cc?cc.p:null;}
+/* ================= standen, HUD en bijschriften ================= */
+function ctlW(){return S.state===2?`<label>Vermogen</label><input type="range" id="sW" min="25" max="350" step="5" value="${B.watt}" aria-label="Vermogen in watt"><b class="wv" id="wv">${B.watt} W</b>`:S.state===3?`<button id="bPuff" class="${B.puffT>=0?'on':''}" title="Luchtwegverwijder inademen">Puffer</button>`:'';}
+function bindW(){const s=K.$('#sW');if(s)s.addEventListener('input',e=>{B.watt=+e.target.value;const w=K.$('#wv');if(w)w.textContent=B.watt+' W';});const b=K.$('#bPuff');if(b)b.addEventListener('click',puffer);}
+function phase3(){if(!B.attack)return 0;if(B.puffT>=0&&S.stT-Math.max(B.puffT,B.attT)>1.5)return B.prevent?3:2;return B.prevent?3:1;}
+const caps3={0:'Hard fietsen (260 W) in koude, droge lucht. De luchtwegen koelen af en drogen uit…',1:'<b>Inspanningsastma</b>: de luchtwegen vernauwen. De uitademing (rode lijn) wordt lang en piept. De lijn zakt niet meer terug naar de nullijn: er blijft lucht achter in de longen. Druk op <b>Puffer</b>.',2:'De luchtwegverwijder ontspant de gladde spier en de luchtwegen gaan weer open. In het echt duurt dat enkele minuten. Volg altijd het astmaplan.',3:'De puffer vooraf houdt de vernauwing klein. Zo staat het vaak in het astmaplan van een leerling.'};
+let spN=0;
+function hud0(){const cv=K.$('#spiro');if(cv&&(spN++)%2===0)drawSpiro(cv.getContext('2d'),cv.width,cv.height,false);const e=id=>K.$(id);
+  if(e('#vRR')){e('#vRR').textContent=Math.round(B.rr)+' /min';e('#vVT').textContent=fmt(B.vt)+' L';e('#vVE').textContent=Math.round(B.ve)+' L/min';e('#vHR').textContent=Math.round(B.hr)+' /min';
+    e('#vVE').parentElement;e('#vVE').style.color=B.c>.3?'var(--bad)':'';}}
+const LV=[
+ {step(dt){breath(dt);updL0(dt);hud0();const st=S.state,f=B.f;
+   if(st===1)K.capSoft(K.stateText(),B.insp?'<b>Inademen</b>: het middenrif zakt en de borstkas wordt groter. De druk in de longen daalt onder de buitenluchtdruk: lucht stroomt naar binnen.':'<b>Uitademen</b>: de spieren ontspannen, de longen veren terug en de lucht stroomt vanzelf naar buiten.',2.4);
+   else if(st===2)K.capSoft(K.stateText(),f<.3?'Licht werk: je ademt vooral <b>dieper</b>. Het teugvolume stijgt, de ademfrequentie nog weinig.':f<.62?'Matig werk: dieper én sneller. De <b>buikspieren</b> helpen nu actief bij het uitademen.':'Zwaar werk: ook de <b>hulpademhalingsspieren</b> in de hals tillen de borstkas op. Praten in zinnen lukt niet meer.',2.6);
+   else K.capSoft(K.stateText(),caps3[phase3()],2.6);},
+  reset(n){resetB(n);},hud:()=>`<div id="lgHud"><canvas id="spiro" width="460" height="128" aria-label="Spirogram: longvolume in de tijd"></canvas><div id="lgVals"><span>AF</span><b id="vRR"></b><span>VT</span><b id="vVT"></b><span>V̇E</span><b id="vVE"></b><span>HF</span><b id="vHR"></b></div></div>`,
+  ctl:ctlW,bind:bindW,sound(api){breathSound(api,1);if(B.cad>8){const hr=Math.floor(B.crank/Math.PI);if(hr!==B._cr){B._cr=hr;api.noise(.18,'lowpass',180+B.cad,.6,.02+.0004*B.cad,.05);}}}},
+ {step(dt){breath(dt);updL1(dt);const fl=B.flow,d=1-AW[1].kc*B.c*.78,res=1/Math.pow(d,4);
+   K.bar(1,Math.abs(fl)/5,fmt(Math.abs(fl))+' L/s '+(fl>=0?'in':'uit'),fl>=0?'ok':'ecc');K.bar(2,d,Math.round(d*100)+'%',d<.75?'bad':'ok',d<.75?'var(--bad)':'var(--ok)');K.bar(3,clamp(Math.log(res)/Math.log(20),0,1),'× '+fmt(res),res>3?'bad':'',res>3?'var(--bad)':'#e6d27a');
+   const st=S.state;if(st===1)K.capSoft(K.stateText(),'Een kleine bronchus splitst in twee <b>bronchioli</b>. Kraakbeenplaten (blauw) houden de bronchus open. De bronchioli hebben geen kraakbeen meer, wel <b>gladde spier</b> (rood).',2.6);
+   else if(st===2)K.capSoft(K.stateText(),'Bij inspanning stroomt er veel meer lucht door: in (blauw) en uit (oranje). De trilhaartjes vegen het slijm intussen naar de keel.',2.6);
+   else K.capSoft(K.stateText(),phase3()===0?'Koude, droge lucht trekt diep de luchtwegen in. Het slijmvlies koelt af en droogt uit…':phase3()===1?'De gladde spier trekt samen en het slijmvlies zwelt op. De straal zakt hier tot ongeveer 60%: de weerstand wordt dan al ruim <b>zeven keer</b> zo groot (straal tot de vierde macht). Bij de halve straal is het zestien keer.':phase3()===2?'De pufferdeeltjes (lila) slaan neer op de wand. De gladde spier ontspant en de bronchioli gaan weer open.':caps3[3],2.6);},
+  reset(){aerS.on=false;l1.c=-1;},onShow(){l1.c=-1;},hud:()=>K.bars(['Luchtstroom','Diameter','Weerstand']),ctl:ctlW,bind:bindW,
+  sound(api){breathSound(api,1.2);}},
+ {step(dt){breath(dt);updL2(dt);const sat=98-1.2*B.f-7*B.c;K.bar(1,B.vo2/4,fmt(B.vo2)+' L/min','ok');K.bar(2,l2ct/.8,fmt(l2ct,2)+' s',l2ct<.4?'ecc':'');K.bar(3,(sat-85)/15,Math.round(sat)+'%',sat<94?'bad':'ok',sat<94?'var(--bad)':'var(--ok)');
+   const st=S.state;if(st===1)K.capSoft(K.stateText(),'Een longblaasje is een blaasje van 0,2 à 0,3 mm met een net van haarvaten. Het bloed komt <b>zuurstofarm</b> binnen (paars) en vertrekt <b>helderrood</b>.',2.6);
+   else if(st===2)K.capSoft(K.stateText(),'Bij inspanning stroomt het bloed sneller: de contacttijd daalt van 0,75 naar ongeveer 0,3 s. Er gaan veel meer O₂-bolletjes (oranje) het bloed in en CO₂-bolletjes (blauw) naar buiten.',2.6);
+   else K.capSoft(K.stateText(),phase3()===0?'Hard werken: veel O₂ erin, veel CO₂ eruit…':phase3()===1?'Achter de vernauwde luchtweg (gloeiende rode ringen) komt minder verse lucht. Er gaat minder O₂ het bloed in en CO₂ blijft hangen.':caps3[phase3()],2.6);},
+  hud:()=>K.bars(['O₂-opname','Contacttijd','O₂-verzadiging']),ctl:ctlW,bind:bindW,sound(api){breathSound(api,.45);if(B.ev.beat)api.thump(52,.22,.16);}},
+ {step(dt){breath(dt);updL3(dt);K.bar(1,L3.PA/110,Math.round(L3.PA)+' mmHg',L3.PA<90?'bad':'ok',L3.PA<90?'var(--bad)':'#ff9d8c');K.bar(2,L3.Pc/110,Math.round(L3.Pc)+' mmHg','',L3.Pc<60?'#8a7ad0':'#ff9d8c');K.bar(3,L3.S,Math.round(L3.S*100)+'%',L3.S<.9?'ecc':'ok',L3.S<.9?'#b06aa0':'var(--ok)');
+   const st=S.state;if(st===1)K.capSoft(K.stateText(),'Zuurstof <b>diffundeert</b> van hoge naar lage druk: van de lucht (100 mmHg) naar het bloed (40 mmHg), door een wand van maar 0,5 µm. In de rode bloedcel bindt hemoglobine de O₂.',2.6);
+   else if(st===2)K.capSoft(K.stateText(),'Bij inspanning komt het bloed <b>zuurstofarmer</b> terug uit de spieren en stroomt het sneller. Het drukverschil is groter, dus de diffusie gaat sneller. CO₂ (blauw) gaat de andere kant op.',2.6);
+   else K.capSoft(K.stateText(),phase3()===1?'Minder verse lucht: de PO₂ in het longblaasje daalt. Het drukverschil wordt kleiner, er bindt minder O₂ en de verzadiging zakt.':phase3()===0?'Hard werken in koude lucht. Kijk naar de PO₂ in het longblaasje…':caps3[phase3()],2.6);},
+  hud:()=>K.bars(['PO₂ longblaasje','PO₂ bloed','Hb-verzadiging']),ctl:ctlW,bind:bindW,
+  sound(api){if(B.ev.beat)api.thump(50,.2,.1);if(L3.bindN>0&&api.now>L3.clickT){api.click(1.3+R()*.5);L3.clickT=api.now+.06;}breathSound(api,.25);}}];
+/* ================= punten ================= */
+const ALVsp=ALV.map(A=>A.sp),ALVcap=ALV.map(A=>A.cap);
+const POINTS=[
+ {lv:0,name:'Luchtpijp',lat:'Trachea · cartilagines tracheales',at:()=>W.trach,view:[[-.6,8.9,7.2],[SX,7.5,-.4]],focus:()=>[trachea,TRR,treeM],pick:()=>[trachea,TRR],layer:'Longen',tabs:[
+  `<p>De <b>luchtpijp</b> loopt van het strottenhoofd naar de borstkas en splitst zich daar in de linker- en rechterhoofdbronchus. Hoefijzervormige ringen van kraakbeen (blauw) houden hem open. Aan de achterkant zit geen kraakbeen maar gladde spier: daar ligt de slokdarm tegenaan.</p><p>De rechterhoofdbronchus loopt steiler naar beneden dan de linker. Een verslikt pinda komt daarom vaker rechts terecht.</p>`,
+  `<p>Bij borstcrawl adem je in een paar tienden van een seconde in, door je mond. Dan moet er in korte tijd veel lucht door de luchtpijp. Een snorkel maakt die buis langer: je moet dieper ademen om evenveel verse lucht in je longen te krijgen.</p>`,
+  `<p>De luchtpijp van een volwassene is ongeveer 10 à 12 cm lang en zo'n 2 cm breed, met 16 tot 20 kraakbeenringen.</p>`,
+  `<p class="think">Waarom is het handig dat de luchtpijp stevige ringen heeft, maar aan de achterkant soepel is? Denk aan inademen én aan slikken.</p>`]},
+ {lv:0,name:'Middenrif',lat:'Diaphragma · centrum tendineum',at:()=>W.dia,view:[[-1.5,6.3,9.8],[SX,4.6,0]],focus:()=>[diaM].concat(crura),layer:'Ademspieren',tabs:[
+  `<p>Het <b>middenrif</b> is een koepel van spierweefsel met in het midden een peesplaat (wit). Het scheidt de borstholte van de buikholte. Trekt het samen, dan wordt de koepel platter en zakt hij. De borstkas wordt daardoor hoger en dus groter.</p><p>Een groter volume geeft een lagere druk in de longen (de wet van Boyle). De buitenlucht heeft dan een hogere druk en stroomt vanzelf naar binnen.</p>`,
+  `<p>Zingen, blazen op een fluitje, een lange uitademing bij yoga: het middenrif regelt het ritme. Bij <b>buikademhaling</b> zie je de buik naar voren komen, omdat het zakkende middenrif de buikorganen opzij duwt. Kijk naar de buikwand van het model in stand 1.</p>`,
+  `<p>In rust zakt het middenrif maar 1 à 2 cm en doet het zo'n driekwart van het inademingswerk. Bij een diepe teug kan het tot ongeveer 10 cm zakken.</p>`,
+  `<p class="think">De hik is een plotselinge samentrekking van het middenrif terwijl de stembanden dichtklappen. Wat hoor en voel je daardoor precies?</p>`]},
+ {lv:0,name:'Tussenribspieren',lat:'Mm. intercostales externi et interni',at:()=>W.ic,view:[[-11.2,7.4,9.2],[SX-.6,5.8,.3]],focus:()=>[IEXT,IINT,ribGrp],pick:()=>[IEXT,IINT],layer:'Ademspieren',tabs:[
+  `<p>Tussen de ribben liggen twee lagen spieren. De <b>uitwendige</b> tussenribspieren lopen schuin naar voren en naar beneden, als handen in je broekzakken. Ze tillen de ribben op bij het inademen. De <b>inwendige</b> lopen haaks daarop en trekken de ribben omlaag bij krachtig uitademen.</p><p>De bovenste ribben bewegen als een <b>pompzwengel</b>: het borstbeen gaat naar voren en omhoog. De onderste bewegen als een <b>emmerhengsel</b>: de zijkant gaat naar buiten en omhoog. Vergelijk stand 1 en stand 2.</p>`,
+  `<p>Na een sprint of een 400 meter zie je sporters met de handen op de knieën staan. Dan zetten ze de schoudergordel vast, zodat borst- en rugspieren ook kunnen helpen om de ribben op te tillen.</p>`,
+  `<p>Een mens heeft twaalf paar ribben. De onderste twee hangen los aan de voorkant: de <b>zwevende ribben</b>.</p>`,
+  `<p class="think">Leg je handen plat op je onderste ribben en adem diep in. Welke beweging voel je: de pompzwengel of het emmerhengsel?</p>`]},
+ {lv:0,name:'Long- en borstvlies',lat:'Pleura visceralis et parietalis',at:()=>W.pleura,view:[[2.6,6.4,8.4],[SX+1.3,5.6,0]],focus:()=>LUNG.map(L=>L.pl).concat(LUNG.map(L=>L.m)),pick:()=>LUNG.map(L=>L.pl),layer:'Long- en borstvlies',tabs:[
+  `<p>Elke long zit in een dubbel vlies, de <b>pleura</b>. Het binnenste blad, het <b>longvlies</b> (<i>pleura visceralis</i>), ligt op de long. Het buitenste blad, het <b>borstvlies</b> (<i>pleura parietalis</i>), bekleedt de binnenkant van de borstwand en het middenrif. Daartussen zit een dun laagje vocht. Daardoor kunnen de bladen langs elkaar glijden, maar ze laten elkaar niet los.</p><p>Zo volgt de long elke beweging van de borstkas. In de ruimte tussen de bladen is de druk iets lager dan de buitenlucht. Dat houdt de long uitgerekt.</p>`,
+  `<p>Komt er lucht tussen de bladen, dan klapt de long (deels) in: een <b>klaplong</b>. Dat kan door een harde klap op de borst, maar soms ook spontaan, vooral bij lange, slanke jongens. Plotselinge pijn op de borst en benauwdheid in de les: stop de les voor die leerling en schakel volgens het protocol van de school hulp in.</p>`,
+  `<p>Tussen de twee bladen zit per kant maar een paar milliliter vocht.</p>`,
+  `<p class="think">Twee natte glasplaatjes kun je makkelijk langs elkaar schuiven, maar moeilijk uit elkaar trekken. Wat zegt dat over het borstvlies?</p>`]},
+ {lv:0,name:'Hulpademhalingsspieren',lat:'M. sternocleidomastoideus · mm. scaleni',at:()=>W.acc,view:[[-.4,9.6,7.4],[SX,8.4,-.4]],focus:()=>SCM.concat(SCAL),layer:'Ademspieren',state:2,tabs:[
+  `<p>De <b>scaleni</b> lopen van de halswervels naar de eerste twee ribben. De <b>sternocleidomastoideus</b> loopt van achter het oor naar het borstbeen en het sleutelbeen. Bij zware ademarbeid tillen ze de bovenste ribben en het borstbeen extra op. Zo wordt de borstkas bovenin groter.</p><p>In het model lichten ze op bij een hoog vermogen (stand 2, schuif naar rechts) en bij astma (stand 3).</p>`,
+  `<p>Kijk naar een leerling aan het eind van de bleeptest: de schouders gaan op en neer en de halsspieren staan strak. Dat is een teken dat de ademhaling op haar maximum werkt.</p><p>Soms ademt een leerling snel en hoog in de borst zonder dat hij hard werkt, bijvoorbeeld door spanning voor een toets of wedstrijd: <b>hyperventilatie</b>. Hij blaast dan te veel CO₂ uit. Dat geeft tintelingen in de handen en rond de mond, duizeligheid en een benauwd gevoel, terwijl er genoeg zuurstof is. Laat de leerling rustig zitten en praat rustig mee. Twijfel je of het astma is of iets anders, volg dan het protocol van de school.</p>`,
+  `<p>De scaleni doen al een beetje mee bij rustig ademen. De sternocleidomastoideus schakelt pas in als je hard moet ademen.</p>`,
+  `<p class="think">Waarom is ademen met opgetrokken schouders op den duur vermoeiend, ook als je stilzit?</p>`]},
+ {lv:0,name:'Buikspieren bij uitademen',lat:'M. transversus abdominis · mm. obliqui externus et internus abdominis · m. rectus abdominis',at:()=>W.abs,view:[[-.4,3.9,9.6],[SX,3.4,.8]],focus:()=>[RECT,TAB],layer:'Ademspieren',state:2,tabs:[
+  `<p>In rust is uitademen <b>passief</b>: de longen veren terug als elastiek. Bij inspanning moet het sneller. Dan trekken de buikspieren samen. Ze duwen de buikorganen en het middenrif omhoog en trekken de onderste ribben omlaag. Dat is <b>actief uitademen</b>.</p><p>Vooral de dwarse buikspier (<i>transversus abdominis</i>) en de schuine buikspieren (<i>obliquus externus</i> en <i>internus</i>) doen dit werk. In het model zijn ze samen de doorzichtige buikwand. De rechte buikspier (<i>rectus abdominis</i>, met de peesopschriften van de 'six-pack') helpt minder mee. Bij matige inspanning lichten ze op tijdens elke uitademing.</p>`,
+  `<p>Een <b>steek in de zij</b> komt veel voor bij lopen en zwemmen, vooral vlak na het eten. De oorzaak is niet helemaal bekend. Een veelgenoemde verklaring is irritatie van het buikvlies. Rustiger aan doen en diep uitademen helpt vaak; het gaat vanzelf over.</p>`,
+  `<p>Bij een krachtige hoest of een harde schreeuw stijgt de druk in de buik in een fractie van een seconde. Dezelfde buikspieren zorgen ook voor stevigheid van de romp bij tillen.</p>`,
+  `<p class="think">Waarom helpt het bij een zware squat om even je adem in te houden en de buik aan te spannen? En waarom moet je daar voorzichtig mee zijn?</p>`]},
+ {lv:0,name:'Ademminuutvolume',lat:'Ventilatio · spirometrie en ademgasanalyse',at:()=>W.sport,view:[[8.6,3.4,6.0],[3.8,1.4,-1.4]],focus:()=>[F.root,ERG,CART0,HOSE],pick:()=>[F.root,ERG,CART0],layer:'Sporter',state:2,tabs:[
+  `<p>Het <b>ademminuutvolume</b> (V̇E) is de hoeveelheid lucht die je per minuut in- en uitademt: ademfrequentie × teugvolume. In rust is dat ongeveer 12 × 0,5 = 6 liter per minuut. Bij zwaar werk kan het boven de 100 L/min komen. Schuif in stand 2 het vermogen omhoog en kijk naar het spirogram.</p><p>Eerst stijgt vooral het <b>teugvolume</b>. Boven ongeveer de helft van je vitale capaciteit gaat de <b>frequentie</b> verder omhoog. Het masker meet hoeveel O₂ je opneemt en hoeveel CO₂ je uitademt.</p>`,
+  `<p>De <b>praattest</b>: kun je tijdens een duurloop nog in zinnen praten, dan zit je onder je <b>ventilatoire drempel</b>. Boven die drempel stijgt de ademhaling sterker dan het vermogen, omdat je extra CO₂ moet uitademen. Bruikbaar om leerlingen hun tempo te laten kiezen.</p>`,
+  `<p>Getrainde duursporters halen ademminuutvolumes van 150 tot meer dan 200 liter per minuut. Dat is een badkuip lucht in minder dan een minuut.</p>`,
+  `<p class="think">Zuurstof is zelden de beperkende factor voor gezonde longen bij inspanning. Waar ligt de grens dan wel? Kijk ook in <a href="hart.html">het hart</a>.</p>`]},
+ {lv:1,name:'Bronchiën en bronchioli',lat:'Bronchi · bronchioli',at:()=>W.l1Cart,view:[[-2.2,2.8,9.4],[-2.2,.1,0]],focus:()=>[CP].concat(AW.map(a=>a.muc.m)),pick:()=>[CP,AW[0].muc.m],tabs:[
+  `<p>De luchtwegen vertakken zich als een boom: van de luchtpijp via de <b>bronchiën</b> naar steeds kleinere <b>bronchioli</b>. Er zijn ongeveer 23 generaties van vertakkingen. Pas de laatste generaties hebben longblaasjes; daarvoor geleiden de buisjes alleen lucht.</p><p>In de bronchiën houden platen van <b>kraakbeen</b> (blauw) de buis open. De bronchioli hebben geen kraakbeen. Hun wijdte hangt af van de gladde spier en van de trek van het omliggende longweefsel.</p>`,
+  `<p>De lucht in de geleidende luchtwegen doet niet mee aan de gaswisseling: dat is de <b>dode ruimte</b> van ongeveer 150 mL. Bij rustige, oppervlakkige ademhaling is dat een groot deel van elke teug. Dieper ademen is dus efficiënter dan sneller ademen.</p>`,
+  `<p>Doordat de buisjes zich zo vaak splitsen, is de totale doorsnede diep in de long honderden keren groter dan die van de luchtpijp. Daar stroomt de lucht dus heel langzaam.</p>`,
+  `<p class="think">Een leerling snorkelt met een extra lange snorkel. Waarom wordt ademen dan zwaarder, ook als hij precies even diep ademt?</p>`]},
+ {lv:1,name:'Gladde spier van de luchtweg',lat:'Textus muscularis levis · bronchoconstrictio',at:()=>W.l1Musc,view:[[4.8,3.2,7.6],[3.1,1.3,0]],focus:()=>[SMI].concat(AW.map(a=>a.muc.m)),pick:()=>[SMI],layer:'Gladde spier',tabs:[
+  `<p>Rond de bronchioli lopen spiraalbanden van <b>glad spierweefsel</b>. Je stuurt ze niet bewust aan. Trekken ze samen, dan wordt de buis nauwer: <b>bronchoconstrictie</b>. Bij astma reageren ze te sterk, bijvoorbeeld op koude en droge lucht, stof of pollen. Het slijmvlies zwelt dan ook op en er komt meer slijm.</p><p>De weerstand van een buis hangt af van de straal tot de <b>vierde macht</b>. Halveert de straal, dan wordt de weerstand 2⁴ = 16 keer zo groot. Zet stand 3 aan: de straal zakt tot ongeveer 60% en de balk Weerstand loopt op tot ongeveer × 7.</p>`,
+  `<p>Bij <b>inspanningsastma</b> (inspanningsgebonden bronchoconstrictie) komen de klachten meestal na 5 à 8 minuten hard werken. Vaak zijn ze het ergst 5 à 10 minuten ná het stoppen, en binnen ongeveer een uur zijn ze weer weg (ATS, 2013). Je hoort een piepende, lange uitademing, of de leerling hoest en is benauwd. Een warming-up in korte blokjes kan de reactie verminderen. Volg voor de puffer altijd het astmaplan van de leerling en de ouders.</p>`,
+  `<p>Volgens de richtlijn van de American Thoracic Society (2013) treedt inspanningsgebonden bronchoconstrictie op bij een groot deel van de mensen met astma, en ook bij ongeveer 5 à 20% van de mensen zonder astmadiagnose.</p>`,
+  `<p class="think">Waarom geeft astma vooral problemen bij het <b>uitademen</b>? Denk aan wat het longweefsel bij inademen met de luchtwegen doet, en wat de druk in je borstkas met de luchtwegen doet als je krachtig uitademt.</p>`]},
+ {lv:1,name:'Trilhaartjes en slijm',lat:'Epithelium respiratorium · cilia · mucus',at:()=>W.l1Cil,view:[[2.8,1.6,6.2],[2.6,-1.5,0]],focus:()=>[CII,MUI].concat(AW.map(a=>a.mu.m)),pick:()=>[CII,MUI],layer:'Slijm en trilhaar',tabs:[
+  `<p>De binnenkant van de luchtwegen is bekleed met cellen met <b>trilhaartjes</b>. Daarop ligt een laagje <b>slijm</b> dat stof, roet en bacteriën vangt. De trilhaartjes slaan in een golf en schuiven het slijm omhoog naar de keel, waar je het doorslikt of ophoest: de <b>mucociliaire roltrap</b>.</p><p>Bij astma maakt het slijmvlies meer en taaier slijm. Dat maakt de luchtweg nog nauwer.</p>`,
+  `<p>Je neus verwarmt en bevochtigt de lucht. Bij inspanning ga je door je mond ademen; dan komt koude, droge lucht dieper in de luchtwegen. Daarom geeft hardlopen in de winterkou vaker klachten. Een buff of sjaal voor de mond helpt sommige leerlingen.</p>`,
+  `<p>Een trilhaartje slaat ongeveer 10 tot 20 keer per seconde. In de luchtpijp schuift het slijm zo een paar millimeter per minuut omhoog.</p>`,
+  `<p class="think">Roken legt de trilhaartjes stil. Waarom hoesten rokers dan juist 's ochtends zoveel?</p>`]},
+ {lv:2,name:'Longblaasjes',lat:'Alveoli pulmonis · sacculus alveolaris',at:()=>W.l2Alv,view:[[front.c.x+3.6,front.c.y+3.2,front.c.z+9.5],[front.c.x*.6,front.c.y*.6,front.c.z*.5]],focus:()=>ALVsp.concat([duct]),pick:()=>ALVsp,layer:'Longblaasjes',tabs:[
+  `<p>Aan het einde van de kleinste luchtwegen zitten trossen <b>longblaasjes</b> (alveoli), elk zo'n 0,2 à 0,3 mm groot. Hier vindt de gaswisseling plaats. De wand is extreem dun, zodat zuurstof en koolzuurgas er makkelijk doorheen gaan.</p><p>In de wand zitten <b>elastische vezels</b> (geel). Die rekken uit bij inademen en veren terug bij uitademen. Een vettig laagje, <b>surfactant</b>, voorkomt dat de blaasjes dichtklappen. Een <b>longmacrofaag</b> (afweercel, beige) kruipt over de wand en ruimt ingeademde deeltjes op.</p>`,
+  `<p>Bij inspanning pompt het hart veel meer bloed door de longen. Dan gaan haarvaten open die in rust weinig bloed krijgen, vooral bovenin de long. Zo doen meer longblaasjes volop mee en wordt het oppervlak voor gaswisseling groter. Daardoor kun je bij een duurloop vele malen meer zuurstof opnemen dan in rust.</p>`,
+  `<p>Een volwassene heeft zo'n 300 tot 500 miljoen longblaasjes (Ochs e.a., 2004: gemiddeld 480 miljoen). Samen hebben ze een oppervlak van ongeveer 70 tot 100 m²: zo groot als een badmintonveld (13,40 × 6,10 m).</p>`,
+  `<p class="think">Waarom is een groot oppervlak zo belangrijk voor de gaswisseling? En hoe past een badmintonveld in je borstkas?</p>`]},
+ {lv:2,name:'Haarvaten van de long',lat:'Capillaria pulmonalia · circulatio pulmonalis',at:()=>W.l2Cap,view:[[CAP1.A.c.x+2.6,CAP1.A.c.y+1.2,CAP1.A.c.z+7.6],[CAP1.A.c.x*.8,CAP1.A.c.y*.8,CAP1.A.c.z*.8]],focus:()=>ALVcap.concat([RBC2,artCv,venCv]),pick:()=>ALVcap,layer:'Haarvaten',tabs:[
+  `<p>Om elk longblaasje ligt een dicht net van <b>haarvaten</b>. Het bloed komt uit de rechterkamer van het hart via de longslagader. Het is zuurstofarm (paars in het model). In het haarvat neemt het zuurstof op en geeft het koolzuurgas af. Via de longaders gaat het helderrood terug naar de linkerharthelft: de <b>kleine bloedsomloop</b>.</p><p>Rode bloedcellen schuiven één voor één door de haarvaten, zo nauw zijn die.</p>`,
+  `<p>In rust is een rode bloedcel ongeveer 0,75 seconde in contact met het longblaasje. Bij zware inspanning daalt dat tot zo'n 0,3 seconde. Omdat het bloed al na ongeveer 0,25 seconde verzadigd is, gaat dat bij gezonde longen goed. Zie ook <a href="hart.html">het hart</a>, dat dit bloed rondpompt.</p>`,
+  `<p>Bij inspanning gaat het hele hartminuutvolume door de longen: tot 20 à 30 liter bloed per minuut bij getrainde sporters.</p>`,
+  `<p class="think">De longslagader vervoert zuurstofarm bloed en de longader zuurstofrijk bloed. Waarom heten ze dan toch slagader en ader?</p>`]},
+ {lv:3,name:'Bloed-luchtbarrière',lat:'Membrana alveolocapillaris',at:()=>W.l3Mem,view:[[-2.2,1.7,7.4],[-1.8,.25,0]],focus:()=>L3S.concat([O3,C3c,C3o]),pick:()=>L3S,tabs:[
+  `<p>Tussen de lucht en het bloed liggen drie dunne lagen: een platte cel van het longblaasje (<b>type I-cel</b>), een gedeelde basaalmembraan en de wandcel van het haarvat (<b>endotheel</b>). Samen zijn ze maar zo'n 0,5 µm dik. Bovenop ligt surfactant (geel), gemaakt door de <b>type II-cellen</b>.</p><p>Gassen gaan hier door <b>diffusie</b>: van hoge naar lage partiële druk. Hoe groter het drukverschil en het oppervlak, en hoe dunner de wand, hoe sneller het gaat (de wet van Fick).</p>`,
+  `<p>Op grote hoogte is de luchtdruk lager. Dan is ook de PO₂ in het longblaasje lager, het drukverschil kleiner en de opname trager. Daarom presteer je op een berg slechter op een duurloop, en daarom trainen sommige sporters op hoogte.</p>`,
+  `<p>In het longblaasje is de PO₂ ongeveer 100 mmHg (13,3 kPa), in het zuurstofarme bloed ongeveer 40 mmHg (5,3 kPa). Voor CO₂ is het verschil klein (46 tegen 40 mmHg), maar CO₂ gaat ongeveer twintig keer zo makkelijk door de wand.</p>`,
+  `<p class="think">Bij longoedeem zit er vocht tussen de lagen. Welke factor uit de wet van Fick verandert daardoor, en wat merk je ervan bij inspanning?</p>`]},
+ {lv:3,name:'Rode bloedcel en hemoglobine',lat:'Erythrocytus · haemoglobinum',at:()=>Math.abs(R3.x)>8?null:W.l3Rbc,view:[[.4,-.9,9.5],[0,-2.4,0]],focus:()=>[rbcShell,GLO,HEMI,O3],pick:()=>[rbcShell,GLO],layer:'Hemoglobine',tabs:[
+  `<p>Een rode bloedcel is een dubbel hol schijfje vol <b>hemoglobine</b>. Elk hemoglobinemolecuul heeft vier eiwitketens met elk een <b>hemgroep</b> met ijzer, waar één O₂ aan bindt. Donkerpaars is zonder zuurstof, helderrood is met zuurstof.</p><p>Elke binding maakt de volgende makkelijker. Daardoor is de verzadigingscurve S-vormig: in de long laadt hemoglobine snel vol, in de werkende spier laat het de zuurstof makkelijk los.</p>`,
+  `<p>Bloed dat uit een hard werkende spier terugkomt, is veel zuurstofarmer dan in rust. In stand 2 komt de rode bloedcel daarom veel 'leger' binnen en laadt hij meer zuurstof op. Warmte en verzuring in de spier helpen hemoglobine de zuurstof los te laten (het Bohr-effect). Zie ook <a href="spier.html">de spier</a>, die de zuurstof gebruikt om ATP te maken.</p>`,
+  `<p>Eén rode bloedcel bevat ongeveer 270 miljoen hemoglobinemoleculen. Eén liter bloed vervoert zo ongeveer 200 mL zuurstof; zonder hemoglobine zou dat maar 3 mL zijn.</p>`,
+  `<p class="think">Bij hoogtetraining maakt het lichaam meer rode bloedcellen aan. Waarom helpt dat bij een duurprestatie, en waarom is meer niet altijd beter?</p>`]},
+];
+/* ================= labels, lagen, speurtocht en film ================= */
+const qOn=()=>document.body.classList.contains('quiz-on');
+const iOn=()=>{const e=document.getElementById('info');return !!e&&e.classList.contains('open');};
+const p13=()=>{const e=document.getElementById('info'),n=document.getElementById('iNum');return !!e&&e.classList.contains('open')&&!!n&&n.textContent==='13';};
+const TAGS=[
+ {lv:0,cls:'zone',txt:()=>'ademgasanalyse',at:()=>V(7.0,2.85,-2.4)},
+ {lv:0,cls:'o2',txt:()=>'hart',at:()=>V(SX+.75,5.7,1.05)},
+ {lv:0,cls:'air',txt:()=>B.flow>=0?'lucht in':'lucht uit',at:()=>W.sport.clone().add(V(-.6,.8,0)),show:()=>S.state>1&&Math.abs(B.flow)>.3},
+ {lv:0,cls:'co2',txt:()=>'koude, droge lucht',at:()=>V(1.8,2.6,-.5),show:()=>S.state===3&&!B.attack},
+ {lv:0,cls:'o2',txt:()=>'piep…',at:()=>W.sport.clone().add(V(-1.1,.05,0)),show:()=>B.c>.3&&!B.insp},
+ {lv:0,cls:'o2',txt:()=>'vernauwde luchtwegen',at:()=>V(SX+.95,6.85,.45),show:()=>B.c>.3},
+ {lv:1,cls:'band',txt:()=>'kraakbeen',at:()=>W.l1Tag&&W.l1Tag.cart,show:()=>!!(W.l1Tag&&W.l1Tag.cart)&&!qOn()&&!iOn()},
+ {lv:1,cls:'o2',txt:()=>'gladde spier',at:()=>W.l1Tag&&W.l1Tag.sm,show:()=>!!(W.l1Tag&&W.l1Tag.sm)&&!qOn()&&!iOn()},
+ {lv:1,cls:'co2',txt:()=>'longslagadertje',at:()=>V(-.6,1.75,-1.6),show:()=>innerWidth>820&&!iOn()},
+ {lv:1,cls:'o2',txt:()=>'bronchiaal slagadertje',at:()=>V(-1.2,-.95,-1.1),show:()=>innerWidth>820&&!iOn()},
+ {lv:1,cls:'zone',txt:()=>'naar de longblaasjes',at:()=>V(7.1,3.4,-.3),show:()=>!iOn()&&innerWidth>820},
+ {lv:1,cls:'puf',txt:()=>'puffer',at:()=>W.l1Aer,show:()=>aerS.on&&!!W.l1Aer},
+ {lv:1,cls:'zone',txt:()=>'bronchiolus (geen kraakbeen)',at:()=>V(5.0,-1.55,.4),show:()=>!iOn()&&innerWidth>820},
+ {lv:2,cls:'co2',txt:()=>'slagadertje · zuurstofarm',at:()=>V(-5.6,2.15,-1.4)},
+ {lv:2,cls:'o2',txt:()=>'adertje · zuurstofrijk',at:()=>V(6.4,-2.05,1.9)},
+ {lv:2,cls:'zone',txt:()=>'afweercel',at:()=>W.l2Mac,show:()=>!!W.l2Mac},
+ {lv:2,cls:'o2',txt:()=>'O₂',at:()=>{const d=o2D.find((d,i)=>i<5&&d.t>.3&&d.t<.8);return d?_tg.copy(d.a).lerp(d.b,ease(d.t)).multiplyScalar(1+.05*Math.max(0,B.vol)).add(ALV[d.ai].c):null;}},
+ {lv:2,cls:'co2',txt:()=>'CO₂',at:()=>{const d=co2D.find((d,i)=>i<5&&d.t>.2&&d.t<.6);return d?_tg2.copy(d.a).multiplyScalar(1+.05*Math.max(0,B.vol)).add(ALV[d.ai].c).lerp(d.b,ease(d.t)):null;}},
+ {lv:2,cls:'zone',txt:()=>'alveolaire buis',at:()=>V(-6.2,-.4,.5)},
+ {lv:3,cls:'air',txt:()=>'lucht in het longblaasje',at:()=>V(-5.2,3.0,0)},
+ {lv:3,cls:'zone',txt:()=>'type I-cel',at:()=>V(-3.6,.56+wav(-3.6,2.6),2.6),show:()=>!p13()&&innerWidth>820},
+ {lv:3,cls:'zone',txt:()=>'basaalmembraan',at:()=>V(-.6,.33+wav(-.6,2.6),2.6),show:()=>!p13()&&innerWidth>820},
+ {lv:3,cls:'zone',txt:()=>'endotheel',at:()=>V(1.9,.16+wav(1.9,2.6),2.6),show:()=>!p13()&&innerWidth>820},
+ {lv:3,cls:'zone',txt:()=>'surfactant',at:()=>V(-3.4,.72+wav(-3.4,2.6),2.6),show:p13},
+ {lv:3,cls:'zone',txt:()=>'type I-cel',at:()=>V(-3.0,.53+wav(-3.0,2.6),2.6),show:p13},
+ {lv:3,cls:'zone',txt:()=>'basaalmembraan',at:()=>V(-2.6,.33+wav(-2.6,2.6),2.6),show:p13},
+ {lv:3,cls:'zone',txt:()=>'endotheel',at:()=>V(-2.2,.15+wav(-2.2,2.6),2.6),show:p13},
+ {lv:3,cls:'zone',txt:()=>'type II-cel · surfactant',at:()=>V(5.5,2.25,-.3),show:()=>innerWidth>820},
+ {lv:3,cls:'zone',txt:()=>'bloedplasma',at:()=>V(-4.6,-1.5,1.8),show:()=>innerWidth>820},
+ {lv:3,cls:'o2',txt:()=>'O₂',at:()=>W.l3O2,show:()=>!!W.l3O2},
+ {lv:3,cls:'co2',txt:()=>'CO₂',at:()=>W.l3CO2,show:()=>!!W.l3CO2},
+ {lv:3,cls:'o2',txt:()=>'Hb · '+Math.round(L3.S*100)+'%',at:()=>W.l3Hb,show:()=>Math.abs(R3.x)<7},
+];
+const _tg=V(0,0,0),_tg2=V(0,0,0);
+const LAYERS=[
+ {name:'Ribben',lv:0,objs:()=>[ribGrp,stern,CART].concat(CLAV)},
+ {name:'Longen',lv:0,objs:()=>LUNG.map(L=>L.m).concat([treeM,trachea,TRR])},
+ {name:'Long- en borstvlies',lv:0,objs:()=>LUNG.map(L=>L.pl),on:true},
+ {name:'Ademspieren',lv:0,objs:()=>[diaM,IEXT,IINT,RECT,TAB].concat(SCM,SCAL,crura)},
+ {name:'Hart',lv:0,objs:()=>[heartM,aorta,pulmT,pulmL]},
+ {name:'Sporter',lv:0,objs:()=>[F.root,ERG,HOSE,VAP]},
+ {name:'Wand',lv:1,objs:()=>AW.map(a=>a.adv.m).concat([CP])},
+ {name:'Gladde spier',lv:1,objs:()=>[SMI]},
+ {name:'Slijm en trilhaar',lv:1,objs:()=>[CII,MUI].concat(AW.map(a=>a.mu.m))},
+ {name:'Bloedvaten',lv:1,objs:()=>VES1},
+ {name:'Longblaasjes',lv:2,objs:()=>ALVsp.concat([duct])},
+ {name:'Haarvaten',lv:2,objs:()=>ALVcap.concat([RBC2,artCv,venCv])},
+ {name:'Gassen',lv:2,objs:()=>[O2I,CO2I]},
+ {name:'Hemoglobine',lv:3,objs:()=>[GLO,HEMI]},
+ {name:'Gassen ',lv:3,objs:()=>[O3,C3c,C3o]},
+];
+const QUIZ=[
+ {t:'R',type:'find',lv:0,state:1,view:[[1.2,6.4,11.5],[SX,5.6,0]],q:'Klik op het <b>middenrif</b>: de belangrijkste inademingsspier.',opts:[()=>W.trach,()=>W.abs,()=>W.dia,()=>W.heart],ok:2,
+  fb:['Dit is de luchtpijp: daar stroomt de lucht door, maar hij werkt niet als spier.','Dit is de rechte buikspier. Die helpt bij krachtig <b>uit</b>ademen.','Goed! Het middenrif is de koepel onder de longen. Bij inademen zakt het en wordt de borstkas groter.','Dit is het hart. Het ligt óp het middenrif, tussen de longen.']},
+ {t:'R',type:'find',lv:1,state:1,view:[[-1.5,5.3,14.2],[1.2,.1,-.3]],q:'Klik op de <b>gladde spier</b> die bij astma de luchtweg vernauwt.',opts:[()=>W.l1Musc,()=>W.l1Cart,()=>W.l1Cil,()=>W.l1Ves],ok:0,
+  fb:['Goed! De spiraalbanden van gladde spier rond de bronchiolus trekken bij astma samen.','Dit is een kraakbeenplaat. Kraakbeen houdt de bronchus juist open en kan niet samentrekken.','Dit zijn de trilhaartjes met slijm. Ze reinigen de luchtweg, maar vernauwen hem niet actief.','Dit is een bloedvat naast de luchtweg.']},
+ {t:'R',type:'find',lv:2,state:1,view:[[3.8,2.2,15.5],[.8,-.5,0]],q:'Klik op een stukje haarvat waar het bloed <b>net zuurstof heeft opgenomen</b>.',opts:[()=>W.l2Art,()=>W.l2Cap0,()=>W.l2Duct,()=>W.l2Cap],ok:3,
+  fb:['Dit is het aanvoerende slagadertje: daar is het bloed nog zuurstofarm.','Hier komt het bloed het haarvat net binnen: nog paars, dus zuurstofarm.','Dit is de alveolaire buis: daar zit lucht, geen bloed.','Goed! Aan het eind van het haarvat is het bloed helderrood: verzadigd met zuurstof.']},
+ {t:'T1',type:'mc',lv:0,state:1,q:'Wat zorgt ervoor dat er bij inademen lucht naar binnen stroomt?',opts:['De longen zuigen zichzelf vol met hun eigen spieren.','De borstkas wordt groter, daardoor daalt de druk in de longen onder de buitenluchtdruk.','Het middenrif duwt de lucht via de luchtpijp naar binnen.','De druk in de longen stijgt, zodat de longblaasjes openklappen.'],ok:1,
+  ex:'Middenrif en tussenribspieren maken de borstkas groter. De longen volgen via het borstvlies. Een groter volume geeft een lagere druk, en lucht stroomt van hoge naar lage druk.',
+  why:['Longen hebben zelf geen spieren om uit te zetten. Ze volgen de borstkas via het borstvlies.',null,'Het middenrif duwt niets naar binnen. Het zakt, waardoor het volume groter en de druk lager wordt.','Andersom: bij inademen daalt de druk in de longen. Lucht stroomt naar de plek met de laagste druk.']},
+ {t:'T1',type:'mc',lv:3,state:1,q:'Waardoor gaat zuurstof van het longblaasje naar het bloed?',opts:['De rode bloedcel pompt O₂ actief naar binnen.','Hemoglobine trekt zuurstof aan, ook tegen een drukverschil in.','Door diffusie: de PO₂ in het longblaasje is hoger dan in het bloed.','Door de bloeddruk in het haarvat.'],ok:2,
+  ex:'Gaswisseling is diffusie. De PO₂ is in de lucht van het longblaasje ongeveer 100 mmHg en in het zuurstofarme bloed ongeveer 40 mmHg. Hemoglobine bindt de opgeloste zuurstof en houdt zo de PO₂ in het plasma laag.',
+  why:['Er is geen pomp voor zuurstof: het gaat vanzelf, zonder energie.','Hemoglobine helpt wel, maar zuurstof gaat nooit tegen het drukverschil in.',null,'De bloeddruk duwt bloed door het haarvat, maar bepaalt niet de richting waarin gassen gaan.']},
+ {t:'T2',type:'mc',lv:0,state:2,q:'Anouk en Bram hebben bij de duurloop allebei een ademminuutvolume van 40 L/min. Anouk ademt 40 keer per minuut 1 liter, Bram 20 keer per minuut 2 liter. De dode ruimte is 0,15 L. Bij wie komt er per minuut meer verse lucht in de longblaasjes?',opts:['Bij Anouk, want zij ademt vaker.','Bij allebei evenveel, want hun ademminuutvolume is gelijk.','Dat kun je niet zeggen zonder het vermogen te weten.','Bij Bram, want hij verliest minder teugen aan de dode ruimte.'],ok:3,
+  ex:'Van elke teug blijft 0,15 L in de luchtwegen hangen. Anouk: 40 × 0,85 = 34 L/min. Bram: 20 × 1,85 = 37 L/min. Dieper ademen is efficiënter dan sneller ademen.',
+  why:['Vaker ademen betekent ook vaker de dode ruimte vullen: bij elke teug gaat 0,15 L verloren.','Het ademminuutvolume is gelijk, maar de dode ruimte telt per teug. Wie vaker ademt, verliest meer.','Het vermogen heb je niet nodig. Reken per teug wat er na de dode ruimte overblijft.',null]},
+ {t:'T2',type:'mc',lv:1,state:3,q:'In het model zakt de straal van de bronchiolus bij de aanval tot ongeveer 60%. Hoeveel keer zo groot wordt de weerstand ongeveer?',opts:['ongeveer 8 keer','ongeveer 1,7 keer','ongeveer 2,8 keer','ongeveer 4,6 keer'],ok:0,
+  ex:'Weerstand hangt af van 1/straal⁴ (de wet van Poiseuille): 1 / 0,6⁴ ≈ 1 / 0,13 ≈ 7,7. Dat zie je ook op de balk Weerstand in stand 3. Een vernauwing van 40% geeft dus bijna acht keer zoveel weerstand.',
+  why:[null,'Dat is 1/0,6: zo zou het gaan als de weerstand evenredig was met 1/straal.','Dat is 1/0,6²: zo verandert het oppervlak van de doorsnede.','Dat is 1/0,6³. De weerstand gaat met de vierde macht.']},
+ {t:'I',type:'open',q:'Je geeft in november een buitenles met een duurloop. Twee leerlingen hebben inspanningsastma. Hoe richt je de warming-up en de les in, en waar let je op? Gebruik wat je in deze halte hebt gezien.',
+  model:'<p><b>Een sterk antwoord noemt:</b></p><ul><li>Overleg vooraf: wat staat er in het <b>astmaplan</b> van de leerling en de ouders? Volg dat, ook voor een puffer vooraf. Jij stelt geen diagnose en geeft geen behandeladvies.</li><li>Een <b>warming-up in korte blokjes</b> (bijvoorbeeld 10–15 minuten met korte versnellingen en rust). Daarna is de kans op een aanval vaak kleiner.</li><li><b>Koude, droge lucht</b> is een prikkel: door de mond ademen haalt die lucht diep naar binnen. Een buff of sjaal voor de mond kan helpen, en een binnenalternatief bij vrieskou.</li><li>De <b>puffer bij de hand</b>, niet in de kleedkamer. Leerlingen mogen altijd stoppen bij benauwdheid, piepen of hoesten.</li><li>Intensiteit doseren met de <b>praattest</b>, en nooit een benauwde leerling alleen naar binnen sturen.</li><li>Let ook <b>na afloop</b> op: de benauwdheid is vaak 5 à 10 minuten na het stoppen het ergst.</li><li>Gaat het na de puffer niet beter, dan volg je het protocol van de school voor hulp.</li></ul>'},
+];
+const CAM={wide:[[6.4,6.9,19.5],[.5,4.0,0]],cart:[[5.6,2.6,.5],[7.3,2.15,-2.6]],chest:[[-.2,6.8,11.2],[SX,5.8,0]],dia:[[-1.2,5.8,9.6],[SX,4.8,0]],bike:[[8.4,3.4,6.6],[3.4,1.4,-1.2]],neck:[[-.4,9.4,7.6],[SX,8.2,-.3]],
+  l1:[[2.2,2.4,15.5],[.2,.1,0]],l1m:[[4.8,3.2,8.2],[3.1,1.2,0]],l1c:[[2.8,1.6,6.2],[2.6,-1.5,0]],l2:[[4.5,3.2,14.5],[.2,0,0]],l2c:[[front.c.x+2,front.c.y+1.4,front.c.z+5.5],[front.c.x*.7,front.c.y*.7,front.c.z*.7]],l3:[[.6,2.0,13.5],[0,-.2,0]],l3r:[[.4,-.9,9.5],[0,-2.2,0]]};
+const SCENES=[
+ {chap:'',lv:0,st:1,view:CAM.wide,title:['Hoe je longen inspanning bijhouden','Van borstkas tot hemoglobine · drie keer inzoomen'],lines:[
+  {t:'Bij elke sprint, elke baan borstcrawl en elke bleeptest moet er zuurstof naar binnen en koolzuurgas naar buiten.'},
+  {t:'We kijken naar een sporter op de fietsergometer en zoomen in tot op één rode bloedcel.',do:()=>{K.FILM.title=null;}}]},
+ {chap:'1 · Inademen',lv:0,st:1,view:CAM.chest,lines:[
+  {t:'Dit is de borstkas: ribben, borstbeen, wervelkolom en daaronder het middenrif.'},
+  {t:'Bij inademen trekt het middenrif samen en zakt het. De borstkas wordt groter.',cam:CAM.dia},
+  {t:'Een groter volume betekent een lagere druk in de longen. De buitenlucht stroomt vanzelf naar binnen.'},
+  {t:'Uitademen gaat in rust vanzelf. De spieren ontspannen en de elastische longen veren terug.',cam:CAM.chest}]},
+ {chap:'2 · Inspanning',lv:0,st:2,view:CAM.wide,setup(){B.watt=75;},lines:[
+  {t:'Nu gaat de sporter fietsen. Kijk naar het scherm van de ademgasanalyse.',cam:CAM.cart},
+  {t:'Eerst ademt hij vooral dieper. Het teugvolume stijgt van een halve liter naar ruim twee liter.',do:()=>{B.watt=160;},min:4.5},
+  {t:'Daarna ook sneller: van twaalf tot ruim veertig ademhalingen per minuut.',do:()=>{B.watt=350;},min:5},
+  {t:'Het ademminuutvolume gaat van zes liter in rust naar meer dan honderd liter per minuut.',min:5},
+  {t:'Nu helpen ook de buikspieren bij het uitademen, en de halsspieren tillen de borstkas mee op.',cam:CAM.neck}]},
+ {chap:'3 · De luchtwegen',lv:1,st:2,view:CAM.l1,setup(){B.watt=200;},lines:[
+  {t:'We zoomen in op de luchtwegen. Ze splitsen zich zo\'n drieëntwintig keer, tot steeds kleinere buisjes.'},
+  {t:'Bronchiën worden opengehouden door kraakbeen, hier in het blauw. De kleinste, de bronchioli, hebben geen kraakbeen meer, alleen nog gladde spier.',cam:CAM.l1m},
+  {t:'Trilhaartjes vegen een laagje slijm met stof en bacteriën omhoog, naar de keel.',cam:CAM.l1c}]},
+ {chap:'4 · Het longblaasje',lv:2,st:1,view:CAM.l2,lines:[
+  {t:'Aan het eind zitten de longblaasjes, zo\'n vierhonderd miljoen, als trossen druiven.'},
+  {t:'Samen hebben ze een oppervlak zo groot als een badmintonveld.'},
+  {t:'Om elk blaasje ligt een net van haarvaten. Het bloed komt zuurstofarm binnen en vertrekt helderrood.',cam:CAM.l2c},
+  {t:'Bij inspanning stroomt het bloed sneller. Toch is het op tijd volgeladen met zuurstof.',do:()=>{K.setState(2);}}]},
+ {chap:'5 · Gaswisseling',lv:3,st:2,view:CAM.l3,lines:[
+  {t:'Nog verder in. Tussen lucht en bloed zit een wand van maar een halve micrometer.'},
+  {t:'Zuurstof gaat van de hoge druk in de lucht naar de lage druk in het bloed. Dat heet diffusie.'},
+  {t:'In de rode bloedcel bindt hemoglobine de zuurstof. Elk molecuul kan er vier dragen.',cam:CAM.l3r},
+  {t:'Koolzuurgas gaat de andere kant op, naar de lucht. Dat adem je uit.',cam:CAM.l3}]},
+ {chap:'6 · Inspanningsastma',lv:1,st:3,view:CAM.l1,setup(){B.tAtt=1e9;},lines:[
+  {t:'Bij sommige leerlingen gaat het mis na een paar minuten hard werken in koude, droge lucht.'},
+  {t:'De luchtwegen koelen af en drogen uit. De gladde spier trekt samen en het slijmvlies zwelt op.',do:()=>{B.tAtt=S.stT;},min:5.5,cam:CAM.l1m},
+  {t:'De straal zakt hier tot zestig procent. Dan is de weerstand al zeven keer zo groot. Vooral uitademen wordt zwaar.'},
+  {t:'Een luchtwegverwijder, de puffer, laat de gladde spier weer ontspannen.',do:()=>puffer(),min:6,cam:CAM.l1}]},
+ {chap:'7 · Wat merk je ervan',lv:0,st:3,view:CAM.bike,setup(){B.tAtt=1e9;},lines:[
+  {t:'Op de fiets ziet dat er zo uit. Eerst gaat alles goed.',min:4},
+  {t:'Dan wordt de uitademing lang en piepend. Op het scherm zakt de lijn niet meer terug: er blijft lucht achter in de longen.',do:()=>{B.tAtt=S.stT;},min:6,cam:CAM.cart},
+  {t:'De sporter stopt, buigt voorover en ademt snel en oppervlakkig.',cam:CAM.bike,min:4},
+  {t:'In het echt komt de benauwdheid vaak pas een paar minuten na het stoppen.'},
+  {t:'Na de puffer gaan de luchtwegen weer open. Ook dat duurt in het echt enkele minuten.',do:()=>puffer(),min:6}]},
+ {chap:'Tot slot',lv:0,st:2,view:CAM.wide,setup(){B.watt=150;},lines:[
+  {t:'In de les: bouw de warming-up op in korte blokjes, en let extra op bij koude buitenlessen.'},
+  {t:'Laat leerlingen met astma hun puffer bij de hand houden, en volg altijd hun astmaplan.'},
+  {t:'En de praattest: kun je nog in zinnen praten, dan zit je onder je ventilatoire drempel.'},
+  {t:'',min:5,do:()=>{K.FILM.title=['Verken het zelf','De Bewegingsatlas · zoom in, van borstkas tot hemoglobine'];}}]}];
+window.__longen={B,L3,R3};
+return {levels:LV,points:POINTS,tags:TAGS,quiz:QUIZ,layers:LAYERS,film:{scenes:SCENES,stop(){B.watt=200;B.tAtt=7;}}};
+ }});
+
+</script>
+</body>
+</html>

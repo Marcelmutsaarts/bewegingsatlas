@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Biomechanica · De Bewegingsatlas</title>
-<meta name="description" content="Biomechanica in de praktijk voor de ALO: zeven thema's van Newton tot energie, steeds vertaald naar de gymles, met een interactief 3D-saltolab.">
+<meta name="description" content="Biomechanica in de praktijk voor de ALO: zeven thema's van Newton tot energie, steeds vertaald naar de gymles, met vijf interactieve 3D-labs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -17,7 +17,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:"Instrument S
 body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.5;background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(80% 60% at 70% 20%,#000 0%,transparent 80%);-webkit-mask-image:radial-gradient(80% 60% at 70% 20%,#000 0%,transparent 80%)}
 a{color:inherit}
 .wrap{max-width:1180px;margin:0 auto;padding:0 24px;position:relative}
-nav.top{display:flex;align-items:center;justify-content:space-between;padding:20px 0;gap:16px}
+nav.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:20px 0;gap:10px 16px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cta{background:#b0392b}}:root[data-theme="dark"] .cta{background:#b0392b}
 .brand{display:flex;align-items:center;gap:10px;font-family:Fraunces,serif;font-weight:700;font-size:20px;text-decoration:none}
 .brand svg{width:30px;height:30px}
 .wings{display:flex;gap:4px;background:var(--paper2);border:1px solid var(--line);border-radius:999px;padding:4px}
@@ -157,7 +158,7 @@ footer{padding:50px 0 40px;color:var(--muted);font-size:13.5px}
     <div class="myth">
       <div><s>Zware voorwerpen vallen sneller.</s> Zonder luchtweerstand vallen ze even snel: de zwaartekracht is groter, maar de massa ook (Newton 2).</div>
       <div><s>In de lucht kun je extra draai maken.</s> L blijft constant. Je kunt alleen sneller of langzamer draaien door je houding (week 4).</div>
-      <div><s>Een werphoek van 45° is altijd het verst.</s> Dat geldt alleen als je loslaat op grondhoogte. Bij kogelstoten ligt het optimum lager (week 7).</div>
+      <div><s>Een werphoek van 45° is altijd het verst.</s> Dat geldt alleen als je loslaat op grondhoogte. Bij kogelstoten ligt het optimum lager, omdat je boven je hoofd loslaat.</div>
       <div><s>Een zachte landing is vooral geluk.</s> Langer remmen (door de knieën, dikke mat) verlaagt de piekkracht: F · Δt = m · Δv (week 6).</div>
     </div>
   </section>
