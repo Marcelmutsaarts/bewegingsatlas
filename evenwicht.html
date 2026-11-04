@@ -4,50 +4,70 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Evenwicht · Bewegingsatlas</title>
-<meta name="description" content="Biomechanica-lab Momenten: zwaartepunt, steunvlak en krachtmoment in 3D. Kies een houding, geef een duw en zie wie blijft staan, van stoeien tot balanceren op de balk.">
+<meta name="description" content="Biomechanica-lab Momenten: zwaartepunt, steunvlak en krachtmoment in 3D. Kies een houding, laat een klasgenoot duwen en zie of de leerling blijft staan, kantelt en een stap zet, of wegschuift.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg0:#2c3a42;--bg1:#0d1316;--ink:#f1e9da;--muted:#aab3b4;--panel:rgba(15,20,23,.86);--panel2:rgba(22,29,33,.95);--line:rgba(241,233,218,.13);--line2:rgba(241,233,218,.3);
-  --accent:#d65a42;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#e6b65e;--teal:#6fb2b4;--MP:#e86a5a;--MR:#7fc8a0;--FM:#e6b65e}
+:root{--bg0:#2c3a42;--bg1:#0d1316;--ink:#f1e9da;--muted:#aab3b4;--panel:rgba(15,20,23,.86);--panel2:rgba(22,29,33,.96);--line:rgba(241,233,218,.13);--line2:rgba(241,233,218,.3);
+  --accent:#d65a42;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#e6b65e;--teal:#6fb2b4;--push:#e86a5a;--grav:#e6b65e}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-button,input{font:inherit;color:inherit}
+button,input,textarea{font:inherit;color:inherit}
 #app{position:fixed;inset:0;background:radial-gradient(120% 90% at 55% 35%,var(--bg0) 0%,#18232a 55%,var(--bg1) 100%)}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 #top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;z-index:6;pointer-events:none}
 #top>*{pointer-events:auto}
-.title a{color:var(--muted);text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+/* titelblok: blijft leesbaar op de lichte muur en vloer (zachte donkere achtergrond plus schaduw) */
+.title{position:relative}
+.title::before{content:"";position:absolute;left:-14px;top:-10px;right:-22px;bottom:-8px;border-radius:14px;background:radial-gradient(120% 140% at 30% 40%,rgba(13,19,22,.62),rgba(13,19,22,.38) 60%,rgba(13,19,22,0) 100%);z-index:-1;pointer-events:none}
+.title a,.title h1,.title p{text-shadow:0 1px 3px #000,0 0 10px rgba(0,0,0,.85)}
+.title a{color:#c9c0ae;text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
 .title a:hover{color:var(--ink)}
-.title h1{margin:2px 0 0;font:700 32px/1.05 Fraunces,serif;text-shadow:0 2px 18px rgba(0,0,0,.5)}
-.title p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.title h1{margin:2px 0 0;font:700 32px/1.05 Fraunces,serif}
+.title p{margin:4px 0 0;color:#d9d0c0;font-size:13.5px}
 .tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;backdrop-filter:blur(8px);white-space:nowrap}
 .btn:hover{border-color:var(--line2)}.btn.on{background:var(--ink);color:#111}
+.btn:disabled{opacity:.42;cursor:not-allowed;box-shadow:none}
 .btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn svg{width:16px;height:16px}
 .seg{display:inline-flex;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
 .seg button{border:0;background:none;border-radius:7px;padding:6px 9px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
 .seg button.on{background:var(--ink);color:#111}
-#lab{position:absolute;left:16px;top:104px;width:296px;max-height:calc(100% - 270px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:5;backdrop-filter:blur(10px);scrollbar-width:thin}
-#lab h4{margin:10px 0 6px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-#lab h4:first-child{margin-top:0}
-.sl{margin:5px 0 8px}
+/* labpaneel */
+#lab{position:absolute;left:16px;top:104px;width:300px;max-height:calc(100% - 252px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:14px;z-index:5;backdrop-filter:blur(10px);overflow:hidden}
+.lbody{overflow:auto;padding:12px 14px 6px;scrollbar-width:thin;flex:1 1 auto;min-height:0}
+#lab h4{margin:12px 0 6px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.lsec:first-child h4:first-child{margin-top:0}
+.sl{margin:6px 0 9px}
 .sl label{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:600}
-.sl label b{font:600 13px "JetBrains Mono",monospace;color:var(--gold)}
+.sl label b{font:600 13px "JetBrains Mono",monospace;color:var(--gold);white-space:nowrap}
+.sl small,.hint{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;line-height:1.35}
 input[type=range]{width:100%;accent-color:var(--accent)}
-.jump{width:100%;justify-content:center;font-size:16px;padding:12px;margin:8px 0 2px;background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(214,90,66,.3)}
-.tog{display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0;cursor:pointer}
+details#fine{margin:10px 0 2px;border:1px solid var(--line);border-radius:10px;padding:0 10px;background:rgba(255,255,255,.02)}
+details#fine summary{cursor:pointer;font-weight:600;font-size:13px;padding:8px 0;list-style:none;display:flex;justify-content:space-between}
+details#fine summary::-webkit-details-marker{display:none}
+details#fine summary::after{content:"▸";color:var(--muted)}details#fine[open] summary::after{content:"▾"}
+.pushbar{flex:none;padding:9px 14px 12px;border-top:1px solid var(--line);background:rgba(15,20,23,.6)}
+.jump{width:100%;justify-content:center;font-size:16px;padding:11px;background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(214,90,66,.3)}
+.jump:hover{filter:brightness(1.08)}
+.row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tog{display:flex;align-items:center;gap:8px;font-size:13px;margin:6px 0;cursor:pointer}
 .tog input{accent-color:var(--accent)}.tog kbd{margin-left:auto}
 kbd{font:600 11px "JetBrains Mono",monospace;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
+#ltabs{display:none}
+/* markers en 3D-labels */
 .mk{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;will-change:transform;display:flex;gap:6px;align-items:center}
 .mk b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#2a1d00;font:800 12px "Instrument Sans";box-shadow:0 0 0 3px rgba(230,182,94,.3),0 4px 12px rgba(0,0,0,.5)}
 .mk span{display:none;background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
-body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
+body.lbl-names .mk span{display:block}body.lbl-off .mk,body.lbl-off .tag3d{display:none!important}
 .mk.sel b{background:var(--accent);color:#fff}
-.tag3d{position:absolute;left:0;top:0;pointer-events:none;font:600 12px "JetBrains Mono",monospace;white-space:nowrap;will-change:transform;text-shadow:0 1px 4px #000}
+/* 3D-labels: een donker plaatje eronder, zodat ze ook op de lichte mat, vloer of muur leesbaar zijn */
+.tag3d{position:absolute;left:0;top:0;pointer-events:none;font:600 12px/16px "JetBrains Mono",monospace;white-space:nowrap;will-change:transform;background:rgba(11,16,19,.74);padding:1px 6px;border-radius:6px;text-shadow:0 1px 2px #000}
+.tag3d.sm{font-size:11px;opacity:.92}
+/* uitlegpunten */
 .panel{position:absolute;right:16px;top:104px;bottom:16px;width:390px;display:none;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:14px;z-index:7;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
 .panel.open{display:flex;animation:slidein .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes slidein{from{opacity:0;transform:translateX(16px)}}
@@ -60,31 +80,52 @@ body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
 .tabs button.on{color:var(--ink);border-color:var(--accent)}
 .pb{flex:1;overflow:auto;padding:12px 16px 16px;font-size:14.5px;line-height:1.55;scrollbar-width:thin}
 .pb p{margin:0 0 10px}.pb ul{margin:0 0 10px;padding-left:18px}.pb li{margin:3px 0}
+.pb svg{display:block;width:100%;height:auto;margin:4px 0 10px}
 .calc{font:13px/1.6 "JetBrains Mono",monospace;background:rgba(255,255,255,.05);border-radius:9px;padding:10px 12px;margin:0 0 10px}
 .think{border-left:3px solid var(--gold);padding:8px 12px;background:rgba(230,182,94,.08);border-radius:0 9px 9px 0}
 .ctx{display:inline-block;font:600 10.5px "JetBrains Mono",monospace;padding:2px 6px;border-radius:4px;background:rgba(111,178,180,.2);color:var(--teal);margin-right:6px}
+.cP{color:var(--push);font-weight:700}.cG{color:var(--grav);font-weight:700}.cS{color:var(--ok);font-weight:700}
 .pnav{display:flex;justify-content:space-between;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
-#hud{position:absolute;left:328px;right:16px;bottom:16px;display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;z-index:4;backdrop-filter:blur(10px)}
+/* HUD */
+#hud{position:absolute;left:332px;right:16px;bottom:16px;display:flex;flex-wrap:wrap;gap:10px 12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;z-index:4;backdrop-filter:blur(10px)}
 body.dossier #hud{right:422px}
-.eq{display:flex;align-items:center;gap:6px;flex:none}
-.term{width:122px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
-.term small{display:block;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-.term b{display:block;font:700 24px/1.05 Fraunces,serif;margin-top:2px}
-.term em{display:block;font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
-.term i{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}.term i span{display:block;height:100%;width:0;border-radius:3px}
-.term.P b{color:var(--MP)}.term.P i span{background:var(--MP)}.term.R b{color:var(--MR)}.term.R i span{background:var(--MR)}.term.F b{color:var(--FM)}
-.op{font:700 20px Fraunces,serif;color:var(--muted)}
-#mapWrap{flex:none;width:150px;height:100px;position:relative}
-#map{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
-#res{flex:1;min-width:180px;font-size:12.5px;line-height:1.4;border-left:1px solid var(--line);padding-left:12px}
+.eq{display:flex;align-items:center;gap:5px;flex:none}
+.term{width:128px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 8px}
+.term small{display:block;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.03em;white-space:nowrap}
+.term small.f{color:#d9d0c0}
+.term b{display:block;font:700 23px/1.05 Fraunces,serif;margin-top:3px}
+.term em{display:block;font-style:normal;font-size:10px;color:var(--muted);white-space:nowrap;margin-top:1px}
+.term i{display:block;height:5px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden}.term i span{display:block;height:100%;width:0;border-radius:3px}
+.term.R b{color:var(--grav)}.term.R i span{background:var(--grav)}.term.P b{color:var(--push)}.term.P i span{background:var(--push)}
+.term.S.pos b{color:var(--ok)}.term.S.neg b{color:var(--bad)}.term.S.pos{border-color:rgba(127,200,160,.45)}.term.S.neg{border-color:rgba(232,106,90,.55)}
+.term.S.sld b{color:#f0a04b}.term.S.sld{border-color:rgba(240,160,75,.55)}.term.q b{color:var(--muted)}
+.term.F b{color:var(--ink)}
+.term.R.help b{color:var(--bad)}.term.R.help{border-color:rgba(232,106,90,.55)}
+.op{font:700 19px Fraunces,serif;color:var(--muted)}
+#chartWrap{flex:1 1 170px;min-width:160px;height:88px;position:relative}
+#chart{position:absolute;inset:0;width:100%;height:100%;display:block}
+#res{flex:1 1 240px;min-width:220px;font-size:12.5px;line-height:1.42;border-left:1px solid var(--line);padding-left:12px}
 #res b.t{display:block;font:700 15px/1.2 Fraunces,serif;margin-bottom:3px}
 #res .k{display:block;font:600 10px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
 #res.good b.t{color:var(--ok)}#res.mid b.t{color:var(--mid)}#res.bad b.t{color:var(--bad)}
+.pred{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.pred button{border:1px solid var(--line2);background:rgba(255,255,255,.05);border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600;cursor:pointer}
+.pred button:hover{background:rgba(255,255,255,.12)}
+#res .short{display:none}#res .prd{display:block;margin-top:3px}
+body.dossier #chartWrap{display:none}
+body.running .mk{opacity:.3}
+/* voetenkaart: het steunvlak van bovenaf */
+#mapCard{position:absolute;right:16px;top:104px;width:184px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:7px 8px 6px;z-index:4;backdrop-filter:blur(8px);pointer-events:none}
+#mapCard small{display:flex;justify-content:space-between;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.03em}
+#map{display:block;width:100%;height:132px;margin-top:3px}
+body.dossier #mapCard{right:422px}body.nolines #mapCard{display:none}
+/* modals */
 .modal{position:absolute;inset:0;background:rgba(5,8,10,.66);display:none;place-items:center;z-index:20;padding:16px}
 .modal.open{display:grid}
-.mcard{background:var(--panel2);border:1px solid var(--line);border-radius:16px;max-width:620px;width:100%;max-height:92%;overflow:auto;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.55)}
+.mcard{background:var(--panel2);border:1px solid var(--line);border-radius:16px;max-width:640px;width:100%;max-height:92%;overflow:auto;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.55)}
 .mcard h2{font:700 25px Fraunces,serif;margin:0 0 8px}
 .mcard p,.mcard li{font-size:14.5px;line-height:1.55;color:#ddd5c7}
+.legend{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:13.5px;margin:8px 0 10px;align-items:center}
+.legend i{display:inline-block;width:22px;height:6px;border-radius:3px}
 .opts{display:flex;flex-direction:column;gap:6px;margin:8px 0}
 .opt{text-align:left;border:1px solid var(--line);background:rgba(255,255,255,.03);padding:9px 11px;border-radius:9px;cursor:pointer;font-size:14px;line-height:1.4}
 .opt:hover:not(:disabled){border-color:var(--line2)}
@@ -92,54 +133,93 @@ body.dossier #hud{right:422px}
 .fb{margin-top:10px;padding:9px 12px;border-radius:9px;background:rgba(255,255,255,.05);font-size:14px;line-height:1.5}
 .fb.ok{border-left:3px solid var(--ok)}.fb.no{border-left:3px solid var(--bad)}
 .qtag{display:inline-block;font:600 11px "JetBrains Mono",monospace;padding:3px 7px;border-radius:5px;background:rgba(230,182,94,.16);color:var(--gold);margin-right:6px}
-.dots{display:flex;gap:5px;margin:2px 0 12px}.dots i{width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--gold)}
+.dots{display:flex;flex-wrap:wrap;gap:5px;margin:2px 0 12px}.dots i{width:22px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--gold)}
 .num-in{display:flex;gap:8px;align-items:center}.num-in input{width:110px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 textarea{width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:9px;padding:9px;font:14px "Instrument Sans";resize:vertical;color:var(--ink)}
 .keys{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}.keys td{padding:5px 6px;border-bottom:1px solid var(--line)}
-#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:520px;text-align:center}
+#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;width:max-content;max-width:min(520px,calc(100% - 32px));text-align:center}
 #toast.on{opacity:1}
 #loader{position:absolute;inset:0;display:grid;place-items:center;z-index:30;background:var(--bg1);transition:opacity .6s}
 #loader.gone{opacity:0;pointer-events:none}#loader div{text-align:center}#loader h3{font:700 26px Fraunces,serif;margin:14px 0 4px}#loader p{color:var(--muted);margin:0}
 .spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);margin:auto;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(1turn)}}
 #err{position:absolute;inset:0;display:none;place-items:center;z-index:40;background:var(--bg1);padding:24px;text-align:center}#err.open{display:grid}
 body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font-size:16.5px}body.present .title h1{font-size:40px}
-@media (max-width:1180px){#mapWrap{display:none}}
-@media (max-width:960px){.term{width:104px}#res{display:none}}
-@media (max-width:820px){.title h1{font-size:24px}.title p{display:none}#top{flex-direction:column}.tools{justify-content:flex-start}.btn .t{display:none}#lab{top:auto;bottom:126px;left:16px;right:16px;width:auto;max-height:32%}#hud{left:16px;right:16px!important}.panel{left:16px;right:16px;width:auto;top:auto;height:62%}}
+@media (max-width:1300px){#chartWrap{display:none}}
+@media (max-width:960px){.term{width:100px}.term b{font-size:20px}}
+@media (max-width:820px){
+  .title h1{font-size:22px}.title p{display:none}#top{flex-direction:column;gap:6px;left:12px;right:12px;top:10px}.tools{justify-content:flex-start;gap:6px}
+  .btn{padding:7px 10px}.btn .t,.btn .t2{display:none}#bPresent{display:none}
+  #toast{top:auto;bottom:40%}
+  #hud{left:12px;right:12px!important;bottom:auto;top:118px;padding:7px 8px;gap:6px}
+  .eq{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;align-items:stretch}.eq .op{display:none}
+  .term{width:auto;padding:5px 5px;min-width:0}.term b{font-size:17px}.term small{font-size:8.5px;white-space:normal;line-height:1.2;letter-spacing:0}.term em{font-size:9.5px;white-space:normal;line-height:1.2}.term i{display:none}
+  #res{flex:1 1 100%;min-width:0;border-left:0;padding-left:2px;font-size:12px}#res .k,#res .more{display:none}#res .short{display:inline;color:var(--muted)}#res .prd{display:inline;margin:0 0 0 4px}#res b.t{display:inline;font-size:14px;margin:0 6px 0 0}
+  #res .pred{display:inline-flex;margin:0 0 0 4px;vertical-align:middle}#res .pred button{padding:3px 8px;font-size:11.5px}
+  #mapCard{display:none}body.mobmap:not(.nolines):not(.dossier) #mapCard{display:block;right:12px;width:112px;padding:3px 5px 3px;border-radius:9px}#mapCard small{font-size:8.5px}#map{height:58px;margin-top:1px}
+  #lab{top:auto;bottom:12px;left:12px;right:12px;width:auto;max-height:none}
+  #ltabs{display:flex;margin:8px 10px 0;width:auto}#ltabs button{flex:1;padding:6px 4px}
+  .lsec{display:none}.lsec.on{display:block}.lsec h4:first-child{margin-top:2px}
+  .lbody{max-height:23vh;padding:8px 12px 4px}#lab.collapsed .lbody{display:none}
+  #lab h4{margin:8px 0 5px}#oF2{display:none}.lsec[data-s=push] .sl{margin-top:6px!important}
+  .pushbar{padding:8px 10px 10px}.jump{padding:10px;font-size:15px}.jump kbd{display:none}
+  .panel{left:12px;right:12px;width:auto;top:auto;bottom:12px;height:46%}
+}
 </style>
 </head>
 <body class="lbl-dots">
 <div id="app">
-  <canvas id="c" aria-label="3D-gymzaal met een leerling die een duw krijgt"></canvas>
+  <canvas id="c" aria-label="3D-gymzaal: een klasgenoot duwt tegen een leerling die op de mat of de balk staat"></canvas>
   <div id="labels"></div>
   <div id="toast"></div>
   <header id="top">
-    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>Evenwicht</h1><p>Week 3 · Momenten: zwaartepunt, steunvlak en M = F · d <i style="font:12px 'JetBrains Mono',monospace;font-style:normal;color:#c9c0ae">· wie blijft staan?</i></p></div>
+    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>Evenwicht</h1><p>Week 3 · Momenten: zwaartepunt, steunvlak en M = F · arm <i style="font:12px 'JetBrains Mono',monospace;font-style:normal;color:#c9c0ae">· blijf je staan?</i></p></div>
     <div class="tools">
       <button class="btn" id="bQuiz">Opdrachten</button>
       <button class="btn" id="bHelp">Uitleg</button>
-      <button class="btn" id="bLbl">Labels: stippen</button>
-      <button class="btn" id="bSound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
+      <button class="btn" id="bCam" title="Camera (V)">Camera<span class="t2" id="camName">: zijaanzicht</span></button>
+      <button class="btn" id="bLbl">Labels<span class="t2" id="lblName">: stippen</span></button>
+      <button class="btn" id="bSound" aria-label="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
       <button class="btn" id="bPresent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
     </div>
   </header>
 
   <aside id="lab">
-    <h4>Wie staat er?</h4>
-    <div class="seg" id="sWho"><button data-v="po">PO · 30 kg</button><button data-v="vo">VO · 55 kg</button><button data-v="st">Student · 70 kg</button></div>
-    <h4>Houding</h4>
-    <div class="seg" id="sPre"><button data-v="normal">Gewoon</button><button data-v="stoei">Breed en laag</button><button data-v="oneleg">Eén been</button><button data-v="toes">Op de tenen</button><button data-v="beam">Op de balk</button></div>
-    <div class="sl"><label>Voeten naast elkaar <b id="oW"></b></label><input type="range" id="iW" min="0" max=".8" step=".02"></div>
-    <div class="sl"><label>Voeten voor en achter <b id="oS"></b></label><input type="range" id="iS" min="0" max=".7" step=".02"></div>
-    <div class="sl"><label>Door de knieën <b id="oK"></b></label><input type="range" id="iK" min="0" max="1" step=".05"></div>
-    <div class="sl"><label>Schrap zetten: leunen naar de duw <b id="oL"></b></label><input type="range" id="iL" min="0" max="12" step="1"></div>
-    <div class="seg" id="sArms"><button data-v="down">Armen langs</button><button data-v="side">Zijwaarts</button><button data-v="front">Naar voren</button></div>
-    <h4>Duw</h4>
-    <div class="seg" id="sDir"><button data-v="front">Van voren</button><button data-v="side">Van opzij</button><button data-v="back">Van achteren</button></div>
-    <div class="sl" style="margin-top:8px"><label>Duwkracht <b id="oF"></b></label><input type="range" id="iF" min="10" max="400" step="5"></div>
-    <button class="btn jump" id="bPush">Duw! <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd></button>
-    <h4>Lagen</h4>
-    <label class="tog"><input type="checkbox" id="tLines" checked> Loodlijn, steunvlak en armen <kbd>Z</kbd></label>
+    <div class="seg" id="ltabs"><button data-s="pose" class="on">Houding</button><button data-s="push">Duw</button><button data-s="replay">Terugkijken</button><button data-s="layers">Lagen</button></div>
+    <div class="lbody">
+      <section class="lsec on" data-s="pose">
+        <h4>Wie staat er?</h4>
+        <div class="seg" id="sWho"><button data-v="po">PO · 30 kg</button><button data-v="vo">VO · 55 kg</button><button data-v="st">Student · 70 kg</button></div>
+        <h4>Houding</h4>
+        <div class="seg" id="sPre"><button data-v="normal">Gewoon</button><button data-v="stoei">Breed en laag</button><button data-v="oneleg">Eén been</button><button data-v="toes">Op de tenen</button><button data-v="beam">Op de balk</button></div>
+        <details id="fine"><summary>Houding aanpassen</summary>
+          <div class="sl"><label>Voeten naast elkaar <b id="oW"></b></label><input type="range" id="iW" min="0" max=".8" step=".02"><small>breder staan: groter steunvlak opzij</small></div>
+          <div class="sl"><label>Voeten voor en achter <b id="oS"></b></label><input type="range" id="iS" min="0" max=".7" step=".02"><small>groter steunvlak naar voren en achteren</small></div>
+          <div class="sl"><label>Door de knieën <b id="oK"></b></label><input type="range" id="iK" min="0" max="1" step=".05"><small>schouders en heupen lager: kleinere h</small></div>
+          <div class="sl"><label>Schrap zetten <b id="oL"></b></label><input type="range" id="iL" min="0" max="12" step="1"><small id="oL2">leun naar de duwer toe (tegen de duw in)</small></div>
+          <div class="seg" id="sArms" style="margin:2px 0 8px"><button data-v="down">Armen langs</button><button data-v="side">Zijwaarts</button><button data-v="front">Naar voren</button></div>
+        </details>
+      </section>
+      <section class="lsec" data-s="push">
+        <h4>Duw van</h4>
+        <div class="seg" id="sDir"><button data-v="front">Voren</button><button data-v="side">Opzij</button><button data-v="back">Achteren</button></div>
+        <h4>Duwhoogte</h4>
+        <div class="seg" id="sHp"><button data-v="sho">Schouders</button><button data-v="chest">Borst</button><button data-v="hip">Heup</button></div>
+        <div class="sl" style="margin-top:10px"><label>Duwkracht F <b id="oF"></b></label><input type="range" id="iF" min="10" max="400" step="5"><small id="oF2"></small></div>
+      </section>
+      <section class="lsec" data-s="replay">
+        <h4>Terugkijken</h4>
+        <div class="sl" style="margin-top:0"><label>Tijd <b id="oScrub">–</b></label><input type="range" id="iScrub" min="0" max="1000" value="0" disabled></div>
+        <div class="row2"><div class="seg" id="sSpeed"><button data-v=".25">×¼</button><button data-v=".5">×½</button><button data-v="1">×1</button></div><button class="btn" id="bReplay" style="padding:6px 10px">↻ Herhaal</button></div>
+        <small class="hint" style="margin-top:6px">Rond het moment dat de leerling gaat kantelen of schuiven, loopt de film vanzelf trager.</small>
+      </section>
+      <section class="lsec" data-s="layers">
+        <h4>Lagen</h4>
+        <label class="tog"><input type="checkbox" id="tLines" checked> Loodlijn, steunvlak en krachtarmen (h en d) <kbd>Z</kbd></label>
+        <label class="tog"><input type="checkbox" id="tPusher" checked> Duwer <kbd>D</kbd></label>
+        <button class="btn" id="bDefaults" style="margin-top:6px;width:100%;justify-content:center">Beginwaarden herstellen</button>
+      </section>
+    </div>
+    <div class="pushbar"><button class="btn jump" id="bPush">Duw! <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd></button></div>
   </aside>
 
   <aside class="panel" id="dossier">
@@ -151,18 +231,21 @@ body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font
 
   <div id="hud">
     <div class="eq">
-      <div class="term P"><small>Duwmoment F · h</small><b id="vP">0</b><em id="vP2">N·m</em><i><span id="bP"></span></i></div>
-      <div class="op">vs</div>
-      <div class="term R"><small>Tegenmoment m · g · d</small><b id="vR">0</b><em id="vR2">N·m</em><i><span id="bR"></span></i></div>
-      <div class="term F"><small>Maximale duw</small><b id="vF">0</b><em>N voordat je omvalt</em></div>
+      <div class="term R" id="tR"><small id="vRh">Tegenmoment</small><small class="f" id="vRf">m · g · d</small><b id="vR">0</b><em id="vR2">N·m</em><i><span id="bR"></span></i></div>
+      <div class="op">−</div>
+      <div class="term P"><small>Duwmoment</small><small class="f" id="vPf">F · h</small><b id="vP">0</b><em id="vP2">N·m</em><i><span id="bP"></span></i></div>
+      <div class="op">=</div>
+      <div class="term S" id="tS"><small>Kantelmarge</small><small class="f">m·g·d − F·h</small><b id="vS">0</b><em id="vS2">N·m</em></div>
+      <div class="term F" id="tF"><small>Kantelgrens</small><small class="f">F_max = m·g·d / h</small><b id="vF">0</b><em id="vF2">N</em></div>
     </div>
-    <div id="mapWrap"><canvas id="map"></canvas></div>
-    <div id="res"><span class="k">Klaar</span><b class="t">Kies een houding en duw</b>Valt de loodlijn uit het zwaartepunt binnen het steunvlak? En hoe ver van de rand?</div>
+    <div id="chartWrap"><canvas id="chart"></canvas></div>
+    <div id="res"></div>
   </div>
+  <div id="mapCard" aria-hidden="true"><small><span>Van boven</span><span style="color:#ff8b7c">duw →</span></small><canvas id="map"></canvas></div>
 
   <div class="modal" id="mQuiz"><div class="mcard" id="quizBody"></div></div>
   <div class="modal" id="mHelp"><div class="mcard" id="helpBody"></div></div>
-  <div id="loader"><div><div class="spin"></div><h3>De gymzaal wordt klaargezet…</h3><p>Mat, balk, ledenpop</p></div></div>
+  <div id="loader"><div><div class="spin"></div><h3>De gymzaal wordt klaargezet…</h3><p>Mat, balk, twee leerlingen</p></div></div>
   <div id="err"><div><h2 style="font-family:Fraunces,serif">Het 3D-beeld werkt niet</h2><p id="errMsg" style="color:var(--muted);max-width:460px;margin:8px auto 16px">Je browser kon de 3D-weergave niet starten.</p><button class="btn accent" onclick="location.reload()">Opnieuw laden</button></div></div>
 </div>
 
@@ -180,233 +263,627 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
 const D2R=Math.PI/180,TAU=Math.PI*2,g=9.81;
-const f1=n=>n.toFixed(1).replace('.',','),f2=n=>n.toFixed(2).replace('.',','),f0=n=>Math.round(n).toLocaleString('nl-NL');
+const f1=n=>n.toFixed(1).replace('.',','),f2=n=>n.toFixed(2).replace('.',','),f3=n=>n.toFixed(3).replace('.',','),f0=n=>Math.round(n).toLocaleString('nl-NL');
 const store={get(k,d){try{const v=localStorage.getItem('evenwicht.'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('evenwicht.'+k,JSON.stringify(v));}catch(e){}}};
-function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),3600);}
-const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+// op een smal scherm staat de melding direct onder de HUD, niet over de voeten en het steunvlak
+function toast(m,ms){const t=$('#toast');t.innerHTML=m;if(innerWidth<=820){const hb=$('#hud').getBoundingClientRect().bottom;t.style.top=Math.round(hb+8)+'px';t.style.bottom='auto';}else{t.style.top='';t.style.bottom='';}
+  t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),ms||(innerWidth<=820?2600:3800));}
+const V=(x,y,z)=>new THREE.Vector3(x,y,z),UP=V(0,1,0);
+const touch=matchMedia('(pointer:coarse)').matches;
 
-/* ================= model ================= */
-const WHO={po:{m:30,sc:.8,n:'PO-leerling'},vo:{m:55,sc:.95,n:'VO-leerling'},st:{m:70,sc:1.03,n:'Student'}};
-const PRESETS={normal:{w:.2,s:0,k:.05,L:0,arms:'down',one:false,toes:false,beam:false},stoei:{w:.55,s:.35,k:.55,L:4,arms:'front',one:false,toes:false,beam:false},
-  oneleg:{w:.2,s:0,k:.1,L:0,arms:'side',one:true,toes:false,beam:false},toes:{w:.16,s:0,k:0,L:0,arms:'down',one:false,toes:true,beam:false},beam:{w:0,s:.3,k:.12,L:0,arms:'side',one:false,toes:false,beam:true}};
-const BEAMH=.3,BEAMW=.1;
-const S={who:store.get('who','vo'),pre:'normal',...PRESETS.normal,dir:'side',F:store.get('F',80),anim:null,last:null};
-const DIRS={front:[-1,0],side:[0,1],back:[1,0]}; // richting waarin de duw de leerling duwt (x,z)
-const MASS=[['pelvis','sho',.497],['head',null,.081],['shoL','elbL',.028],['shoR','elbR',.028],['elbL','handL',.022],['elbR','handR',.022],['hipL','kneeL',.10],['hipR','kneeR',.10],['kneeL','ankL',.0465],['kneeR','ankR',.0465],['ankL','toeL',.0145],['ankR','toeR',.0145]];
-function ik(H,A,l1,l2,hint){const d=A.clone().sub(H);let D=d.length();D=Math.min(D,(l1+l2)*.999);const dir=d.normalize();const a=(D*D+l1*l1-l2*l2)/(2*D);const p=Math.sqrt(Math.max(0,l1*l1-a*a));const h=hint.clone().sub(dir.clone().multiplyScalar(hint.dot(dir))).normalize();return H.clone().add(dir.multiplyScalar(a)).add(h.multiplyScalar(p));}
-function body(){const u0=DIRS[S.dir];S.lf=-u0[0]*S.L;S.ls=-u0[1]*S.L;const sc=WHO[S.who].sc,fl=.26*sc,fw=.1*sc,gY=S.beam?BEAMH:0;const w=S.beam?0:S.w,s=S.s;
-  const fR=V(s/2,gY,w/2),fL=V(-s/2,gY,-w/2);const stance=S.one?[fR]:[fL,fR];
-  const mid=S.one?fR.clone():fL.clone().add(fR).multiplyScalar(.5);
-  const toeLift=S.toes?.08*sc:0;const legL=.87*sc;const hp=gY+.07*sc+toeLift+legL*(1-.36*S.k)*Math.cos(Math.max(Math.abs(S.lf),Math.abs(S.ls))*D2R*.5);
-  // leunen: hele lichaam kantelt rond de enkels (omgekeerde slinger)
-  const lfx=Math.sin(S.lf*D2R),lsz=Math.sin(S.ls*D2R);
-  const pel=V(mid.x+(hp-gY)*lfx-.03*sc*S.k,hp,mid.z+(hp-gY)*lsz);
-  const trunkF=(S.lf+S.k*18)*D2R,trunkS=S.ls*D2R;const up=V(Math.sin(trunkF),Math.cos(trunkF)*Math.cos(trunkS),Math.sin(trunkS)).normalize();
-  const sho=pel.clone().add(up.clone().multiplyScalar(.52*sc)),head=sho.clone().add(up.clone().multiplyScalar(.17*sc));
-  const side=V(0,0,1);const hipL=pel.clone().add(V(0,0,-.095*sc)),hipR=pel.clone().add(V(0,0,.095*sc));
-  const shoL=sho.clone().add(V(0,0,-.2*sc)),shoR=sho.clone().add(V(0,0,.2*sc));
-  const ank=f=>f.clone().add(V(-fl*.22+(S.toes?-.02*sc:0),.07*sc+toeLift,0)),toe=f=>f.clone().add(V(fl*.48,.03*sc,0));
-  let ankR=ank(fR),toeR=toe(fR),ankL,toeL;
-  if(S.one){ankL=V(pel.x+.12*sc,pel.y-.38*sc,-.13*sc+pel.z);toeL=ankL.clone().add(V(.15*sc,-.03*sc,0));}else{ankL=ank(fL);toeL=toe(fL);}
-  const fwd=V(1,0,0);const kneeL=ik(hipL,ankL,.44*sc,.43*sc,S.one?V(1,.6,0):fwd),kneeR=ik(hipR,ankR,.44*sc,.43*sc,fwd);
-  const arm=(sh,sgn)=>{let e,h;if(S.arms==='side'){e=sh.clone().add(V(0,.02*sc,sgn*.3*sc));h=e.clone().add(V(0,.03*sc,sgn*.36*sc));}else if(S.arms==='front'){e=sh.clone().add(V(.26*sc,-.12*sc,sgn*.02*sc));h=e.clone().add(V(.3*sc,.1*sc,-sgn*.04*sc));}else{e=sh.clone().add(V(.02*sc,-.3*sc,sgn*.04*sc));h=e.clone().add(V(.05*sc,-.36*sc,sgn*.01*sc));}return [e,h];};
-  const [elbL,handL]=arm(shoL,-1),[elbR,handR]=arm(shoR,1);
-  const P={pelvis:pel,sho,head,hipL,hipR,shoL,shoR,elbL,elbR,handL,handR,kneeL,kneeR,ankL,ankR,toeL,toeR};
-  const com=V(0,0,0);for(const [a,b,f] of MASS){const p=b?P[a].clone().add(P[b]).multiplyScalar(.5):P[a];com.add(p.clone().multiplyScalar(f));}
-  // steunvlak: rechthoeken van de staande voet(en)
-  const pts=[];for(const f of stance){const cx=f.x+(S.toes?fl*.3:0),L=S.toes?fl*.4:fl;for(const [dx,dz] of [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]])pts.push([cx+dx*L,f.z+dz*fw]);}
-  const hull=convexHull(pts);
-  return {P,com,hull,gY,sc,stance};}
+/* ================= model =================
+   Lokaal assenstelsel van de leerling: x = voor, y = omhoog, z = rechts.
+   Duw van voren duwt naar −x, van achteren naar +x, van opzij (vanaf de rechterkant) naar −z. */
+const WHO={po:{m:30,sc:.8,n:'PO-leerling',hij:'die',Fcap:250},vo:{m:55,sc:.95,n:'VO-leerling',hij:'die',Fcap:400},st:{m:70,sc:1.03,n:'Student',hij:'die',Fcap:450}};
+const PRESETS={normal:{w:.2,s:0,k:.05,L:0,arms:'down',one:false,toes:false,beam:false},
+  stoei:{w:.5,s:.25,k:.55,L:0,arms:'front',one:false,toes:false,beam:false},
+  oneleg:{w:.2,s:0,k:.1,L:0,arms:'side',one:true,toes:false,beam:false},
+  toes:{w:.16,s:0,k:0,L:0,arms:'down',one:false,toes:true,beam:false},
+  beam:{w:0,s:.3,k:.12,L:0,arms:'side',one:false,toes:false,beam:true}};
+const PRE_NAME={normal:'Gewoon',stoei:'Breed en laag',oneleg:'Eén been',toes:'Op de tenen',beam:'Op de balk',eigen:'Eigen houding'};
+const MATH=.03,BEAMH=.3,BEAMW=.1,MU=.5;
+const DIRS={front:[-1,0],side:[0,-1],back:[1,0]};
+const DIR_NAME={front:'van voren',side:'van opzij',back:'van achteren'};
+const HP_NAME={sho:'schouders',chest:'borst',hip:'heup'};
+const DEF={who:'vo',pre:'normal',dir:'side',hp:'sho',F:80};
+const S=Object.assign({who:store.get('who','vo'),pre:'normal'},PRESETS.normal,{dir:'side',hp:'sho',F:store.get('F',80),phase:'ready',tau:0,speed:.5,J:null,last:null,pred:null,cam:'side'});
+const LEG1=.44,LEG2=.43,UA=.29,FA=.33;
+// segmentmassa's (fracties naar Winter)
+const MASS=[['pelvis','sho',.497],['head',null,.081],['shoL','elbL',.028],['shoR','elbR',.028],['elbL','handL',.022],['elbR','handR',.022],['hipL','kneeL',.10],['hipR','kneeR',.10],['kneeL','ankL',.0465],['kneeR','ankR',.0465],['heelL','toeL',.0145],['heelR','toeR',.0145]];
+function ik(H,A,l1,l2,hint){const d=A.clone().sub(H);let D=d.length();D=clamp(D,Math.abs(l1-l2)+1e-3,(l1+l2)*.999);const dir=d.normalize();const a=(D*D+l1*l1-l2*l2)/(2*D);const p=Math.sqrt(Math.max(0,l1*l1-a*a));const h=hint.clone().sub(dir.clone().multiplyScalar(hint.dot(dir))).normalize();return H.clone().add(dir.multiplyScalar(a)).add(h.multiplyScalar(p));}
+// voet: f = punt op de grond onder de enkel
+function footPts(f,sc){const fl=.26*sc;
+  if(!f.toes)return {ank:V(f.x,f.y+.075*sc,f.z),heel:V(f.x-.23*fl,f.y,f.z),ball:V(f.x+.5*fl,f.y,f.z),toe:V(f.x+.77*fl,f.y,f.z)};
+  const ph=36*D2R,B=f.x+.5*fl,c=Math.cos(ph),s=Math.sin(ph),R=(u,v)=>V(B+u*c+v*s,f.y-u*s+v*c,f.z);
+  return {ank:R(-.5*fl,.075*sc),heel:R(-.73*fl,0),ball:V(B,f.y,f.z),toe:V(f.x+.77*fl,f.y,f.z)};}
+function footRect(f,sc){const fl=.26*sc,fw=Math.min(.1*sc,f.bw||9);const x0=f.toes?f.x+.42*fl:f.x-.23*fl,x1=f.x+.77*fl;return [[x0,f.z-fw/2],[x1,f.z-fw/2],[x1,f.z+fw/2],[x0,f.z+fw/2]];}
+function footTarget(f,sc){const fl=.26*sc;return [f.toes?f.x+.595*fl:f.x+.2*fl,f.z];}
+function comTarget(feet,sc){let x=0,z=0;for(const f of feet){const t=footTarget(f,sc);x+=t[0];z+=t[1];}return [x/feet.length,z/feet.length];}
+function comOf(P){const c=V(0,0,0);for(const [a,b,f] of MASS){const p=b?P[a].clone().add(P[b]).multiplyScalar(.5):P[a];c.addScaledVector(p,f);}return c;}
+function poseFrom(pel,up,side,fwd,sc,feet,o){const P={pelvis:pel.clone()};
+  P.sho=pel.clone().addScaledVector(up,.5*sc);P.neck=P.sho.clone().addScaledVector(up,.06*sc);P.head=P.sho.clone().addScaledVector(up,.2*sc);
+  P.shoL=P.sho.clone().addScaledVector(side,-.19*sc);P.shoR=P.sho.clone().addScaledVector(side,.19*sc);
+  P.hipL=pel.clone().add(V(0,0,-.09*sc));P.hipR=pel.clone().add(V(0,0,.09*sc));
+  for(const s of ['L','R']){const hip=P['hip'+s],q=feet.find(x=>x.f.side===s);let ank,heel,ball,toe;
+    if(q){ank=q.ank.clone();heel=q.heel.clone();ball=q.ball.clone();toe=q.toe.clone();}
+    else{ank=hip.clone().add(V(.13*sc,-.47*sc,0));heel=ank.clone().add(V(-.05*sc,-.06*sc,0));ball=ank.clone().add(V(.12*sc,-.07*sc,0));toe=ank.clone().add(V(.18*sc,-.07*sc,0));}
+    Object.assign(P,{['ank'+s]:ank,['heel'+s]:heel,['ball'+s]:ball,['toe'+s]:toe});P['knee'+s]=ik(hip,ank,LEG1*sc,LEG2*sc,V(1,.15,0));}
+  const arm=(s,sg)=>{const A0=P['sho'+s];let e,h;
+    if(o.hands&&o.hands[s]){const t=o.hands[s],dv=t.clone().sub(A0),r=(UA+FA)*sc*.995;h=dv.length()>r?A0.clone().addScaledVector(dv.normalize(),r):t.clone();e=ik(A0,h,UA*sc,FA*sc,V(0,-1,0).addScaledVector(side,sg*.9));}
+    else if(o.arms==='side'){e=A0.clone().addScaledVector(side,sg*UA*sc).addScaledVector(up,.03*sc);h=e.clone().addScaledVector(side,sg*FA*sc).addScaledVector(up,.05*sc);}
+    else if(o.arms==='front'){e=A0.clone().addScaledVector(fwd,.24*sc).addScaledVector(up,-.15*sc).addScaledVector(side,sg*.02*sc);h=e.clone().addScaledVector(fwd,.3*sc).addScaledVector(up,.08*sc).addScaledVector(side,-sg*.05*sc);}
+    else{e=A0.clone().addScaledVector(up,-UA*sc).addScaledVector(fwd,.03*sc).addScaledVector(side,sg*.04*sc);h=e.clone().addScaledVector(up,-FA*sc*.97).addScaledVector(fwd,.07*sc).addScaledVector(side,sg*.01*sc);}
+    P['elb'+s]=e;P['hand'+s]=h;};
+  arm('L',-1);arm('R',1);return P;}
+/* bouw een lichaam: het bekken wordt zo geplaatst dat het zwaartepunt precies boven het doel (comT) ligt.
+   Leunen (L, richting lv) kantelt het hele lichaam rond de enkels: het zwaartepunt schuift dan h_z · tan L op. */
+function build(o){const sc=o.sc,k=o.k||0;const feet=o.feet.map(f=>Object.assign({f},footPts(f,sc)));
+  const Lr=(o.L||0)*D2R,lv=o.lv||[0,0],flex=(k*22+(o.flex||0))*D2R;
+  const up=V(Math.sin(flex)+Math.tan(Lr)*lv[0],Math.cos(flex),Math.tan(Lr)*lv[1]).normalize();
+  const side=V(0,0,1);side.addScaledVector(up,-side.dot(up)).normalize();const fwd=new THREE.Vector3().crossVectors(up,side).normalize();
+  const D=(LEG1+LEG2)*sc*(.996-.3*k);const surf=Math.max(...o.feet.map(f=>f.y));
+  let tgt=(o.comT||comTarget(o.feet,sc)).slice(),leanDone=!Lr;const pel=V(tgt[0],1,tgt[1]);let P=null,com=null;
+  const setY=()=>{let py=1e9;for(const q of feet){const hz=pel.z+(q.f.side==='L'?-1:1)*.09*sc,dx=pel.x-q.ank.x,dz=hz-q.ank.z;py=Math.min(py,q.ank.y+Math.sqrt(Math.max(.03*sc*sc,D*D-dx*dx-dz*dz)));}pel.y=py;};
+  for(let it=0;it<7;it++){setY();P=poseFrom(pel,up,side,fwd,sc,feet,o);com=comOf(P);
+    if(!leanDone){const hc=com.y-surf;tgt=[tgt[0]+lv[0]*hc*Math.tan(Lr),tgt[1]+lv[1]*hc*Math.tan(Lr)];leanDone=true;}
+    pel.x+=tgt[0]-com.x;pel.z+=tgt[1]-com.z;}
+  setY();P=poseFrom(pel,up,side,fwd,sc,feet,o);com=comOf(P);
+  const pts=[];for(const q of feet)pts.push(...footRect(q.f,sc));
+  return {P,com,hull:convexHull(pts),sc,feet:o.feet,surf,o};}
 function convexHull(p){p=p.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],up=[];for(const q of p){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q);}for(let i=p.length-1;i>=0;i--){const q=p[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],q)<=0)up.pop();up.push(q);}up.pop();lo.pop();return lo.concat(up);}
-function inside(hull,x,z){for(let i=0;i<hull.length;i++){const a=hull[i],b=hull[(i+1)%hull.length];if((b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])<0)return false;}return true;}
-function analyse(B){const m=WHO[S.who].m,u=DIRS[S.dir],c=[B.com.x,B.com.z];let d=-1e9,edge=null;for(const v of B.hull){const dd=(v[0]-c[0])*u[0]+(v[1]-c[1])*u[1];if(dd>d){d=dd;edge=v;}}
-  // tegenmoment rond de kantelrand in de duwrichting
-  const ins=inside(B.hull,c[0],c[1]);const h=B.P.sho.y-B.gY;const Mr=Math.max(0,m*g*d),Mp=S.F*h,Fmax=Math.max(0,Mr/h);
-  return {u,c,d,edge,ins,h,Mr,Mp,Fmax,tips:!ins||Mp>Mr,m};}
+function inside(H,x,z){for(let i=0;i<H.length;i++){const a=H[i],b=H[(i+1)%H.length];if((b[0]-a[0])*(z-a[1])-(b[1]-a[1])*(x-a[0])<-1e-9)return false;}return true;}
+// straal c + t·u door het (bolle) steunvlak: [t0, t1] en de rand waar hij uittreedt
+function rayHull(H,c,u){let t0=-1e9,t1=1e9,e1=0;for(let i=0;i<H.length;i++){const a=H[i],b=H[(i+1)%H.length],ex=b[0]-a[0],ez=b[1]-a[1];const f0=ex*(c[1]-a[1])-ez*(c[0]-a[0]),kk=ex*u[1]-ez*u[0];
+    if(Math.abs(kk)<1e-12){if(f0<0)return null;continue;}const t=-f0/kk;if(kk>0)t0=Math.max(t0,t);else if(t<t1){t1=t;e1=i;}}
+  return t0<=t1?{t0,t1,e1}:null;}
+function stance(){const sc=WHO[S.who].sc,gY=S.beam?BEAMH:MATH,w=S.beam?0:S.w,s=S.s,bw=S.beam?BEAMW:null;
+  const fR={side:'R',x:s/2,z:w/2,y:gY,toes:S.toes,bw},fL={side:'L',x:-s/2,z:-w/2,y:gY,toes:S.toes,bw};return S.one?[fR]:[fL,fR];}
+function body(over){const u=DIRS[S.dir];const o=Object.assign({sc:WHO[S.who].sc,k:S.k,L:S.L,lv:[-u[0],-u[1]],arms:S.arms,feet:stance()},over||{});return build(o);}
+function leanMax(){const u=DIRS[S.dir],lv=[-u[0],-u[1]];const B=body({L:0});const r=rayHull(B.hull,[B.com.x,B.com.z],lv);if(!r)return 0;const hc=B.com.y-B.surf;return clamp(Math.floor(Math.atan(Math.max(0,r.t1-.012)/hc)/D2R),0,12);}
+// aangrijpingspunt van de duw op het lichaam (aan de kant van de duwer)
+function contactPt(P,sc,dir,hp){const u=DIRS[dir],up=P.sho.clone().sub(P.pelvis).normalize();let p,ext;const sd=dir==='side';
+  if(hp==='sho'){p=P.sho.clone().addScaledVector(up,-.02*sc);ext=sd?.25:.11;}else if(hp==='chest'){p=P.sho.clone().addScaledVector(up,-.17*sc);ext=sd?.21:.12;}else{p=P.pelvis.clone().addScaledVector(up,.03*sc);ext=sd?.18:.11;}
+  return p.add(V(-u[0]*ext*sc,0,-u[1]*ext*sc));}
+function analyse(B,F){if(F===undefined)F=S.F;const m=WHO[S.who].m,u=DIRS[S.dir],c=[B.com.x,B.com.z];
+  const r=rayHull(B.hull,c,u),d=r?Math.max(0,r.t1):0,E=[c[0]+u[0]*d,c[1]+u[1]*d];
+  const e=r?r.e1:0,ea=B.hull[e],eb=B.hull[(e+1)%B.hull.length];let n=[eb[1]-ea[1],-(eb[0]-ea[0])];const nl=Math.hypot(n[0],n[1])||1;n=[n[0]/nl,n[1]/nl];if(n[0]*u[0]+n[1]*u[1]<0)n=[-n[0],-n[1]];
+  const C=contactPt(B.P,B.sc,S.dir,S.hp),h=Math.max(.05,C.y-B.surf),hc=B.com.y-B.surf;
+  const Mr=m*g*d,Mp=F*h,Fmax=Mr/h,Fs=MU*m*g,un=u[0]*n[0]+u[1]*n[1],dn=d*un;
+  /* Glijden de voeten eerder weg dan dat je kantelt (F_s < F_max), dan versnelt de leerling: a = (F − F_s) / m.
+     Rond de kantelrand telt dan M_kantel = F · h − m · a · h_z = F_s · h + (F − F_s) · (h − h_z). Is dat groter dan m · g · d,
+     dan kantelt ze tijdens het glijden toch. Fstar is de duw waarbij dat begint. */
+  let out,Mk=Mp,Fstar=null,slideTip=false;
+  if(F<=Fmax+1e-9&&F<=Fs)out='stand';
+  else if(Fs>=Fmax)out='tip';
+  else{Mk=Fs*h+(F-Fs)*(h-hc);if(h>hc&&Mk>Mr+1e-9){out='tip';slideTip=true;Fstar=Fs+(Mr-Fs*h)/(h-hc);}else out='slide';}
+  const A={m,u,c,d,E,ea,eb,n,un,dn,C,h,hc,Mr,Mp,Mk,Fmax,Fs,Fstar,slideTip,F,out,margin:Mr-Mk,
+    alpha:Math.atan2(dn,hc)}; // kantelhoek: de afstand loodrecht op de rand telt (d⊥ = d · cos tussen duw en randnormaal)
+  A.cop=Math.min(d,Meff(A,F)/(m*g));return A;}
+/* het moment dat de kantelrand echt voelt bij duw Ft: zolang de voeten niet glijden F · h, daarna F · h − m · a · h_z */
+function Meff(A,Ft){return (Ft<=A.Fs||A.Fs>=A.Fmax)?Ft*A.h:A.Fs*A.h+(Ft-A.Fs)*(A.h-A.hc);}
+function inertia(P,Q,a,m){let I=0;for(const [x,y,f] of MASS){const p=y?P[x].clone().add(P[y]).multiplyScalar(.5):P[x].clone();p.sub(Q);p.addScaledVector(a,-p.dot(a));I+=f*m*p.lengthSq();}
+  I+=.497*m*Math.pow(P.sho.distanceTo(P.pelvis),2)/12;return I;}
+
+/* ================= de duw als film ================= */
+const TR=.4,TU=.45,TH=1.8,TL=.3; // handen naar de leerling, kracht opbouwen, vasthouden tot, loslaten
+function Fbase(F,t,hold){if(t<TR)return 0;if(t<TR+TU)return F*ease((t-TR)/TU);if(t<hold)return F;if(t<hold+TL)return F*(1-ease((t-hold)/TL));return 0;}
+function tCross(F,Fx){if(Fx<=0)return TR;let lo=TR,hi=TR+TU;for(let i=0;i<40;i++){const mid=(lo+hi)/2;if(Fbase(F,mid,99)<Fx)lo=mid;else hi=mid;}return hi;}
+const KEYS=['pelvis','sho','neck','head','shoL','shoR','hipL','hipR','elbL','elbR','handL','handR','kneeL','kneeR','ankL','ankR','heelL','heelR','ballL','ballR','toeL','toeR'];
+function mapP(P,fn){const o={};for(const k of KEYS)o[k]=fn(P[k],k);return o;}
+function simulate(){const B0=body(),A=analyse(B0),F=S.F,m=A.m,sc=B0.sc;
+  const J={B0,A,F,out:A.out,who:S.who,dir:S.dir,hp:S.hp,sc,m};
+  if(A.out==='stand'){J.hold=TH;J.T=TH+TL+.5;J.tKey=TR+TU;J.Ft=t=>Fbase(F,t,TH);}
+  else if(A.out==='slide'){/* de duwer laat los zodra de leerling wegglijdt (na 0,3 s of 22 cm); daarna remt de wrijving μ · m · g */
+    J.ts=tCross(F,A.Fs);J.tKey=J.ts;const dt=1/600;let v=0,x=0,t=J.ts,hold=null;J.sl=[0];J.slDt=dt;
+    while(t<8){const a=(Fbase(F,t,hold==null?99:hold)-A.Fs)/m;v=Math.max(0,v+a*dt);x+=v*dt;t+=dt;J.sl.push(x);
+      if(hold==null&&(x>=.22||t>=J.ts+.3))hold=t;if(hold!=null&&t>hold+TL&&v<=0)break;}
+    J.hold=hold;J.Ft=tt=>Fbase(F,tt,J.hold);J.slEnd=t;J.slX=x;J.T=Math.max(J.hold+TL+.9,t+.6);}
+  else{const sT=A.slideTip;J.slideTip=sT;J.tc=tCross(F,sT?A.Fstar:A.Fmax);J.tKey=J.tc;if(sT)J.ts=tCross(F,A.Fs);
+    const n=V(A.n[0],0,A.n[1]);J.n=n;J.axis=new THREE.Vector3().crossVectors(UP,n).normalize();J.pivot=V(A.E[0],B0.surf,A.E[1]);
+    J.I=inertia(B0.P,J.pivot,J.axis,m);const un=A.u[0]*A.n[0]+A.u[1]*A.n[1];const dn=(A.E[0]-A.c[0])*A.n[0]+(A.E[1]-A.c[1])*A.n[1];const dp=(A.E[0]-A.C.x)*A.n[0]+(A.E[1]-A.C.z)*A.n[1];
+    J.dn=dn;J.un=un;J.dp=dp;const dt=1/600;let th=0,w=0,t=J.tc,tst=null;J.th=[0];J.thDt=dt;
+    /* de duw: houdt aan tot de stap begint en valt dan weg. Glijdt de leerling, dan laat de duwer (net als bij wegschuiven)
+       los na 0,3 s of 22 cm, maar niet voordat het kantelen begonnen is. */
+    J.hold=null;J.Ft=tt=>{let f=Fbase(F,tt,J.hold==null?99:J.hold);if(J.tst!=null&&tt>J.tst)f=Math.min(f,Fbase(F,tt,99)*(1-ease((tt-J.tst)/.22)));return f;};
+    // glijden: a = (F − μ · m · g) / m, tot de stapvoet neerkomt
+    let sv=0,sx=0;const slStep=tt=>{const a=(J.Ft(tt)-A.Fs)/m;sv=Math.max(0,sv+a*dt);sx+=sv*dt;J.sl.push(sx);if(J.hold==null&&tt>=J.tc+.1&&(sx>=.22||tt>=J.ts+.3))J.hold=tt;};
+    if(sT){J.sl=[0];J.slDt=dt;for(let t2=J.ts;t2<J.tc-1e-9;t2+=dt)slStep(t2);}
+    // glijdt de leerling al, dan telt rond de rand alleen F · h − m · a · h_z (zie Meff)
+    while(true){const Ft=J.Ft(t);const Mp=Meff(A,Ft)/A.h*(A.h*Math.cos(th)+dp*Math.sin(th))*un,Mg=m*g*(dn*Math.cos(th)-A.hc*Math.sin(th));
+      w+=(Mp-Mg)/J.I*dt;th=clamp(th+w*dt,0,1.2);if(th===0&&w<0)w=0;if(sT)slStep(t);t+=dt;J.th.push(.45*Math.tanh(th/.45)); // zachte grens in beeld, geen harde stop
+      /* glijdend kantelen: laat de duwer los en groeit de kantelhoek niet meer, dan zet de leerling op dat moment haar stap
+         (anders zou ze na het glijden nog lang stil staan en pas dan stappen) */
+      if(tst===null&&(th>=4.5*D2R||t-J.tc>=1.6||(J.hold!=null&&t>J.hold&&w<=0))){tst=t;J.tst=t;}
+      if(tst!==null&&t>=tst+.32)break;}
+    J.tland=J.tst+.32;J.tKey2=J.tst;if(sT){J.slX=sx;J.aMax=(F-A.Fs)/m;}
+    /* welke voet stapt, en waarheen? De voet op de kantelrand blijft staan: dat is het draaipunt.
+       De andere voet komt bij het kantelen los en stapt. Staat die aan de binnenkant, dan wordt het een kruispas
+       voor de standvoet langs; daarna zet de standvoet een tweede stap naar buiten, zodat de benen weer naast elkaar staan. */
+    const thL=J.th[J.th.length-1];J.thPeak=thL;
+    const offL=offAt(J,J.tland);J.offL=offL;const shiftF=f=>f&&Object.assign({},f,{x:f.x+offL.x,z:f.z+offL.z});
+    const comL=rotAbout(J,B0.com,thL).add(offL);let stepSide;
+    /* staan beide voeten even ver van de rand (op de balk, voeten op één lijn), dan stapt het been aan de valkant: zo kruisen de benen niet */
+    if(S.one)stepSide='L';else{const pr=B0.feet.map(f=>Math.max(...footRect(f,sc).map(q=>q[0]*A.n[0]+q[1]*A.n[1])));stepSide=Math.abs(pr[0]-pr[1])<.01?(A.n[1]<-.3?'L':'R'):(pr[0]<pr[1]?B0.feet[0].side:B0.feet[1].side);}
+    J.stepSide=stepSide;const stance0=B0.feet.find(f=>f.side!==stepSide)||B0.feet[0],stanceF=shiftF(B0.feet.find(f=>f.side!==stepSide));J.stance0=stance0;const fl=.26*sc;
+    const sf={side:stepSide,toes:false,bw:null,x:0,z:0,y:MATH};const old=shiftF(B0.feet.find(f=>f.side===stepSide));let cross=false,along=false;
+    if(Math.abs(A.n[1])>Math.abs(A.n[0])){const sg=Math.sign(A.n[1]);sf.z=comL.z+A.n[1]*.13;sf.x=comL.x-.2*fl;
+      if(stanceF){if(old&&(old.z-stanceF.z)*sg<-.01){cross=true;sf.z=sg>0?Math.max(sf.z,stanceF.z+CX.dz*sc):Math.min(sf.z,stanceF.z-CX.dz*sc);sf.x=Math.max(sf.x,stanceF.x+CX.fx*sc);}
+        else if(Math.abs(sf.z-stanceF.z)<.12*sc)sf.z=stanceF.z+sg*.12*sc;}}
+    else if(S.beam&&stanceF){/* op de balk met een duw in de lengterichting: de vrije voet stapt vóór of achter de standvoet, op de balk */
+      along=true;sf.z=0;const s0=comL.x+A.n[0]*.16-.2*fl;sf.x=A.n[0]<0?Math.min(s0,stanceF.x-fl-.03):Math.max(s0,stanceF.x+fl+.03);}
+    else{sf.x=comL.x+A.n[0]*.16-.2*fl;sf.z=old?old.z:(stanceF?stanceF.z-.2*sc:0);if(stanceF&&Math.abs(sf.z-stanceF.z)<.1*sc)sf.z=stanceF.z+(stepSide==='L'?-1:1)*.14*sc;}
+    J.along=along;
+    /* de kantelrand tijdens de stap: alleen het stuk onder de standvoet draagt nog */
+    {const ea=A.ea,eb=A.eb,ed=[eb[0]-ea[0],eb[1]-ea[1]],L2=ed[0]*ed[0]+ed[1]*ed[1]||1,L=Math.sqrt(L2);const pr=footRect(stance0,sc).map(q=>((q[0]-ea[0])*ed[0]+(q[1]-ea[1])*ed[1])/L2);
+      let t0=clamp(Math.min(...pr),0,1),t1=clamp(Math.max(...pr),0,1);if((t1-t0)*L<.04){const mid=(t0+t1)/2,hw=.02/L;t0=clamp(mid-hw,0,1);t1=clamp(mid+hw,0,1);}
+      J.eStep=[[ea[0]+ed[0]*t0,ea[1]+ed[1]*t0],[ea[0]+ed[0]*t1,ea[1]+ed[1]*t1]];}
+    const offBeam=S.beam&&Math.abs(sf.z)>BEAMW/2+.02;
+    if(S.beam){if(!offBeam){sf.z=0;sf.y=BEAMH;sf.bw=BEAMW;}else{sf.y=0;sf.z=Math.sign(sf.z)*Math.max(Math.abs(sf.z),.32);cross=false;}}
+    J.stepFoot=sf;J.stepPts=footPts(sf,sc);J.cross=cross;J.offBeam=offBeam;
+    const feet1=[];let mover=null;
+    if(stanceF){const st2=Object.assign({},stanceF,{toes:false});
+      if(offBeam){st2.y=0;st2.bw=null;st2.z=Math.sign(sf.z)*.12;mover=st2.side;}
+      else if(cross){st2.z=sf.z+Math.sign(A.n[1])*.2*sc;st2.x=sf.x-.06*sc;mover=st2.side;}
+      feet1.push(st2);}
+    feet1.push(sf);J.mover=mover;
+    J.B1=build({sc,k:.3,L:0,lv:[0,0],arms:'down',feet:feet1});
+    if(mover){J.hullMid=offBeam?convexHull(footRect(sf,sc)):convexHull([...footRect(stanceF,sc),...footRect(sf,sc)]);J.hullSwing=convexHull(footRect(sf,sc));}
+    J.TR2=mover?.95:.7;J.T=J.tland+J.TR2+.55;}
+  return J;}
+function thAt(J,t){if(t<=J.tc)return 0;const i=(t-J.tc)/J.thDt,i0=Math.floor(i);if(i0>=J.th.length-1)return J.th[J.th.length-1];return lerp(J.th[i0],J.th[i0+1],i-i0);}
+function slideAt(J,t){if(t<=J.ts)return 0;const i=(t-J.ts)/J.slDt,i0=Math.floor(i);if(i0>=J.sl.length-1)return J.slX;return lerp(J.sl[i0],J.sl[i0+1],i-i0);}
+function rotP(P,J,a){const q=new THREE.Quaternion().setFromAxisAngle(J.axis,a);return mapP(P,v=>v.clone().sub(J.pivot).applyQuaternion(q).add(J.pivot));}
+function rotAbout(J,v,a){return v.clone().sub(J.pivot).applyAxisAngle(J.axis,a).add(J.pivot);}
+// verschuiving door glijden (wegschuiven, of glijden tijdens het kantelen tot de stapvoet neerkomt)
+function offAt(J,t){if(!(J.out==='slide'||J.slideTip)||!J.sl)return V(0,0,0);const x=slideAt(J,J.slideTip?Math.min(t,J.tland):t);return V(J.A.u[0]*x,0,J.A.u[1]*x);}
+function restoring(J,th){return J.m*g*(J.dn*Math.cos(th)-J.A.hc*Math.sin(th))/(J.un||1);}
+// kruispas: hoe ver de zwaaivoet vóór en naast de standvoet landt, hoe ver hij naar voren uitzwaait, en hoe het bekken meedraait
+const CX={fx:.44,dz:.1,bul:.17,yaw:60,lift:.12};
+/* armen reageren bij het vallen (alleen in beeld; voor de berekening blijft het lichaam star).
+   De arm aan de valkant gaat hoog opzij, de arm aan de kant van de duwer pas als die heeft losgelaten. */
+function armsReact(P,J,t,sc){const A=J.A,up=P.sho.clone().sub(P.pelvis).normalize(),side=P.shoR.clone().sub(P.shoL);side.addScaledVector(up,-side.dot(up)).normalize();const fwd=new THREE.Vector3().crossVectors(up,side).normalize();
+  const lat=Math.abs(A.n[1])>.5,fs=A.n[1]>0?'R':'L';
+  const turn=(a,b,w)=>a.clone().applyQuaternion(new THREE.Quaternion().slerp(new THREE.Quaternion().setFromUnitVectors(a,b),w)); // gelijkmatig draaien
+  for(const s of ['L','R']){const sg=s==='L'?-1:1,big=!lat||s===fs,w=ease((t-(big?J.tc+.05:J.tst+.06))/.55);if(w<=0)continue;
+    const a=(lat?(big?105:40):80)*D2R,fw=lat&&!big?.3:.15;const tgt=(ang,f)=>up.clone().multiplyScalar(-Math.cos(ang)).addScaledVector(side,sg*Math.sin(ang)).addScaledVector(fwd,f).normalize();
+    const sho=P['sho'+s],e0=P['elb'+s],h0=P['hand'+s],l1=e0.distanceTo(sho),l2=h0.distanceTo(e0);
+    const dA=turn(e0.clone().sub(sho).normalize(),tgt(a,fw),w),e=sho.clone().addScaledVector(dA,l1);
+    const dB=turn(h0.clone().sub(e0).normalize(),tgt(a+14*D2R,fw+.15),w);P['elb'+s]=e;P['hand'+s]=e.clone().addScaledVector(dB,l2);}}
+// toestand van de leerling op tijd t
+const T2a=.12,T2b=.55;
+// kniehint van het stapbeen aan het eind van de stap (de knie wijst iets naar buiten, weg van het standbeen)
+function stepHint(J,sd){const o=sd==='L'?-1:1;return J.cross?V(1,.12,(J.A.n[1]>0?1:-1)*.12):J.along?V(1,.25,o*.45):V(1,.25,o*.25);} // tweede stap: van dan tot dan zwaait de tweede voet
+function studentAt(J,t){const B0=J.B0,A=J.A,sc=J.sc;let P=B0.P,stage='push',th=0,off=V(0,0,0),hull=B0.hull,baseY=B0.surf,newBase=false,ghost=null,com=null,dLive=null,edge=null;
+  const KH={},knee=(s,hv)=>{KH[s]=hv;P['knee'+s]=ik(P['hip'+s],P['ank'+s],LEG1*sc,LEG2*sc,hv);};
+  const sh=H=>H.map(q=>[q[0]+off.x,q[1]+off.z]);
+  if(t<TR)stage='reach';
+  if(J.out==='slide'){off=offAt(J,t);if(off.lengthSq()>0)P=mapP(B0.P,v=>v.clone().add(off));if(t>J.ts)stage='slide';hull=sh(B0.hull);}
+  else if(J.out==='tip'&&t<=J.tc){if(J.slideTip){off=offAt(J,t);if(t>J.ts)stage='slide';if(off.lengthSq()>0)P=mapP(B0.P,v=>v.clone().add(off));hull=sh(B0.hull);}}
+  else if(J.out==='tip'){if(t<=J.tland){off=offAt(J,t);th=thAt(J,t);P=rotP(B0.P,J,th);if(off.lengthSq()>0)P=mapP(P,v=>v.add(off));stage='tip';hull=sh(B0.hull);
+      // zwaartepunt van het starre lichaam: daarmee rekenen het tegenmoment en d, dus ook het beeld
+      com=rotAbout(J,B0.com,th).add(off);dLive=((A.E[0]+off.x-com.x)*A.n[0]+(A.E[1]+off.z-com.z)*A.n[1])/(A.un||1);
+      armsReact(P,J,t,sc);
+      if(t>J.tst){stage='step';const s=clamp((t-J.tst)/(J.tland-J.tst),0,1),e=ease(s),o0=offAt(J,J.tst),s0=mapP(rotP(B0.P,J,thAt(J,J.tst)),v=>v.add(o0)),sd=J.stepSide;
+        // kruispas: de voet zwaait ruim vóór de standvoet langs; op de balk (lengterichting) zwaait hij opzij langs de standvoet
+        const bul=Math.sin(Math.PI*s)*sc,bx=J.cross?bul*CX.bul:0,bz=J.along?bul*.13*(sd==='L'?-1:1):0;
+        // van de balk af: eerst opzij, dan pas omlaag, zodat de voet niet door de balk gaat
+        // op één been hangt de vrije voet al los: die beweegt meteen weg, anders zwaait het standbeen er doorheen
+        const eXZ=J.offBeam?ease(clamp(s*1.7,0,1)):B0.feet.length===1?1-Math.pow(1-s,2.4):e,eY=J.offBeam?ease(clamp((s-.3)/.7,0,1)):e;
+        for(const k of ['ank','heel','ball','toe']){const a=s0[k+sd],b=J.stepPts[k];const q=a.clone().lerp(b,eXZ);q.y=lerp(a.y,b.y,eY);P[k+sd]=q.add(V(bx,Math.sin(Math.PI*s)*(J.cross?CX.lift:.11)*sc,bz));}
+        knee(sd,V(1,.15,0).lerp(stepHint(J,sd),ease(clamp(s*3,0,1))));
+        if(J.along){const o=sd==='L'?'R':'L';knee(o,V(1,.15,0).lerp(V(1,.15,(o==='L'?-1:1)*.4),e));} // op de balk: de standknie wijkt iets naar buiten
+        // steunvlak tijdens de stap: alleen de standvoet. Het oude vlak blijft als vage omtrek zichtbaar.
+        const st=Object.assign({},J.stance0,{x:J.stance0.x+off.x,z:J.stance0.z+off.z});hull=convexHull(footRect(st,sc));ghost=sh(B0.hull);
+        edge=J.eStep.map(q=>[q[0],q[1]]);}}
+    else{stage='recover';newBase=true;ghost=B0.hull.map(q=>[q[0]+J.offL.x,q[1]+J.offL.z]);const tr=t-J.tland,r=ease(tr/J.TR2);if(!J.Pland){const sl=studentAt(J,J.tland);J.Pland=sl.P;J.comLand=sl.com;}const P1=J.B1.P;P=mapP(J.Pland,(v,k)=>v.clone().lerp(P1[k],r));
+      for(const s of ['L','R']){
+        if(s===J.mover){const s2=clamp((tr-T2a)/(T2b-T2a),0,1),e2=ease(s2),eXZ=J.offBeam?ease(clamp(s2*1.7,0,1)):e2,eY=J.offBeam?ease(clamp((s2-.3)/.7,0,1)):e2;
+          for(const k of ['ank','heel','ball','toe']){const a=J.Pland[k+s],b=P1[k+s],q=a.clone().lerp(b,eXZ);q.y=lerp(a.y,b.y,eY)+Math.sin(Math.PI*s2)*(J.offBeam?.05:J.cross?.06:.1)*sc;if(J.cross)q.x-=Math.sin(Math.PI*s2)*.2*sc;P[k+s]=q;}/* na een kruispas zwaait de standvoet achter het andere been langs */if(s2>0&&s2<1)stage='step2';}
+        else{const rq=ease(tr/.2);for(const k of ['ank','heel','ball','toe'])P[k+s]=J.Pland[k+s].clone().lerp(P1[k+s],rq);} // staande voet: alleen plat neerzetten, niet optillen
+        {const rh=J.along?V(1,.15,(s==='L'?-1:1)*.4):V(1,.15,0);knee(s,s===J.stepSide?stepHint(J,s).lerp(rh,ease(tr/.3)):rh);}}
+      const yB1=Math.min(...J.B1.feet.map(f=>f.y));
+      if(J.mover){hull=tr<T2a?J.hullMid:tr<T2b?J.hullSwing:J.B1.hull;baseY=tr<T2b?J.stepFoot.y:yB1;}else{hull=J.B1.hull;baseY=yB1;}}}
+  // kruispas: het bekken draait mee, zodat het zwaaibeen vóór het standbeen langs gaat
+  if(J.cross&&J.out==='tip'&&t>J.tst){const tr=t-J.tland,kk=t<=J.tland?ease((t-J.tst)/(J.tland-J.tst)):1-ease(clamp((tr-.55)/.3,0,1));const yaw=(J.stepSide==='R'?1:-1)*CX.yaw*D2R*kk;
+    const out=V(.6,.1,Math.sign(A.n[1])*.8); // tweede stap: de knie wijst naar buiten, weg van het andere been
+    // na de landing: de heupen in J.Pland zijn al gedraaid. Draai ze eerst terug en meng dan, anders draait het bekken dubbel.
+    if(tr>0){const r=ease(tr/J.TR2),y0=(J.stepSide==='R'?1:-1)*CX.yaw*D2R;for(const s of ['L','R']){const a=J.Pland['hip'+s].clone().sub(J.Pland.pelvis).applyAxisAngle(UP,-y0),b=J.B1.P['hip'+s].clone().sub(J.B1.P.pelvis);P['hip'+s]=P.pelvis.clone().add(a.lerp(b,r));}}
+    // de knie van het standbeen draait tijdens de kruispas geleidelijk naar buiten, zodat het zwaaibeen er vóór langs kan, en daarna weer terug
+    const wOut=t<=J.tland?kk:tr<T2b?1:1-ease(clamp((tr-T2b)/.3,0,1));
+    const pel=P.pelvis;for(const s of ['L','R']){if(yaw)P['hip'+s]=P['hip'+s].clone().sub(pel).applyAxisAngle(UP,yaw).add(pel);knee(s,s===J.mover&&wOut>0?V(1,.2,0).lerp(out,wOut):V(1,.2,0));}}
+  /* benen rekken nooit uit. Staat een voet op de grond, dan zakt het lichaam mee (zoals bij een stap van de balk: het standbeen buigt);
+     hangt de voet nog in de lucht, dan blijft hij binnen het bereik van het been. Tegen het eind van een stap zakt het lichaam al mee. */
+  if(J.out==='tip'&&t>J.tst){const R=(LEG1+LEG2)*sc*.998,tr=t-J.tland,late=p=>ease(clamp((p-.45)/.55,0,1));
+    const wOf=s=>{if(t<=J.tland)return s===J.stepSide?late((t-J.tst)/(J.tland-J.tst)):1;if(s!==J.mover)return 1;const s2=(tr-T2a)/(T2b-T2a);return s2<=0||s2>=1?1:late(s2);};
+    let drop=0;for(const s of ['L','R']){const w=wOf(s);if(w<=0)continue;const v=P['hip'+s].clone().sub(P['ank'+s]),hz=v.x*v.x+v.z*v.z;if(v.length()>R&&hz<R*R)drop=Math.max(drop,w*(v.y-Math.sqrt(R*R-hz)));}
+    if(drop>0)for(const k of ['pelvis','sho','neck','head','shoL','shoR','hipL','hipR','elbL','elbR','handL','handR'])P[k]=P[k].clone().add(V(0,-drop,0));
+    for(const s of ['L','R']){const v=P['ank'+s].clone().sub(P['hip'+s]),L=v.length();let mv=drop>0;
+      if(L>R){const sh=v.multiplyScalar(R/L-1);for(const k of ['ank','heel','ball','toe'])P[k+s]=P[k+s].clone().add(sh);mv=true;}
+      if(mv)P['knee'+s]=ik(P['hip'+s],P['ank'+s],LEG1*sc,LEG2*sc,KH[s]||V(1,.15,0));}}
+  if(J.out==='stand'&&t>TR)stage='push';
+  if(t>=J.T-.001)stage='done';
+  if(!com){com=comOf(P);if(newBase&&J.comLand){const k=ease((t-J.tland)/.3);com=J.comLand.clone().lerp(com,k);}}
+  let C;
+  if(J.out==='tip'&&t>J.tc&&t<=J.tland){C=rotAbout(J,A.C,th).add(off);}else if(newBase)C=contactPt(P,sc,J.dir,J.hp);else C=A.C.clone().add(off);
+  return {P,com,stage,th,off,hull,baseY,newBase,C,ghost,dLive,edge};}
 
 /* ================= renderer & zaal ================= */
 const canvas=$('#c');let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}catch(e){window.__err('Je browser ondersteunt geen WebGL. Probeer Chrome of Edge.');return;}
 renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,14,36);
+const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,12,34);
 const camera=new THREE.PerspectiveCamera(34,1,.05,100);
-const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=1.6;controls.maxDistance=12;controls.maxPolarAngle=1.52;
-const HOME=innerWidth<820?{p:[2.6,2.4,4.6],t:[0,.8,0]}:{p:[2.2,2.6,4.6],t:[-.6,.75,-.15]};camera.position.set(...HOME.p);controls.target.set(...HOME.t);
-scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.55));
-const key=new THREE.DirectionalLight(0xfff1dc,1.1);key.position.set(3,7,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-3,right:3,top:3,bottom:-2,near:1,far:20});key.shadow.bias=-.0004;scene.add(key);
+const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=1.6;controls.maxDistance=14;controls.maxPolarAngle=1.52;
+camera.position.set(5,2,1);controls.target.set(0,.9,0);
+scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.6));
+const key=new THREE.DirectionalLight(0xfff1dc,1.05);key.position.set(4,7,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-3,right:3,top:3,bottom:-2,near:1,far:20});key.shadow.bias=-.0004;scene.add(key);
 const rim=new THREE.DirectionalLight(0x9fc7d8,.45);rim.position.set(-5,3,-4);scene.add(rim);
 const std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7},o||{}));
 function mesh(geo,mat,pos,parent){const mm=new THREE.Mesh(geo,mat);if(pos)mm.position.set(...pos);mm.castShadow=true;mm.receiveShadow=true;(parent||scene).add(mm);return mm;}
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
-const floorTex=canvasTex(1024,512,(x,w,h)=>{for(let i=0;i<32;i++){const y=i*h/32;x.fillStyle=`hsl(${30+Math.random()*6},${42+Math.random()*10}%,${46+Math.random()*9}%)`;x.fillRect(0,y,w,h/32);x.fillStyle='rgba(60,35,15,.35)';x.fillRect(0,y,w,1.5);}});
-mesh(new THREE.BoxGeometry(7,.25,5),std(0x2a1d15),[0,-.125,0]);
-const floor=mesh(new THREE.PlaneGeometry(7,5),std(0xffffff,{map:floorTex,roughness:.55}),[0,.002,0]);floor.rotation.x=-Math.PI/2;floor.castShadow=false;
-mesh(new THREE.BoxGeometry(7,3,.12),std(0xcfd6d8),[0,1.5,-2.5]);
-const woodM=std(0xc89a5e,{roughness:.6});for(let s=0;s<3;s++){const x0=-2.8+s*1.0;[x0,x0+.9].forEach(x=>mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[x,1.3,-2.34]));for(let r=0;r<14;r++)mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[x0+.45,.18+r*.17,-2.34]).rotation.z=Math.PI/2;}
-const matG=mesh(new THREE.BoxGeometry(2.4,.03,1.6),std(0x3a6ea5,{roughness:.9}),[0,.015,0]);matG.castShadow=false;
+const floorTex=canvasTex(1024,512,(x,w,h)=>{for(let i=0;i<32;i++){const y=i*h/32;x.fillStyle=`hsl(${30+Math.random()*6},${42+Math.random()*10}%,${46+Math.random()*9}%)`;x.fillRect(0,y,w,h/32);x.fillStyle='rgba(60,35,15,.35)';x.fillRect(0,y,w,1.5);for(let k=0;k<3;k++)x.fillRect(Math.random()*w,y,1.5,h/32);}});
+mesh(new THREE.BoxGeometry(8,.25,6),std(0x2a1d15),[0,-.125,0]);
+const floor=mesh(new THREE.PlaneGeometry(8,6),std(0xffffff,{map:floorTex,roughness:.55}),[0,.002,0]);floor.rotation.x=-Math.PI/2;floor.castShadow=false;
+const wallM=std(0xcfd6d8),woodM=std(0xc89a5e,{roughness:.6});
+mesh(new THREE.BoxGeometry(8,3,.12),wallM,[0,1.5,-3]);mesh(new THREE.BoxGeometry(.12,3,6),wallM,[-4,1.5,0]);
+function wallBars(x0,z0,alongX){for(let s=0;s<3;s++){const o=s*1.0;const pos=a=>alongX?[x0+o+a,0,z0]:[x0,0,z0+o+a];[0,.9].forEach(a=>{const p=pos(a);mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[p[0],1.3,p[2]]);});
+  for(let r=0;r<14;r++){const p=pos(.45);const m=mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[p[0],.18+r*.17,p[2]]);if(alongX)m.rotation.z=Math.PI/2;else m.rotation.x=Math.PI/2;}}}
+wallBars(-2.6,-2.86,true);wallBars(-3.86,-1.6,false);
+const matG=mesh(new THREE.BoxGeometry(3.2,MATH,2.6),std(0x2f5d8c,{roughness:.9}),[0,MATH/2,0]);matG.castShadow=false;
 const beamG=new THREE.Group();scene.add(beamG);
-mesh(new THREE.BoxGeometry(3.4,.06,BEAMW),std(0xd8b27a,{roughness:.55}),[0,BEAMH-.03,0],beamG);mesh(new THREE.BoxGeometry(3.4,BEAMH-.06,.06),std(0x8d969b,{metalness:.5,roughness:.4}),[0,(BEAMH-.06)/2,0],beamG);
+mesh(new THREE.BoxGeometry(3.4,.06,BEAMW),std(0xd8b27a,{roughness:.55}),[0,BEAMH-.03,0],beamG);mesh(new THREE.BoxGeometry(3.4,BEAMH-.06,.05),std(0x8d969b,{metalness:.5,roughness:.4}),[0,(BEAMH-.06)/2,0],beamG);
 [-1.4,1.4].forEach(x=>mesh(new THREE.BoxGeometry(.08,.04,.6),std(0x8d969b,{metalness:.5}),[x,.02,0],beamG));
 
-/* ================= ledenpop (3D-punten) ================= */
-const UP=new THREE.Vector3(0,1,0),_d=new THREE.Vector3();
-const CYL=new THREE.CylinderGeometry(1,1,1,18),SPH=new THREE.SphereGeometry(1,20,14);
-const mats={jersey:std(0xd65a42,{roughness:.55}),skin:std(0xe8d6b6,{roughness:.55}),short:std(0x2b3a52,{roughness:.55}),shoe:std(0xf3efe6,{roughness:.55}),joint:std(0x8a7a66,{roughness:.55})};
-const SEGS=[['pelvis','sho',.125,'jersey'],['shoL','shoR',.065,'jersey'],['hipL','hipR',.075,'short'],['shoL','elbL',.045,'skin'],['shoR','elbR',.045,'skin'],['elbL','handL',.038,'skin'],['elbR','handR',.038,'skin'],['hipL','kneeL',.07,'short'],['hipR','kneeR',.07,'short'],['kneeL','ankL',.052,'skin'],['kneeR','ankR',.052,'skin'],['ankL','toeL',.042,'shoe'],['ankR','toeR',.042,'shoe']];
-const JNT=[['elbL',.05],['elbR',.05],['handL',.045],['handR',.045],['kneeL',.075],['kneeR',.075],['ankL',.055],['ankR',.055],['shoL',.072],['shoR',.072],['hipL',.08],['hipR',.08]];
-const segM=SEGS.map(([a,b,r,mt])=>{const mm=new THREE.Mesh(CYL,mats[mt]);mm.castShadow=true;scene.add(mm);return {mm,a,b,r};});
-const jM=JNT.map(([k,r])=>{const mm=new THREE.Mesh(SPH,mats.joint);mm.castShadow=true;scene.add(mm);return {mm,k,r};});
-const headM=new THREE.Mesh(SPH,mats.skin);headM.castShadow=true;scene.add(headM);const noseM=new THREE.Mesh(SPH,std(0x2b3a52));scene.add(noseM);
+/* ================= ledenpoppen ================= */
+const CYL=new THREE.CylinderGeometry(1,1,1,18),SPH=new THREE.SphereGeometry(1,22,16),BOX=new THREE.BoxGeometry(1,1,1),TORSO=new THREE.CylinderGeometry(1,.8,1,22);
+const _a=new THREE.Vector3(),_b=new THREE.Vector3(),_d=new THREE.Vector3(),_m=new THREE.Matrix4();
 function placeSeg(mm,A,B,r){_d.subVectors(B,A);const L=_d.length();mm.position.addVectors(A,B).multiplyScalar(.5);mm.scale.set(r,Math.max(L,1e-4),r);if(L>1e-6)mm.quaternion.setFromUnitVectors(UP,_d.normalize());}
-function drawBody(P,sc){for(const q of segM)placeSeg(q.mm,P[q.a],P[q.b],q.r*sc);for(const j of jM){j.mm.position.copy(P[j.k]);j.mm.scale.setScalar(j.r*sc);}
-  headM.position.copy(P.head);headM.scale.setScalar(.11*sc);const fw=P.head.clone().sub(P.sho).normalize();const n=V(1,0,0).sub(fw.clone().multiplyScalar(fw.x)).normalize();noseM.position.copy(P.head).add(n.multiplyScalar(.105*sc));noseM.scale.setScalar(.03*sc);}
+function makeRig(col){const grp=new THREE.Group();scene.add(grp);const M={};for(const k in col)M[k]=std(col[k],{roughness:.55});
+  const add=(geo,mat)=>{const mm=new THREE.Mesh(geo,M[mat]);mm.castShadow=true;grp.add(mm);return mm;};
+  const segs=[['shoL','elbL',.047,'skin'],['shoR','elbR',.047,'skin'],['elbL','handL',.038,'skin'],['elbR','handR',.038,'skin'],['hipL','kneeL',.07,'short'],['hipR','kneeR',.07,'short'],['kneeL','ankL',.052,'skin'],['kneeR','ankR',.052,'skin'],['neck','head',.048,'skin']].map(([a,b,r,mt])=>({mm:add(CYL,mt),a,b,r}));
+  const joints=[['elbL',.047,'skin'],['elbR',.047,'skin'],['handL',.045,'skin'],['handR',.045,'skin'],['kneeL',.062,'skin'],['kneeR',.062,'skin'],['ankL',.05,'skin'],['ankR',.05,'skin'],['shoL',.074,'jersey'],['shoR',.074,'jersey'],['hipL',.078,'short'],['hipR',.078,'short']].map(([k,r,mt])=>({mm:add(SPH,mt),k,r}));
+  const torso=add(TORSO,'jersey'),yoke=add(CYL,'jersey'),hips=add(CYL,'short'),head=add(SPH,'skin'),hair=add(SPH,'hair'),nose=add(SPH,'short');
+  const shoes=['L','R'].map(s=>({s,a:add(BOX,'shoe'),b:add(BOX,'shoe')}));
+  return {grp,segs,joints,torso,yoke,hips,head,hair,nose,shoes,M};}
+const _x=new THREE.Vector3(),_y=new THREE.Vector3(),_z=new THREE.Vector3();
+function placeBox(mm,A,B,w,h,side){_x.subVectors(B,A);const L=Math.max(_x.length(),1e-4);_x.normalize();_z.copy(side).addScaledVector(_x,-side.dot(_x)).normalize();_y.crossVectors(_z,_x).normalize();
+  _m.makeBasis(_x,_y,_z);mm.quaternion.setFromRotationMatrix(_m);mm.position.addVectors(A,B).multiplyScalar(.5).addScaledVector(_y,h/2);mm.scale.set(L+.01,h,w);}
+function updateRig(R,P,sc){for(const s of R.segs)placeSeg(s.mm,P[s.a],P[s.b],s.r*sc);for(const j of R.joints){j.mm.position.copy(P[j.k]);j.mm.scale.setScalar(j.r*sc);}
+  const up=P.sho.clone().sub(P.pelvis);const L=up.length();up.normalize();const side=P.shoR.clone().sub(P.shoL);side.addScaledVector(up,-side.dot(up)).normalize();const fwd=new THREE.Vector3().crossVectors(up,side).normalize();
+  _m.makeBasis(fwd,up,side);R.torso.quaternion.setFromRotationMatrix(_m);R.torso.position.copy(P.pelvis).addScaledVector(up,L*.5);R.torso.scale.set(.112*sc,L,.165*sc);
+  const nup=up.clone().negate();_m.makeBasis(fwd,side,nup);R.yoke.quaternion.setFromRotationMatrix(_m);R.yoke.position.copy(P.sho).addScaledVector(up,-.03*sc);R.yoke.scale.set(.072*sc,.4*sc,.068*sc);
+  const hs=P.hipR.clone().sub(P.hipL).normalize();const hf=new THREE.Vector3().crossVectors(up,hs).normalize();_m.makeBasis(hf,hs,new THREE.Vector3().crossVectors(hf,hs));R.hips.quaternion.setFromRotationMatrix(_m);R.hips.position.copy(P.pelvis).addScaledVector(up,.02*sc);R.hips.scale.set(.1*sc,.27*sc,.085*sc);
+  R.head.position.copy(P.head);R.head.scale.setScalar(.108*sc);R.hair.position.copy(P.head).addScaledVector(up,.014*sc).addScaledVector(fwd,-.02*sc);R.hair.scale.setScalar(.104*sc);
+  R.nose.position.copy(P.head).addScaledVector(fwd,.1*sc).addScaledVector(up,-.01*sc);R.nose.scale.setScalar(.024*sc);
+  for(const sh of R.shoes){placeBox(sh.a,P['heel'+sh.s],P['ball'+sh.s],.092*sc,.058*sc,hs);placeBox(sh.b,P['ball'+sh.s],P['toe'+sh.s],.088*sc,.045*sc,hs);}}
+const rig=makeRig({jersey:0xd65a42,skin:0xe8d6b6,short:0x2b3a52,shoe:0xf3efe6,hair:0x3b2a1e});
+const pusher=makeRig({jersey:0x2f6f73,skin:0xd9c3a0,short:0x1f2a33,shoe:0xf3efe6,hair:0x1e1712});
+// duwer: lokaal gebouwd (kijkt naar +x), daarna gedraaid naar de duwrichting
+function pusherPose(sf,J,t){const sc=WHO[S.who].sc,u=DIRS[S.dir],yaw=Math.atan2(-u[1],u[0]),y0=S.beam?0:MATH;const Ft=J?J.Ft(t):0;
+  const feet=[{side:'L',x:.17*sc,z:-.12*sc,y:y0,toes:false},{side:'R',x:-.3*sc,z:.13*sc,y:y0,toes:true}];
+  const base=build({sc,k:.28,L:0,lv:[0,0],arms:'down',feet,flex:12});
+  const C0=(J?J.A.C:analyse(curB().B).C);let shift=0;
+  if(J){const tEnd=J.out==='tip'?(J.hold!=null?Math.min(J.tst,J.hold):J.tst):J.hold;const tt=Math.min(t,tEnd);const Ct=(J.out==='tip'&&tt>J.tc?rotAbout(J,J.A.C,thAt(J,tt)):J.A.C.clone()).add(offAt(J,tt));
+    shift=Math.max(0,(Ct.x-C0.x)*u[0]+(Ct.z-C0.z)*u[1]-.04);}
+  // de voeten van de duwer blijven staan: volgt de leerling, dan leunt hij mee en strekt hij zijn armen
+  const lean=Math.min(26,Math.atan2(shift,.5*sc)/D2R);
+  const root=V(C0.x-u[0]*(base.P.sho.x+.5*sc),0,C0.z-u[1]*(base.P.sho.x+.5*sc));
+  const toW=v=>v.clone().applyAxisAngle(UP,yaw).add(root),toL=v=>v.clone().sub(root).applyAxisAngle(UP,-yaw);
+  // handen: van 'klaar' naar het contactpunt en terug
+  let reach=0;if(J){const tEnd=J.out==='tip'?(J.hold!=null?Math.min(J.tst,J.hold+TL*.6):J.tst):J.hold+TL*.6;reach=t<TR?ease(t/TR):t<tEnd?1:1-ease((t-tEnd)/.35);}
+  const perp=V(-u[1],0,u[0]);const tgtW=s=>sf.C.clone().addScaledVector(perp,(s==='L'?1:-1)*.085*sc).add(V(-u[0]*.02,0,-u[1]*.02));
+  const ready=s=>V(base.P.sho.x+.22*sc,base.P.sho.y-.3*sc,(s==='L'?-.17:.17)*sc);
+  const hands={};for(const s of ['L','R'])hands[s]=ready(s).lerp(toL(tgtW(s)),reach);
+  const P=build({sc,k:.28,L:0,lv:[0,0],arms:'down',feet,flex:12+12*clamp(Ft/300,0,1)+lean,hands}).P;
+  return mapP(P,v=>toW(v));}
 
-/* ================= lagen ================= */
+/* ================= lagen: steunvlak, kantelrand, loodlijn, drukpunt, krachten, armen ================= */
+// hulplijnen: precies de kleur uit de legenda (geen tonemapping, kleur als sRGB opgegeven)
+const lin=c=>new THREE.Color(c).convertSRGBToLinear();
+const over=(c,o)=>new THREE.MeshBasicMaterial(Object.assign({color:lin(c),transparent:true,depthTest:false,depthWrite:false,toneMapped:false},o||{}));
 const comTex=canvasTex(128,128,(x)=>{x.fillStyle='#fff';x.beginPath();x.arc(64,64,58,0,TAU);x.fill();x.fillStyle='#111';x.beginPath();x.moveTo(64,64);x.arc(64,64,58,-Math.PI/2,0);x.fill();x.beginPath();x.moveTo(64,64);x.arc(64,64,58,Math.PI/2,Math.PI);x.fill();x.lineWidth=6;x.strokeStyle='#111';x.beginPath();x.arc(64,64,58,0,TAU);x.stroke();});
-const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true}));comSpr.scale.set(.12,.12,1);comSpr.renderOrder=10;scene.add(comSpr);
-const plumb=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0,0,0),V(0,1,0)]),new THREE.LineDashedMaterial({color:0xf1e9da,dashSize:.04,gapSize:.03,depthTest:false,transparent:true}));plumb.renderOrder=9;scene.add(plumb);
-const footDot=new THREE.Mesh(new THREE.CircleGeometry(.035,24),new THREE.MeshBasicMaterial({color:0x7fc8a0,depthTest:false,transparent:true}));footDot.rotation.x=-Math.PI/2;footDot.renderOrder=9;scene.add(footDot);
-let hullMesh=null,hullLine=null;const hullMat=new THREE.MeshBasicMaterial({color:0x7fc8a0,transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide}),hullLineMat=new THREE.LineBasicMaterial({color:0x7fc8a0});
-function setHull(hull,y,ok){if(hullMesh){scene.remove(hullMesh);hullMesh.geometry.dispose();scene.remove(hullLine);hullLine.geometry.dispose();}
-  const sh=new THREE.Shape(hull.map(([x,z])=>new THREE.Vector2(x,-z)));const geo=new THREE.ShapeGeometry(sh);hullMesh=new THREE.Mesh(geo,hullMat);hullMesh.rotation.x=-Math.PI/2;hullMesh.position.y=y+.006;hullMesh.renderOrder=5;scene.add(hullMesh);
-  hullLine=new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(hull.map(([x,z])=>V(x,y+.008,z))),hullLineMat);scene.add(hullLine);
-  const col=ok?0x7fc8a0:0xe86a5a;hullMat.color.setHex(col);hullLineMat.color.setHex(col);}
-const dArrow=new THREE.ArrowHelper(V(1,0,0),V(),1,0xe6b65e,.07,.05);scene.add(dArrow);
-const pushArrow=new THREE.ArrowHelper(V(1,0,0),V(),.6,0xe86a5a,.14,.09);scene.add(pushArrow);
-const hLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0,0,0),V(0,1,0)]),new THREE.LineBasicMaterial({color:0xe86a5a,transparent:true,opacity:.8}));scene.add(hLine);
-[dArrow,pushArrow].forEach(a=>{a.line.material.depthTest=false;a.cone.material.depthTest=false;a.renderOrder=11;});
+const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true,toneMapped:false}));comSpr.scale.set(.11,.11,1);comSpr.renderOrder=20;scene.add(comSpr);
+const dashTex=canvasTex(8,64,(x,w,h)=>{x.clearRect(0,0,w,h);x.fillStyle='#fff';x.fillRect(0,0,w,h*.58);});dashTex.wrapS=dashTex.wrapT=THREE.RepeatWrapping;
+const ROD=new THREE.CylinderGeometry(1,1,1,10,1,true),CONE=new THREE.ConeGeometry(1,1,16);
+function rod(col,op,dashed){const mat=over(col,{opacity:op||1});if(dashed){mat.map=dashTex.clone();mat.map.needsUpdate=true;mat.map.wrapS=mat.map.wrapT=THREE.RepeatWrapping;}const mm=new THREE.Mesh(ROD,mat);mm.renderOrder=14;scene.add(mm);return mm;}
+function setRod(mm,A,B,r,dashLen){placeSeg(mm,A,B,r);if(dashLen&&mm.material.map){mm.material.map.repeat.set(1,Math.max(1,A.distanceTo(B)/dashLen));}}
+function arrow(col){const grp=new THREE.Group();const m=over(col);const sh=new THREE.Mesh(ROD,m),hd=new THREE.Mesh(CONE,m);sh.renderOrder=hd.renderOrder=16;grp.add(sh,hd);scene.add(grp);return {grp,sh,hd,m};}
+function setArrow(ar,tip,dir,len,r){const d=dir.clone().normalize(),hl=Math.min(len*.4,r*5.5),base=tip.clone().addScaledVector(d,-len),neck=tip.clone().addScaledVector(d,-hl);placeSeg(ar.sh,base,neck,r);ar.hd.position.copy(neck).addScaledVector(d,hl/2);ar.hd.scale.set(r*2.6,hl,r*2.6);ar.hd.quaternion.setFromUnitVectors(UP,d);}
+const plumb=rod(0xf1e9da,.95,true),footDot=new THREE.Mesh(new THREE.CircleGeometry(.026,24),over(0xffc83a));footDot.rotation.x=-Math.PI/2;footDot.renderOrder=17;scene.add(footDot);
+// drukpunt: een witte ring met een donkere rand, zodat hij ook op de lichte vloer en het groene vlak opvalt
+const copBack=new THREE.Mesh(new THREE.RingGeometry(.027,.064,36),over(0x0b1410,{opacity:.85}));copBack.rotation.x=-Math.PI/2;copBack.renderOrder=17;scene.add(copBack);
+const copRing=new THREE.Mesh(new THREE.RingGeometry(.035,.056,36),over(0xffffff));copRing.rotation.x=-Math.PI/2;copRing.renderOrder=18;scene.add(copRing);
+const dRod=rod(0xffc83a,1),hRod=rod(0xff4f3c,1),actRod=rod(0xff4f3c,.85,true),edgeBack=rod(0x0b1410,1),edgeRod=rod(0xffffff,1);edgeBack.renderOrder=13;
+const hTick1=rod(0xff4f3c,1),hTick2=rod(0xff4f3c,1);
+const pushAr=arrow(0xff4f3c),gravAr=arrow(0xffc83a);
+let hullMesh=null,hullEdges=[];const hullMat=new THREE.MeshBasicMaterial({color:lin(0x36b86a),transparent:true,opacity:.6,depthWrite:false,toneMapped:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2});
+const hullEdgeMat=new THREE.MeshBasicMaterial({color:lin(0x0f3d24),transparent:true,opacity:1,depthWrite:false,toneMapped:false});
+let oldHull=null;const oldHullMat=new THREE.MeshBasicMaterial({color:lin(0x7fc8a0),transparent:true,opacity:.16,depthWrite:false,toneMapped:false,side:THREE.DoubleSide,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
+function makeHullMesh(hull,y,mat){const sh=new THREE.Shape(hull.map(([x,z])=>new THREE.Vector2(x,-z)));const mm=new THREE.Mesh(new THREE.ShapeGeometry(sh),mat);mm.rotation.x=-Math.PI/2;mm.position.y=y;mm.renderOrder=2;scene.add(mm);return mm;}
+function setHull(hull,y){if(hullMesh){scene.remove(hullMesh);hullMesh.geometry.dispose();}hullEdges.forEach(e=>{scene.remove(e);});hullEdges=[];
+  hullMesh=makeHullMesh(hull,y+.003,hullMat);
+  for(let i=0;i<hull.length;i++){const a=hull[i],b=hull[(i+1)%hull.length];const e=new THREE.Mesh(BOX,hullEdgeMat);const A=V(a[0],y+.005,a[1]),B=V(b[0],y+.005,b[1]);const L=A.distanceTo(B);e.position.addVectors(A,B).multiplyScalar(.5);e.scale.set(L+.01,.003,.014);e.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);e.renderOrder=3;scene.add(e);hullEdges.push(e);}}
+function setOldHull(hull,y){if(oldHull){scene.remove(oldHull);oldHull.geometry.dispose();oldHull=null;}if(hull)oldHull=makeHullMesh(hull,y+.002,oldHullMat);}
 const labWrap=$('#labels');
-const tagD=document.createElement('div');tagD.className='tag3d';tagD.style.color='#e6b65e';labWrap.appendChild(tagD);
-const tagH=document.createElement('div');tagH.className='tag3d';tagH.style.color='#e86a5a';labWrap.appendChild(tagH);
-const tagF=document.createElement('div');tagF.className='tag3d';tagF.style.color='#e86a5a';labWrap.appendChild(tagF);
+const mkTag=(col,sm)=>{const t=document.createElement('div');t.className='tag3d'+(sm?' sm':'');t.style.color=col;labWrap.appendChild(t);return t;};
+const tagF=mkTag('#ff8b7c'),tagH=mkTag('#ff8b7c'),tagD=mkTag('#f2c873'),tagG=mkTag('#f2c873'),tagE=mkTag('#ffffff',1),tagP=mkTag('#ffffff',1),tagK=mkTag('#ffffff');
 const _p=new THREE.Vector3();
-function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';el.style.transform=`translate(${((_p.x*.5+.5)*innerWidth-(ox||0)).toFixed(1)}px,${((-_p.y*.5+.5)*innerHeight-(oy||0)).toFixed(1)}px)`;}
+// schermposities met een eenvoudige botsingscontrole: labels blijven leesbaar en binnen beeld
+let FRc={l:0,r:innerWidth,t:0,b:innerHeight};const placed=[];const hitR=(x,y,w,h)=>placed.find(r=>x<r.x+r.w&&x+w>r.x&&y<r.y+r.h&&y+h>r.y);
+function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1||!el.textContent){el.style.display='none';return;}el.style.display='';
+  const W=innerWidth,H=innerHeight,w=el.textContent.length*(el.classList.contains('sm')?6.7:7.3)+14,h=18;let x=(_p.x*.5+.5)*W-(ox||0),y=(-_p.y*.5+.5)*H-(oy||0);
+  const L0=Math.max(8,FRc.l+4),R0=Math.min(W-8,FRc.r-4),T0=Math.max(8,FRc.t+4),B0=Math.min(H-8,FRc.b-4);x=clamp(x,L0,R0-w);y=clamp(y,T0,B0-h);const y00=y;
+  // botst het label, probeer dan plekken eromheen; lukt geen enkele, kies dan de plek met de minste overlap
+  const ovl=(xx,yy)=>placed.reduce((s,r)=>s+Math.max(0,Math.min(xx+w,r.x+r.w)-Math.max(xx,r.x))*Math.max(0,Math.min(yy+h,r.y+r.h)-Math.max(yy,r.y)),0);
+  if(hitR(x,y,w,h)){const x00=x;let best=[x,y,ovl(x,y)],found=false;for(const [dx,dy] of [[0,-1],[0,1],[0,-2],[0,2],[1,0],[-1,0],[1,-1],[-1,-1],[1,1],[-1,1],[0,-3],[0,3]]){const xx=clamp(x00+dx*(w*.6+8),L0,R0-w),yy=clamp(y00+dy*(h+3),T0,B0-h);if(!hitR(xx,yy,w,h)){x=xx;y=yy;found=true;break;}const o=ovl(xx,yy);if(o<best[2])best=[xx,yy,o];}if(!found){x=best[0];y=best[1];}}
+  placed.push({x,y,w,h});el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;}
+function block(v,r){_p.copy(v).project(camera);if(_p.z>1)return;const x=(_p.x*.5+.5)*innerWidth,y=(-_p.y*.5+.5)*innerHeight;placed.push({x:x-r,y:y-r,w:2*r,h:2*r});}
+function projMk(v,el,on,nameLen){_p.copy(v).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';
+  const W=innerWidth,H=innerHeight,w=nameLen?30+nameLen*6.6+16:24;let x=clamp((_p.x*.5+.5)*W-12,Math.max(8,FRc.l+4),Math.min(W-8,FRc.r-4)-w),y=clamp((-_p.y*.5+.5)*H-12,Math.max(8,FRc.t+4),Math.min(H-8,FRc.b-4)-24);
+  if(on)placed.push({x:x-2,y:y-2,w:w+4,h:28});el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`;}
 
-/* ================= duwen ================= */
-function push(){SND.init();const B=body(),A=analyse(B);S.anim={t:0,A,B,tips:A.tips};S.last={who:S.who,pre:S.pre,one:S.one,beam:S.beam,toes:S.toes,dir:S.dir,F:S.F,tipped:A.tips,Fmax:A.Fmax};
-  SND.push();setTimeout(()=>{if(A.tips)SND.bad();else SND.good();},380);
-  const res=$('#res');if(A.tips){res.className='bad';res.innerHTML=`<span class="k">${WHO[S.who].n} · ${f0(S.F)} N</span><b class="t">${!A.ins&&A.d>0?'Leunt te ver: valt naar de duwer toe':'Valt om: stapt bij'}</b>Duwmoment ${f0(A.Mp)} N·m is groter dan het tegenmoment ${f0(A.Mr)} N·m. ${A.ins?'':'De loodlijn viel al buiten het steunvlak. '}Bij deze houding kan de leerling maximaal ${f0(A.Fmax)} N hebben.`;}
-  else{const r=A.Mp/Math.max(A.Mr,1e-6);res.className=r>.8?'mid':'good';res.innerHTML=`<span class="k">${WHO[S.who].n} · ${f0(S.F)} N</span><b class="t">${r>.8?'Blijft net staan':'Blijft staan'}</b>Duwmoment ${f0(A.Mp)} N·m tegen ${f0(A.Mr)} N·m. Tot ${f0(A.Fmax)} N houdt deze houding het.`;}}
+/* ================= toestand per beeld ================= */
+let BC=null,BK='';
+function curB(){const k=[S.who,S.w,S.s,S.k,S.L,S.arms,S.one,S.toes,S.beam,S.dir,S.hp,S.F].join('|');if(k!==BK){BK=k;const B=body();BC={B,A:analyse(B)};}return BC;}
+let CUR=null;
+function frame(){const J=S.J;
+  if(!J){const {B,A}=curB();return {t:0,P:B.P,com:B.com,sc:B.sc,A,B0:B,Ft:0,C:A.C,stage:'ready',th:0,hull:B.hull,baseY:B.surf,newBase:false,ghost:null,dLive:null,edge:null,J:null};}
+  const t=S.tau,st=studentAt(J,t);return Object.assign({t,A:J.A,B0:J.B0,sc:J.sc,Ft:J.Ft(t),J},st);}
+
+/* ================= duwen, terugkijken ================= */
+function push(){SND.init();
+  S.J=simulate();S.phase='run';S.tau=0;S.fired={};const J=S.J;
+  S.last={who:S.who,pre:S.pre,one:S.one,beam:S.beam,toes:S.toes,dir:S.dir,hp:S.hp,F:S.F,out:J.out,tipped:J.out==='tip',slid:J.out==='slide',slideTip:!!J.slideTip,Fmax:J.A.Fmax,k:S.k,L:S.L,w:S.w,s:S.s};
+  $('#iScrub').disabled=false;setRes('run');drawChart();}
+function replay(){if(!S.J){push();return;}S.phase='run';S.tau=0;S.fired={};setRes('run');}
+function resetRun(){if(S.J){S.J=null;S.phase='ready';S.tau=0;$('#iScrub').disabled=true;$('#iScrub').value=0;setOldHull(null);}S.pred=null;setRes('ready');drawChart();}
+function onEvents(prev,now){const J=S.J,F=S.fired;
+  if(prev<TR&&now>=TR&&!F.c){F.c=1;SND.push();}
+  if(prev<J.tKey&&now>=J.tKey&&!F.k){F.k=1;setRes('final');if(J.out==='stand')SND.good();else if(J.out==='tip')SND.bad();else SND.slide();}
+  if(J.out==='tip'&&prev<J.tland&&now>=J.tland&&!F.l){F.l=1;SND.step();}}
 
 /* ================= uitlegpunten ================= */
+const LEVER_SVG=`<svg viewBox="0 0 320 190" role="img" aria-label="Drie soorten hefbomen"><g font-family="Instrument Sans" font-size="11" fill="#d9d0c0">
+ ${[0,1,2].map(i=>{const y=26+i*52;const piv=[160,40,40][i],F=[60,280,110][i],L=[260,160,280][i];const lab=['1e soort: draaipunt in het midden','2e soort: last in het midden','3e soort: kracht in het midden'][i];
+  return `<text x="8" y="${y-10}" font-weight="700">${lab}</text><line x1="30" y1="${y+8}" x2="290" y2="${y+8}" stroke="#f1e9da" stroke-width="4" stroke-linecap="round"/>
+   <path d="M${piv-9} ${y+24} L${piv} ${y+10} L${piv+9} ${y+24} Z" fill="#f1e9da"/>
+   <line x1="${F}" y1="${i===0?y-6:y+30}" x2="${F}" y2="${i===0?y+3:y+13}" stroke="#e86a5a" stroke-width="3"/><path d="M${F-5} ${i===0?y-1:y+18} L${F} ${i===0?y+6:y+11} L${F+5} ${i===0?y-1:y+18}" fill="#e86a5a"/>
+   <rect x="${L-9}" y="${y-8}" width="18" height="14" rx="2" fill="#e6b65e"/>`;}).join('')}
+ <text x="8" y="184" fill="#e86a5a">rood: spierkracht</text><text x="130" y="184" fill="#e6b65e">geel: last</text><text x="210" y="184" fill="#f1e9da">wit: draaipunt</text></g></svg>`;
+const BACK_SVG=`<svg viewBox="0 0 320 120" role="img" aria-label="Tillen dicht bij en ver van het lichaam, allebei voorovergebogen"><g font-family="Instrument Sans" font-size="11" fill="#d9d0c0">
+ <circle cx="80" cy="30" r="9" fill="#e8d6b6"/><line x1="44" y1="78" x2="76" y2="38" stroke="#d65a42" stroke-width="10" stroke-linecap="round"/><circle cx="44" cy="80" r="5" fill="#f1e9da"/><rect x="61" y="60" width="28" height="18" rx="3" fill="#e6b65e"/><line x1="44" y1="92" x2="75" y2="92" stroke="#e6b65e" stroke-width="2"/><text x="30" y="106">dicht bij: arm 0,2 m</text>
+ <circle cx="240" cy="30" r="9" fill="#e8d6b6"/><line x1="200" y1="78" x2="236" y2="38" stroke="#d65a42" stroke-width="10" stroke-linecap="round"/><circle cx="200" cy="80" r="5" fill="#f1e9da"/><rect x="262" y="58" width="28" height="18" rx="3" fill="#e6b65e"/><line x1="200" y1="92" x2="276" y2="92" stroke="#e6b65e" stroke-width="2"/><text x="196" y="106">ver weg: arm 0,5 m</text></g></svg>`;
+const camSide=()=>{const e=camera.matrixWorld.elements;return V(e[0],0,e[2]).normalize();};
+const camToward=()=>{const e=camera.matrixWorld.elements;return V(e[8],0,e[10]).normalize();};
+// aan welke kant van het beeld valt de leerling? (+1 = rechts). De algemene punten 6 tot 8 hangen aan de kant van de duwer, boven in de zaal.
+const fallS=()=>{const cs=camSide(),u=DIRS[S.dir];return (cs.x*u[0]+cs.z*u[1])>=0?1:-1;};
+const roomPt=(f,side,hgt)=>V(f.B0.com.x,f.B0.surf+hgt*f.sc,f.B0.com.z).addScaledVector(camSide(),-fallS()*side);
 const PTS=[
- {t:'Zwaartepunt en loodlijn',s:'het punt waar je massa “zit”',at:B=>B.com.clone().add(V(.12,.1,.25)),tabs:[
-  `<p>Het <b>zwaartepunt</b> (massamiddelpunt) is het punt waar je de massa van het hele lichaam geconcentreerd kunt denken. Rechtop staand ligt het ongeveer op 55% van je lengte, net voor het heiligbeen.</p><p>De <b>loodlijn</b> is de lijn recht naar beneden uit het zwaartepunt (de witte stippellijn). Valt die binnen het steunvlak (groen), dan blijf je staan. Valt hij erbuiten, dan val je, tenzij je een stap zet.</p>`,
-  `<p><span class="ctx">PO</span>Bij balanceren en stoeispelen: "Zorg dat je buik boven je voeten blijft."</p><p><span class="ctx">VO</span>Bij judo heet het uit evenwicht brengen <i>kuzushi</i>: je duwt of trekt zo dat de loodlijn van je tegenstander naar de rand van het steunvlak schuift.</p><p>Zet de schuif <b>Leunen</b> eens ver naar voren en kijk waar de stip op de grond terechtkomt.</p>`,
-  `<div class="calc">Lengte 1,65 m<br>Zwaartepunt ≈ 0,55 · 1,65 ≈ 0,91 m boven de grond</div>`,
+ {t:'Zwaartepunt en loodlijn',s:'waar je massa “zit”',at:f=>f.com.clone().addScaledVector(camSide(),fallS()*.45).add(V(0,.12,0)),tabs:[
+  `<p>Het <b>zwaartepunt</b> is het punt waar je de massa van je hele lichaam samengebracht kunt denken: het zwart-witte symbool. Rechtop ligt het op ongeveer 55 tot 58% van je lengte, net voor het heiligbeen.</p><p>De <b>loodlijn</b> is de lijn recht naar beneden uit het zwaartepunt: de witte stippellijn. Het <span class="cG">gele stipje</span> is waar die lijn de grond raakt. Ligt dat stipje binnen het <span class="cS">steunvlak</span>, dan kun je blijven staan.</p>`,
+  `<p><span class="ctx">PO</span>Bij balanceren en stoeispelen: "Houd je buik boven je voeten."</p><p><span class="ctx">VO</span>Bij judo heet uit evenwicht brengen <i>kuzushi</i>: je duwt of trekt zo dat het drukpunt van je tegenstander naar de rand van het steunvlak schuift.</p><p><b>Probeer:</b> kies Duw van voren, open <b>Houding aanpassen</b> en zet <b>Schrap zetten</b> op de hoogste stand. Het gele stipje schuift naar je tenen, tot net binnen de rand. In het lab stopt de schuif daar. In het echt kun je nog verder leunen, maar dan sta je alleen nog dankzij de duw: laat de duwer plots los, dan val je voorover. Zo gebruikt een judoka jouw schrap zetten (kuzushi).</p>`,
+  ()=>`<div class="calc">Lengte 1,65 m<br>Zwaartepunt ≈ 0,57 · 1,65 ≈ 0,94 m boven de grond<br><br>In het lab nu: ${WHO[S.who].n}, zwaartepunt op ${f2(CUR?CUR.A.hc:0)} m boven het steunvlak</div>`,
   `<p class="think">Ga met je hielen tegen de muur staan en probeer je tenen aan te raken zonder door de knieën te gaan. Waarom lukt dat niet?</p>`]},
- {t:'Steunvlak',s:'alles tussen je steunpunten',at:B=>{const c=B.stance[0];return V(c.x+.25,B.gY+.02,c.z+.25);},tabs:[
-  `<p>Het <b>steunvlak</b> is het oppervlak tussen alle steunpunten: je voeten, en soms ook je handen. Het groene vlak op de grond is het steunvlak van deze houding.</p><p>Hoe groter het steunvlak in een richting, hoe stabieler je in die richting bent. Breed staan helpt tegen een duw van opzij, voeten voor en achter helpen tegen een duw van voren of achteren.</p>`,
-  `<p><span class="ctx">PO</span>Stoeispelen: "Maak je voeten breed." Balanceren op de balk is moeilijk omdat het steunvlak heel smal is.</p><p><span class="ctx">VO</span>Bij een handstand zijn je handen het steunvlak: gespreide vingers maken het groter. Bij acrogym staat de onderman breed in spreidstand.</p>`,
-  `<div class="calc">Twee voeten naast elkaar (20 cm): ≈ 0,30 · 0,26 m²<br>Spreidstand (55 cm): ≈ 0,65 · 0,26 m²<br>→ ruim twee keer zo groot</div>`,
+ {t:'Steunvlak',s:'alles tussen je steunpunten',at:f=>{let x=0,z=0;f.hull.forEach(q=>{x+=q[0];z+=q[1];});return V(x/f.hull.length,f.baseY+.02,z/f.hull.length).addScaledVector(camSide(),-fallS()*.3).addScaledVector(camToward(),.45);},tabs:[
+  `<p>Het <b>steunvlak</b> is het vlak tussen al je steunpunten: je voeten, en soms ook je handen. In het lab is het het <span class="cS">groene vlak</span> op de grond. Op een groot scherm zie je het rechtsboven ook van bovenaf.</p><p>Wat telt, is hoe ver de loodlijn van de rand ligt <b>in de richting van de duw</b>: de afstand <span class="cG">d</span> (gele lijn op de grond, van het gele stipje tot de kantelrand). Breed staan helpt tegen een duw van opzij. Voeten voor en achter helpen tegen een duw van voren of achteren.</p><p>Sta je schuin, dan loopt de rand ook schuin, en is d vaak kleiner dan je denkt. De duw en de zwaartekracht werken dan allebei maar voor een deel om die schuine rand. Dat deel is voor allebei even groot, dus F_max = m · g · d / h klopt nog steeds, met d gemeten in de duwrichting.</p>`,
+  `<p><span class="ctx">PO</span>Stoeispelen: "Maak je voeten breed." Balanceren op de balk is moeilijk omdat het steunvlak heel smal is.</p><p><span class="ctx">VO</span>Bij een handstand zijn je handen het steunvlak: gespreide vingers maken het groter. Bij acrogym staat de onderman breed in spreidstand.</p><p><b>Probeer:</b> kies Op de tenen. Je steunvlak is nu alleen je voorvoet.</p>`,
+  `<div class="calc">Voeten naast elkaar (20 cm):<br>0,30 m × 0,25 m ≈ 0,08 m²<br>Spreidstand (55 cm):<br>0,65 m × 0,25 m ≈ 0,16 m²</div><p>Tegen een duw van opzij telt de breedte, niet het oppervlak. d gaat van 0,15 naar 0,32 m, dus F_max wordt ruim 2× zo groot (0,32 / 0,15 ≈ 2,1). Tegen een duw van voren helpt de spreidstand niets.</p>`,
   `<p class="think">Waarom staan boksers en judoka's schuin, met één voet voor en één voet achter?</p>`]},
- {t:'Het duwmoment',s:'M = F · h',at:B=>B.P.sho.clone().add(V(0,.18,0)),tabs:[
-  `<p>Een duw laat je <b>kantelen</b> rond de rand van je steunvlak. Het krachtmoment van de duw is kracht maal arm: M = F · h. De arm h is de hoogte waarop de duw aangrijpt, hier op schouderhoogte (de rode verticale lijn).</p><p>Hoe hoger iemand duwt, hoe groter het moment met dezelfde kracht.</p>`,
-  `<p><span class="ctx">PO/VO</span>Bij een duwspel ("wie duwt de ander van de mat") werkt duwen op heuphoogte beter om iemand te verplaatsen; duwen op schouderhoogte om iemand te laten kantelen.</p><p>Spreek bij stoeispelen af waar je mag duwen: niet tegen het hoofd, wel tegen schouders of heupen.</p>`,
+ {t:'Het duwmoment',s:'M = F · h',at:f=>f.C.clone().add(V(0,.3,0)),tabs:[
+  `<p>Een kracht die niet door het draaipunt gaat, geeft een <b>krachtmoment</b>: M = F · arm. De <b>arm</b> is de loodrechte afstand van de werklijn van de kracht tot het draaipunt.</p><p>Bij een duw is het draaipunt de <b>kantelrand</b>: de witte lijn op de grond aan de kant waar je heen zou vallen. De werklijn van de duw is horizontaal (rode stippellijn), dus de arm is de hoogte <span class="cP">h</span> waarop de duw aangrijpt (rode maatlijn). Dus: duwmoment = F · h. Hoe hoger iemand duwt, hoe groter het moment met dezelfde kracht.</p>`,
+  `<p><span class="ctx">PO/VO</span>Bij een duwspel ("wie duwt de ander van de mat?") werkt duwen op heuphoogte beter om iemand te verplaatsen. Duwen op schouderhoogte laat iemand sneller kantelen.</p><p><b>Probeer:</b> zet Duwhoogte op Heup. h wordt kleiner, dus de leerling kan een hardere duw weerstaan.</p><p>Spreek bij stoeispelen af waar je mag duwen: niet tegen hoofd of nek, wel tegen schouders of heupen.</p>`,
   `<div class="calc">F = 120 N, h = 1,30 m<br>M = F · h = 120 · 1,30 = 156 N·m</div>`,
-  `<p class="think">Waarom is het makkelijker iemand omver te duwen die rechtop staat dan iemand die door de knieën zakt?</p>`]},
- {t:'Het tegenmoment',s:'M = m · g · d',at:B=>{const A=analyse(B);return V(A.c[0]+A.u[0]*A.d*.5,B.gY+.05,A.c[1]+A.u[1]*A.d*.5+.15);},tabs:[
-  `<p>De zwaartekracht houdt je overeind zolang de loodlijn binnen het steunvlak valt. Ze geeft een <b>tegenmoment</b> rond de kantelrand: M = m · g · d. De arm d is de afstand van de loodlijn tot de rand in de duwrichting (de gele pijl op de grond).</p><p>Je blijft staan zolang F · h kleiner is dan m · g · d. De grootste duw die je aankunt is dus F = m · g · d / h.</p>`,
-  `<p><span class="ctx">PO/VO</span>Een zwaardere leerling heeft een groter tegenmoment: eerlijke tweetallen bij stoeispelen maak je op gewicht en lengte.</p><p>Wie leunt in de richting van de duw, vergroot d: daarom "zet je schrap" tegen een duw.</p>`,
-  `<div class="calc">m = 55 kg, d = 0,10 m, h = 1,30 m<br>M = 55 · 9,81 · 0,10 ≈ 54 N·m<br>F_max = 54 / 1,30 ≈ 41 N</div>`,
-  `<p class="think">Twee leerlingen staan in precies dezelfde houding. De ene weegt 30 kg, de andere 60 kg. Hoeveel harder moet je de tweede duwen?</p>`]},
- {t:'Laag en breed',s:'zwaartepunt omlaag, steunvlak groot',at:B=>B.P.kneeR.clone().add(V(.12,0,.12)),tabs:[
-  `<p>Door de knieën zakken verlaagt je zwaartepunt en je schouders. Een duw op schouderhoogte heeft dan een kleinere arm h, dus een kleiner moment. Bovendien kun je dieper leunen voordat de loodlijn het steunvlak verlaat.</p><p>Combineer dat met een breed steunvlak en je hebt de stoeihouding: laag en breed.</p>`,
-  `<p><span class="ctx">PO</span>"Maak je zwaar: laag en breed, als een sumoworstelaar."</p><p><span class="ctx">VO</span>Ook in doelspelen: de verdediger staat laag en breed om snel te kunnen reageren en niet omver te lopen.</p>`,
-  `<div class="calc">h van 1,40 naar 1,10 m bij gelijke d:<br>F_max wordt 1,40 / 1,10 ≈ 1,27 keer zo groot</div>`,
+  `<p class="think">Waarom is het makkelijker iemand om te duwen met een duw tegen de schouders dan tegen de heupen, met dezelfde kracht?</p>`]},
+ {t:'Tegenmoment en ΣM = 0',s:'M = m · g · d',at:f=>{const A=f.A;return V(A.c[0]+A.u[0]*A.d*.5,f.B0.surf+.03,A.c[1]+A.u[1]*A.d*.5).add(f.off||V(0,0,0)).addScaledVector(camSide(),fallS()*.6);},tabs:[
+  `<p>De <span class="cG">zwaartekracht m · g</span> (gele pijl) werkt in het zwaartepunt, recht omlaag. Rond de kantelrand geeft ze een <b>tegenmoment</b> m · g · d. Ook hier is d de arm: de afstand van de loodlijn tot de kantelrand (gele lijn), gemeten in de duwrichting.</p><p>Zolang F · h kleiner is dan m · g · d, vangt de grond het verschil op. Het <b>drukpunt</b> (de witte ring) is het punt waar de grond tegen je voeten duwt. Bij een duw schuift het naar de rand. Alle momenten samen zijn dan nul: <b>ΣM = 0</b>, en je blijft staan. Onderin heet het verschil m · g · d − F · h de <b>kantelmarge</b>.</p><p>Is de kantelmarge op, dan staat het drukpunt op de rand en kan de grond niet meer helpen. Op die grens geldt F · h = m · g · d, dus <b>F_max = m · g · d / h</b>. Duw je harder, dan is ΣM niet meer nul en kantel je om de rand.</p><p>Kantel je zo ver dat de loodlijn voorbij de rand komt (kantelhoek groter dan α, zie punt 5), dan wordt d negatief. De zwaartekracht houdt je dan niet meer tegen, maar helpt mee met kantelen. Onderin staat dan een negatief getal bij de zwaartekracht.</p>`,
+  `<p><span class="ctx">PO/VO</span>Een zwaardere leerling heeft een groter tegenmoment. Eerlijke tweetallen bij stoeispelen maak je dus op gewicht en lengte.</p><p>Wie naar de duwer toe leunt (tegen de duw in), vergroot d. Daarom "zet je je schrap" tegen een duw.</p>`,
+  `<div class="calc">m = 55 kg, d = 0,10 m, h = 1,30 m<br>m · g · d = 55 · 9,81 · 0,10 ≈ 54 N·m<br>F_max = 54 / 1,30 ≈ 41,5 N</div>`,
+  `<p class="think">Twee leerlingen staan in precies dezelfde houding. De ene weegt 30 kg, de andere 60 kg. Hoeveel harder moet je de tweede duwen om die te laten kantelen?</p>`]},
+ {t:'Laag en breed',s:'h kleiner, d groter',at:f=>f.P.kneeR.clone().lerp(f.P.kneeL,.5).addScaledVector(camSide(),fallS()*.5),tabs:[
+  `<p>Door de knieën zakken doet twee dingen.</p><ul><li>Je <b>schouders en heupen komen lager</b>. Een duw daar heeft dan een kleinere arm h, dus een kleiner duwmoment. Daardoor wordt F_max groter.</li><li>Je <b>zwaartepunt komt lager</b>. In dit lab, met een duw die blijft duwen, verandert dat F_max niet: alleen m, d en h tellen. Een laag zwaartepunt helpt wel als je al kantelt. Je moet dan verder kantelen voordat de loodlijn over de rand gaat. Die kantelhoek α vind je met tan α = d⊥ / h_z. Hier is h_z de hoogte van het zwaartepunt en d⊥ de afstand van de loodlijn tot de rand, loodrecht op die rand. Loopt de rand dwars op de duw, dan is d⊥ gewoon d.</li></ul><p>Breed staan maakt d groter. Samen geeft dat de stoeihouding: laag en breed.</p>`,
+  `<p><span class="ctx">PO</span>"Maak je laag en breed, als een sumoworstelaar." Je wordt daar niet zwaarder van: h wordt kleiner en d groter.</p><p><span class="ctx">VO</span>Ook in doelspelen staat de verdediger laag en breed, zodat hij niet omver gelopen wordt en snel kan reageren.</p>`,
+  ()=>{const A=CUR?CUR.A:null;return `<div class="calc">VO, gewoon, duw van opzij:<br>d = 0,15 m, h_z = 0,95 m → tan α = 0,16 → α ≈ 9°<br>Helemaal door de knieën (h_z ≈ 0,74 m) → α ≈ 11°<br><br>Schouders van 1,34 naar 1,06 m bij gelijke d:<br>F_max wordt 1,34 / 1,06 ≈ 1,26× zo groot<br>(van 60 naar 75 N)</div>${A?`<p>In het lab nu: d = ${f2(A.d)} m${Math.abs(A.dn-A.d)>.003?`, loodrecht op de schuine rand d⊥ = ${f2(A.dn)} m`:''}, h_z = ${f2(A.hc)} m, kantelhoek α ≈ ${f0(A.alpha/D2R)}°.</p>`:''}`;},
   `<p class="think">Waarom is "laag en breed" niet altijd handig, bijvoorbeeld als je snel moet wegsprinten?</p>`]},
- {t:'Hefbomen in het lichaam',s:'spieren werken via momenten',at:B=>B.P.elbR.clone().add(V(.1,.1,.15)),tabs:[
-  `<p>Spieren draaien botten om gewrichten: ook dat zijn momenten. De biceps hecht vlak bij de elleboog aan (korte arm, ongeveer 4 cm), terwijl de last in je hand op ongeveer 35 cm zit. Dat is een hefboom van de <b>derde soort</b>: de spier moet veel harder trekken dan de last weegt, maar de hand beweegt wel snel.</p><p>Op je tenen staan is een hefboom van de <b>tweede soort</b>: de kuitspier tilt je lichaam rond de bal van de voet.</p>`,
-  `<p><span class="ctx">PO/VO</span>Op de tenen staan maakt je steunvlak kleiner (kies de houding Op de tenen) én vraagt kracht van de kuit. Goed voor balanceeroefeningen, maar het maakt je ook instabieler.</p>`,
-  `<div class="calc">5 kg in de hand: 49 N · 0,35 m ≈ 17 N·m<br>Biceps op 0,04 m: F = 17 / 0,04 ≈ 430 N</div>`,
-  `<p class="think">Waarom zou een leerling een kastdeel dicht tegen het lichaam houden in plaats van met gestrekte armen?</p>`]},
- {t:'Armen en de stapstrategie',s:'corrigeren of een stap zetten',at:B=>B.P.handL.clone().add(V(0,.12,0)),tabs:[
-  `<p>Armen zijwaarts vergroten het traagheidsmoment: je kantelt <b>langzamer</b> om, en hebt meer tijd om te corrigeren. Kom je toch over de rand, dan zet je een <b>stap</b>: je maakt een nieuw steunvlak onder je zwaartepunt. Dat zie je in het lab als de leerling omvalt.</p>`,
-  `<p><span class="ctx">PO</span>Balk: "Armen zijwaarts als een vliegtuig, kijk naar een vast punt aan het eind." Een lage, brede balk eerst, dan smaller en hoger.</p><p><span class="ctx">VO</span>Judo en stoeien: valbreken oefenen is belangrijk, omdat een stap niet altijd lukt.</p>`,
-  `<div class="calc">Armen zijwaarts: traagheidsmoment ≈ 1,3 keer zo groot<br>Omvaltijd ≈ √1,3 ≈ 1,14 keer zo lang</div>`,
-  `<p class="think">Waarom helpt een stok of een paraplu een koorddanser? Denk aan het traagheidsmoment.</p>`]},
- {t:'Tillen en hulpverlenen',s:'last dicht bij het lichaam',at:B=>B.P.pelvis.clone().add(V(-.15,0,-.2)),tabs:[
-  `<p>De onderrug is een draaipunt. Hoe verder een last van het lichaam, hoe groter het moment op de rug, en hoe harder de rugspieren moeten trekken. Daarom til je met de last dicht tegen je aan en door de knieën.</p><p>Bij hulpverlenen geldt hetzelfde: sta zelf breed en laag (stabiel steunvlak) en pak de leerling dicht bij diens zwaartepunt.</p>`,
-  `<p><span class="ctx">PO/VO</span>Matten en kastdelen dragen leerlingen samen: met vier om een dikke mat, met twee om een bank. Laat ze "dicht bij je buik, door de knieën" tillen.</p><p>Als hulpverlener bij de kast of de ringen: voeten breed, één voet voor, zodat je in de bewegingsrichting stabiel bent.</p>`,
-  `<div class="calc">Mat van 15 kg (147 N):<br>op 0,2 m van de rug → 29 N·m<br>op 0,5 m → 74 N·m<br>Rugspieren op 0,05 m: 590 N tegen 1470 N</div>`,
+ {t:'Hefbomen in het lichaam',s:'drie soorten hefbomen',at:f=>roomPt(f,1.0,1.8),tabs:[
+  `<p>Een <b>hefboom</b> is een staaf die om een draaipunt draait. Spieren draaien botten om gewrichten: ook dat zijn momenten.</p>${LEVER_SVG}<ul><li><b>1e soort</b>: draaipunt tussen kracht en last. Een wip, je hoofd op de bovenste halswervel, de triceps bij het strekken van de elleboog.</li><li><b>2e soort</b>: last tussen draaipunt en kracht. Een kruiwagen. Ook de voet bij op de tenen staan, als je de bal van de voet als draaipunt neemt. Let op: de last is dan niet alleen m · g. Het scheenbeen drukt de voet in de enkel omlaag met m · g plus de kuitkracht. Neem je de enkel als draaipunt, dan is het een hefboom van de 1e soort. Beide manieren geven dezelfde kuitkracht (zie Rekenen).</li><li><b>3e soort</b>: kracht tussen draaipunt en last. De biceps hecht vlak bij de elleboog aan. De spier moet veel harder trekken dan de last weegt, maar de hand beweegt wel snel.</li></ul>`,
+  `<p><span class="ctx">PO/VO</span>Op de tenen staan maakt je steunvlak kleiner (kies Op de tenen) én vraagt kracht van de kuit. Goed voor balanceeroefeningen, maar je wordt er ook instabieler van.</p><p>Een kastdeel draag je dicht tegen je lichaam: dan is de arm van de last klein.</p>`,
+  `<div class="calc">Biceps, 5 kg in de hand:<br>49 N · 0,35 m ≈ 17,2 N·m<br>onderarm 1,5 kg: 14,7 N · 0,15 m ≈ 2,2 N·m<br>biceps op 0,04 m: F = 19,4 / 0,04 ≈ 485 N</div><div class="calc">Op de tenen van één been, enkel als draaipunt:<br>kuitspier op 0,05 m achter de enkel,<br>grond duwt m · g op 0,13 m voor de enkel<br>F_kuit · 0,05 = m · g · 0,13<br>F_kuit ≈ 2,6 · m · g<br>(op twee benen per kuit ongeveer de helft)</div><p>Wie de bal van de voet als draaipunt neemt en als last alleen m · g gebruikt, vindt F_kuit ≈ 0,7 · m · g. Dat is fout: de enkel drukt met m · g + F_kuit op de voet. Reken je dat mee, dan kom je ook op 2,6 · m · g.</p>`,
+  `<p class="think">Waarom houdt een leerling een kastdeel beter dicht tegen het lichaam dan met gestrekte armen?</p>`]},
+ {t:'Armen en de stap',s:'bijsturen of een nieuw steunvlak',at:f=>roomPt(f,.5,2.12),tabs:[
+  `<p>Kom je over de grens, dan kantel je om de rand. Je redt je met een <b>stap</b>: je zet een voet neer onder je zwaartepunt en maakt zo een <b>nieuw steunvlak</b>. Dat zie je in het lab als de leerling kantelt. De voet op de kantelrand blijft staan, want dat is het draaipunt. De andere voet komt los en stapt. Sta je met de voeten naast elkaar en komt de duw van opzij, dan is dat een kruispas: de vrije voet zwaait vóór de standvoet langs. Daarna zet de standvoet een stap opzij, en het groene vlak verhuist mee. Let op het groene vlak tijdens de stap: zolang de vrije voet in de lucht hangt, is je steunvlak alleen de standvoet. Op de balk stapt de leerling eraf, of bij een duw van voren of achteren een stap verder op de balk.</p><p>Armen zijwaarts veranderen F_max in dit lab niet: ze verplaatsen je zwaartepunt bijna niet. Ze helpen op twee andere manieren. Je kunt er snel mee bijsturen: zwaai je je armen de ene kant op, dan draait je romp de andere kant op (actie = reactie). En je kantelt iets trager om, omdat je traagheidsmoment groter wordt. Dat effect is klein.</p>`,
+  `<p><span class="ctx">PO</span>Balk: "Armen zijwaarts als een vliegtuig, kijk naar een vast punt aan het eind." Eerst een lage, brede balk, dan smaller en hoger.</p><p><span class="ctx">VO</span>Judo en stoeien: oefen valbreken, omdat een stap niet altijd lukt.</p>`,
+  ()=>{const J=S.J;return `<div class="calc">Armen zijn samen ongeveer 10% van je massa.<br>Zijwaarts: traagheidsmoment rond de kantelrand ≈ 1,1× zo groot<br>Omvaltijd ≈ √1,1 ≈ 1,05× zo lang<br><br>Balanceerstok van een koorddanser, 10 kg en 8 m lang:<br>I_stok ≈ m · L² / 12 = 10 · 64 / 12 ≈ 53 kg·m²<br>(om het eigen midden; ter vergelijking: een VO-leerling van 55 kg in de houding Gewoon heeft rond de kantelrand ≈ 59 kg·m²)</div><p>De stok helpt vooral zo: draai je de stok met de klok mee, dan duwt de stok jou tegen de klok in (actie = reactie). Zo stuur je bij zonder je voeten te verplaatsen. Hoe groter de I van de stok, hoe trager hij zelf gaat draaien, dus hoe langer je zo kunt bijsturen. Hangen de uiteinden door, dan komt ook het zwaartepunt iets lager.</p>${J&&J.out==='tip'?`<p>Laatste duw: traagheidsmoment rond de kantelrand ${f0(J.I)} kg·m², van kantelen tot stap ${f2(J.tst-J.tc)} s.</p>`:''}`;},
+  `<p class="think">Waarom helpt een lange, zware stok een koorddanser veel meer dan alleen de armen zijwaarts? Denk aan actie = reactie.</p>`]},
+ {t:'Tillen en hulpverlenen',s:'last dicht bij het lichaam',at:f=>roomPt(f,1.3,1.3),tabs:[
+  `<p>Bij tillen is de onderrug een draaipunt. Hoe verder een last van je lichaam, hoe groter het moment op je rug, en hoe harder je rugspieren moeten trekken. Daarom til je met de last dicht tegen je aan en door de knieën.</p>${BACK_SVG}<p>Bij hulpverlenen geldt hetzelfde. Sta zelf breed en laag, met een stabiel steunvlak, en pak de leerling dicht bij diens zwaartepunt.</p>`,
+  `<p><span class="ctx">PO/VO</span>Matten en kastdelen dragen leerlingen samen: met vier om een dikke mat, met twee om een bank. Laat ze "dicht bij je buik, door de knieën" tillen.</p><p>Als hulpverlener bij de kast of de ringen: voeten breed, één voet voor. Dan ben je stabiel in de bewegingsrichting.</p>`,
+  `<div class="calc">Mat van 15 kg (147 N):<br>op 0,2 m van de rug → 29 N·m<br>op 0,5 m → 74 N·m<br>Je eigen bovenlichaam (≈ 35 kg) telt ook mee:<br>voorovergebogen ≈ 343 N · 0,25 m ≈ 86 N·m<br>Rugspieren op 0,05 m:<br>(29 + 86) / 0,05 ≈ 2300 N<br>tegen (74 + 86) / 0,05 ≈ 3200 N</div><p>Rechtop tillen maakt de arm van je bovenlichaam bijna nul.</p>`,
   `<p class="think">Een leerling tilt een bank met gestrekte benen en een bolle rug. Leg met momenten uit waarom dat zwaarder en riskanter is.</p>`]}];
 const MKS=PTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.t}</span>`;b.onclick=()=>openPt(i);labWrap.appendChild(b);return b;});
 let ptI=0,ptTab=0;
-function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((mm,k)=>mm.classList.toggle('sel',k===i));}
-function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(mm=>mm.classList.remove('sel'));}
-function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));$('#dBody').innerHTML=p.tabs[ptTab];}
+function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((mm,k)=>mm.classList.toggle('sel',k===i));layout();}
+function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(mm=>mm.classList.remove('sel'));layout();}
+function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));const c=p.tabs[ptTab];$('#dBody').innerHTML=typeof c==='function'?c():c;}
 $$('#dTabs button').forEach(b=>b.onclick=()=>{ptTab=+b.dataset.t;renderPt();});$('#dClose').onclick=closePt;
 function ptStep(d){if(!$('#dossier').classList.contains('open')){openPt(0);return;}ptTab+=d;if(ptTab>3){if(ptI<PTS.length-1){ptI++;ptTab=0;}else ptTab=3;}if(ptTab<0){if(ptI>0){ptI--;ptTab=3;}else ptTab=0;}openPt(ptI,ptTab);}
 $('#dNext').onclick=()=>ptStep(1);$('#dPrev').onclick=()=>ptStep(-1);
 
 /* ================= HUD ================= */
-const mapC=$('#map'),mx=mapC.getContext('2d');
-function drawMap(B,A){const r=mapC.getBoundingClientRect();if(!r.width)return;const dpr=Math.min(devicePixelRatio,2);if(mapC.width!==Math.round(r.width*dpr)){mapC.width=Math.round(r.width*dpr);mapC.height=Math.round(r.height*dpr);}
-  const w=r.width,h=r.height;mx.setTransform(dpr,0,0,dpr,0,0);mx.clearRect(0,0,w,h);const sc=Math.min(w,h)/1.1;const cx=w/2,cy=h/2+4;const X=x=>cx+x*sc,Y=z=>cy+z*sc;
-  const ox=A.c[0],oz=A.c[1];mx.font='600 9px JetBrains Mono, monospace';mx.fillStyle='#aab3b4';mx.fillText('bovenaanzicht',5,11);
-  mx.beginPath();B.hull.forEach(([x,z],i)=>{const px=X(x-ox),py=Y(z-oz);i?mx.lineTo(px,py):mx.moveTo(px,py);});mx.closePath();mx.fillStyle=A.tips?'rgba(232,106,90,.3)':'rgba(127,200,160,.3)';mx.fill();mx.strokeStyle=A.tips?'#e86a5a':'#7fc8a0';mx.lineWidth=1.5;mx.stroke();
-  mx.strokeStyle='#e6b65e';mx.lineWidth=2;mx.beginPath();mx.moveTo(X(0),Y(0));mx.lineTo(X(A.u[0]*A.d),Y(A.u[1]*A.d));mx.stroke();
-  mx.fillStyle='#fff';mx.beginPath();mx.arc(X(0),Y(0),4,0,TAU);mx.fill();
-  mx.strokeStyle='#e86a5a';mx.lineWidth=2;const ax=X(-A.u[0]*.42),ay=Y(-A.u[1]*.42),bx=X(-A.u[0]*.14),by=Y(-A.u[1]*.14);mx.beginPath();mx.moveTo(ax,ay);mx.lineTo(bx,by);mx.stroke();
-  mx.beginPath();mx.arc(bx,by,3,0,TAU);mx.fillStyle='#e86a5a';mx.fill();mx.fillStyle='#e6b65e';mx.fillText('d = '+f2(Math.max(0,A.d))+' m',5,h-6);}
-function updateHud(B,A){const mx2=Math.max(A.Mp,A.Mr,1);$('#vP').textContent=f0(A.Mp);$('#vP2').textContent=`N·m · ${f0(S.F)} N × ${f2(A.h)} m`;$('#bP').style.width=clamp(A.Mp/mx2*100,0,100)+'%';
-  $('#vR').textContent=f0(A.Mr);$('#vR2').textContent=`N·m · d = ${f2(Math.max(0,A.d))} m`;$('#bR').style.width=clamp(A.Mr/mx2*100,0,100)+'%';$('#vF').textContent=f0(A.Fmax);drawMap(B,A);}
+let resMode='';function setRes(mode){resMode=mode;const r=$('#res'),J=S.J,w=WHO[S.who];
+  if(mode==='ready'||!J){const {A}=curB();r.className='';
+    r.innerHTML=`<span class="k">${w.n} · ${PRE_NAME[S.pre]} · duw ${DIR_NAME[S.dir]}</span><b class="t">Wat denk je?</b><span class="more">Vergelijk m · g · d met F · h: is er marge over? Voorspel en duw.</span><span class="pred"><button data-p="stand">Blijft staan</button><button data-p="fall">Valt of schuift</button></span>`;
+    $$('#res .pred button').forEach(b=>b.onclick=()=>{S.pred=b.dataset.p;push();});return;}
+  if(mode==='run'){r.className='';r.innerHTML=`<span class="k">${w.n} · ${f0(J.F)} N ${DIR_NAME[J.dir]}</span><b class="t">De duw begint…</b><span class="more">Kijk naar de witte ring (ook rechtsboven, van bovenaf): het drukpunt schuift naar de kantelrand naarmate F · h groeit.</span><span class="short">kijk naar de witte ring</span>`;return;}
+  const A=J.A;let cls,t,x,sh;
+  if(J.out==='stand'){const ratio=A.Mp/Math.max(A.Mr,1e-6);cls=ratio>.85?'mid':'good';t=ratio>.85?'Blijft net staan':'Blijft staan';
+    const lim=A.Fs<A.Fmax?`Kantelen pas bij ${f0(A.Fmax)} N, maar wegschuiven al vanaf ${f0(A.Fs)} N.`:`Grens: ${f0(A.Fmax)} N.`;
+    x=`F · h = ${f0(A.Mp)} N·m is kleiner dan m · g · d = ${f0(A.Mr)} N·m. Het drukpunt stopt ${f0(Math.max(0,A.d-A.cop)*100)} cm voor de rand: ΣM = 0. ${lim}`;sh=`F · h < m · g · d, grens ${f0(Math.min(A.Fmax,A.Fs))} N`;}
+  else if(J.out==='tip'){cls='bad';
+    const how=J.offBeam?'Ze stapt van de balk af.':J.along?'De voet op de rand blijft staan; de andere stapt er langs, op de balk.':J.cross?'De voet op de rand blijft staan; de andere zet een kruispas en daarna een stap opzij.':'De voet op de rand blijft staan; de vrije voet stapt.';
+    const hard=J.thPeak>16*D2R?` Zo hard (${f0(J.thPeak/D2R)}°) volgt in het echt vaak nog een stap of een val.`:'';
+    if(J.slideTip){t='Glijdt en kantelt';
+      x=`Vanaf μ · m · g ≈ ${f0(A.Fs)} N glijden de voeten weg. Wie glijdt, versnelt (a ≈ ${f1(J.aMax)} m/s²), en dat remt het kantelen: rond de rand telt F · h − m · a · h_z. Vanaf ${f0(A.Fstar)} N is dat toch groter dan m · g · d. ΣM ≠ 0: de leerling draait om de rand. ${how}${hard}`;sh=`glijdt, en kantelt vanaf ${f0(A.Fstar)} N`;}
+    else{t='Kantelt en zet een stap';
+      x=`Vanaf ${f0(A.Fmax)} N staat het drukpunt op de kantelrand. Daarboven is F · h groter dan m · g · d: ΣM ≠ 0 en de leerling draait om de rand. ${how}${hard}`;sh=`F · h > m · g · d vanaf ${f0(A.Fmax)} N`;}}
+  else{cls='mid';t='Schuift weg';const a=(J.F-A.Fs)/A.m;
+    x=`De voeten houden maar μ · m · g ≈ ${f0(A.Fs)} N tegen. De rest van de duw versnelt de leerling (a ≈ ${f1(a)} m/s²): ze glijdt ${f0(J.slX*100)} cm weg. ${J.F>A.Fmax?`F is groter dan F_max (${f0(A.Fmax)} N), toch kantelt ze niet: wie versnelt, kantelt minder snel. Rond de rand telt F · h − m · a · h_z = ${f0(A.Mk)} N·m, minder dan m · g · d = ${f0(A.Mr)} N·m.`:`Kantelen zou pas bij ${f0(A.Fmax)} N gebeuren.`}`;sh=`F > μ · m · g ≈ ${f0(A.Fs)} N`;}
+  let pr='';if(S.pred){const ok=(S.pred==='stand')===(J.out==='stand');pr=`<b class="prd" style="color:${ok?'var(--ok)':'var(--bad)'}">Je voorspelling ${ok?'klopte':'klopte niet'}.</b>`;}
+  r.className=cls;r.innerHTML=`<span class="k">${w.n} · ${f0(J.F)} N ${DIR_NAME[J.dir]} · ${HP_NAME[J.hp]}</span><b class="t">${t}</b><span class="more">${x}</span><span class="short">${sh}</span>${pr}`;}
+/* waarden voor de tegels. Glijden de voeten, dan telt rond de rand F · h − m · a · h_z (zie Meff).
+   Tijdens het kantelen rekenen beide momenten met de kantelhoek θ: de arm van de duw wordt h · cos θ + (afstand tot de rand) · sin θ. */
+function hudVals(f){const A=f.A,J=f.J;let F=J?f.Ft:S.F,Mr=A.Mr,h=A.h,state=J?'push':'ready',tilt=null,arm=h,Mp=J?Meff(A,F):F*h;
+  if(J&&(J.out==='slide'||J.slideTip)&&f.t>J.ts&&!(J.out==='tip'&&f.t>J.tc)){state='slide';if(J.out==='slide'&&f.t>J.slEnd){state='slid';F=J.F;Mp=Meff(A,F);}}
+  if(J&&J.out==='tip'&&f.t>J.tc){if(f.t<=J.tland){Mr=restoring(J,f.th);tilt=f.th/D2R;state='tip';arm=A.h*Math.cos(f.th)+J.dp*Math.sin(f.th);Mp=Meff(A,F)/A.h*arm;}else{F=J.F;Mr=A.Mr;state='tipped';Mp=Meff(A,F);}}
+  if(J&&f.stage==='done'){F=J.F;Mp=Meff(A,F);if(J.out==='tip'){state='tipped';Mr=A.Mr;}}
+  const glide=!!(J&&(J.out==='slide'||J.slideTip)&&F>A.Fs&&state!=='push');
+  return {F,Mr,Mp,h,arm,state,tilt,glide};}
+function updateHud(f){const A=f.A,J=f.J,v=hudVals(f),ready=v.state==='ready';
+  // alles in hele N·m, en de marge uit die afgeronde getallen: zo kan een student het narekenen
+  const Mr=Math.round(v.Mr),Mp=Math.round(v.Mp),mx=Math.max(Math.abs(Mp),Math.abs(Mr),1),helps=v.state==='tip'&&Mr<0;
+  const mob=innerWidth<=820;// op een smal scherm korter, zodat de tegel niet hoger wordt
+  $('#vRh').textContent=helps?'Zwaartekracht':'Tegenmoment';$('#vRf').textContent=helps&&!mob?'m·g·d, d < 0':'m · g · d';$('#tR').classList.toggle('help',helps);
+  $('#vR').textContent=(Mr<0?'−':'')+f0(Math.abs(Mr));
+  $('#vR2').textContent=v.tilt!=null?(helps?(mob?'d < 0: helpt kantelen':'θ > α: helpt kantelen'):`kantelt ${f0(v.tilt)}°, α = ${f0(A.alpha/D2R)}°`):`${A.m} kg · 9,81 · ${f3(A.d)} m`;$('#bR').style.width=clamp(Mr/mx*100,0,100)+'%';
+  $('#vP').textContent=f0(Mp);$('#vPf').textContent=v.glide?'F·h − m·a·h_z':'F · h';
+  $('#vP2').textContent=v.glide?`${v.state==='tipped'||v.state==='slid'?'duw: ':'glijdt: '}a = ${f1((v.F-A.Fs)/A.m)} m/s²`:v.state==='tipped'?`duw: ${f0(v.F)} N · ${f2(v.h)} m`:v.state==='tip'?`${f0(v.F)} N · ${f2(v.arm)} m`:`${f0(v.F)} N · ${f2(v.h)} m`;$('#bP').style.width=clamp(Mp/mx*100,0,100)+'%';
+  const tS=$('#tS'),tF=$('#tF'),mg=Mr-Mp,sg=mg>0?'+':mg<0?'−':'';let txt=sg+f0(Math.abs(mg)),cl;
+  if(ready){txt='?';cl='q';$('#vS2').textContent='voorspel, duw dan';}
+  else if(v.state==='tip'){cl='neg';$('#vS2').textContent=mg<0?(helps?'N·m · valt door':'N·m · kantelt'):'N·m · draait nog door';}
+  else if(v.state==='tipped'){cl='neg';$('#vS2').textContent='N·m · kantelde';}
+  else if(v.state==='slide'||v.state==='slid'){cl='sld';$('#vS2').textContent=v.state==='slide'?(J.slideTip?'schuift, kantelt nog niet':'kantelt niet, schuift'):'kantelde niet, schoof';}
+  else{cl=mg>=0?'pos':'neg';$('#vS2').textContent=mg>=0?'N·m · kantelt niet':'N·m · kantelt';}
+  $('#vS').textContent=txt;['pos','neg','sld','q'].forEach(c=>tS.classList.toggle(c,c===cl));
+  const showF=!ready||S.pred;tF.classList.toggle('q',!showF);
+  $('#vF').textContent=showF?f0(A.Fmax):'?';$('#vF2').textContent=!showF?'eerst voorspellen':(J&&J.slideTip)?`N · glijdend: ${f0(A.Fstar)} N`:A.Fs<A.Fmax?`N · schuift al bij ${f0(A.Fs)} N`:`N · schuift pas bij ${f0(A.Fs)} N`;
+  $('#oScrub').textContent=S.J?f2(S.tau)+' s':'–';if(S.J&&document.activeElement!==$('#iScrub'))$('#iScrub').value=Math.round(clamp(S.tau/S.J.T,0,1)*1000);}
+const chart=$('#chart'),cx2=chart.getContext('2d');
+function drawChart(){const r=chart.getBoundingClientRect();if(!r.width)return;const dpr=Math.min(devicePixelRatio,2);if(chart.width!==Math.round(r.width*dpr)){chart.width=Math.round(r.width*dpr);chart.height=Math.round(r.height*dpr);}
+  const x=cx2,w=r.width,h=r.height,pl=4,pt=14,pb=14;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);x.font='600 10px JetBrains Mono, monospace';x.fillStyle='#aab3b4';x.fillText('momenten rond de kantelrand',pl,10);
+  const J=S.J;if(!J){x.strokeStyle='rgba(241,233,218,.14)';x.beginPath();x.moveTo(pl,h-pb);x.lineTo(w-2,h-pb);x.stroke();x.fillStyle='#aab3b4';x.font='11px Instrument Sans';x.fillText('Duw om F · h en m · g · d',pl,h/2+2);x.fillText('in de tijd te zien.',pl,h/2+16);return;}
+  const A=J.A,T=J.out==='tip'?J.tland:J.T,N=120,X=t=>pl+(w-pl-6)*t/T;const mp=[],mr=[];
+  // dezelfde grootheden als de tegels: met teken, dus onder de nul als de zwaartekracht helpt kantelen
+  for(let i=0;i<=N;i++){const t=T*i/N,Ft=J.Ft(t);let p=Meff(A,Ft),q=A.Mr;if(J.out==='tip'&&t>J.tc){const th=thAt(J,t);q=restoring(J,th);p=p/A.h*(A.h*Math.cos(th)+J.dp*Math.sin(th));}mp.push(p);mr.push(q);}
+  const ymax=Math.max(...mp,...mr,1)*1.12,ymin=Math.min(0,...mr)*1.15,Y=v=>h-pb-(h-pb-pt)*(v-ymin)/(ymax-ymin);
+  x.strokeStyle='rgba(241,233,218,.22)';x.beginPath();x.moveTo(pl,Y(0));x.lineTo(w-2,Y(0));x.stroke();if(ymin<0){x.fillStyle='#aab3b4';x.font='600 9px JetBrains Mono, monospace';x.fillText('0',w-9,Y(0)-2);}
+  const line=(arr,col)=>{x.strokeStyle=col;x.lineWidth=2;x.beginPath();arr.forEach((v,i)=>{const px=X(T*i/N),py=Y(v);i?x.lineTo(px,py):x.moveTo(px,py);});x.stroke();};
+  line(mr,'#e6b65e');line(mp,'#e86a5a');
+  x.font='600 9.5px JetBrains Mono, monospace';
+  if(J.out==='tip'){const px=X(J.tc),py=Y(A.Mr);x.fillStyle='#fff';x.beginPath();x.arc(px,py,3.5,0,TAU);x.fill();x.fillStyle='#f1e9da';x.fillText('grens',Math.min(px+5,w-40),py-5);}
+  if(J.out==='slide'||J.slideTip){const px=X(J.ts);x.strokeStyle='rgba(241,233,218,.5)';x.setLineDash([3,3]);x.beginPath();x.moveTo(px,pt);x.lineTo(px,h-pb);x.stroke();x.setLineDash([]);x.fillStyle='#f1e9da';x.fillText('glijdt',Math.max(pl,Math.min(px+4,w-44)),pt+9);}
+  const cx=X(Math.min(S.tau,T));x.strokeStyle='rgba(241,233,218,.75)';x.lineWidth=1;x.beginPath();x.moveTo(cx,pt-2);x.lineTo(cx,h-pb);x.stroke();
+  const gl=J.out==='slide'||J.slideTip;x.fillStyle='#e6b65e';x.fillText('m·g·d',pl,h-2);x.fillStyle='#e86a5a';x.fillText(gl?'F·h−m·a·h_z':'F·h',pl+40,h-2);x.fillStyle='#aab3b4';x.fillText('tijd →',w-44,h-2);}
+
+/* voetenkaart: het steunvlak van bovenaf, de duw wijst altijd naar rechts */
+const mapC=$('#map'),mx2=mapC.getContext('2d');let mapBox=null,mapKey=null;
+function drawMap(f,cp,cpHot,dLive,during,edgeOn){if(!$('#tLines').checked||getComputedStyle($('#mapCard')).display==='none')return;const r=mapC.getBoundingClientRect();if(!r.width)return;
+  const dpr=Math.min(devicePixelRatio,2);if(mapC.width!==Math.round(r.width*dpr)){mapC.width=Math.round(r.width*dpr);mapC.height=Math.round(r.height*dpr);}
+  const x=mx2,w=r.width,h=r.height,mb=w<150?12:24;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const A=f.A,J=f.J,u=A.u,pv=[-u[1],u[0]];const U=(px,pz)=>px*u[0]+pz*u[1],Vv=(px,pz)=>px*pv[0]+pz*pv[1];
+  const key=J||BK;if(key!==mapKey||!mapBox||mapBox.w!==w){mapKey=key;const pts=[...f.B0.hull];if(J&&J.B1)pts.push(...J.B1.hull);if(J&&(J.out==='slide'||J.slideTip))f.B0.hull.forEach(q=>pts.push([q[0]+u[0]*J.slX,q[1]+u[1]*J.slX]));pts.push([A.C.x,A.C.z]);
+    let u0=1e9,u1=-1e9,v0=1e9,v1=-1e9;for(const q of pts){const a=U(q[0],q[1]),b=Vv(q[0],q[1]);u0=Math.min(u0,a);u1=Math.max(u1,a);v0=Math.min(v0,b);v1=Math.max(v1,b);}
+    u0-=.05;u1+=.08;v0-=.07;v1+=.07;mapBox={u0,u1,v0,v1,w,s:Math.min((w-8)/(u1-u0),(h-mb)/(v1-v0),700)};}
+  const {u0,u1,v0,v1,s}=mapBox;const ox=(w-(u1-u0)*s)/2,oy=3+(h-mb-(v1-v0)*s)/2;const X=(px,pz)=>ox+(U(px,pz)-u0)*s,Y=(px,pz)=>oy+(Vv(px,pz)-v0)*s;
+  const path=H=>{x.beginPath();H.forEach((q,i)=>{const a=X(q[0],q[1]),b=Y(q[0],q[1]);i?x.lineTo(a,b):x.moveTo(a,b);});x.closePath();};
+  const seg=(a,b,col,lw)=>{x.strokeStyle=col;x.lineWidth=lw;x.lineCap='round';x.beginPath();x.moveTo(X(a[0],a[1]),Y(a[0],a[1]));x.lineTo(X(b[0],b[1]),Y(b[0],b[1]));x.stroke();};
+  if(f.ghost){path(f.ghost);x.fillStyle='rgba(127,200,160,.12)';x.fill();x.strokeStyle='rgba(127,200,160,.35)';x.lineWidth=1;x.stroke();}
+  path(f.hull);x.fillStyle='rgba(54,184,106,.45)';x.fill();
+  for(const sd of ['L','R']){const a=f.P['heel'+sd],b=f.P['toe'+sd];if(!a||!b)continue;const up=Math.min(a.y,b.y)-f.baseY>.03;seg([a.x,a.z],[b.x,b.z],up?'rgba(243,239,230,.22)':'rgba(243,239,230,.62)',.085*f.sc*s);}
+  path(f.hull);x.strokeStyle='#2c9a5a';x.lineWidth=1.5;x.stroke();
+  const off=f.off||{x:0,z:0};
+  if(edgeOn){const eg=f.edge||[A.ea,A.eb],a=[eg[0][0]+off.x,eg[0][1]+off.z],b=[eg[1][0]+off.x,eg[1][1]+off.z];seg(a,b,'#0b1410',6);seg(a,b,during?'#ff4f3c':'#ffffff',3);}
+  const pc=[f.com.x,f.com.z];
+  if(edgeOn&&Math.abs(dLive)>.004&&(!J||J.out!=='tip'||f.t<=J.tland)){const e=[pc[0]+u[0]*dLive,pc[1]+u[1]*dLive];seg(pc,e,dLive<0?'#ff4f3c':'#ffc83a',2);x.fillStyle=dLive<0?'#ff4f3c':'#ffc83a';x.font='700 10px JetBrains Mono, monospace';x.fillText('d',(X(...pc)+X(...e))/2-3,(Y(...pc)+Y(...e))/2-5);}
+  if(cp){x.strokeStyle=cpHot?'#ff4f3c':'#ffffff';x.lineWidth=2;x.beginPath();x.arc(X(cp[0],cp[1]),Y(cp[0],cp[1]),4.5,0,TAU);x.stroke();}
+  x.fillStyle='#ffc83a';x.beginPath();x.arc(X(...pc),Y(...pc),3.6,0,TAU);x.fill();x.strokeStyle='#2a1d00';x.lineWidth=1;x.stroke();
+  const Fm=J?f.Ft:S.F;if(Fm>.5){const cx=X(f.C.x,f.C.z),cy=Y(f.C.x,f.C.z),L=10+Math.min(Fm,400)/400*18;x.globalAlpha=J?1:.55;x.strokeStyle=x.fillStyle='#ff4f3c';x.lineWidth=2.5;x.beginPath();x.moveTo(cx-L,cy);x.lineTo(cx-5,cy);x.stroke();x.beginPath();x.moveTo(cx,cy);x.lineTo(cx-7,cy-4.5);x.lineTo(cx-7,cy+4.5);x.closePath();x.fill();x.globalAlpha=1;}
+  if(w<150){x.font='600 8.5px JetBrains Mono, monospace';x.fillStyle='#f1e9da';x.fillText('○ drukpunt',2,h-3);return;}
+  x.font='600 9px JetBrains Mono, monospace';x.fillStyle='#ffc83a';x.fillText('● loodlijn',2,h-3);x.fillStyle='#f1e9da';x.fillText('○ drukpunt',60,h-3);
+  const sb=.1*s;x.strokeStyle='rgba(241,233,218,.6)';x.lineWidth=1.5;x.beginPath();x.moveTo(w-3-sb,h-5);x.lineTo(w-3,h-5);x.stroke();x.fillStyle='#aab3b4';x.fillText('10 cm',w-3-Math.max(sb,28),h-9);}
 
 /* ================= bediening ================= */
-function syncUI(){$$('#sWho button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.who));$$('#sPre button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.pre));$$('#sArms button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.arms));$$('#sDir button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.dir));
+// twee voeten kunnen niet op dezelfde plek staan: de schuif stopt waar de voeten elkaar raken
+function feetApart(moved){if(S.one)return false;const sc=WHO[S.who].sc,fw=.1*sc+.01,fl=.26*sc+.01;if(!((S.beam||S.w<fw)&&S.s<fl))return false;
+  if(moved==='s'||S.beam)S.s=+(Math.ceil(fl/.02-1e-9)*.02).toFixed(2);else S.w=+(Math.ceil(fw/.02-1e-9)*.02).toFixed(2);return true;}
+function syncUI(){feetApart();$$('#sWho button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.who));$$('#sPre button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.pre));$$('#sArms button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.arms));
+  $$('#sDir button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.dir));$$('#sHp button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.hp));$$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));
+  const lm=leanMax();if(S.L>lm)S.L=lm;$('#iL').max=Math.max(lm,0);$('#iL').disabled=lm<1;
   $('#iW').value=S.w;$('#oW').textContent=S.beam?'op de balk':S.one?'één voet':f2(S.w)+' m';$('#iS').value=S.s;$('#oS').textContent=S.one?'–':f2(S.s)+' m';$('#iK').value=S.k;$('#oK').textContent=Math.round(S.k*100)+'%';
-  $('#iL').value=S.L;$('#oL').textContent=S.L+'°';$('#iF').value=S.F;$('#oF').textContent=S.F+' N';
+  $('#iL').value=S.L;$('#oL').textContent=S.L+'°';$('#oL2').textContent=lm<1?'kan hier niet: de loodlijn ligt al dicht bij de rand':`leun naar de duwer toe (tegen de duw in), hier maximaal ${lm}°`;
+  const cap=WHO[S.who].Fcap;$('#iF').max=cap;if(S.F>cap)S.F=cap;$('#iF').value=S.F;$('#oF').textContent=S.F+' N';const A=curB().A;$('#oF2').textContent=`wegschuiven vanaf μ · m · g ≈ ${f0(A.Fs)} N`;
   $('#iW').disabled=S.beam||S.one;$('#iS').disabled=S.one;beamG.visible=S.beam;matG.visible=!S.beam;store.set('who',S.who);store.set('F',S.F);
-  if(!S.anim){const r=$('#res');r.className='';r.innerHTML=`<span class="k">${WHO[S.who].n}</span><b class="t">Klaar voor de duw</b>Deze houding kan maximaal ${f0(analyse(body()).Fmax)} N ${S.dir==='side'?'van opzij':S.dir==='front'?'van voren':'van achteren'} hebben.`;}}
-$$('#sWho button').forEach(b=>b.onclick=()=>{S.who=b.dataset.v;S.anim=null;syncUI();});
-$$('#sPre button').forEach(b=>b.onclick=()=>{S.pre=b.dataset.v;Object.assign(S,PRESETS[S.pre]);S.anim=null;syncUI();});
-$$('#sArms button').forEach(b=>b.onclick=()=>{S.arms=b.dataset.v;S.anim=null;syncUI();});
-$$('#sDir button').forEach(b=>b.onclick=()=>{S.dir=b.dataset.v;S.anim=null;syncUI();});
-const sl=(id,key)=>$(id).oninput=e=>{S[key]=+e.target.value;S.anim=null;if(key!=='F')S.pre='eigen';syncUI();};
+  if(S.phase==='ready')setRes('ready');}
+function changed(){resetRun();syncUI();}
+$$('#sWho button').forEach(b=>b.onclick=()=>{S.who=b.dataset.v;changed();});
+const PRE_TOAST={normal:'Gewoon: voeten 20 cm uit elkaar, rechtop.',stoei:'Breed en laag: spreidstand, één voet iets voor, door de knieën.',oneleg:'Eén been: het steunvlak is één voet.',toes:'Op de tenen: het steunvlak is alleen je voorvoet.',beam:'Op de balk: 10 cm breed, 30 cm hoog.'};
+$$('#sPre button').forEach(b=>b.onclick=()=>{S.pre=b.dataset.v;Object.assign(S,PRESETS[S.pre]);changed();toast(PRE_TOAST[S.pre]);});
+$$('#sArms button').forEach(b=>b.onclick=()=>{S.arms=b.dataset.v;changed();});
+$$('#sDir button').forEach(b=>b.onclick=()=>{S.dir=b.dataset.v;changed();});
+$$('#sHp button').forEach(b=>b.onclick=()=>{S.hp=b.dataset.v;changed();});
+$$('#sSpeed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;syncUI();});
+const sl=(id,keyN)=>$(id).oninput=e=>{S[keyN]=+e.target.value;if(keyN!=='F')S.pre='eigen';const hit=feetApart(keyN);changed();if(hit)toast('Verder kan niet: dan staan je voeten op elkaar.',2200);};
 sl('#iW','w');sl('#iS','s');sl('#iK','k');sl('#iL','L');sl('#iF','F');
-$('#bPush').onclick=push;
+$('#bPush').onclick=push;$('#bReplay').onclick=replay;
+$('#iScrub').oninput=e=>{if(!S.J)return;S.phase='scrub';S.tau=(+e.target.value/1000)*S.J.T;};
+$('#bDefaults').onclick=()=>{Object.assign(S,PRESETS.normal,{who:DEF.who,pre:DEF.pre,dir:DEF.dir,hp:DEF.hp,F:DEF.F,speed:.5});setCam('side');$('#tLines').checked=true;$('#tPusher').checked=true;changed();toast('Beginwaarden hersteld');};
+$$('#ltabs button').forEach(b=>b.onclick=()=>{const lab=$('#lab');if(b.classList.contains('on')){lab.classList.toggle('collapsed');}else{lab.classList.remove('collapsed');$$('#ltabs button').forEach(x=>x.classList.toggle('on',x===b));$$('.lsec').forEach(s=>s.classList.toggle('on',s.dataset.s===b.dataset.s));}layout();});
 const LBL=['dots','names','off'],LBLN={dots:'stippen',names:'namen',off:'uit'};let lblI=0;
-$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.className=document.body.className.replace(/lbl-\w+/,'lbl-'+LBL[lblI]);$('#bLbl').textContent='Labels: '+LBLN[LBL[lblI]];};
-function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.className=document.body.className.replace(/lbl-\w+/,'lbl-'+LBL[lblI]);$('#lblName').textContent=': '+LBLN[LBL[lblI]];};
+const CAMS=['side','top','free'],CAMN={side:'zijaanzicht',top:'bovenaanzicht',free:'vrij'};
+function rigAlpha(R,a){for(const k in R.M){const mt=R.M[k];mt.transparent=a<1;mt.opacity=a;mt.depthWrite=a>=1;mt.needsUpdate=true;}R.grp.traverse(o=>{o.castShadow=a>=1;});}
+function setCam(m){S.cam=m;$('#camName').textContent=': '+CAMN[m];camSnap=false;const a=m==='top'?.32:1;rigAlpha(rig,a);rigAlpha(pusher,a);}
+$('#bCam').onclick=()=>setCam(CAMS[(CAMS.indexOf(S.cam)+1)%3]);
+let userCam=false;controls.addEventListener('start',()=>{if(userCam&&S.cam!=='free')setCam('free');});
+canvas.addEventListener('pointerdown',()=>{userCam=true;});canvas.addEventListener('wheel',()=>{userCam=true;},{passive:true});
+function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});layout();}
 $('#bPresent').onclick=()=>setPresent(!document.body.classList.contains('present'));
-addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;const k=e.key,K=k.toUpperCase();
-  if(k===' '){e.preventDefault();push();return;}if(K==='Z'){const i=$('#tLines');i.checked=!i.checked;}
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;if($$('.modal.open').length&&e.key!=='Escape')return;const k=e.key,K=k.toUpperCase();
+  if(k===' '){e.preventDefault();if(S.phase==='run'){S.phase='pause';return;}if(S.phase==='pause'){S.phase='run';return;}push();return;}
+  if(K==='Z'){const i=$('#tLines');i.checked=!i.checked;}if(K==='D'){const i=$('#tPusher');i.checked=!i.checked;}if(K==='V')$('#bCam').click();if(K==='R')replay();
   if(K==='G')setSound(!SND.on);if(K==='L')$('#bLbl').click();if(K==='P')setPresent(!document.body.classList.contains('present'));
   if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();ptStep(1);}if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();ptStep(-1);}
   if(k==='Escape'){if($$('.modal.open').length)$$('.modal.open').forEach(mm=>mm.classList.remove('open'));else if($('#dossier').classList.contains('open'))closePt();else if(document.body.classList.contains('present'))setPresent(false);}});
 
 /* ================= uitleg & opdrachten ================= */
 $('#bHelp').onclick=()=>{$('#mHelp').classList.add('open');$('#helpBody').innerHTML=`<h2>Zo werkt het evenwichtslab</h2>
-  <p>Een leerling staat op de mat of op de balk. Jij kiest de <b>houding</b> en geeft een <b>duw</b>. Blijft de leerling staan of valt die om?</p>
-  <ul><li>Het groene vlak is het <b>steunvlak</b>, de witte stippellijn de <b>loodlijn</b> uit het zwaartepunt. De gele pijl op de grond is de afstand d tot de rand in de duwrichting.</li><li>Onderin vergelijk je het <b>duwmoment F · h</b> met het <b>tegenmoment m · g · d</b>. Is het duwmoment groter, dan kantelt de leerling en zet een stap.</li><li>Het kaartje <b>bovenaanzicht</b> toont het steunvlak, de loodlijn (witte stip) en de duw.</li><li>De gele cijfers in beeld zijn uitlegpunten met vier tabjes.</li></ul>
-  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Duw</td></tr><tr><td><kbd>Z</kbd></td><td>Lijnen en vlakken aan of uit</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
-  <p style="font-size:13px;color:var(--muted)">Het model is statisch: we vergelijken de momenten rond de kantelrand. In het echt kun je ook met je enkels en heupen bijsturen, waardoor je iets meer aankunt dan hier berekend.</p>
+  <p>Een leerling staat op de mat of op de balk. Een klasgenoot (groen shirt) duwt. Jij kiest de <b>houding</b>, de <b>richting</b>, de <b>hoogte</b> en de <b>kracht</b> van de duw. Blijft de leerling staan, kantelt die om en zet een stap, of schuift die weg?</p>
+  <div class="legend"><i style="background:#36b86a;border:2px solid #0f3d24;height:10px"></i><span><b>Steunvlak</b>: het vlak tussen de voeten, met een donkere rand.</span><i style="background:#fff;box-shadow:0 0 0 2px #0b1410"></i><span><b>Kantelrand</b>: de rand waar je omheen zou kantelen. Dit is het draaipunt. Hij wordt rood als je kantelt.</span><i style="background:repeating-linear-gradient(90deg,#f1e9da 0 6px,transparent 6px 10px)"></i><span><b>Loodlijn</b> uit het zwaartepunt (zwart-wit symbool), met een geel stipje op de grond.</span><i style="background:#ffc83a"></i><span><b>m · g</b> (gele pijl) en de arm <b>d</b>: van het gele stipje tot de kantelrand, gemeten in de duwrichting.</span><i style="background:#ff4f3c"></i><span><b>F</b> (rode pijl) en de arm <b>h</b>: van de kantelrand tot de werklijn van de duw.</span><i style="border:2px solid #fff;height:10px;width:10px;border-radius:50%;background:none"></i><span><b>Drukpunt</b>: waar de grond tegen de voeten duwt. Het schuift bij een duw naar de rand.</span></div>
+  <p>Op een groot scherm zie je rechtsboven het steunvlak <b>van bovenaf</b>, met de duw naar rechts. Daar zie je het drukpunt en het gele stipje het best bewegen.</p>
+  <ul><li>De arm in M = F · arm is steeds de loodrechte afstand van de werklijn tot het draaipunt. Voor de duw heet die hier <b>h</b>, voor de zwaartekracht <b>d</b>.</li><li>Onderin zie je het tegenmoment m · g · d, het duwmoment F · h en de <b>kantelmarge</b>. Is de marge positief, dan kan de grond het verschil opvangen: ΣM = 0 en je kantelt niet. Is ze negatief, dan kantel je. De marge en de kantelgrens zie je pas na je voorspelling of na de duw: reken eerst zelf.</li><li>Met <b>Terugkijken</b> spoel je door de duw en kies je het tempo. Met <b>Camera</b> wissel je tussen zijaanzicht, bovenaanzicht en vrij draaien.</li><li>De gele cijfers in beeld zijn uitlegpunten met vier tabjes.</li></ul>
+  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Duw · pauzeren</td></tr><tr><td><kbd>R</kbd></td><td>Herhaal de laatste duw</td></tr><tr><td><kbd>Z</kbd> <kbd>D</kbd></td><td>Lijnen en vlakken · duwer</td></tr><tr><td><kbd>V</kbd></td><td>Camera</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
+  <p style="font-size:13px;color:var(--muted)"><b>Het model.</b> Een ledenpop met segmentmassa's naar Winter, als star lichaam. De duw is horizontaal en blijft even duwen, zoals bij een duwspel. Een korte stoot werkt anders: daar telt de impuls (zie het landingslab). De voeten glijden niet weg zolang F kleiner is dan μ · m · g. We nemen μ ≈ 0,5 aan: een voorzichtige schatting, met stroeve schoenen is μ eerder 0,6 tot 0,9. We nemen voor stilstaan en glijden dezelfde μ; in het echt glijdt het iets makkelijker als je eenmaal schuift. Glijdt de leerling weg, dan versnelt ze: a = (F − μ · m · g) / m. Dat remt het kantelen, want rond de rand telt dan F · h − m · a · h_z. Duw je veel harder, dan kan ze tijdens het glijden toch kantelen. Na een tijdje laat de duwer los en remt de wrijving de leerling af; dat afremmen rekent het lab niet als kantelen door. Bij een kanteling blijft de voet op de kantelrand staan en stapt de andere voet; van opzij, met de voeten naast elkaar, is dat een kruispas. Op de balk stapt de leerling eraf, of bij een duw van voren of achteren een stap verder op de balk. De armen bewegen bij het vallen alleen in beeld mee; voor de berekening blijft het lichaam star. In het echt stuur je ook bij met enkels en heupen, of zet je eerder een stap.</p>
   <p><button class="btn accent" id="hClose">Aan de slag</button></p>`;$('#hClose').onclick=()=>$('#mHelp').classList.remove('open');};
+const TAGN={R:'Kennen',T1:'Toepassen',T2:'Toepassen in het lab',I:'Inzicht'};
 const QUIZ=[
- {t:'R',type:'mc',q:'Wanneer val je om als je stilstaat?',opts:['Als je zwaartepunt hoger is dan je knieën','Als de loodlijn uit je zwaartepunt buiten je steunvlak valt','Als je op één been staat','Als je armen langs je lichaam hangen'],ok:1,ex:'Zolang de loodlijn binnen het steunvlak valt, zorgt de zwaartekracht voor een tegenmoment. Valt hij erbuiten, dan kantel je.'},
- {t:'R',type:'mc',q:'Welke houding is het stabielst tegen een duw van opzij?',opts:['Voeten voor en achter','Op de tenen','Voeten breed naast elkaar en door de knieën','Op één been met de armen zijwaarts'],ok:2,ex:'Breed staan vergroot d opzij, en door de knieën zakken verkleint de arm h van de duw.'},
- {t:'T1',type:'num',q:'Iemand duwt met 120 N op 1,30 m hoogte. Hoe groot is het duwmoment (N·m)?',answer:156,tol:1,ex:'M = F · h = 120 · 1,30 = 156 N·m.'},
- {t:'T1',type:'num',q:'Een leerling van 55 kg staat met d = 0,10 m. De duw komt op 1,30 m. Wat is de grootste duw (N) die de leerling aankan? (g = 9,81)',answer:41.5,tol:1,ex:'F_max = m · g · d / h = 55 · 9,81 · 0,10 / 1,30 ≈ 41,5 N.'},
- {t:'T2',type:'sim',q:'Kies <b>Eén been</b> en zoek een houding waarmee de leerling een duw <b>van opzij</b> van minstens <b>30 N</b> weerstaat.',check:l=>l&&l.one&&l.dir==='side'&&l.F>=30&&!l.tipped,fail:l=>!l?'Duw eerst.':!l.one?'Kies de houding Eén been.':l.dir!=='side'?'Duw van opzij.':l.F<30?'Zet de duw op minstens 30 N.':'Omgevallen. Leun in de richting van de duw of zak door de knieën.',ok:'Leunen naar de duw toe vergroot d, door de knieën verkleint h.'},
- {t:'T2',type:'sim',q:'Een <b>VO-leerling</b> moet een duw <b>van voren</b> van <b>200 N</b> weerstaan. Zoek de houding.',check:l=>l&&l.who==='vo'&&l.dir==='front'&&l.F>=200&&!l.tipped,fail:l=>!l?'Duw eerst.':(l.who!=='vo'||l.dir!=='front'||l.F<200)?'Controleer: VO-leerling, duw van voren, 200 N of meer.':'Omgevallen. Welke kant op moet het steunvlak groter worden?',ok:'Voeten voor en achter, laag, en een beetje voorover leunen: precies de stoeihouding.'},
- {t:'T2',type:'sim',q:'<b>Op de balk</b>: weersta een duw <b>van opzij</b> van <b>20 N</b>.',check:l=>l&&l.beam&&l.dir==='side'&&l.F>=20&&!l.tipped,fail:l=>!l?'Duw eerst.':!l.beam?'Kies de houding Op de balk.':(l.dir!=='side'||l.F<20)?'Duw van opzij met minstens 20 N.':'Omgevallen. Het steunvlak is maar 10 cm breed: wat kun je nog wel veranderen?',ok:'Op de balk kun je het steunvlak niet groter maken. Je kunt wel lager gaan staan en naar de duw toe leunen.'},
- {t:'I',type:'open',q:'Ontwerp een stoeiles voor groep 6 met het thema "uit evenwicht brengen". Gebruik zwaartepunt, steunvlak en krachtmoment om je organisatie, regels en aanwijzingen te onderbouwen.',model:'<p><b>Organisatie:</b> tweetallen van ongeveer gelijk gewicht en lengte (gelijk tegenmoment), elk op een eigen mat met ruimte eromheen.</p><p><b>Opbouw:</b> eerst zelf stabiel staan ("laag en breed": groot steunvlak, lage arm h), dan elkaar met de handen tegen de schouders proberen te verplaatsen, daarna van de mat duwen.</p><p><b>Regels:</b> duwen tegen schouders en heupen, niet tegen hoofd of nek; bij "stop" direct loslaten.</p><p><b>Aanwijzingen:</b> "zet je voeten breed en één voet voor": groter steunvlak in de duwrichting. "Zak door je knieën": kleinere arm, dus kleiner duwmoment. "Leun in de duw": de loodlijn blijft verder van de rand. Wie omvalt, leert een stap zetten of valbreken.</p>'}];
+ {t:'R',type:'mc',q:'Wanneer val je om als je stilstaat en niemand duwt?',opts:[['Als je zwaartepunt hoger ligt dan je knieën','Hoogte alleen beslist dat niet. Ook een hoog zwaartepunt kan stabiel boven je voeten staan.'],['Als de loodlijn uit je zwaartepunt buiten je steunvlak valt',''],['Als je op één been staat','Op één been kun je prima blijven staan, zolang de loodlijn binnen die ene voet valt.'],['Als je armen langs je lichaam hangen','De armen verplaatsen je zwaartepunt maar een klein beetje.']],ok:1,ex:'Zolang de loodlijn binnen het steunvlak valt, geeft de zwaartekracht een tegenmoment rond elke rand. Valt hij erbuiten, dan kantel je.'},
+ {t:'R',type:'mc',q:'Welke houding is het stabielst tegen een duw van opzij?',opts:[['Voeten voor en achter','Dat helpt tegen een duw van voren of achteren, niet van opzij.'],['Op de tenen','Op de tenen wordt je steunvlak juist kleiner.'],['Voeten breed naast elkaar en door de knieën',''],['Op één been met de armen zijwaarts','Eén voet is maar 10 cm breed. De armen veranderen F_max bijna niet.']],ok:2,ex:'Breed staan vergroot d opzij. Door de knieën zakken verkleint de arm h van de duw.'},
+ {t:'T1',type:'num',q:'Iemand duwt met 120 N op 1,30 m hoogte. Hoe groot is het duwmoment (N·m)?',answer:156,tol:1,ex:'M = F · h = 120 · 1,30 = 156 N·m.',wrong:v=>Math.abs(v-92.3)<1.5?'Je deelde F door h. Een moment is kracht maal arm.':Math.abs(v-121.3)<1.5?'Je telde op. Een moment is kracht maal arm.':'Gebruik M = F · h.'},
+ {t:'T1',type:'num',q:'Een leerling van 55 kg staat met d = 0,10 m. De duw komt op 1,30 m. Wat is de grootste duw (N) die de leerling aankan? (g = 9,81)',answer:41.5,tol:1,ex:'Op de grens geldt F · h = m · g · d. F_max = m · g · d / h = 55 · 9,81 · 0,10 / 1,30 ≈ 41,5 N.',wrong:v=>Math.abs(v-54)<1.5?'Dat is m · g · d, het tegenmoment in N·m. Deel nog door h.':Math.abs(v-70.1)<2?'Je vermenigvuldigde met h. Deel juist door h: F = M / h.':Math.abs(v-4.2)<.3?'Je bent g vergeten. Gebruik m · g · d.':'Zet F · h gelijk aan m · g · d en los F op.'},
+ {t:'T2',type:'sim',setup:{who:'vo',pre:'oneleg',dir:'side',hp:'sho',F:30},q:'Een <b>VO-leerling</b> staat op <b>één been</b>. Zoek een houding waarmee ze een duw <b>van opzij</b> van minstens <b>30 N</b> op de schouders weerstaat.',check:l=>l&&l.who==='vo'&&l.one&&l.dir==='side'&&l.hp==='sho'&&l.F>=30&&l.out==='stand',fail:l=>!l?'Duw eerst.':l.who!=='vo'?'Kies de VO-leerling.':!l.one?'Kies de houding Eén been.':l.dir!=='side'?'Duw van opzij.':l.hp!=='sho'?'Duw op de schouders.':l.F<30?'Zet de duw op minstens 30 N.':(l.k>=.4&&!l.L)?`Door de knieën alleen is hier niet genoeg (F_max ≈ ${f0(l.Fmax)} N). Leun ook naar de duwer toe: open Houding aanpassen en zet Schrap zetten op 2°, de hoogste stand hier. Dat is al genoeg.`:l.L>0&&l.L<2?'Bijna. Leun nog iets verder naar de duwer toe: Schrap zetten op 2°, of zak er ook bij door de knieën.':l.L>0?'Omgevallen. Combineer: leun zo ver als het lab toestaat (2°) naar de duwer toe én zak door de knieën.':'Omgevallen. Open Houding aanpassen: leun naar de duwer toe (Schrap zetten, hier maximaal 2°) en zak door de knieën.',ok:'Leunen naar de duwer toe vergroot d. Door de knieën zakken verkleint h.'},
+ {t:'T2',type:'sim',setup:{who:'vo',pre:'normal',dir:'front',hp:'sho',F:150},q:'Een <b>VO-leerling</b> moet een duw <b>van voren</b> van <b>150 N</b> op de schouders weerstaan. Zoek de houding.',check:l=>l&&l.who==='vo'&&l.dir==='front'&&l.hp==='sho'&&l.F>=150&&l.out==='stand',fail:l=>!l?'Duw eerst.':(l.who!=='vo'||l.dir!=='front'||l.F<150||l.hp!=='sho')?'Controleer: VO-leerling, duw van voren op de schouders, 150 N of meer.':'In welke richting moet het steunvlak groter worden? Zet de camera op bovenaanzicht en kijk hoe ver de loodlijn van de achterrand ligt.',ok:'Voeten ver voor en achter, bijna op één lijn, en laag. Schuin staan helpt hier minder dan je denkt: de rand loopt dan schuin.'},
+ {t:'T2',type:'sim',setup:{who:'vo',pre:'beam',dir:'side',hp:'sho',F:25},q:'Een <b>VO-leerling</b> staat <b>op de balk</b>. Laat haar een duw <b>van opzij</b> van <b>25 N</b> op de schouders weerstaan.',check:l=>l&&l.who==='vo'&&l.beam&&l.dir==='side'&&l.hp==='sho'&&l.F>=25&&l.out==='stand',fail:l=>!l?'Duw eerst.':l.who!=='vo'?'Kies de VO-leerling.':!l.beam?'Kies de houding Op de balk.':(l.dir!=='side'||l.F<25||l.hp!=='sho')?'Duw van opzij op de schouders, met minstens 25 N.':'Omgevallen. Het steunvlak is maar 10 cm breed. Wat kun je nog wel veranderen?',ok:'Op de balk kun je het steunvlak niet groter maken. Je kunt wel lager gaan staan (kleinere h) en naar de duwer toe leunen (grotere d).'},
+ {t:'T2',type:'sim',setup:{who:'vo',pre:'normal',dir:'side',hp:'sho',F:70},q:'VO-leerling, houding <b>Gewoon</b>, duw <b>van opzij</b> van <b>70 N</b>. Verander <b>alleen de duwhoogte</b>, zodat de leerling blijft staan.',check:l=>l&&l.who==='vo'&&l.pre==='normal'&&l.dir==='side'&&l.F>=70&&l.out==='stand',fail:l=>!l?'Duw eerst.':(l.who!=='vo'||l.pre!=='normal'||l.dir!=='side'||l.F<70)?'Zet de beginsituatie klaar en verander alleen de duwhoogte.':l.hp==='sho'?'Op schouderhoogte is de arm h het grootst. Kies een lagere duwhoogte.':'Probeer een nog lagere duwhoogte.',ok:'Dezelfde kracht, een kleinere arm h: het duwmoment F · h wordt kleiner dan m · g · d.'},
+ {t:'I',type:'mc',q:'Lisa zakt diep door de knieën. Nu kan ze een hardere duw tegen haar schouders weerstaan. Wat is de beste verklaring in dit model?',opts:[['Haar zwaartepunt ligt lager, dus m · g · d wordt groter','m, g en d veranderen niet als je alleen door de knieën zakt. Een lager zwaartepunt helpt pas als je al kantelt (grotere kantelhoek).'],['Haar schouders zijn lager, dus de arm h van de duw is kleiner',''],['Haar steunvlak wordt groter','Haar voeten blijven op dezelfde plek staan, dus het steunvlak blijft gelijk.'],['Ze wordt zwaarder','Haar massa blijft gelijk.']],ok:1,ex:'F_max = m · g · d / h. Door de knieën zakken verkleint h, dus F_max wordt groter. Het lagere zwaartepunt zelf zit niet in die formule.'},
+ {t:'T2',type:'sim',setup:{who:'vo',pre:'stoei',dir:'side',hp:'sho',F:250},q:'Laat de <b>VO-leerling</b> in een stabiele houding <b>wegschuiven</b> in plaats van omvallen.',check:l=>l&&l.who==='vo'&&l.out==='slide',fail:l=>!l?'Duw eerst.':l.who!=='vo'?'Kies de VO-leerling.':l.out==='tip'?(l.slideTip?'Ze gleed weg, maar kantelde toch. Duw iets minder hard (net boven 270 N), of maak h kleiner: duw lager, op de heup.':'Ze kantelde. Maak de houding stabieler (groter d, kleiner h), zodat F_max boven μ · m · g komt. Tip: zet de voeten zo breed mogelijk en duw lager, op de heup.'):'Ze bleef staan. Duw harder dan μ · m · g ≈ 270 N.',ok:'Is F_max groter dan μ · m · g, dan glijden de voeten eerder weg dan dat je kantelt. Wie glijdt, versnelt, en dat remt het kantelen ook nog. Daarom zijn stroeve schoenen en een stroeve mat belangrijk bij duwspelen.'},
+ {t:'I',type:'open',q:'Ontwerp een stoeiles voor groep 6 met het thema "uit evenwicht brengen". Gebruik zwaartepunt, steunvlak en krachtmoment om je organisatie, regels en aanwijzingen te onderbouwen.',model:'<p><b>Organisatie:</b> tweetallen van ongeveer gelijk gewicht en lengte (gelijk tegenmoment m · g · d), elk op een eigen mat met ruimte eromheen.</p><p><b>Opbouw:</b> eerst zelf stabiel staan ("laag en breed": groot steunvlak, kleine arm h), dan elkaar met de handen tegen de schouders proberen te verplaatsen, daarna van de mat duwen.</p><p><b>Regels:</b> duwen tegen schouders en heupen, niet tegen hoofd of nek; bij "stop" direct loslaten.</p><p><b>Aanwijzingen:</b> "zet je voeten breed en één voet voor": groter steunvlak in de duwrichting. "Zak door je knieën": kleinere arm h, dus kleiner duwmoment. "Leun naar je partner toe": de loodlijn komt verder van de rand (grotere d), maar laat je partner los, dan val je voorover. Wie toch kantelt, leert een stap zetten of valbreken.</p>'}];
 let qi=0,qres=[];
 function dots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
+function applySetup(su){if(su.pre)Object.assign(S,PRESETS[su.pre]);Object.assign(S,su);changed();}
 function renderQ(){if(!qres.length)qres=QUIZ.map(()=>null);const box=$('#quizBody');
-  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${dots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');return;}
-  const q=QUIZ[qi];let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${dots()}</div><p><span class="qtag">${q.t}</span>${q.q}</p>`;
-  if(q.type==='mc')h+=`<div class="opts">${q.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>`;
-  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal"><button class="btn accent" id="qGo">Controleer</button></div>`;
-  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en duw. Open daarna de opdrachten weer en klik op Controleer.</p><p><button class="btn accent" id="qGo">Controleer mijn laatste duw</button></p>`;
+  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${dots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];renderQ.f={};renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');return;}
+  const q=QUIZ[qi];let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${dots()}</div><p><span class="qtag">${TAGN[q.t]}</span>${q.q}</p>`;
+  if(q.type==='mc')h+=`<div class="opts">${q.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o[0]}</button>`).join('')}</div>`;
+  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal" aria-label="Je antwoord"><button class="btn accent" id="qGo">Controleer</button></div>`;
+  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en duw. Open daarna de opdrachten weer en klik op Controleer.</p><p style="display:flex;gap:8px;flex-wrap:wrap">${q.setup?'<button class="btn" id="qSetup">Zet de beginsituatie klaar</button>':''}<button class="btn accent" id="qGo">Controleer mijn laatste duw</button></p>`;
   if(q.type==='open')h+=`<textarea id="qTxt" placeholder="Schrijf je antwoord. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p>`;
-  h+=`<div id="qfb"></div><p style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="qClose">Sluiten</button><button class="btn accent" id="qNext" ${q.type==='open'?'':'disabled'}>Volgende →</button></p>`;
-  box.innerHTML=h;let done=false;
-  const fb=(ok,txt)=>{if(qres[qi]===null)qres[qi]=ok;$('#qfb').innerHTML=`<div class="fb ${ok?'ok':'no'}">${txt}</div>`;if(ok){done=true;$('#qNext').disabled=false;SND.good();}};
-  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Denk aan loodlijn en steunvlak.');});
-  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));const ok=Math.abs(v-q.answer)<=q.tol;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Gebruik M = F · h en M = m · g · d.');};
-  if(q.type==='sim')$('#qGo').onclick=()=>{const ok=q.check(S.last);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(S.last));};
+  h+=`<div id="qfb"></div><p style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button class="btn" id="qClose">Sluiten</button><button class="btn" id="qSkip" style="display:none">Sla over</button><button class="btn accent" id="qNext" ${q.type==='open'?'':'disabled'}>Volgende →</button></p>`;
+  box.innerHTML=h;let done=false;if(!renderQ.f)renderQ.f={};const qf=renderQ.f;if(qf[qi]>=2&&qres[qi]!==true)$('#qSkip').style.display='';
+  // na twee mislukte pogingen mag je verder (de opdracht telt dan als niet in één keer goed)
+  const fb=(ok,txt)=>{if(qres[qi]===null)qres[qi]=ok;$('#qfb').innerHTML=`<div class="fb ${ok?'ok':'no'}">${txt}</div>`;if(ok){done=true;$('#qNext').disabled=false;$('#qSkip').style.display='none';SND.good();}else if((qf[qi]=(qf[qi]||0)+1)>=2&&!done)$('#qSkip').style.display='';};
+  $('#qSkip').onclick=()=>{qi++;renderQ();};
+  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> '+q.opts[j][1]);});
+  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));if(isNaN(v)){fb(false,'<b>Vul een getal in.</b> Een komma mag.');return;}const ok=Math.abs(v-q.answer)<=q.tol;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> '+q.wrong(v));};
+  if(q.type==='sim'){$('#qGo').onclick=()=>{const ok=q.check(S.last);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(S.last));};if(q.setup)$('#qSetup').onclick=()=>{applySetup(q.setup);$('#mQuiz').classList.remove('open');toast('De beginsituatie staat klaar. Duw eerst eens zo, en los het dan op.');};}
   if(q.type==='open')$('#qShow').onclick=()=>{$('#qfb').innerHTML=`<div class="fb ok">${q.model}</div>`;};
   $('#qNext').onclick=()=>{qi++;renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');}
 $('#bQuiz').onclick=()=>{$('#mQuiz').classList.add('open');renderQ();};
@@ -414,46 +891,102 @@ $('#bQuiz').onclick=()=>{$('#mQuiz').classList.add('open');renderQ();};
 /* ================= geluid ================= */
 const SND=(function(){let C=null,master,on=false;
   function init(){if(C)return;try{C=new (window.AudioContext||window.webkitAudioContext)();}catch(e){return;}master=C.createGain();master.gain.value=0;master.connect(C.destination);}
-  function tone(f0,f1,dur,vol,type,delay){if(!C||!on)return;const t=C.currentTime+(delay||0),o=C.createOscillator(),gg=C.createGain();o.type=type||'sine';o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t+dur);gg.gain.setValueAtTime(.0001,t);gg.gain.exponentialRampToValueAtTime(vol,t+.01);gg.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(gg);gg.connect(master);o.start(t);o.stop(t+dur+.05);}
+  function tone(a,b,dur,vol,type,delay){if(!C||!on)return;const t=C.currentTime+(delay||0),o=C.createOscillator(),gg=C.createGain();o.type=type||'sine';o.frequency.setValueAtTime(a,t);o.frequency.exponentialRampToValueAtTime(Math.max(20,b),t+dur);gg.gain.setValueAtTime(.0001,t);gg.gain.exponentialRampToValueAtTime(vol,t+.01);gg.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(gg);gg.connect(master);o.start(t);o.stop(t+dur+.05);}
   return {init,get on(){return on;},set(v){init();if(!C)return;on=v;C.resume();master.gain.setTargetAtTime(v?.8:0,C.currentTime,.1);},
-    push(){tone(160,90,.18,.3,'sine');},good(){[660,880].forEach((f,i)=>tone(f,f,.22,.1,'triangle',i*.08));},bad(){tone(140,60,.45,.4,'sine');tone(220,140,.35,.08,'sawtooth',.05);}};})();
+    push(){tone(160,90,.18,.3,'sine');},good(){[660,880].forEach((f,i)=>tone(f,f,.22,.1,'triangle',i*.08));},bad(){tone(220,120,.4,.1,'sawtooth');},step(){tone(120,55,.28,.45,'sine');},slide(){tone(300,180,.5,.06,'sawtooth');}};})();
 function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
 $('#bSound').onclick=()=>setSound(!SND.on);
 
-/* ================= render ================= */
-function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?52:34;camera.updateProjectionMatrix();}
+/* ================= camera en indeling ================= */
+function layout(){const mob=innerWidth<=820;if(mob){const tb=$('#top').getBoundingClientRect().bottom;$('#hud').style.top=Math.round(tb+6)+'px';}else $('#hud').style.top='';}
+function freeRect(){const W=innerWidth,H=innerHeight,R=e=>e.getBoundingClientRect();const hud=R($('#hud')),lab=R($('#lab'));const dosOpen=$('#dossier').classList.contains('open'),dos=dosOpen?R($('#dossier')):null;const labOn=getComputedStyle($('#lab')).display!=='none';
+  let l=0,r=W,t=0,b=H;if(W>820){l=labOn?lab.right+8:0;r=dos?dos.left-8:W;t=74;b=hud.top-8;}else{t=hud.bottom+4;b=(dos?dos.top:labOn?lab.top:H)-4;}
+  if(b-t<100){t=0;b=H;}if(r-l<160){l=0;r=W;}return {l,r,t,b,W,H};}
+let camSnap=false;const _cp=new THREE.Vector3(),_ct=new THREE.Vector3();
+function camGoal(f){const fr=freeRect(),u=DIRS[S.dir],sc=f.sc,c=f.com;const fh=(fr.b-fr.t)/fr.H,fw=(fr.r-fr.l)/fr.W,tv=Math.tan(camera.fov*D2R/2);
+  const base=f.J?f.B0.com:c;
+  if(S.cam==='top'){const need=1.25*sc+.25;/* steunvlak, stap en een stukje duwer */const D=clamp(Math.max(need/(2*tv*fh),need/(2*tv*camera.aspect*fw)),2,12);_ct.set(base.x-u[0]*.2,f.B0.surf,base.z-u[1]*.2);const pd=S.dir==='side'?V(1,0,0):V(0,0,1);_cp.copy(_ct).addScaledVector(pd,D*Math.cos(76*D2R)).add(V(0,D*Math.sin(76*D2R),0));}
+  else{const mob=fr.W<=820,needH=2.3*sc+.4,needW=mob?1.75*sc+.3:2.45*sc+.45;const D=clamp(Math.max(needH/(2*tv*fh),needW/(2*tv*camera.aspect*fw)),2.4,14);
+    const sh=mob?.08:.22;_ct.set(base.x-u[0]*sh*sc,f.B0.surf+.9*sc,base.z-u[1]*sh*sc);if(f.J&&f.stage!=='push'&&f.stage!=='reach'){_ct.x=lerp(_ct.x,c.x,.5);_ct.z=lerp(_ct.z,c.z,.5);}
+    const yaw=16*D2R,el=27*D2R;/* iets van boven: zo zie je steunvlak en drukpunt beter */const pd=S.dir==='side'?V(Math.cos(yaw),0,-Math.sin(yaw)):V(Math.sin(yaw),0,Math.cos(yaw));_cp.copy(_ct).addScaledVector(pd,D*Math.cos(el)).add(V(0,D*Math.sin(el),0));}
+  const dx=(fr.l+fr.r)/2-fr.W/2,dy=(fr.t+fr.b)/2-fr.H/2;camera.setViewOffset(fr.W,fr.H,-dx,-dy,fr.W,fr.H);}
+function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?50:34;camera.updateProjectionMatrix();layout();camSnap=false;drawChart();}
 addEventListener('resize',resize);
-let first=true,uiT=0,lastKey='';
-function rotateAbout(P,pivot,axis,ang,shift){const q=new THREE.Quaternion().setFromAxisAngle(axis,ang);const out={};for(const k in P){out[k]=P[k].clone().sub(pivot).applyQuaternion(q).add(pivot).add(shift);}return out;}
-function render(dt){let B=body(),A=analyse(B);let P=B.P,com=B.com.clone();
-  const an=S.anim;if(an){an.t+=dt;const sg=(!an.A.ins&&an.A.d>0)?-1:1,u=[an.A.u[0]*sg,an.A.u[1]*sg],axis=V(-u[1],0,u[0]);// draaias: horizontaal, loodrecht op de duwrichting
-    const pivot=sg>0?V(an.A.c[0]+u[0]*an.A.d,B.gY,an.A.c[1]+u[1]*an.A.d):V(an.A.c[0],B.gY,an.A.c[1]);let ang=0,shift=V(0,0,0);
-    if(an.tips){if(an.t<.55)ang=.42*ease(an.t/.55);else{const e=ease((an.t-.55)/.5);ang=.42*(1-e);shift=V(u[0]*.42*e,0,u[1]*.42*e);}}
-    else{const r=an.A.Mp/Math.max(an.A.Mr,1e-6);ang=clamp(r,0,1)*.09*Math.sin(Math.PI*clamp(an.t/.7,0,1));}
-    // kantelen weg van de duw: met de klok mee rond axis
-    P=rotateAbout(P,pivot,axis,-ang,shift);com=B.com.clone().sub(pivot).applyQuaternion(new THREE.Quaternion().setFromAxisAngle(axis,-ang)).add(pivot).add(shift);
-    if(an.t>1.8){/* blijf in eindstand */}}
-  drawBody(P,B.sc);
-  const show=$('#tLines').checked;comSpr.position.copy(com);
-  const key=JSON.stringify(B.hull)+A.tips+B.gY;if(key!==lastKey){lastKey=key;setHull(B.hull,B.gY,!A.tips);}hullMesh.visible=show;hullLine.visible=show;
-  plumb.visible=show;plumb.position.set(com.x,B.gY,com.z);plumb.scale.set(1,Math.max(.01,com.y-B.gY),1);plumb.computeLineDistances();
-  footDot.visible=show;footDot.position.set(com.x,B.gY+.012,com.z);footDot.material.color.setHex(A.ins?0xffffff:0xe86a5a);
-  dArrow.visible=show&&A.d>.01&&!an;if(dArrow.visible){dArrow.position.set(A.c[0],B.gY+.02,A.c[1]);dArrow.setDirection(V(A.u[0],0,A.u[1]));dArrow.setLength(A.d,Math.min(.07,A.d*.4),.05);}
-  const sh=P.sho;const pushing=an&&an.t<.45;pushArrow.visible=show||pushing;const len=.25+S.F/400*.5;pushArrow.position.set(sh.x-A.u[0]*(len+.15),sh.y,sh.z-A.u[1]*(len+.15));pushArrow.setDirection(V(A.u[0],0,A.u[1]));pushArrow.setLength(len,.12,.08);
-  pushArrow.line.material.opacity=pushing?1:.55;pushArrow.line.material.transparent=true;
-  hLine.visible=show&&!an;hLine.position.set(B.P.sho.x-A.u[0]*.15,B.gY,B.P.sho.z-A.u[1]*.15);hLine.scale.set(1,A.h,1);
-  tagD.textContent=dArrow.visible?'d':'';project(V(A.c[0]+A.u[0]*A.d*.5,B.gY+.05,A.c[1]+A.u[1]*A.d*.5),tagD,-4,16);
-  tagH.textContent=hLine.visible?'h':'';project(V(B.P.sho.x-A.u[0]*.15,B.gY+A.h*.5,B.P.sho.z-A.u[1]*.15),tagH,14,0);
-  tagF.textContent=pushArrow.visible?`F = ${S.F} N`:'';project(V(sh.x-A.u[0]*(len+.2),sh.y+.12,sh.z-A.u[1]*(len+.2)),tagF,30,0);
+
+/* ================= tekenen ================= */
+let first=true,uiT=0,hullKey='',oldKey='';
+function render(dt){
+  if(S.phase==='run'&&S.J){const J=S.J;let rate=S.speed;const near=(J.tKey!=null&&S.tau>J.tKey-.15&&S.tau<J.tKey+.35)||(J.tKey2!=null&&S.tau>J.tKey2-.05&&S.tau<J.tland+.05);if(near&&S.speed>.3)rate*=.4;
+    const prev=S.tau;S.tau=Math.min(J.T,S.tau+dt*rate);onEvents(prev,S.tau);if(S.tau>=J.T){S.phase='done';}}
+  const f=frame();CUR=f;const show=$('#tLines').checked,J=f.J,A=f.A,sc=f.sc;
+  updateRig(rig,f.P,sc);
+  // duwer
+  const pv=$('#tPusher').checked;pusher.grp.visible=pv;if(pv)updateRig(pusher,pusherPose(f,J,f.t),sc);
+  // steunvlak
+  const hk=f.hull.map(q=>q[0].toFixed(3)+','+q[1].toFixed(3)).join(';')+'|'+f.baseY;if(hk!==hullKey){hullKey=hk;setHull(f.hull,f.baseY);}
+  // tijdens de stap en na de landing: het oude steunvlak als vage omtrek
+  const gk=f.ghost?f.ghost.map(q=>q[0].toFixed(3)+','+q[1].toFixed(3)).join(';'):'';if(gk!==oldKey){oldKey=gk;setOldHull(f.ghost||null,J?J.B0.surf:0);}
+  hullMesh.visible=show;hullEdges.forEach(e=>e.visible=show);if(oldHull)oldHull.visible=show;
+  // zwaartepunt en loodlijn
+  comSpr.position.copy(f.com);const gy=(S.beam&&Math.abs(f.com.z)>BEAMW/2)?0:(S.beam?BEAMH:MATH);const foot=V(f.com.x,gy+.006,f.com.z);
+  plumb.visible=show;setRod(plumb,foot,f.com,.007,.07);footDot.visible=show;footDot.position.copy(foot);
+  const topV=S.cam==='top',gl=.18+A.m/70*.22,gOff=camSide().multiplyScalar(-.05);gravAr.grp.visible=show;const gTip=f.com.clone().add(gOff).add(V(0,-gl-.06,0));setArrow(gravAr,gTip,V(0,-1,0),gl,.012);
+  // kantelrand, d, h, werklijn
+  const preTip=!J||J.out!=='tip'||f.t<=J.tc,during=J&&J.out==='tip'&&f.t>J.tc&&f.t<=J.tland;const off=f.off||V(0,0,0);
+  const y0=f.B0.surf+.008,eg=f.edge||[A.ea,A.eb];const Ea=V(eg[0][0],y0,eg[0][1]).add(off),Eb=V(eg[1][0],y0,eg[1][1]).add(off),E=V(A.E[0],y0,A.E[1]).add(off);
+  const edgeOn=show&&!f.newBase;edgeRod.visible=edgeBack.visible=edgeOn;
+  if(edgeOn){setRod(edgeBack,Ea,Eb,.022);setRod(edgeRod,Ea,Eb,.013);const hot=during||(J&&J.out==='tip'&&f.t>J.tc-.02);edgeRod.material.color.copy(lin(hot?0xff4f3c:0xffffff));}
+  const lines=show&&preTip&&!f.newBase;
+  // d: van het gele stipje tot de kantelrand, in de duwrichting. Tijdens het kantelen krimpt d mee (star lichaam, net als het tegenmoment), tot de loodlijn over de rand gaat.
+  let dLive=A.d,c0=V(A.c[0],y0+.002,A.c[1]).add(off);
+  if(during&&f.dLive!=null){dLive=f.dLive;c0=V(f.com.x,y0+.002,f.com.z);}
+  const dOn=show&&!f.newBase&&(preTip||during)&&Math.abs(dLive)>.004;dRod.visible=dOn;
+  if(dOn){const Ed=c0.clone().add(V(A.u[0]*dLive,0,A.u[1]*dLive));setRod(dRod,c0,Ed,.012);dRod.material.color.copy(lin(dLive<0?0xff4f3c:0xffc83a));}
+  const Ctop=V(E.x,f.B0.surf+A.h,E.z);hRod.visible=hTick1.visible=hTick2.visible=lines;
+  if(lines){setRod(hRod,E,Ctop,.009);const pp=V(-A.u[1],0,A.u[0]).multiplyScalar(.045);setRod(hTick1,E.clone().sub(pp),E.clone().add(pp),.005);setRod(hTick2,Ctop.clone().sub(pp),Ctop.clone().add(pp),.005);}
+  const Cn=f.C;actRod.visible=lines;if(lines)setRod(actRod,Cn,Ctop,.006,.05);
+  // drukpunt: bij glijden telt F · h − m · a · h_z (Meff)
+  const Ft=J?f.Ft:0;const copOn=show&&J&&Ft>.5&&!f.newBase&&f.stage!=='step';copRing.visible=copBack.visible=!!copOn;let cpXZ=null,cpHot=false;
+  if(copOn){let cd=clamp(Meff(A,Ft)/(A.m*g),0,A.d);if(during)cd=A.d;const cp=V(A.c[0]+A.u[0]*cd,y0+.004,A.c[1]+A.u[1]*cd).add(off);copRing.position.copy(cp);copBack.position.copy(cp).add(V(0,-.001,0));cpHot=cd>=A.d-.002;copRing.material.color.copy(lin(cpHot?0xff4f3c:0xffffff));cpXZ=[cp.x,cp.z];}
+  // duwpijl
+  const showF=(!J&&show)||(J&&Ft>.5);pushAr.grp.visible=!!showF;const Fv=J?Ft:S.F;
+  if(showF){const len=.18+Fv/400*.5;setArrow(pushAr,f.C,V(A.u[0],0,A.u[1]),len,.016);pushAr.m.opacity=J?1:.5;}
+  // camera
+  if(S.cam!=='free'){camGoal(f);if(!camSnap){camera.position.copy(_cp);controls.target.copy(_ct);camSnap=true;}else{const k=1-Math.exp(-dt*4.5);camera.position.lerp(_cp,k);controls.target.lerp(_ct,k);}}
+  else{const fr=freeRect();camera.setViewOffset(fr.W,fr.H,-((fr.l+fr.r)/2-fr.W/2),-((fr.t+fr.b)/2-fr.H/2),fr.W,fr.H);}
   controls.update();renderer.render(scene,camera);
-  MKS.forEach((mm,i)=>project(PTS[i].at(B),mm,12,12));
-  uiT+=dt;if(uiT>.08){uiT=0;updateHud(B,A);}
+  // uitlegpunten en labels: eerst de punten, dan de labels; een label dat iets raakt, schuift op
+  FRc=freeRect();if(innerWidth>820&&show){const ml=$('#mapCard').getBoundingClientRect().left-6;if(ml>FRc.l+300)FRc.r=Math.min(FRc.r,ml);}placed.length=0;const mkOn=!document.body.classList.contains('lbl-off'),names=document.body.classList.contains('lbl-names');
+  // tijdens de duw zijn de uitlegpunten vaag en wijken ze voor de labels bij de voeten
+  const filmOn=!!J&&f.t<J.T-.001;MKS.forEach((mm,i)=>projMk(PTS[i].at(f),mm,mkOn&&!filmOn,names?PTS[i].t.length:0));
+  // drukpunt en gele stip zijn obstakels: geen label erbovenop
+  if(copOn)block(copRing.position,13);if(show)block(foot,9);
+  if(innerWidth<=820&&document.body.classList.contains('mobmap')){const mr=$('#mapCard').getBoundingClientRect();if(mr.width)placed.push({x:mr.left-4,y:mr.top-4,w:mr.width+8,h:mr.height+8});}
+  const mobT=innerWidth<=820&&(during||f.stage==='step');// op een smal scherm: tijdens het kantelen alleen de toestand en d
+  tagK.textContent=(()=>{if(J&&J.out==='tip'){if(f.t<=J.tc&&f.t>TR&&Meff(A,f.Ft)>=.9*A.Mr)return innerWidth<=820?'ΣM = 0 nog net':'drukpunt bijna op de rand: ΣM = 0 nog net';if(f.t>J.tc&&f.t<J.tc+.5&&f.stage==='tip')return 'ΣM ≠ 0: kantelen begint';if(f.stage==='step')return J.offBeam?'stap van de balk: nieuw steunvlak':J.cross?'kruispas: nieuw steunvlak':'stap: nieuw steunvlak';
+      if(f.stage==='step2')return J.offBeam?'tweede voet van de balk':'tweede stap: voeten naast elkaar';if(during&&dLive<0)return 'loodlijn voorbij de kantelrand';}
+    if(J&&(J.out==='slide'||J.slideTip)&&f.t>J.ts&&(J.slideTip?f.t<=J.tc:f.t<J.slEnd))return f.Ft>A.Fs?'schuift: F > μ · m · g':'glijdt uit: de wrijving remt af';return '';})();
+  project(f.P.head.clone().add(V(0,.32,0)),tagK,60,0);
+  // drukpunt-label naast de ring (rechts), op dezelfde hoogte
+  tagP.textContent=copOn?'○ drukpunt':'';project(copRing.position,tagP,-16,8);
+  tagE.textContent=edgeOn?(during?'kantelrand = draaipunt':'kantelrand'):'';project(Eb.clone().lerp(Ea,.5).add(V(A.u[0]*.07,0,A.u[1]*.07)),tagE,-10,6);
+  // d onder de gele lijn, in het midden; rood als de loodlijn voorbij de rand is
+  const dTxt=dOn?(dLive<0?`d = −${f2(-dLive)} m`:`d = ${f2(dLive)} m`):'';tagD.textContent=dTxt;tagD.style.color=dLive<0?'#ff8b7c':'#f2c873';project(c0.clone().lerp(c0.clone().add(V(A.u[0]*dLive,0,A.u[1]*dLive)),.5),tagD,dTxt.length*3.65+2,-12);
+  tagF.textContent=showF&&!mobT?`F = ${f0(Fv)} N`:'';project(f.C.clone().add(V(-A.u[0]*(.25+Fv/400*.25),.1,-A.u[1]*(.25+Fv/400*.25))),tagF,30,8);
+  tagH.textContent=lines&&!topV&&!mobT?`h = ${f2(A.h)} m`:'';project(V(E.x,f.B0.surf+A.h*.5,E.z).add(V(A.u[0]*.04,0,A.u[1]*.04)),tagH,-10,8);
+  tagG.textContent=show&&!topV&&!mobT?`m · g = ${f0(A.m*g)} N`:'';project(gTip.clone().add(V(0,gl*.45,0)),tagG,-14,0);
+  drawMap(f,cpXZ,cpHot,dLive,during,edgeOn);
+  document.body.classList.toggle('running',!!S.J&&S.tau<S.J.T-.001);document.body.classList.toggle('nolines',!show);
+  // smal scherm: tijdens en na een duw een kleine bovenkaart rechts onder de HUD, zodat je het drukpunt ziet schuiven
+  const mm=innerWidth<=820&&!!S.J;document.body.classList.toggle('mobmap',mm);if(mm){const mc=$('#mapCard'),tp=Math.round($('#hud').getBoundingClientRect().bottom+6)+'px';if(mc.style.top!==tp)mc.style.top=tp;}
+  uiT+=dt;if(uiT>.06){uiT=0;updateHud(f);if(S.J){drawChart();const md=S.tau>=S.J.tKey?'final':'run';if(md!==resMode)setRes(md);}}
   if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}}
 let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;render(dt);}
-resize();syncUI();requestAnimationFrame(loop);
-setTimeout(()=>toast('Kies een houding en druk op <b>spatie</b> om te duwen.'),1400);
-window.__ew={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,push,body,analyse,syncUI,openPt};
+resize();syncUI();setRes('ready');drawChart();requestAnimationFrame(loop);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{layout();camSnap=false;drawChart();});
+setTimeout(()=>toast(touch||innerWidth<=820?'Kies een houding, tik op <b>Duw!</b>':'Kies een houding en druk op <b>spatie</b> of <b>Duw!</b>',2500),1400);
+window.__ew={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,push,body,analyse,syncUI,openPt,closePt,replay,simulate,leanMax,setCam,frame:()=>CUR,studentAt,camera,controls,freeRect,changed,applySetup,curB,Meff,CX,hudVals,toast};
 })();
 </script>
 </body>

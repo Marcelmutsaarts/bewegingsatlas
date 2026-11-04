@@ -4,22 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>De landing · Bewegingsatlas</title>
-<meta name="description" content="Biomechanica-lab Momentum en impuls: een sprong van de kast in 3D. Zie hoe remtijd, landingstechniek en ondergrond de piekkracht bepalen, met een live kracht-tijdgrafiek.">
+<meta name="description" content="Biomechanica-lab Impuls en krachtstoot: een sprong van de kast in 3D. Zie hoe remweg, remtijd, landingstechniek en ondergrond de piekkracht bepalen, met een live kracht-tijdgrafiek.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg0:#2c3a42;--bg1:#0d1316;--ink:#f1e9da;--muted:#aab3b4;--panel:rgba(15,20,23,.86);--panel2:rgba(22,29,33,.95);--line:rgba(241,233,218,.13);--line2:rgba(241,233,218,.3);
-  --accent:#d65a42;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#e6b65e;--teal:#6fb2b4;--P:#7fc8a0;--T:#6fb2b4;--F:#e6b65e}
+  --accent:#d65a42;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#e6b65e;--teal:#6fb2b4;--P:#7fc8a0;--T:#6fb2b4;--F:#e6b65e;--K:#f0914a}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,input{font:inherit;color:inherit}
 #app{position:fixed;inset:0;background:radial-gradient(120% 90% at 55% 35%,var(--bg0) 0%,#18232a 55%,var(--bg1) 100%)}
+/* donkere band achter de titel, zodat die ook voor de lichte muur leesbaar blijft */
+#app::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--bandH,130px);background:linear-gradient(180deg,rgba(13,19,22,.85) 0%,rgba(13,19,22,.68) 55%,rgba(13,19,22,0) 100%);pointer-events:none;z-index:2}
+.title a,.title p{text-shadow:0 1px 6px rgba(0,0,0,.85)}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 #top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;z-index:6;pointer-events:none}
 #top>*{pointer-events:auto}
-.title a{color:var(--muted);text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+.title a{color:var(--muted);text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.title .nw{white-space:nowrap}
 .title a:hover{color:var(--ink)}
 .title h1{margin:2px 0 0;font:700 32px/1.05 Fraunces,serif;text-shadow:0 2px 18px rgba(0,0,0,.5)}
 .title p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
@@ -27,31 +31,40 @@ button,input{font:inherit;color:inherit}
 .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;backdrop-filter:blur(8px);white-space:nowrap}
 .btn:hover{border-color:var(--line2)}.btn.on{background:var(--ink);color:#111}
 .btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.42;cursor:not-allowed;box-shadow:none}
 .btn svg{width:16px;height:16px}
+.btn.sm{padding:5px 8px;font-size:12px;border-radius:8px}
 .seg{display:inline-flex;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
-.seg button{border:0;background:none;border-radius:7px;padding:6px 9px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
+.seg button{border:0;background:none;border-radius:7px;padding:6px 7px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
 .seg button.on{background:var(--ink);color:#111}
+#sWho button{padding:6px 5px;font-size:12px}
 .seg button kbd{font:10.5px "JetBrains Mono",monospace;opacity:.6;margin-right:4px}
-#lab{position:absolute;left:16px;top:104px;width:292px;max-height:calc(100% - 270px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:5;backdrop-filter:blur(10px);scrollbar-width:thin}
-#lab h4{margin:10px 0 6px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-#lab h4:first-child{margin-top:0}
-.sl{margin:6px 0 10px}
+#lab{position:absolute;left:16px;top:var(--topB,104px);width:292px;max-height:var(--labMax,calc(100% - 252px));overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:5;backdrop-filter:blur(10px);scrollbar-width:thin;display:flex;flex-direction:column}
+#lab h4{margin:9px 0 5px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+#lab .blk:first-child h4{margin-top:0}
+.sl{margin:6px 0 8px}
 .sl label{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:600}
 .sl label b{font:600 13px "JetBrains Mono",monospace;color:var(--gold)}
 .sl small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
 input[type=range]{width:100%;accent-color:var(--accent)}
-.jump{width:100%;justify-content:center;font-size:16px;padding:12px;margin:8px 0 2px;background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(214,90,66,.3)}
+.jumprow{display:flex;gap:6px;margin:10px 0 2px}
+.jump{flex:1;justify-content:center;font-size:16px;padding:11px;background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 8px 20px rgba(214,90,66,.3)}
+#bMore{display:none}
+/* bureaublad: als het paneel moet scrollen, blijft de springknop onderin in beeld */
+@media (min-width:821px){#lab .bJ{position:sticky;bottom:-12px;z-index:2;margin:0 -14px;padding:8px 14px 10px;background:linear-gradient(180deg,rgba(15,20,23,0) 0,rgba(15,20,23,.95) 9px)}#lab .bJ .jumprow{margin:0}}
 .row2{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.tog{display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0;cursor:pointer}
+.tog{display:flex;align-items:center;gap:8px;font-size:13px;margin:3px 0;cursor:pointer}
 .tog input{accent-color:var(--accent)}.tog kbd{margin-left:auto}
 kbd{font:600 11px "JetBrains Mono",monospace;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
 .mk{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;will-change:transform;display:flex;gap:6px;align-items:center}
 .mk b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#2a1d00;font:800 12px "Instrument Sans";box-shadow:0 0 0 3px rgba(230,182,94,.3),0 4px 12px rgba(0,0,0,.5)}
 .mk span{display:none;background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
-body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
+body.lbl-names .mk span{display:block}body.lbl-off .mk,body.running .mk{display:none}
 .mk.sel b{background:var(--accent);color:#fff}
-.tag3d{position:absolute;left:0;top:0;pointer-events:none;font:600 12px "JetBrains Mono",monospace;white-space:nowrap;will-change:transform;text-shadow:0 1px 4px #000}
-.panel{position:absolute;right:16px;top:104px;bottom:16px;width:390px;display:none;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:14px;z-index:7;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
+.mk{z-index:1}
+.tag3d{position:absolute;left:0;top:0;z-index:2;pointer-events:none;font:600 12px "JetBrains Mono",monospace;white-space:nowrap;will-change:transform;background:rgba(13,19,22,.72);padding:2px 6px;border-radius:5px}
+.tag3d.sm{font-size:10.5px;color:#c9c0ae;background:rgba(13,19,22,.55)}
+.panel{position:absolute;right:16px;top:var(--topB,104px);bottom:16px;width:390px;display:none;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:14px;z-index:7;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
 .panel.open{display:flex;animation:slidein .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes slidein{from{opacity:0;transform:translateX(16px)}}
 .ph{display:flex;gap:12px;align-items:flex-start;padding:14px 16px 0}
@@ -64,24 +77,33 @@ body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
 .pb{flex:1;overflow:auto;padding:12px 16px 16px;font-size:14.5px;line-height:1.55;scrollbar-width:thin}
 .pb p{margin:0 0 10px}.pb ul{margin:0 0 10px;padding-left:18px}.pb li{margin:3px 0}
 .calc{font:13px/1.6 "JetBrains Mono",monospace;background:rgba(255,255,255,.05);border-radius:9px;padding:10px 12px;margin:0 0 10px}
+.calc table{border-collapse:collapse;width:100%}.calc td{padding:1px 4px}.calc tr:first-child td{color:var(--muted)}
 .think{border-left:3px solid var(--gold);padding:8px 12px;background:rgba(230,182,94,.08);border-radius:0 9px 9px 0}
 .ctx{display:inline-block;font:600 10.5px "JetBrains Mono",monospace;padding:2px 6px;border-radius:4px;background:rgba(111,178,180,.2);color:var(--teal);margin-right:6px}
 .pnav{display:flex;justify-content:space-between;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
-#hud{position:absolute;left:324px;right:16px;bottom:16px;display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;z-index:4;backdrop-filter:blur(10px)}
-body.dossier #hud{right:422px}
-.eq{display:flex;align-items:center;gap:6px;flex:none}
-.term{width:118px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
-.term small{display:block;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-.term b{display:block;font:700 24px/1.05 Fraunces,serif;margin-top:2px}
-.term em{display:block;font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
-.term.P b{color:var(--P)}.term.T b{color:var(--T)}.term.F b{color:var(--F)}
-.op{font:700 22px Fraunces,serif;color:var(--muted)}
-#chartWrap{flex:1;min-width:160px;position:relative;height:96px}
+/* HUD */
+#hud{position:absolute;left:16px;right:16px;bottom:16px;display:flex;gap:14px;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;z-index:4;backdrop-filter:blur(10px)}
+body.dossier #hud{right:422px}body.dossier #res{display:none}
+.eqw{flex:none;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.eq{display:flex;align-items:center;gap:5px}
+.term{width:112px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
+.term small{display:block;font:600 10px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term b{display:block;font:700 23px/1.05 Fraunces,serif;margin-top:2px;white-space:nowrap}
+.term em{display:block;font-style:normal;font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.term i{display:block;height:4px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden}
+.term i span{display:block;height:100%;width:0;border-radius:3px}
+.term.P b{color:var(--P)}.term.P i span{background:var(--P)}.term.F b{color:var(--F)}.term.F i span{background:var(--F)}.term.T b{color:var(--T)}.term.T i span{background:var(--T)}
+@media (min-width:821px){.term.P{width:122px}}
+.term.K{margin-left:8px;border-style:dashed}.term.K b{color:var(--K)}.term.K i span{background:var(--K)}
+.op{font:700 21px Fraunces,serif;color:var(--muted);width:12px;text-align:center}
+#eqLine{font:600 11px "JetBrains Mono",monospace;color:#c9c0ae;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+#chartWrap{flex:1;min-width:240px;position:relative;height:104px;align-self:center}
 #chart{position:absolute;inset:0;width:100%;height:100%;display:block}
-#res{flex:none;width:250px;font-size:12.5px;line-height:1.4;border-left:1px solid var(--line);padding-left:12px}
+#res{flex:none;width:236px;font-size:12.5px;line-height:1.4;border-left:1px solid var(--line);padding-left:12px;align-self:center}
 #res b.t{display:block;font:700 15px/1.2 Fraunces,serif;margin-bottom:3px}
 #res .k{display:block;font:600 10px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
 #res.good b.t{color:var(--ok)}#res.mid b.t{color:var(--mid)}#res.bad b.t{color:var(--bad)}
+#res .tipm{display:none}
 .modal{position:absolute;inset:0;background:rgba(5,8,10,.66);display:none;place-items:center;z-index:20;padding:16px}
 .modal.open{display:grid}
 .mcard{background:var(--panel2);border:1px solid var(--line);border-radius:16px;max-width:620px;width:100%;max-height:92%;overflow:auto;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.55)}
@@ -98,54 +120,85 @@ body.dossier #hud{right:422px}
 .num-in{display:flex;gap:8px;align-items:center}.num-in input{width:110px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 textarea{width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:9px;padding:9px;font:14px "Instrument Sans";resize:vertical;color:var(--ink)}
 .keys{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}.keys td{padding:5px 6px;border-bottom:1px solid var(--line)}
-#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:520px;text-align:center}
+#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:min(520px,calc(100% - 32px));text-align:center}
 #toast.on{opacity:1}
 #loader{position:absolute;inset:0;display:grid;place-items:center;z-index:30;background:var(--bg1);transition:opacity .6s}
 #loader.gone{opacity:0;pointer-events:none}#loader div{text-align:center}#loader h3{font:700 26px Fraunces,serif;margin:14px 0 4px}#loader p{color:var(--muted);margin:0}
 .spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);margin:auto;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(1turn)}}
 #err{position:absolute;inset:0;display:none;place-items:center;z-index:40;background:var(--bg1);padding:24px;text-align:center}#err.open{display:grid}
-#slowmo{position:absolute;left:50%;top:22%;transform:translateX(-50%);font:700 13px "JetBrains Mono",monospace;letter-spacing:.2em;color:var(--gold);z-index:4;opacity:0;transition:opacity .2s;pointer-events:none;text-shadow:0 2px 10px #000}
+#slowmo{position:absolute;left:0;top:0;font:700 11.5px "JetBrains Mono",monospace;letter-spacing:.14em;color:var(--gold);z-index:4;opacity:0;transition:opacity .2s;pointer-events:none;background:rgba(13,19,22,.82);border:1px solid rgba(230,182,94,.4);padding:5px 10px;border-radius:999px;white-space:nowrap;transform:translateX(-50%)}
 #slowmo.on{opacity:1}
-body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font-size:16.5px}body.present .title h1{font-size:40px}
-@media (max-width:1180px){#res{display:none}}
-@media (max-width:960px){.term{width:100px}}
-@media (max-width:820px){.title h1{font-size:24px}.title p{display:none}#top{flex-direction:column}.tools{justify-content:flex-start}.btn .t{display:none}#lab{top:auto;bottom:126px;left:16px;right:16px;width:auto;max-height:32%}#hud{left:16px;right:16px!important}#chartWrap{display:none}.panel{left:16px;right:16px;width:auto;top:auto;height:62%}}
+body.present #lab{display:none}body.present .pb{font-size:16.5px}body.present .title h1{font-size:40px}
+/* laptop en tablet: het oordeel als compacte regel onder de vergelijking en de grafiek */
+@media (min-width:821px) and (max-width:1240px){
+  #hud{flex-wrap:wrap;row-gap:6px}
+  #res{width:100%;border-left:0;border-top:1px solid var(--line);padding:6px 0 0;font-size:12.5px}
+  #res .k{display:none}#res b.t{display:inline;font-size:14px;margin:0 8px 0 0}#res .x2{display:inline;color:#ddd5c7}
+}
+@media (max-width:1100px){.title p i{display:none}}
+@media (max-width:960px){.term{width:98px}.term b{font-size:20px}}
+@media (max-width:820px){
+  .title h1{font-size:22px}.title p{display:none}.title a{font-size:10.5px}#top{flex-direction:column;gap:6px;top:10px}.tools{justify-content:flex-start;gap:6px}.btn{padding:6px 9px;font-size:12px}.btn .t{display:none}
+  #lab{top:auto;left:16px;right:16px;width:auto;max-height:none;padding:8px 10px;bottom:var(--hudH,170px)}
+  /* "Meer" open: het paneel schuift over de HUD, zodat er genoeg beeld overblijft */
+  body.more #lab{max-height:50%;bottom:16px}body.more #hud{display:none}
+  /* na de eerste sprong: een compacte terugkijkrij die altijd zichtbaar is */
+  body.hasJ #lab .bScrub{display:block}body:not(.more) #lab .bScrub h4,body:not(.more) #lab .bScrub small,body:not(.more) #lab .speedRow{display:none}
+  body:not(.more) #lab .bScrub .sl{margin:0 0 4px}body:not(.more) #lab .bScrub .sl label{font-size:11.5px}body:not(.more) #lab .bScrub .sl label b{font-size:11.5px}
+  body:not(.more) #lab .scrubBtns{flex-wrap:nowrap;margin-bottom:2px!important}#lab .scrubBtns .btn{flex:1;justify-content:center;padding:4px 4px}
+  #lab .blk{display:none}#lab .blk.core{display:block}body.more #lab .blk{display:block}
+  #lab .blk.core h4{display:none}body.more #lab .blk.core h4{display:block}
+  #lab .bJ{order:1}#lab .bTech{order:2}#lab .bSurf{order:3}#lab .bWho{order:4}#lab .bH{order:5}#lab .bScrub{order:6}#lab .bLay{order:7}
+  .jumprow{margin:0 0 6px}.jump{font-size:15px;padding:8px}.jump kbd{display:none}#bMore{display:inline-flex}
+  #lab .seg{display:flex;width:100%}#lab .seg button{flex:1;padding:6px 4px;font-size:12px}#lab .seg button kbd{display:none}
+  #hud{flex-wrap:wrap;gap:6px;padding:8px 10px}
+  .eqw{width:100%}.eq{display:grid;grid-template-columns:1fr 12px 1fr 12px 1fr;gap:3px}
+  .term{width:auto;min-width:0;padding:5px 6px}.term small{font-size:8.5px;letter-spacing:0}.term b{font-size:18px}.term em{font-size:9.5px}.term.K{display:none}
+  #eqLine{font-size:10px;max-width:none;text-align:center}
+  #chartWrap{width:100%;flex:none;min-width:0;height:70px}
+  #res{display:block;width:100%;border-left:0;padding-left:0;font-size:12px}#res .k,#res .x2{display:none}#res b.t{font-size:13px;margin:0}#res .tipm{display:block;font-size:11.5px;color:#ddd5c7;margin-top:1px}
+  .tag3d{font-size:10.5px}.panel{left:16px;right:16px;width:auto;top:auto;height:62%}
+  body.dossier #hud{right:16px}
+}
 </style>
 </head>
 <body class="lbl-dots">
 <div id="app">
   <canvas id="c" aria-label="3D-gymzaal met een sprong van de kast"></canvas>
   <div id="labels"></div>
-  <div id="toast"></div><div id="slowmo">SLOW MOTION · CONTACT</div>
+  <div id="toast"></div><div id="slowmo">SLOW MOTION · HET CONTACT</div>
   <header id="top">
-    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>De landing</h1><p>Week 6 · Momentum en impuls: F · Δt = m · Δv <i style="font:12px 'JetBrains Mono',monospace;font-style:normal;color:#c9c0ae">· langer remmen, minder kracht</i></p></div>
+    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>De landing</h1><p>Week 6 · Impuls en krachtstoot: <span class="nw">F · Δt = m · Δv</span> <i style="font:12px 'JetBrains Mono',monospace;font-style:normal;color:#c9c0ae">· langer remmen, minder kracht</i></p></div>
     <div class="tools">
       <button class="btn" id="bQuiz">Opdrachten</button>
       <button class="btn" id="bHelp">Uitleg</button>
+      <button class="btn" id="bCam" title="Camera (C)">Camera: volgen</button>
       <button class="btn" id="bLbl">Labels: stippen</button>
-      <button class="btn" id="bSound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
-      <button class="btn" id="bPresent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
+      <button class="btn" id="bSound" aria-label="Geluid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
+      <button class="btn" id="bPresent" aria-label="Presenteren"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
     </div>
   </header>
 
   <aside id="lab">
-    <h4>Wie springt?</h4>
-    <div class="seg" id="sWho"><button data-v="po">PO · 30 kg</button><button data-v="vo">VO · 55 kg</button><button data-v="st">Student · 70 kg</button></div>
-    <h4>Sprong</h4>
-    <div class="sl"><label>Hoogte van de kast <b id="oH"></b></label><input type="range" id="iH" min=".4" max="1.6" step=".05"><small id="oH2"></small></div>
-    <h4>Landing</h4>
-    <div class="seg" id="sTech"><button data-v="stiff"><kbd>1</kbd>Stijf</button><button data-v="knee"><kbd>2</kbd>Door de knieën</button><button data-v="deep"><kbd>3</kbd>Diep inveren</button></div>
-    <h4>Ondergrond</h4>
-    <div class="seg" id="sSurf"><button data-v="floor">Gymvloer</button><button data-v="turn">Turnmat</button><button data-v="thick">Dikke mat</button></div>
-    <button class="btn jump" id="bJump">Spring! <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd></button>
-    <h4>Terugkijken</h4>
-    <div class="sl" style="margin-top:0"><label>Tijd <b id="oScrub">–</b></label><input type="range" id="iScrub" min="0" max="1000" value="0" disabled></div>
-    <div class="row2"><div class="seg" id="sSpeed"><button data-v=".25">×¼</button><button data-v=".5">×½</button><button data-v="1">×1</button></div><button class="btn" id="bReplay" style="padding:6px 10px">↻ Herhaal</button></div>
-    <h4>Lagen</h4>
-    <label class="tog"><input type="checkbox" id="tSlow" checked> Slow motion bij het contact <kbd>M</kbd></label>
-    <label class="tog"><input type="checkbox" id="tV" checked> Snelheidspijl <kbd>V</kbd></label>
-    <label class="tog"><input type="checkbox" id="tF" checked> Grondreactiekracht <kbd>F</kbd></label>
-    <label class="tog"><input type="checkbox" id="tK" checked> Belasting op de knie <kbd>K</kbd></label>
+    <div class="blk bWho"><h4>Wie springt?</h4>
+      <div class="seg" id="sWho"><button data-v="po">PO · 30 kg</button><button data-v="vo">VO · 55 kg</button><button data-v="st">Student · 70 kg</button></div></div>
+    <div class="blk bH"><h4>Valhoogte</h4>
+      <div class="sl"><label>Kast boven de landingsplek <b id="oH"></b></label><input type="range" id="iH" min=".4" max="1.6" step=".05" aria-label="Valhoogte"><small id="oH2"></small></div></div>
+    <div class="blk core bTech"><h4>Landing</h4>
+      <div class="seg" id="sTech"><button data-v="stiff"><kbd>1</kbd>Stijf</button><button data-v="knee"><kbd>2</kbd>Door de knieën</button><button data-v="deep"><kbd>3</kbd>Diep inveren</button></div></div>
+    <div class="blk core bSurf"><h4>Ondergrond</h4>
+      <div class="seg" id="sSurf"><button data-v="floor">Gymvloer</button><button data-v="turn">Turnmat</button><button data-v="thick">Dikke mat</button></div></div>
+    <div class="blk core bJ"><div class="jumprow"><button class="btn jump" id="bJump">Spring! <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd></button><button class="btn" id="bMore" aria-expanded="false">Meer ▾</button></div></div>
+    <div class="blk bScrub"><h4>Terugkijken</h4>
+      <div class="sl scrubSl" style="margin-top:0"><label>Tijd <b id="oScrub">–</b></label><input type="range" id="iScrub" min="0" max="1000" value="0" disabled aria-label="Tijdschuif"><small>Het midden van de schuif is het contact, uitvergroot.</small></div>
+      <div class="row2 scrubBtns" style="margin-bottom:6px"><button class="btn sm" id="bToC">Contact</button><button class="btn sm" id="bToP">Piek</button><button class="btn sm" id="bMin" aria-label="10 ms terug">−10 ms</button><button class="btn sm" id="bPlus" aria-label="10 ms verder">+10 ms</button></div>
+      <div class="row2 speedRow"><div class="seg" id="sSpeed"><button data-v=".25">×¼</button><button data-v=".5">×½</button><button data-v="1">×1</button></div><button class="btn" id="bReplay" style="padding:6px 10px">↻ Herhaal</button></div></div>
+    <div class="blk bLay"><h4>Lagen</h4>
+      <label class="tog"><input type="checkbox" id="tSlow" checked> Slow motion bij het contact <kbd>M</kbd></label>
+      <label class="tog"><input type="checkbox" id="tV" checked> Snelheidspijl <kbd>V</kbd></label>
+      <label class="tog"><input type="checkbox" id="tF" checked> Krachten: vloer en gewicht <kbd>F</kbd></label>
+      <label class="tog"><input type="checkbox" id="tS" checked> Remweg en stroboscoop <kbd>S</kbd></label>
+      <label class="tog"><input type="checkbox" id="tK" checked> Kleurring: belasting <kbd>K</kbd></label></div>
   </aside>
 
   <aside class="panel" id="dossier">
@@ -156,15 +209,19 @@ body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font
   </aside>
 
   <div id="hud">
-    <div class="eq">
-      <div class="term P"><small>Impuls p = m · v</small><b id="vP">0</b><em id="vP2">kg·m/s</em></div>
-      <div class="op">÷</div>
-      <div class="term T"><small>Remtijd Δt</small><b id="vT">–</b><em>milliseconden</em></div>
-      <div class="op">→</div>
-      <div class="term F"><small>Kracht F</small><b id="vF">–</b><em id="vF2">× lichaamsgewicht</em></div>
+    <div class="eqw">
+      <div class="eq">
+        <div class="term P"><small id="sP">Impuls p = m · v</small><b id="vP">0</b><em id="vP2">kg·m/s</em><i><span id="bP"></span></i></div>
+        <div class="op">=</div>
+        <div class="term F"><small>Remkracht F</small><b id="vF">–</b><em id="vF2">N, netto</em><i><span id="bF"></span></i></div>
+        <div class="op">·</div>
+        <div class="term T"><small>Remtijd Δt</small><b id="vT">–</b><em id="vT2">seconde</em><i><span id="bT"></span></i></div>
+        <div class="term K"><small>Piekkracht</small><b id="vK">–</b><em id="vK2">× lichaamsgewicht</em><i><span id="bK"></span></i></div>
+      </div>
+      <div id="eqLine">impulsverandering Δp = gemiddelde netto remkracht · remtijd</div>
     </div>
-    <div id="chartWrap"><canvas id="chart"></canvas></div>
-    <div id="res"><span class="k">Klaar voor de sprong</span><b class="t">Kies een landing en spring</b>Dezelfde val, een andere landing: wat gebeurt er met de piekkracht?</div>
+    <div id="chartWrap"><canvas id="chart" aria-label="Kracht-tijdgrafiek van de landing"></canvas></div>
+    <div id="res"><span class="k">Klaar voor de sprong</span><b class="t">Kies een landing en spring</b><span class="x2">Dezelfde val, een andere landing: wat gebeurt er met de piekkracht?</span></div>
   </div>
 
   <div class="modal" id="mQuiz"><div class="mcard" id="quizBody"></div></div>
@@ -187,37 +244,80 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
 const ease=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
 const D2R=Math.PI/180,TAU=Math.PI*2;
-const f1=n=>n.toFixed(1).replace('.',','),f2=n=>n.toFixed(2).replace('.',','),f0=n=>Math.round(n).toLocaleString('nl-NL');
+const f1=n=>n.toFixed(1).replace('.',','),f2=n=>n.toFixed(2).replace('.',','),f3=n=>n.toFixed(3).replace('.',',');
+const f0=n=>{const s=String(Math.round(Math.abs(n))).replace(/\B(?=(\d{3})+(?!\d))/g,' ');return (n<0&&Math.round(n)!==0?'−':'')+s;};
 const store={get(k,d){try{const v=localStorage.getItem('landing.'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('landing.'+k,JSON.stringify(v));}catch(e){}}};
-function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),3400);}
+function toast(m){const t=$('#toast');t.innerHTML=m;const tp=document.getElementById('top');if(tp)t.style.top=Math.round(tp.getBoundingClientRect().bottom+8)+'px';t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),3800);}
 
-/* ================= model ================= */
-const g=9.81,KX=-.55,VX=.95,VZ=1.1;
+/* ================= model =================
+   Valhoogte H = bovenkant kast boven de landingsplek (dus gelijk bij elke ondergrond).
+   Remweg d = hoeveel het zwaartepunt zakt van eerste contact tot stilstand: lichaam (zichtbaar in de houding) + indeuken van de ondergrond.
+   Netto remkracht = halve sinus bovenop het lichaamsgewicht: F(t) = m·g + Fn·sin(π t/Δt), met ∫Fn = m·v → Fn = π·m·v/(2Δt), en d = v·Δt/2.  */
+const g=9.81,KX=-.55,TOEK=KX-.05,VX=1.6,VZ=1.1,FR=.04,TCM=.45,TH=.2,TL=.12,POST=1.7,SLOW=.08,STROBE=.02;
 const WHO={po:{m:30,sc:.78,n:'PO-leerling'},vo:{m:55,sc:.94,n:'VO-leerling'},st:{m:70,sc:1.03,n:'Student'}};
-const TECH={stiff:{pose:'stiff',n:'Stijf'},knee:{pose:'knee',n:'Door de knieën'},deep:{pose:'deep',n:'Diep inveren'}};
+const TECH={stiff:{pose:'stiff',n:'Stijf',kn:'ongeveer 70°'},knee:{pose:'knee',n:'Door de knieën',kn:'ongeveer 110°'},deep:{pose:'deep',n:'Diep inveren',kn:'ongeveer 145°'}};
 const SURF={floor:{h:0,d:.004,n:'Gymvloer'},turn:{h:.06,d:.035,n:'Turnmat'},thick:{h:.30,d:.2,n:'Dikke mat'}};
-const SOFT=.2; // ‘verende’ weg van enkels, hielen en weefsel, ook bij een stijve landing
-const POSES={stand:{t:0,th:0,sh:0,ua:6,fa:10},prep:{t:24,th:40,sh:-26,ua:-40,fa:-30},air:{t:10,th:30,sh:-20,ua:70,fa:80},reach:{t:6,th:8,sh:-4,ua:65,fa:72},
-  stiff:{t:6,th:22,sh:-12,ua:60,fa:70},knee:{t:28,th:72,sh:-36,ua:75,fa:85},deep:{t:40,th:98,sh:-48,ua:85,fa:95}};
+// t romp voorover · th bovenbeen (+ = knie naar voren) · sh onderbeen (− = enkel achter de knie) · ua/fa armen · fo voet (+ = tenen omlaag)
+const POSES={stand:{t:0,th:-3,sh:-3,ua:8,fa:12,fo:0},prep:{t:20,th:40,sh:-24,ua:-36,fa:-26,fo:0},up:{t:6,th:3,sh:2,ua:100,fa:108,fo:20},
+  air:{t:12,th:38,sh:-34,ua:100,fa:112,fo:24},reach:{t:8,th:12,sh:-6,ua:80,fa:88,fo:28},
+  stiff:{t:10,th:40,sh:-28,ua:66,fa:78,fo:0},knee:{t:30,th:72,sh:-40,ua:82,fa:92,fo:0},deep:{t:45,th:95,sh:-50,ua:92,fa:102,fo:0}};
 const lerpPose=(A,B,t)=>{const o={};for(const k in A)o[k]=A[k]+(B[k]-A[k])*t;return o;};
 let SC=1;
-function bodyPts(P){const s=SC,t=P.t*D2R,th=P.th*D2R,sh=P.sh*D2R,ua=P.ua*D2R,fa=P.fa*D2R;
+function bodyPts(P){const s=SC,t=P.t*D2R,th=P.th*D2R,sh=P.sh*D2R,ua=P.ua*D2R,fa=P.fa*D2R,fo=P.fo*D2R,cf=Math.cos(fo),sf=Math.sin(fo);
   const sho=[.52*s*Math.sin(t),.52*s*Math.cos(t)],head=[sho[0]+.17*s*Math.sin(t),sho[1]+.17*s*Math.cos(t)];
-  const knee=[.44*s*Math.sin(th),-.44*s*Math.cos(th)],ank=[knee[0]+.43*s*Math.sin(sh),knee[1]-.43*s*Math.cos(sh)],toe=[ank[0]+.17*s*Math.cos(sh),ank[1]+.17*s*Math.sin(sh)];
+  const knee=[.44*s*Math.sin(th),-.44*s*Math.cos(th)],ank=[knee[0]+.43*s*Math.sin(sh),knee[1]-.43*s*Math.cos(sh)];
+  const rot=(px,py)=>[ank[0]+(px*cf+py*sf)*s,ank[1]+(-px*sf+py*cf)*s];const toe=rot(.15,-.045),heel=rot(-.06,-.045);
   const elb=[sho[0]+.30*s*Math.sin(ua),sho[1]-.30*s*Math.cos(ua)],hand=[elb[0]+.36*s*Math.sin(fa),elb[1]-.36*s*Math.cos(fa)];
-  return {hip:[0,0],sho,head,knee,ank,toe,elb,hand};}
-const SEGS=[['romp','hip','sho',.497,1],['bovenarm','sho','elb',.028,2],['onderarm','elb','hand',.022,2],['bovenbeen','hip','knee',.10,2],['onderbeen','knee','ank',.0465,2],['voet','ank','toe',.0145,2]];
+  return {hip:[0,0],sho,head,knee,ank,toe,heel,elb,hand};}
+const SEGS=[['romp','hip','sho',.497,1],['bovenarm','sho','elb',.028,2],['onderarm','elb','hand',.022,2],['bovenbeen','hip','knee',.10,2],['onderbeen','knee','ank',.0465,2],['voet','heel','toe',.0145,2]];
 function massProps(P){const p=bodyPts(P);let mx=0,my=0;for(const [n,a,b,f,c] of SEGS){const A=p[a],B=p[b];mx+=f*c*(A[0]+B[0])/2;my+=f*c*(A[1]+B[1])/2;}mx+=.081*p.head[0];my+=.081*p.head[1];return {p,com:[mx,my]};}
-function solePt(mp){const a=mp.p.ank,t=mp.p.toe;return [(a[0]+t[0])/2,Math.min(a[1],t[1])-.05*SC];}
-function comFromContact(mp,c){const s=solePt(mp);return [c[0]+mp.com[0]-s[0],c[1]+mp.com[1]-s[1]];}
-function comHeight(pose){const mp=massProps(pose);return mp.com[1]-solePt(mp)[1];}
-function simulate(cfg){SC=WHO[cfg.who].sc;const m=WHO[cfg.who].m,S=SURF[cfg.surf],H=cfg.H;
-  const y0=H+comHeight(POSES.stand),hReach=comHeight(POSES.reach);
-  // tijd tot de voeten de ondergrond raken: y0 + VZ t − g t²/2 − hReach = S.h
-  const c=y0-hReach-S.h,tc=(VZ+Math.sqrt(VZ*VZ+2*g*c))/g;const v=g*tc-VZ; // neerwaartse snelheid bij contact
-  const drop=comHeight(POSES.reach)-comHeight(POSES[TECH[cfg.tech].pose]);const dBody=SOFT*SC+drop,d=dBody+S.d;
-  const dt=2*d/v,Fp=Math.PI*m*v/(2*dt),W=m*g,peak=(Fp+W)/W;
-  return {cfg:{...cfg},m,W,H,S,y0,tc,v,p:m*v,dBody,dS:S.d,d,dt,Fp,peak,xC:KX-.12+VX*tc,fallH:v*v/(2*g)};}
+const groundY=mp=>Math.min(mp.p.toe[1],mp.p.heel[1])-FR*SC;
+// zwaartepunt in de wereld als de bal van de voet (toe) op punt c staat
+function comFromContact(mp,c){return [c[0]+mp.com[0]-mp.p.toe[0],c[1]+mp.com[1]-groundY(mp)];}
+function comHeight(pose){const mp=massProps(pose);return mp.com[1]-groundY(mp);}
+// romphoek zo kiezen dat het zwaartepunt boven het midden van de voet ligt (evenwicht, week 3)
+function balance(P){const s0=SC;SC=1;let lo=-30,hi=80;for(let i=0;i<40;i++){const mid=(lo+hi)/2,mp=massProps({...P,t:mid});const dx=mp.com[0]-(mp.p.toe[0]+mp.p.heel[0])/2-.005;if(dx>0)hi=mid;else lo=mid;}P.t=(lo+hi)/2;SC=s0;}
+['stand','prep','stiff','knee','deep'].forEach(k=>balance(POSES[k]));
+function landPose(tech,k){const A=POSES.reach,B=POSES[TECH[tech].pose],o=lerpPose(A,B,k);o.fo=A.fo*(1-ease(clamp(k/.4,0,1)));return o;}
+const TAB={};
+function tab(tech){if(TAB[tech])return TAB[tech];const s0=SC;SC=1;const h=[];for(let i=0;i<=200;i++)h.push(comHeight(landPose(tech,i/200)));for(let i=1;i<=200;i++)h[i]=Math.min(h[i],h[i-1]);SC=s0;return TAB[tech]=h;}
+function kForDrop(tech,b){const h=tab(tech),bb=b/SC,h0=h[0];if(bb<=0)return 0;for(let i=1;i<=200;i++){const di=h0-h[i];if(di>=bb){const dp=h0-h[i-1];const fr=(di-dp)>1e-9?(bb-dp)/(di-dp):0;return (i-1+fr)/200;}}return 1;}
+// het hele lichaam (romp, benen, armen) kantelen om de enkel; de voet houdt zijn hoek
+// bij de landing (d < 0) draaien vooral de benen naar voren en de romp maar deels mee
+const LA=.6,leanP=(P,d,a)=>{a=a===undefined?1:a;return {t:P.t+a*d,th:P.th-d,sh:P.sh-d,ua:P.ua-a*d,fa:P.fa-a*d,fo:P.fo};};
+// hoogte van het zwaartepunt boven de steun en horizontale afstand tot de bal van de voet
+function hx(P){const mp=massProps(P);return [mp.com[1]-groundY(mp),mp.com[0]-mp.p.toe[0]];}
+function solveLean(P,xT,d0,la){let d=d0||0;for(let i=0;i<10;i++){const e=hx(leanP(P,d,la))[1]-xT;if(Math.abs(e)<1e-6)break;const e2=hx(leanP(P,d+.2,la))[1]-xT;const s=(e2-e)/.2;if(Math.abs(s)<1e-9)break;d-=e/s;}return d;}
+// zoek houding (mengfactor k, kanteling d) zodat het zwaartepunt precies op hoogte hT en afstand xT zit
+function solve2(fn,hT,xT,k0,d0,la){let k=clamp(k0,0,1),d=d0||0;
+  for(let i=0;i<10;i++){const e=hx(leanP(fn(k),d,la)),r0=e[0]-hT,r1=e[1]-xT;if(Math.abs(r0)<2e-6&&Math.abs(r1)<2e-6)break;
+    const ek=hx(leanP(fn(k+1e-3),d,la)),ed=hx(leanP(fn(k),d+.1,la));const a=(ek[0]-e[0])/1e-3,b=(ed[0]-e[0])/.1,c=(ek[1]-e[1])/1e-3,q=(ed[1]-e[1])/.1,det=a*q-b*c;
+    if(Math.abs(det)<1e-10)break;k=clamp(k-(r0*q-b*r1)/det,0,1);d-=(a*r1-c*r0)/det;}
+  solve2.k=k;solve2.d=d;return leanP(fn(k),d,la);}
+function simulate(cfg){SC=WHO[cfg.who].sc;const m=WHO[cfg.who].m,Sf=SURF[cfg.surf],H=cfg.H,kastTop=Sf.h+H,W=m*g;
+  // afzet: tegenbeweging (TCM s) en duwfase (TP s); de zwaartepuntbaan volgt uit dezelfde kracht als in de HUD
+  const eS=hx(POSES.stand),hS=eS[0],offS=eS[1],hP=hx(POSES.prep)[0],Dc=hS-hP,A=TAU*Dc/(g*TCM*TCM);
+  const xU=offS+VX*TH/2,dU=solveLean(POSES.up,xU,0),poseTO=leanP(POSES.up,dU),hU=hx(poseTO)[0],Dp=hU-hP,TP=2*Dp/VZ,pre=TCM+TP;
+  const x0=TOEK+xU,y0=kastTop+hU;
+  // landing: voeten vóór het zwaartepunt, zodat het zwaartepunt tijdens het remmen doorschuift tot boven het midden van de voet
+  const eE=hx(landPose(cfg.tech,1)),hE=eE[0],offE=eE[1];
+  // het eerste contact ligt altijd op dezelfde zwaartepunthoogte hR, dus v en p zijn bij elke techniek en ondergrond gelijk
+  // horizontaal: constante wrijving remt de vaart VX in TL s af, dus het zwaartepunt schuift VX·TL/2 door tot boven het midden van de voet.
+  // Daardoor is de contacthouding (voeten vóór het zwaartepunt) voor elke techniek en ondergrond dezelfde.
+  const offR=offE-VX*TL/2,d0=solveLean(POSES.reach,offR,-5,LA),poseR=leanP(POSES.reach,d0,LA),Rb=POSES.reach;
+  const hR=hx(poseR)[0],yC=Sf.h+hR,c=y0-yC,tc=(VZ+Math.sqrt(VZ*VZ+2*g*c))/g,v=g*tc-VZ,dBody=hR-hE,d=dBody+Sf.d,xC=x0+VX*tc-offR;
+  const dt=2*d/v,Fn=Math.PI*m*v/(2*dt),peak=(Fn+W)/W,Favg=m*v/dt;
+  return {cfg:{...cfg},m,W,H,S:Sf,kastTop,x0,y0,hR,yC,tc,v,p:m*v,dBody,dS:Sf.d,d,dt,Fn,Favg,peak,xC,fallH:c+VZ*VZ/(2*g),sc:SC,
+    hS,hP,hU,offS,Dc,Dp,A,TP,pre,poseTO,poseR,Rb,offR,offE,d0,pTO:m*VZ};}
+// landingshouding vanuit de contacthouding van deze sprong
+function landPoseJ(J,k){const A=J.Rb,B=POSES[TECH[J.cfg.tech].pose],o=lerpPose(A,B,k);o.fo=A.fo*(1-ease(clamp(k/.4,0,1)));return o;}
+// horizontale afstand zwaartepunt – bal van de voet, tl s na het eerste contact
+const xPath=(J,tl)=>tl<TL?J.offR+VX*(tl-tl*tl/(2*TL)):J.offE;
+// vaste referentiesprongen voor de rekenvoorbeelden in de tekst (VO-leerling, kast 1,0 m)
+const R=(who,tech,surf,H)=>simulate({who,tech,surf,H:H||1});
+const RF={vk:R('vo','knee','floor'),vs:R('vo','stiff','floor'),vd:R('vo','deep','floor'),pk:R('po','knee','floor'),ps:R('po','stiff','floor'),sk:R('st','knee','floor'),
+  vsT:R('vo','stiff','thick'),vsM:R('vo','stiff','turn'),h05:R('vo','knee','floor',.5),h15:R('vo','knee','floor',1.5),h08:R('vo','knee','floor',.8),h16:R('vo','knee','floor',1.6),q6:{floor:R('vo','stiff','floor',1.2),turn:R('vo','stiff','turn',1.2),thick:R('vo','stiff','thick',1.2)},q5:{knee:R('vo','knee','floor',1.2),deep:R('vo','deep','floor',1.2)}};
+const Q6LIM=7;
 
 /* ================= renderer & gymzaal ================= */
 const canvas=$('#c');let renderer;
@@ -226,8 +326,7 @@ renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,16,40);
 const camera=new THREE.PerspectiveCamera(34,1,.05,100);
-const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2;controls.maxDistance=14;controls.maxPolarAngle=1.5;
-const HOME=innerWidth<820?{p:[.1,1.4,7.4],t:[.1,.55,0]}:{p:[-.62,1.55,5.1],t:[-.72,1.0,0]};function frameCam(){const H=S?S.cfg.H:1,nar=innerWidth<820,ty=(nar?.35:.72)+H*.52,d=(nar?6.2:5.2)+H*1.5,x=nar?.1:-.75;camera.position.set(x+.1,ty+.5,d);controls.target.set(x,ty,0);}
+const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=1.2;controls.maxDistance=16;controls.maxPolarAngle=1.5;
 scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.55));
 const key=new THREE.DirectionalLight(0xfff1dc,1.15);key.position.set(3,7,5);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-4,right:4,top:4,bottom:-2,near:1,far:20});key.shadow.bias=-.0004;scene.add(key);
 const rim=new THREE.DirectionalLight(0x9fc7d8,.45);rim.position.set(-5,3,-4);scene.add(rim);
@@ -236,224 +335,371 @@ function mesh(geo,mat,pos,parent){const m=new THREE.Mesh(geo,mat);if(pos)m.posit
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;}
 const floorTex=canvasTex(1024,512,(x,w,h)=>{for(let i=0;i<32;i++){const y=i*h/32;x.fillStyle=`hsl(${30+Math.random()*6},${42+Math.random()*10}%,${46+Math.random()*9}%)`;x.fillRect(0,y,w,h/32);x.fillStyle='rgba(60,35,15,.35)';x.fillRect(0,y,w,1.5);for(let k=0;k<3;k++){const xx=Math.random()*w;x.fillRect(xx,y,1.5,h/32);}}
   x.strokeStyle='rgba(255,255,255,.75)';x.lineWidth=5;x.beginPath();x.moveTo(0,h*.8);x.lineTo(w,h*.8);x.stroke();});
-const FW=8,FD=5;
+const FW=9,FD=5;
 mesh(new THREE.BoxGeometry(FW,.25,FD),std(0x2a1d15),[0,-.125,0]);
 const floor=mesh(new THREE.PlaneGeometry(FW,FD),std(0xffffff,{map:floorTex,roughness:.55}),[0,.002,0]);floor.rotation.x=-Math.PI/2;floor.castShadow=false;
 const wallM=std(0xcfd6d8),woodM=std(0xc89a5e,{roughness:.6});
-mesh(new THREE.BoxGeometry(FW,3.2,.12),wallM,[0,1.6,-FD/2]);
-for(let s=0;s<3;s++){const x0=1.0+s*1.0;[x0,x0+.9].forEach(x=>mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[x,1.3,-FD/2+.16]));for(let r=0;r<14;r++)mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[x0+.45,.18+r*.17,-FD/2+.16]).rotation.z=Math.PI/2;}
-// kast (opbouw uit kastdelen)
+mesh(new THREE.BoxGeometry(FW,3.4,.12),wallM,[0,1.7,-FD/2]);
+for(let s=0;s<3;s++){const x0=1.3+s*1.0;[x0,x0+.9].forEach(x=>mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[x,1.3,-FD/2+.16]));for(let r=0;r<14;r++)mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[x0+.45,.18+r*.17,-FD/2+.16]).rotation.z=Math.PI/2;}
+// kast (opbouw uit kastdelen); de bovenkant ligt H boven de landingsplek
 const kastG=new THREE.Group();scene.add(kastG);
-const kastWood=std(0xc4935a,{roughness:.6}),kastTop=std(0x8a5a36,{roughness:.8});
+const kastWood=std(0xc4935a,{roughness:.6}),kastTop=std(0x8a5a36,{roughness:.8}),kastLine=std(0x6b4628);
 function buildKast(H){while(kastG.children.length)kastG.remove(kastG.children[0]);const n=Math.max(1,Math.round((H-.2)/.2));const segH=(H-.12)/n;
-  for(let i=0;i<n;i++){const w=1.0+i*.04*0;const b=mesh(new THREE.BoxGeometry(.62-.0*i,segH-.012,1.15),kastWood,[KX-.31,segH*(n-i-1)+segH/2,0],kastG);
-    const l=mesh(new THREE.BoxGeometry(.64,.02,1.17),std(0x6b4628),[KX-.31,segH*(n-i-1)+segH-.006,0],kastG);l.castShadow=false;}
+  for(let i=0;i<n;i++){mesh(new THREE.BoxGeometry(.62,segH-.012,1.15),kastWood,[KX-.31,segH*(n-i-1)+segH/2,0],kastG);
+    const l=mesh(new THREE.BoxGeometry(.64,.02,1.17),kastLine,[KX-.31,segH*(n-i-1)+segH-.006,0],kastG);l.castShadow=false;}
   mesh(new THREE.BoxGeometry(.6,.12,1.1),kastTop,[KX-.31,H-.06,0],kastG);}
-// ondergronden
-const thickMat=new THREE.Group();scene.add(thickMat);
-const tm=mesh(new THREE.BoxGeometry(2.4,SURF.thick.h,1.9),std(0x2e5fa3,{roughness:.85}),[.85,SURF.thick.h/2,0],thickMat);
-const tmTop=mesh(new THREE.BoxGeometry(2.34,.012,1.84),std(0x3a73c0,{roughness:.9}),[.85,SURF.thick.h+.006,0],thickMat);
-const turnMat=new THREE.Group();scene.add(turnMat);
-const trm=mesh(new THREE.BoxGeometry(2.0,SURF.turn.h,1.0),std(0x3b8a6e,{roughness:.9}),[.75,SURF.turn.h/2,0],turnMat);
-const floorPad=new THREE.Group();scene.add(floorPad);
-const impact=mesh(new THREE.RingGeometry(.05,.07,40),new THREE.MeshBasicMaterial({color:0xe6b65e,transparent:true,opacity:0,side:THREE.DoubleSide}),[0,.01,0]);impact.rotation.x=-Math.PI/2;impact.castShadow=false;
-function showSurf(s){thickMat.visible=s==='thick';turnMat.visible=s==='turn';}
+// matten met een plaatselijke deuk onder de voeten
+function makeMat(w,h,dp,sx,sz,cSide,cTop,cx){const geo=new THREE.BoxGeometry(w,h,dp,sx,1,sz);const side=std(cSide,{roughness:.85}),top=std(cTop,{roughness:.9});
+  const m=new THREE.Mesh(geo,[side,side,top,side,side,side]);m.position.set(cx,h/2,0);m.castShadow=true;m.receiveShadow=true;scene.add(m);
+  return {m,geo,base:Float32Array.from(geo.attributes.position.array),h,cx,ld:-1,lx:0};}
+function dent(M,xw,depth){const xl=xw-M.cx;if(Math.abs(depth-M.ld)<2e-4&&Math.abs(xl-M.lx)<2e-3)return;M.ld=depth;M.lx=xl;const p=M.geo.attributes.position.array,b=M.base,top=M.h/2-1e-5;
+  for(let i=0;i<p.length;i+=3){if(b[i+1]>top){const dx=b[i]-xl,dz=b[i+2];p[i+1]=M.h/2-depth*Math.exp(-dx*dx/(2*.2*.2)-dz*dz/(2*.3*.3));}}
+  M.geo.attributes.position.needsUpdate=true;M.geo.computeVertexNormals();}
+const thickM=makeMat(2.4,SURF.thick.h,1.9,60,30,0x2e5fa3,0x3a73c0,KX+1.2);
+const turnM=makeMat(2.0,SURF.turn.h,1.1,50,20,0x2f7a60,0x3b8a6e,KX+1.0);
+function showSurf(s){thickM.m.visible=s==='thick';turnM.m.visible=s==='turn';}
 
 /* ================= ledenpop ================= */
 const UP=new THREE.Vector3(0,1,0),_a=new THREE.Vector3(),_b=new THREE.Vector3(),_d=new THREE.Vector3();
 const CYL=new THREE.CylinderGeometry(1,1,1,18),SPH=new THREE.SphereGeometry(1,20,14);
-const RIGDEF=[['romp','hip','sho',.125,'jersey',[0]],['bovenarm','sho','elb',.045,'skin',[-.2,.2]],['onderarm','elb','hand',.038,'skin',[-.2,.2]],['bovenbeen','hip','knee',.07,'short',[-.095,.095]],['onderbeen','knee','ank',.052,'skin',[-.095,.095]],['voet','ank','toe',.042,'shoe',[-.095,.095]]];
-function makeRig(colors){const grp=new THREE.Group();scene.add(grp);const mk=c=>std(c,{roughness:.55});
+const RIGDEF=[['romp','hip','sho',.125,'jersey',[0]],['bovenarm','sho','elb',.045,'skin',[-.2,.2]],['onderarm','elb','hand',.038,'skin',[-.2,.2]],['bovenbeen','hip','knee',.07,'short',[-.095,.095]],['onderbeen','knee','ank',.052,'skin',[-.095,.095]],['voet','heel','toe',FR,'shoe',[-.095,.095]]];
+function makeRig(colors,opts){opts=opts||{};const grp=new THREE.Group();scene.add(grp);const gh=!!opts.ghost;
+  const mk=c=>gh?new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:opts.op||.22,depthWrite:false}):std(c,{roughness:.55});
   const mats={jersey:mk(colors.jersey),skin:mk(colors.skin),short:mk(colors.short),shoe:mk(colors.shoe),joint:mk(colors.joint)};const segs=[],joints=[];
-  for(const [n,a,b,r,mat,zs] of RIGDEF){for(const z of zs){const m=new THREE.Mesh(CYL,mats[mat]);m.castShadow=true;grp.add(m);segs.push({m,a,b,z,r});if(n!=='romp'){const j=new THREE.Mesh(SPH,mats.joint);j.castShadow=true;grp.add(j);joints.push({m:j,k:b,z,r:r*1.12});}}}
-  [['sho',-.2],['sho',.2],['hip',-.095],['hip',.095]].forEach(([k,z])=>{const j=new THREE.Mesh(SPH,mats.joint);j.castShadow=true;grp.add(j);joints.push({m:j,k,z,r:.075});});
-  const head=new THREE.Mesh(SPH,mats.skin);head.castShadow=true;grp.add(head);const nose=new THREE.Mesh(SPH,std(0x2b3a52));grp.add(nose);
-  const yoke=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),mats.jersey);yoke.castShadow=true;grp.add(yoke);const hips=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),mats.short);hips.castShadow=true;grp.add(hips);
+  const add=m=>{m.castShadow=!gh;grp.add(m);return m;};
+  for(const [n,a,b,r,mat,zs] of RIGDEF){for(const z of zs){segs.push({m:add(new THREE.Mesh(CYL,mats[mat])),a,b,z,r});if(n!=='romp')joints.push({m:add(new THREE.Mesh(SPH,n==='voet'?mats.shoe:mats.joint)),k:b,z,r:r*1.12});}}
+  [['sho',-.2,.075],['sho',.2,.075],['hip',-.095,.075],['hip',.095,.075],['heel',-.095,FR*1.05],['heel',.095,FR*1.05]].forEach(([k,z,r])=>joints.push({m:add(new THREE.Mesh(SPH,k==='heel'?mats.shoe:mats.joint)),k,z,r}));
+  const head=add(new THREE.Mesh(SPH,mats.skin));const nose=gh?null:add(new THREE.Mesh(SPH,std(0x2b3a52)));
+  const yoke=add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),mats.jersey)),hips=add(new THREE.Mesh(new THREE.BoxGeometry(1,1,1),mats.short));
   return {grp,segs,joints,head,nose,yoke,hips,mats};}
 function placeSeg(m,ax,ay,az,bx,by,bz,r){_a.set(ax,ay,az);_b.set(bx,by,bz);_d.subVectors(_b,_a);const L=_d.length();m.position.addVectors(_a,_b).multiplyScalar(.5);m.scale.set(r,Math.max(L,1e-4),r);if(L>1e-6)m.quaternion.setFromUnitVectors(UP,_d.normalize());}
 function poseRig(rig,pose,com){const mp=massProps(pose),s=SC;const W={};for(const k in mp.p)W[k]=[com[0]+mp.p[k][0]-mp.com[0],com[1]+mp.p[k][1]-mp.com[1]];
   for(const q of rig.segs){const A=W[q.a],B=W[q.b];placeSeg(q.m,A[0],A[1],q.z*s,B[0],B[1],q.z*s,q.r*s);}
   for(const j of rig.joints){const P=W[j.k];j.m.position.set(P[0],P[1],j.z*s);j.m.scale.setScalar(j.r*s);}
   rig.head.position.set(W.head[0],W.head[1],0);rig.head.scale.setScalar(.11*s);
-  const tt=pose.t*D2R;rig.nose.position.set(W.head[0]+.105*s*Math.cos(tt),W.head[1]-.105*s*Math.sin(tt),0);rig.nose.scale.setScalar(.03*s);
+  if(rig.nose){const tt=pose.t*D2R;rig.nose.position.set(W.head[0]+.105*s*Math.cos(tt),W.head[1]-.105*s*Math.sin(tt),0);rig.nose.scale.setScalar(.03*s);}
   const ang=Math.atan2(W.sho[0]-W.hip[0],W.sho[1]-W.hip[1]);rig.yoke.position.set(W.sho[0]-.06*s*Math.sin(ang),W.sho[1]-.06*s*Math.cos(ang),0);rig.yoke.rotation.set(0,0,-ang);rig.yoke.scale.set(.2*s,.14*s,.5*s);
   rig.hips.position.set(W.hip[0]+.04*s*Math.sin(ang),W.hip[1]+.04*s*Math.cos(ang),0);rig.hips.rotation.set(0,0,-ang);rig.hips.scale.set(.24*s,.16*s,.34*s);return W;}
-const rig=makeRig({jersey:0xd65a42,skin:0xe8d6b6,short:0x2b3a52,shoe:0xf3efe6,joint:0x8a7a66});
-const kneeGlow=[-.095,.095].map(z=>{const m=new THREE.Mesh(SPH,new THREE.MeshBasicMaterial({color:0x7fc8a0,transparent:true,opacity:.0,depthWrite:false}));scene.add(m);return {m,z};});
-const vArrow=new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(),1,0x7fc8a0,.14,.08);scene.add(vArrow);
-const fArrow=new THREE.ArrowHelper(new THREE.Vector3(0,1,0),new THREE.Vector3(),1,0xe6b65e,.16,.1);scene.add(fArrow);
-[vArrow,fArrow].forEach(a=>{a.line.material.depthTest=false;a.cone.material.depthTest=false;a.renderOrder=11;a.line.material.linewidth=3;});
+const COL={jersey:0xd65a42,skin:0xe8d6b6,short:0x2b3a52,shoe:0xf3efe6,joint:0x8a7a66};
+const rig=makeRig(COL);
+// doorzichtige pop van het eerste contact: donker teal, zodat hij ook voor de lichte muur en het wandrek opvalt
+const GHC=0x2f8288,ghost=makeRig({jersey:GHC,skin:GHC,short:GHC,shoe:GHC,joint:GHC},{ghost:true,op:.4});ghost.grp.visible=false;
+ghost.grp.traverse(o=>{if(o.isMesh)o.renderOrder=2;});
+// pijlen als dikke meshes (WebGL-lijnen zijn altijd 1 pixel)
+function makeArrow(col,r){const grp=new THREE.Group();const mat=new THREE.MeshBasicMaterial({color:col,depthTest:false,transparent:true,opacity:.95,toneMapped:false});
+  const sh=new THREE.Mesh(new THREE.CylinderGeometry(r,r,1,12),mat),hd=new THREE.Mesh(new THREE.ConeGeometry(r*2.7,1,18),mat);sh.renderOrder=hd.renderOrder=12;grp.add(sh,hd);
+  // donkere rand, zodat de pijl ook voor een lichte muur of huid leesbaar blijft
+  const om=new THREE.MeshBasicMaterial({color:0x0d1316,depthTest:false,transparent:true,opacity:.7,toneMapped:false});
+  const so=new THREE.Mesh(new THREE.CylinderGeometry(r*1.7,r*1.7,1,12),om),ho=new THREE.Mesh(new THREE.ConeGeometry(r*2.7+r*.9,1.25,18),om);so.renderOrder=ho.renderOrder=11;sh.add(so);hd.add(ho);
+  scene.add(grp);return {grp,sh,hd,r};}
+function setArrow(a,x,y,z,dir,L){const hl=Math.min(L*.5,a.r*6.5),sl=Math.max(L-hl,.001);a.sh.scale.set(1,sl,1);a.sh.position.set(0,dir*sl/2,0);a.hd.scale.set(1,hl,1);a.hd.position.set(0,dir*(sl+hl/2),0);a.hd.rotation.z=dir>0?0:Math.PI;a.grp.position.set(x,y,z);}
+const vArrow=makeArrow(0x7fc8a0,.016),fArrow=makeArrow(0xf2b437,.02),gArrow=makeArrow(0xb4c2c8,.017);
+const FSC=.13; // meter pijl per × lichaamsgewicht
+// remweg-maatlat en stroboscoop van het zwaartepunt
+const rulerM=new THREE.MeshBasicMaterial({color:0x6fb2b4,depthTest:false,transparent:true,toneMapped:false});
+const rulerMat=new THREE.MeshBasicMaterial({color:0xa98be6,depthTest:false,transparent:true,toneMapped:false}),rulerO=new THREE.MeshBasicMaterial({color:0x0d1316,depthTest:false,transparent:true,opacity:.75,toneMapped:false});
+// maatlat naast de heup: blauw = lichaam, paars = de mat die indeukt; met een donkere rand voor de lichte muur
+const ruler=new THREE.Group();scene.add(ruler);const rBar=new THREE.Mesh(new THREE.BoxGeometry(.03,1,.03),rulerM),rBarM=new THREE.Mesh(new THREE.BoxGeometry(.03,1,.03),rulerMat),rBarO=new THREE.Mesh(new THREE.BoxGeometry(.046,1,.02),rulerO),rT1=new THREE.Mesh(new THREE.BoxGeometry(.14,.016,.016),rulerM),rT2=rT1.clone();
+rBarO.renderOrder=11;[rBar,rBarM,rT1,rT2].forEach(m=>m.renderOrder=12);[rBarO,rBar,rBarM,rT1,rT2].forEach(m=>ruler.add(m));
+const dashM=new THREE.LineDashedMaterial({color:0x6fb2b4,dashSize:.03,gapSize:.025,depthTest:false,transparent:true,opacity:.8,toneMapped:false});
+const rLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(1,0,0)]),dashM);rLine.computeLineDistances();rLine.renderOrder=12;ruler.add(rLine);
+// stroboscoopstippen: wit met een donkere rand, zodat ze ook op huid en muur zichtbaar blijven
+const dotTex=canvasTex(64,64,(x)=>{x.fillStyle='#0d1316';x.beginPath();x.arc(32,32,30,0,TAU);x.fill();x.fillStyle='#ffffff';x.beginPath();x.arc(32,32,19,0,TAU);x.fill();});
+const dotM=new THREE.SpriteMaterial({map:dotTex,depthTest:false,transparent:true,toneMapped:false});
+const dots=[];for(let i=0;i<70;i++){const m=new THREE.Sprite(dotM);m.scale.set(.05,.05,1);m.renderOrder=13;m.visible=false;scene.add(m);dots.push(m);}
 const comTex=canvasTex(128,128,(x)=>{x.fillStyle='#fff';x.beginPath();x.arc(64,64,58,0,TAU);x.fill();x.fillStyle='#111';x.beginPath();x.moveTo(64,64);x.arc(64,64,58,-Math.PI/2,0);x.fill();x.beginPath();x.moveTo(64,64);x.arc(64,64,58,Math.PI/2,Math.PI);x.fill();x.lineWidth=6;x.strokeStyle='#111';x.beginPath();x.arc(64,64,58,0,TAU);x.stroke();});
-const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true}));comSpr.scale.set(.13,.13,1);comSpr.renderOrder=10;scene.add(comSpr);
+const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true}));comSpr.scale.set(.1,.1,1);comSpr.renderOrder=14;scene.add(comSpr);
+const ring=mesh(new THREE.RingGeometry(.17,.22,48),new THREE.MeshBasicMaterial({color:0x7fc8a0,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false,toneMapped:false}),[0,.01,0]);ring.rotation.x=-Math.PI/2;ring.castShadow=false;ring.receiveShadow=false;ring.renderOrder=5;
 
 /* ================= toestand & animatie ================= */
-const PRE=.7,POST=1.6;
-const S={cfg:{who:store.get('who','vo'),H:store.get('H',1.0),tech:store.get('tech','knee'),surf:store.get('surf','floor')},phase:'ready',tau:-PRE,speed:.5,J:null,prevJ:null,last:null,landed:false};
-function flightCom(J,t){return [KX-.12+VX*t+ (massProps(POSES.stand).com[0]-solePt(massProps(POSES.stand))[0]),J.y0+VZ*t-g*t*t/2];}
-function stateAt(tau){const J=S.J,cfg=S.cfg;SC=WHO[cfg.who].sc;
-  if(!J||S.phase==='ready'){const c=comFromContact(massProps(POSES.stand),[KX-.12,cfg.H]);return {pose:POSES.stand,com:c,v:0,F:0,ph:'ready',sd:0};}
-  SC=WHO[J.cfg.who].sc;
-  if(tau<0){const s=(tau+PRE)/PRE;const pose=s<.6?lerpPose(POSES.stand,POSES.prep,ease(s/.6)):lerpPose(POSES.prep,POSES.stand,ease((s-.6)/.4));return {pose,com:comFromContact(massProps(pose),[KX-.12,J.H]),v:0,F:J.W,ph:'pre',sd:0};}
-  if(tau<J.tc){const u=tau/J.tc;const pose=u<.55?lerpPose(POSES.stand,POSES.air,ease(u/.55)):lerpPose(POSES.air,POSES.reach,ease((u-.55)/.45));const c=flightCom(J,tau);return {pose,com:c,v:Math.max(0,g*tau-VZ),vUp:VZ-g*tau,F:0,ph:'air',sd:0};}
+const S={cfg:{who:store.get('who','vo'),H:store.get('H',1.0),tech:store.get('tech','knee'),surf:store.get('surf','floor')},phase:'ready',tau:-1,speed:.5,J:null,prevJ:null,pv:null,last:null,landed:false,done1:false,strobe:[]};
+if(!WHO[S.cfg.who])S.cfg.who='vo';if(!TECH[S.cfg.tech])S.cfg.tech='knee';if(!SURF[S.cfg.surf])S.cfg.surf='floor';S.cfg.H=clamp(+S.cfg.H||1,.4,1.6);
+function stateAt(tau,Jx){const J=Jx||(S.phase==='ready'||!S.J?S.pv:S.J);SC=WHO[J.cfg.who].sc;
+  if(!Jx&&(S.phase==='ready'||!S.J)){const pose=POSES.stand;return {pose,com:comFromContact(massProps(pose),[TOEK,J.kastTop]),v:0,F:J.W,ph:'ready',sd:0,gy:J.kastTop,J};}
+  if(tau<0){const t0=Math.max(0,tau+J.pre);let hT,xT,F,vy,fn,k0,sub;
+    if(t0<TCM){// tegenbeweging: F = m·g·(1 − A·sin 2πu), netto stoot 0, het zwaartepunt zakt Dc
+      const u=t0/TCM,w=TAU*u,sc_=J.A*g*TCM/TAU*(t0-TCM/TAU*Math.sin(w));vy=-J.A*g*TCM/TAU*(1-Math.cos(w));F=J.W*(1-J.A*Math.sin(w));
+      hT=J.hS-sc_;xT=J.offS;fn=k=>lerpPose(POSES.stand,POSES.prep,k);k0=sc_/J.Dc;sub='cm';}
+    else{// duwfase: halve sinus bovenop m·g, vy loopt van 0 naar VZ; de vaart naar voren komt in de laatste TH s
+      const tp=t0-TCM,u=clamp(tp/J.TP,0,1),sp=VZ*J.TP/2*(u-Math.sin(Math.PI*u)/Math.PI);vy=VZ*(1-Math.cos(Math.PI*u))/2;F=J.W+Math.PI*J.m*VZ/(2*J.TP)*Math.sin(Math.PI*u);
+      const uh=clamp((tp-(J.TP-TH))/TH,0,1);hT=J.hP+sp;xT=J.offS+VX*TH/2*(uh-Math.sin(Math.PI*uh)/Math.PI);fn=k=>lerpPose(POSES.prep,POSES.up,k);k0=sp/J.Dp;sub='push';}
+    const pose=solve2(fn,hT,xT,k0,0);
+    return {pose,com:comFromContact(massProps(pose),[TOEK,J.kastTop]),v:Math.abs(vy),vy,F,ph:'pre',sub,sd:0,gy:J.kastTop,J};}
+  if(tau<J.tc){const u=tau/J.tc;const pose=u<.4?lerpPose(J.poseTO,POSES.air,ease(u/.4)):lerpPose(POSES.air,J.poseR,ease((u-.4)/.6));
+    return {pose,com:[J.x0+VX*tau,J.y0+VZ*tau-g*tau*tau/2],vy:VZ-g*tau,F:0,ph:'air',sd:0,J};}
   const tl=tau-J.tc;
-  if(tl<J.dt){const s=J.v*tl-(J.Fp/J.m)*(J.dt/Math.PI)*(tl-(J.dt/Math.PI)*Math.sin(Math.PI*tl/J.dt));const f=clamp(s/J.d,0,1);
-    const pose=lerpPose(POSES.reach,POSES[TECH[J.cfg.tech].pose],ease(f)*.98+f*.02);const surfY=J.S.h-J.dS*f;
-    const xF=J.xC+VX*(tl-tl*tl/(2*J.dt));const c=comFromContact(massProps(pose),[xF,surfY]);
-    const vNow=J.v-(J.Fp/J.m)*(J.dt/Math.PI)*(1-Math.cos(Math.PI*tl/J.dt));const F=J.W+J.Fp*Math.sin(Math.PI*tl/J.dt);
-    return {pose,com:c,v:Math.max(0,vNow),F,ph:'contact',sd:J.dS*f};}
-  const u=tl-J.dt,pl=POSES[TECH[J.cfg.tech].pose];const pose=u<.35?pl:lerpPose(pl,POSES.stand,ease((u-.35)/.9));const xF=J.xC+VX*J.dt/2;
-  const rec=u<.12?J.dS*(1-u/.12):0;return {pose,com:comFromContact(massProps(pose),[xF,J.S.h-rec]),v:0,F:J.W,ph:'after',sd:rec};}
+  if(tl<J.dt){const a=Math.PI/J.dt,s=J.v*tl-(J.Fn/J.m)*(1/a)*(tl-Math.sin(a*tl)/a);const f=clamp(s/J.d,0,1);
+    // verticaal: zwaartepunt zakt s(t); horizontaal: het schuift (VX/v)·s(t) door, tot boven het midden van de voet
+    const pose=solve2(k=>landPoseJ(J,k),J.hR-J.dBody*f,xPath(J,tl),kForDrop(J.cfg.tech,J.dBody*f),J.d0*clamp(1-tl/TL,0,1),LA),sd=J.dS*f,gy=J.S.h-sd;
+    const vNow=J.v-(J.Fn/J.m)*(1-Math.cos(a*tl))/a,F=J.W+J.Fn*Math.sin(a*tl);
+    return {pose,com:comFromContact(massProps(pose),[J.xC,gy]),v:Math.max(0,vNow),vy:-Math.max(0,vNow),F,ph:'contact',sd,gy,s,tl,J};}
+  // na het remmen: 0,3 s stil in de eindhouding (mat blijft ingedeukt), daarna opstaan (niet gemodelleerd)
+  const u=tl-J.dt,pl0=landPose(J.cfg.tech,1),pl=tl<TL?leanP(pl0,solveLean(pl0,xPath(J,tl),0,LA),LA):pl0,e=ease((u-.3)/.9);const pose=u<.3?pl:lerpPose(pl,POSES.stand,e);const sd=J.dS*(1-.65*(u<.3?0:e)),gy=J.S.h-sd;
+  return {pose,com:comFromContact(massProps(pose),[J.xC,gy]),v:0,vy:0,F:J.W,ph:'after',u,sd,gy,s:J.d,tl,J};}
 
-function jump(){SND.init();S.prevJ=S.J;S.J=simulate(S.cfg);S.phase='run';S.tau=-PRE;S.landed=false;$('#iScrub').disabled=false;
-  $('#res').className='';$('#res').innerHTML=`<span class="k">${WHO[S.cfg.who].n} · ${f2(S.cfg.H)} m</span><b class="t">${TECH[S.cfg.tech].n} op ${SURF[S.cfg.surf].n.toLowerCase()}</b>Kijk naar de grafiek: de oppervlakte (impuls) is steeds gelijk, de piek niet.`;drawChart();}
-function replay(){if(!S.J){jump();return;}S.phase='run';S.tau=-PRE;S.landed=false;}
-function verdict(J){const p=J.peak;if(p<3)return {c:'good',t:'Zachte landing'};if(p<5)return {c:'good',t:'Prima landing'};if(p<8)return {c:'mid',t:'Harde landing: veel belasting'};return {c:'bad',t:'Te hard: blessurerisico'};}
-function landedNow(){const J=S.J,v=verdict(J);S.last={who:J.cfg.who,H:J.cfg.H,tech:J.cfg.tech,surf:J.cfg.surf,peak:J.peak,dt:J.dt,p:J.p,v:J.v};
-  let tip=J.peak>=5?(J.cfg.tech==='stiff'?'Door de knieën zakken verlengt de remtijd het meest.':J.cfg.surf==='floor'?'Een mat of dieper inveren verlengt de remtijd.':'Verlaag de kast of veer dieper in.'):'Langere remtijd, lagere piek: precies wat je wilt.';
-  if(J.cfg.surf==='thick')tip+=' Let op: een dikke mat is zacht maar instabiel voor de enkels.';
-  $('#res').className=v.c;$('#res').innerHTML=`<span class="k">${TECH[J.cfg.tech].n} · ${SURF[J.cfg.surf].n}</span><b class="t">${v.t}: ${f1(J.peak)}× lichaamsgewicht</b>Piek ${f0(J.peak*J.W)} N na ${f0(J.dt*1000)} ms remtijd. ${tip}`;
-  SND.thud(clamp(J.peak/8,.3,1));if(J.peak>=8)SND.bad();else if(J.peak<5)SND.good();
-  impact.position.set(J.xC+.05,J.S.h+.012,0);impact.material.opacity=.9;impact.scale.setScalar(1);}
+function readyRes(){const P=S.J;$('#res').className='';$('#res').innerHTML=`<span class="k">Klaar voor de sprong</span><b class="t">${TECH[S.cfg.tech].n} op de ${SURF[S.cfg.surf].n.toLowerCase()}</b><span class="x2">${P?`Voorspel eerst: wordt de piek hoger of lager dan bij je vorige landing (${f1(P.peak)}×)?`:'Dezelfde val, een andere landing: wat gebeurt er met de piekkracht?'}</span>`;}
+function jump(){SND.init();S.prevJ=S.J;S.J=simulate(S.cfg);S.phase='run';S.tau=-S.J.pre;S.landed=false;S.done1=false;S.doneAt=-9;$('#iScrub').disabled=false;
+  // de opdrachten tellen een sprong pas mee als de landing klaar is (zie completeNow)
+  const J=S.J;buildKast(J.kastTop);showSurf(J.cfg.surf);S.last=null;
+  // stroboscoop: zwaartepunt elke 20 ms tijdens het contact
+  S.strobe=[];for(let t=0;t<=J.dt+1e-9&&S.strobe.length<dots.length;t+=STROBE){const st=stateAt(J.tc+t,J);S.strobe.push({t,x:st.com[0],y:st.com[1]});}
+  const s0=stateAt(J.tc,J);S.ghW=poseRig(ghost,s0.pose,s0.com);S.c0=s0.com;
+  document.body.classList.add('hasJ');if(innerWidth<=820)setMore(false);
+  $('#res').className='';$('#res').innerHTML=`<span class="k">${WHO[J.cfg.who].n} · ${f2(J.cfg.H)} m</span><b class="t">${TECH[J.cfg.tech].n} op de ${SURF[J.cfg.surf].n.toLowerCase()}</b><span class="x2">Kijk bij het contact naar de grafiek en de blauwe maatlat: hoe ver en hoe lang remt het zwaartepunt?</span>`;relayout();}
+function replay(){const c=S.cfg;if(!S.J||S.J.cfg.who!==c.who||S.J.cfg.tech!==c.tech||S.J.cfg.surf!==c.surf||Math.abs(S.J.cfg.H-c.H)>1e-6){jump();return;}buildKast(S.J.kastTop);showSurf(S.J.cfg.surf);S.phase='run';S.tau=-S.J.pre;S.landed=false;S.done1=false;S.doneAt=-9;if(innerWidth<=820)setMore(false);
+  $('#res').className='';$('#res').innerHTML=`<span class="k">Herhaling</span><b class="t">${TECH[c.tech].n} op de ${SURF[c.surf].n.toLowerCase()}</b><span class="x2">Let bij het contact op de maatlat, de stippen en de grafiek.</span>`;relayout();}
+function verdict(J){const p=J.peak;if(p<3.5)return {c:'good',t:'Zachte landing'};if(p<6)return {c:'good',t:'Goede landing'};if(p<9)return {c:'mid',t:'Harde landing'};return {c:'bad',t:'Te hard (blessurerisico)'};}
+function touchdown(){const J=S.J;SND.thud(clamp(J.peak/8,.3,1));}
+function completeNow(){const J=S.J,v=verdict(J);S.done1=true;S.doneAt=clock;
+  S.last={who:J.cfg.who,H:J.cfg.H,tech:J.cfg.tech,surf:J.cfg.surf,peak:J.peak,dt:J.dt,p:J.p,v:J.v,d:J.d};
+  const t=J.cfg.tech,alt=t==='stiff'?simulate({...J.cfg,tech:'knee'}):null;let tip;
+  if(t==='stiff')tip=J.peak<6?`De piek is laag omdat ${J.cfg.surf==='thick'?'de dikke mat ver indeukt':J.cfg.surf==='turn'?'de val laag is en de turnmat iets indeukt':'de val laag is'}, niet door je landing. Door de knieën was hij ${f1(alt.peak)}× geweest.`:`Door de knieën zakken maakt de remweg langer (${f2(alt.d)} m): dan wordt de piek ${f1(alt.peak)}×.`;
+  else if(J.peak<6)tip=t==='knee'?'Lange remweg, lange remtijd, lage piek: precies wat je wilt.':'Heel lange remweg en lage piek. Maar de knie staat sterk gebogen (zie punt 4).';
+  else tip=t==='knee'?(J.cfg.surf==='floor'?'Dieper inveren of een mat maakt de remweg langer.':J.cfg.surf==='turn'?'Dieper inveren, een dikkere mat of een lagere kast helpt.':'Dieper inveren of een lagere kast helpt.'):(J.cfg.surf==='thick'?'Verder inveren lukt niet meer: verlaag de kast.':'Je veert al diep in: kies een mat of een lagere kast.');
+  const warn=J.cfg.surf==='thick'?' Let op: een dikke mat is zacht, maar instabiel voor de enkels.':'';
+  $('#res').className=v.c;$('#res').innerHTML=`<span class="k">${TECH[J.cfg.tech].n} · ${SURF[J.cfg.surf].n}</span><b class="t">${v.t}: ${f1(J.peak)}× lichaamsgewicht</b><span class="x2">Remweg ${f2(J.d)} m in ${f3(J.dt)} s. Piek ${f0(Math.PI/2*Math.round(J.Favg)+Math.round(J.W))} N. ${tip}${warn}</span><span class="tipm">${tip}</span>`;
+  relayout();
+  if(S.phase==='run'){if(J.peak>=9)SND.bad();else if(J.peak<6)SND.good();}}
 
 /* ================= uitlegpunten ================= */
 const labWrap=$('#labels');
-const tagV=document.createElement('div');tagV.className='tag3d';tagV.style.color='#7fc8a0';labWrap.appendChild(tagV);
-const tagF=document.createElement('div');tagF.className='tag3d';tagF.style.color='#e6b65e';labWrap.appendChild(tagF);
+function mkTag(col,cls){const t=document.createElement('div');t.className='tag3d'+(cls?' '+cls:'');if(col)t.style.color=col;labWrap.appendChild(t);return t;}
+const tagV=mkTag('#7fc8a0'),tagF=mkTag('#e6b65e'),tagG=mkTag('','sm'),tagR=mkTag('#8fd0d2'),tagS=mkTag('','sm'),tagM=mkTag('#c3aef0'),tagGh=mkTag('#8fd0d2','sm');
 const _p=new THREE.Vector3();
-function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';el.style.transform=`translate(${((_p.x*.5+.5)*innerWidth-(ox||0)).toFixed(1)}px,${((-_p.y*.5+.5)*innerHeight-(oy||0)).toFixed(1)}px)`;}
+function project(v,el,ox,oy,al){_p.copy(v).project(camera);if(_p.z>1||!el.textContent&&!el.classList.contains('mk')){el.style.display='none';return;}el.style.display='';
+  let x=(_p.x*.5+.5)*innerWidth-(ox||0);const y=(-_p.y*.5+.5)*innerHeight-(oy||0);
+  // labels in beeld houden: niet achter het bedieningspaneel of het uitlegpaneel laten verdwijnen
+  if(el.classList.contains('tag3d')){const w=el.offsetWidth,lo=U.l+4,hi=U.r-4;if(al==='r')x=clamp(x,lo+w,hi);else if(al==='l')x=clamp(x,lo,hi-w);else if(al==='c')x=clamp(x,lo+w/2,hi-w/2);}
+  el.style.transform=`translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`+(al==='r'?' translate(-100%,-50%)':al==='l'?' translate(0,-50%)':al==='c'?' translate(-50%,-100%)':'');}
 let cur=null,curW=null;
+const vk=RF.vk,vs=RF.vs,vd=RF.vd;
+const JJ=()=>S.J||S.pv;
 const PTS=[
- {t:'Impuls: p = m · v',s:'hoeveelheid beweging',at:()=>new THREE.Vector3(cur.com[0]+.25,cur.com[1]+.15,0),tabs:[
-  `<p>De <b>impuls</b> (hoeveelheid beweging) is massa maal snelheid: p = m · v. Een zware leerling die snel valt, heeft veel impuls. Bij de landing moet die impuls helemaal naar nul.</p><p>De groene pijl is de snelheid. Tijdens de vlucht wordt hij langer, bij het contact krimpt hij in een fractie van een seconde tot nul.</p>`,
-  `<p><span class="ctx">PO</span>Een kind van 30 kg dat van een kast van 1 m springt, komt neer met ongeveer 4,6 m/s: zo'n 140 kg·m/s impuls.</p><p><span class="ctx">VO</span>Een leerling van 55 kg van dezelfde kast heeft bijna twee keer zoveel impuls. De belasting <i>per kilo</i> is gelijk, maar ook spieren en banden moeten twee keer zoveel opvangen.</p>`,
-  `<div class="calc">m = 55 kg, v = 4,6 m/s<br>p = m · v = 55 · 4,6 ≈ 253 kg·m/s</div>`,
-  `<p class="think">Een volwassene en een kind springen van dezelfde kast. Wie heeft de meeste impuls bij de landing? Is de kracht per kilogram lichaamsgewicht ook anders?</p>`]},
- {t:'Krachtstoot: F · Δt = Δp',s:'kracht maal tijd',at:()=>new THREE.Vector3((S.J?S.J.xC:.4)+.45,.75,0),tabs:[
-  `<p>Om impuls te veranderen heb je een <b>krachtstoot</b> nodig: kracht maal tijd. F · Δt = m · Δv.</p><p>De impuls die weg moet, ligt vast door de valhoogte en de massa. Of je die met een grote kracht in korte tijd of met een kleine kracht in lange tijd wegneemt, bepaal je zelf. In de grafiek is de oppervlakte onder de kromme (boven de lijn van het lichaamsgewicht) <b>bij elke landing gelijk</b>. Alleen de vorm verandert: kort en hoog, of lang en laag.</p>`,
+ {t:'Impuls: p = m · v',s:'hoeveelheid beweging',at:()=>cur?new THREE.Vector3(cur.com[0]-.45,cur.com[1]+.28,0):new THREE.Vector3(),tabs:[
+  `<p>De <b>impuls</b> p is massa maal snelheid: p = m · v, in kg·m/s. Een zware leerling die snel valt, heeft veel impuls. Bij de landing moet die impuls helemaal naar nul.</p><p>De groene pijl is de snelheid omhoog of omlaag. In de lucht wordt hij eerst korter (je gaat nog even omhoog), in het hoogste punt is hij nul en daarna wordt hij steeds langer omlaag. Bij het contact krimpt hij tot nul: daar gaat dit lab over. Onderin zie je de impuls. Vanaf het contact staat daar de impuls die weg moet (Δp), en eronder hoeveel er nog afgeremd moet worden.</p><p>We rekenen alleen met de beweging omlaag. De vaart naar voren (${f1(VX)} m/s) wordt afgeremd door de wrijving met de vloer. Daarom landen je voeten iets vóór je zwaartepunt, en schuift je zwaartepunt tijdens het remmen nog een stukje door, tot boven je voeten.</p>`,
+  `<p><span class="ctx">PO</span>Een kind van 30 kg dat van een kast van 1 m springt, komt neer met ${f1(RF.pk.v)} m/s: zo'n ${f0(RF.pk.p)} kg·m/s impuls.</p><p><span class="ctx">VO</span>Een leerling van 55 kg van dezelfde kast heeft ${f0(vk.p)} kg·m/s: bijna twee keer zoveel. Is de klap per kilo voor het kind dan kleiner? Nee. Een kind heeft kortere benen en dus een kortere remweg. In het lab is de piek door de knieën ${f1(RF.pk.peak)}× lichaamsgewicht voor het kind en ${f1(vk.peak)}× voor de VO-leerling. Kies voor jonge kinderen dus lagere kasten.</p>`,
+  `<div class="calc">VO-leerling, kast 1,0 m<br>m = 55 kg, v = ${f2(vk.v)} m/s<br>p = m · v = 55 · ${f2(vk.v)} ≈ ${f0(vk.p)} kg·m/s</div><p>Waarom ${f1(vk.v)} m/s en niet √(2 · 9,81 · 1,0) = 4,4 m/s? De leerling springt eerst een stukje omhoog. Zijn zwaartepunt valt daardoor ${f2(vk.fallH)} m in plaats van 1,00 m (zie punt 6).</p>`,
+  `<p class="think">Een volwassene en een kind springen van dezelfde kast. Wie heeft de meeste impuls bij de landing? En wie krijgt per kilo lichaamsgewicht de hoogste piekkracht? Voorspel het en probeer het in het lab.</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">De volwassene heeft de meeste impuls: meer massa, bijna dezelfde snelheid (bij 1,0 m: ${f0(RF.sk.p)} tegenover ${f0(RF.pk.p)} kg·m/s). Per kilo krijgt het kind de hoogste piek: door de knieën ${f1(RF.pk.peak)}× tegenover ${f1(RF.sk.peak)}× lichaamsgewicht. Het kind heeft kortere benen en dus een kortere remweg (${f2(RF.pk.d)} tegenover ${f2(RF.sk.d)} m).</p></details>`]},
+ {t:'Krachtstoot: F · Δt = Δp',s:'de oppervlakte in de grafiek',at:()=>new THREE.Vector3(JJ().xC+.95,JJ().S.h+1.25,0),tabs:[
+  `<p>Om impuls te veranderen heb je een <b>krachtstoot</b> nodig: kracht maal tijd. F · Δt = Δp = m · Δv.</p><p>De impuls die weg moet, ligt vast door de massa en de valhoogte. Jij bepaalt alleen <i>hoe</i>: een grote kracht in korte tijd, of een kleine kracht in lange tijd.</p><p>In de grafiek is de gele oppervlakte boven de stippellijn de <b>netto krachtstoot</b>. Bij dezelfde leerling en dezelfde valhoogte is die oppervlakte bij elke landing en elke ondergrond even groot. Het getal "netto stoot" staat bij de grafiek, ook voor je vorige landing (grijs). Alleen de vorm verandert: kort en hoog, of lang en laag.</p><p>Waarom boven de stippellijn? Die lijn is je lichaamsgewicht. Dat draagt de vloer ook als je stilstaat. Alleen de kracht dáárbovenop remt je af. De vloer levert in totaal dus meer stoot, want hij draagt ook nog je gewicht: m · g · Δt erbij (door de knieën ${f0(vk.W)} N · ${f3(vk.dt)} s ≈ ${f0(vk.W*vk.dt)} N·s).</p>`,
   `<p><span class="ctx">PO/VO</span>Daarom werkt "land als een veer": niet omdat je minder impuls hebt, maar omdat je hem over meer tijd verdeelt.</p><p>Hetzelfde principe zie je bij een bal vangen: "geef mee naar je lichaam".</p>`,
-  `<div class="calc">Δp = 253 kg·m/s<br>Remtijd 0,05 s → gemiddeld F = 5060 N<br>Remtijd 0,25 s → gemiddeld F = 1012 N<br>(plus het lichaamsgewicht)</div>`,
-  `<p class="think">Waarom doet een harde val op je hand meer pijn dan dezelfde val waarbij je je armen laat meebuigen?</p>`]},
- {t:'Remtijd en piekkracht',s:'de vorm van de grafiek',at:()=>new THREE.Vector3((S.J?S.J.xC:.4)-.05,.08,.55),tabs:[
-  `<p>De gele pijl is de <b>grondreactiekracht</b>: de kracht waarmee de vloer terugduwt (Newton 3). Bij een stijve landing is de remtijd soms maar enkele honderdsten van een seconde, en de piekkracht kan dan meer dan acht keer je lichaamsgewicht zijn.</p><p>In de grafiek zie je de kracht in "keer lichaamsgewicht" tegen de tijd. De grijze lijn is de vorige landing. Probeer maar: stijf op de vloer, daarna door de knieën.</p>`,
+  `<div class="calc">Δp = ${f0(vk.p)} kg·m/s (= N·s)<br>Remtijd 0,05 s → F = ${f0(vk.p)} / 0,05 = ${f0(Math.round(vk.p)/.05)} N<br>Remtijd 0,25 s → F = ${f0(vk.p)} / 0,25 = ${f0(Math.round(vk.p)/.25)} N</div><p>Dit is de gemiddelde <b>netto</b> remkracht. De vloer draagt daarnaast nog je gewicht: m · g = 55 · 9,81 = ${f0(vk.W)} N.</p><p style="font-size:13px;color:var(--muted)">Let op bij Engelse bronnen: daar heet de krachtstoot <i>impulse</i> en de impuls <i>momentum</i>.</p>`,
+  `<p class="think">Waarom doet een harde val op je hand meer pijn dan dezelfde val waarbij je je armen laat meebuigen? Gebruik de woorden impuls, krachtstoot en remtijd.</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">De impuls van je arm en romp is in beide gevallen gelijk: dezelfde massa, dezelfde snelheid. Dus de krachtstoot die nodig is om te stoppen, is ook gelijk. Met stijve armen is de remtijd heel kort, dus moet de kracht groot zijn. Laat je je armen meebuigen, dan duurt het remmen langer en is de kracht kleiner.</p></details>`]},
+ {t:'Remtijd en piekkracht',s:'gemiddelde en piek',at:()=>new THREE.Vector3(JJ().xC+.45,JJ().S.h+.1,.6),tabs:[
+  `<p>De gele pijl is de <b>grondreactiekracht</b>: de kracht waarmee de vloer terugduwt (Newton 3). De grijze pijl is je gewicht m · g, op dezelfde schaal. Zolang de gele pijl langer is dan de grijze, rem je af. Het verschil is de netto remkracht.</p><p>Onderin staat Δp = F · Δt. F is de <b>gemiddelde netto remkracht</b>: reken maar na (op afronding na). De kracht is niet de hele tijd even groot. Hij loopt op tot een piek halverwege het remmen en zakt dan weer. In dit model is die piek π/2 ≈ 1,57 keer het gemiddelde. Tel je het lichaamsgewicht erbij op, dan heb je de <b>piekkracht</b> (het oranje vak; op mobiel de piek bij de grafiek): de grootste kracht van de vloer op je voeten. In je knie zijn de krachten nog groter, omdat je spieren met een korte arm om het gewricht een groot moment moeten leveren (zie punt 4).</p><p>In het lab begint de lijn bij het contact meteen op 1×. In echte metingen loopt de kracht vanaf 0 op, vaak met een scherpe eerste piek als de hielen neerkomen.</p><p>Probeer: stijf op de vloer, daarna door de knieën. Vergelijk de gele lijn met de grijze vorige landing.</p>`,
   `<p><span class="ctx">VO</span>Laat leerlingen hun eigen landing horen: een harde klap betekent een korte remtijd. "Land zo stil mogelijk" is een sterke, meetbare opdracht.</p><p><span class="ctx">PO</span>"Wie kan landen als een kat?"</p>`,
-  `<div class="calc">Halve sinus: F_piek = π/2 · F_gem<br>F_gem = m · v / Δt<br>Remweg d = v · Δt / 2<br>→ Δt = 2d / v</div>`,
-  `<p class="think">De piekkracht halveert als je de remtijd verdubbelt. Wat moet er dan met je remweg gebeuren?</p>`]},
- {t:'Door de knieën: excentrisch',s:'spieren als schokdemper',at:()=>curW?new THREE.Vector3(curW.knee[0]+.15,curW.knee[1],.2):new THREE.Vector3(),tabs:[
-  `<p>Door de knieën zakken verlengt de <b>remweg</b> van het lichaamszwaartepunt en dus de remtijd. De bovenbeenspieren werken daarbij <b>excentrisch</b>: ze worden langer terwijl ze kracht leveren, en remmen de beweging zo af. Zie ook <a href="knie.html" style="color:inherit">de knie in de Bewegingsatlas</a>.</p><p>Let op de stand van de knie: knieën boven de tenen, niet naar binnen (valgus). Dat beschermt de voorste kruisband.</p>`,
-  `<p><span class="ctx">PO</span>"Land als een veer, zacht op je voorvoeten, door je knieën."</p><p><span class="ctx">VO</span>"Knieën boven je tenen, heupen naar achteren, armen naar voren." Laat leerlingen landingen in tweetallen filmen en vergelijken.</p>`,
-  `<div class="calc">Stijf: remweg ≈ 0,2 m<br>Door de knieën: ≈ 0,4 m<br>Diep inveren: ≈ 0,6 m<br>Bij v = 4,6 m/s: Δt = 2d / v ≈ 0,09 / 0,18 / 0,27 s</div>`,
-  `<p class="think">Waarom is diep inveren niet altijd beter? Denk aan het moment waarop je weer moet kunnen bewegen (bijvoorbeeld bij basketbal).</p>`]},
- {t:'De ondergrond',s:'matten verlengen de remtijd',at:()=>new THREE.Vector3(1.6,(SURF[S.cfg.surf].h)+.05,.6),tabs:[
-  `<p>Een mat <b>vervormt</b> en verlengt zo de remweg. Een turnmat helpt een beetje, een dikke mat veel. Een gymvloer veert vrijwel niet mee.</p><p>Maar een dikke mat is <b>instabiel</b>: de voeten zakken weg en de enkels moeten corrigeren. Daarom gebruik je hem bij nieuwe of hoge sprongen en rotaties, en niet voor elke afsprong.</p>`,
+  `<div class="calc">VO, 1,0 m, door de knieën, gymvloer<br>p = ${f0(vk.p)} kg·m/s, Δt = ${f3(vk.dt)} s<br>F = p / Δt ≈ ${f0(vk.Favg)} N (netto, gemiddeld)<br>piek netto = π/2 · ${f0(vk.Favg)} ≈ ${f0(Math.PI/2*Math.round(vk.Favg))} N<br>+ m · g = ${f0(vk.W)} N<br>piekkracht ≈ ${f0(Math.PI/2*Math.round(vk.Favg)+Math.round(vk.W))} N = ${f1(vk.peak)}× lichaamsgewicht</div>`,
+  `<p class="think">Stijf (Δt = ${f3(vs.dt)} s) en door de knieën (Δt = ${f3(vk.dt)} s): de remtijd wordt ongeveer twee keer zo lang. De kracht <i>boven</i> je lichaamsgewicht halveert dan: van ${f1(vs.peak-1)}× naar ${f1(vk.peak-1)}×. Halveert de piek in × lichaamsgewicht (${f1(vs.peak)}× → ${f1(vk.peak)}×) ook? Waarom niet?</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">Nee. De vloer draagt altijd ook je lichaamsgewicht (1×), en dat deel verandert niet. Alleen het deel erboven halveert: ${f1(vs.peak-1)}× wordt ongeveer ${f1((vs.peak-1)/2)}×. Tel je de 1× er weer bij op, dan kom je op ${f1((vs.peak-1)/2+1)}×. Omdat de remtijd net iets meer dan verdubbelt, is het in het lab ${f1(vk.peak)}×.</p></details>`]},
+ {t:'Door de knieën: de remweg',s:'spieren als schokdemper',at:()=>curW?new THREE.Vector3(curW.knee[0]+.14,curW.knee[1]+.34,.2):new THREE.Vector3(),tabs:[
+  `<p>De <b>remweg</b> d is hoe ver je zwaartepunt zakt, van het eerste contact tot je stilstaat (plus wat de mat indeukt). In beeld is dat de maatlat naast de heup: blauw is het lichaam, paars de mat. De doorzichtige pop is je houding bij het eerste contact; vergelijk hem met de eindhouding. De witte stippen tonen het zwaartepunt elke 20 ms. Meer stippen betekent een langere remtijd. Grote afstanden tussen de stippen betekenen snel bewegen: aan het begin zak je snel, aan het eind rem je zacht uit.</p><p>Door de knieën zakken maakt de remweg langer, en daarmee de remtijd: Δt = 2 · d / v. Ook een "stijve" landing is niet helemaal stijf. Je landt op je voorvoet, de hielen zakken en de knieën buigen nog zo'n 70°. Dat is minder dan 90°, en daarom heet het in onderzoek een stijve landing. Bij "door de knieën" buigt de knie in dit lab ${TECH.knee.kn}, bij diep inveren ${TECH.deep.kn}. De bovenbeenspieren werken daarbij <b>excentrisch</b>: ze worden langer terwijl ze kracht leveren, en remmen zo af. Zie ook <a href="knie.html" style="color:inherit">de knie in de Bewegingsatlas</a>.</p><p>Let op de stand van de knie: van voren gezien in de lijn van je tenen, niet naar binnen (valgus). Dat beschermt de voorste kruisband.</p>`,
+  `<p><span class="ctx">PO</span>"Land als een veer, zacht op je voorvoeten, door je knieën."</p><p><span class="ctx">VO</span>"Knieën in de lijn van je tenen (niet naar binnen), heupen naar achteren, armen naar voren." Laat leerlingen landingen in tweetallen filmen en vergelijken: hoe ver zakt de heup?</p>`,
+  `<div class="calc"><table><tr><td>VO, 1,0 m</td><td>remweg</td><td>Δt</td><td>piek</td></tr><tr><td>Stijf</td><td>${f2(vs.d)} m</td><td>${f3(vs.dt)} s</td><td>${f1(vs.peak)}×</td></tr><tr><td>Knieën</td><td>${f2(vk.d)} m</td><td>${f3(vk.dt)} s</td><td>${f1(vk.peak)}×</td></tr><tr><td>Diep</td><td>${f2(vd.d)} m</td><td>${f3(vd.dt)} s</td><td>${f1(vd.peak)}×</td></tr></table>Δt = 2 · d / v, bijvoorbeeld door de knieën:<br>2 · ${f3(vk.d)} / ${f2(vk.v)} ≈ ${f3(2*Math.round(vk.d*1000)/1000/(Math.round(vk.v*100)/100))} s</div>`,
+  `<p class="think">Diep inveren geeft de laagste piek. Waarom is het toch niet altijd de beste landing? Denk aan de stand van je knie en aan wat je direct na de landing moet doen.</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">Bij diep inveren staat de knie sterk gebogen. De voorste bovenbeenspier (quadriceps) moet dan een groot kniemoment leveren. Daardoor drukt de knieschijf hard op het dijbeen: de kracht in de knie wordt groot, ook al is de kracht van de vloer klein. Een kniebuiging van ongeveer 90 tot 110° (zoals "door de knieën" in dit lab) is meestal de beste balans. En bij basketbal of een vervolgsprong moet je meteen weer kunnen bewegen.</p></details>`]},
+ {t:'De ondergrond',s:'matten verlengen de remweg',at:()=>new THREE.Vector3(JJ().xC+1.25,JJ().S.h+.06,.55),tabs:[
+  `<p>Een mat <b>vervormt</b> en verlengt zo de remweg. Een turnmat helpt een beetje, een dikke mat veel. Een gymvloer veert vrijwel niet mee. Kijk naar de deuk onder de voeten en naar het paarse deel van de maatlat: zo ver zakt je zwaartepunt extra doordat de mat indeukt.</p><p>Maar een dikke mat is <b>instabiel</b>: de voeten zakken weg en de enkels moeten corrigeren. Daarom gebruik je hem bij nieuwe of hoge sprongen en rotaties, en niet voor elke afsprong.</p><p>In dit lab is de valhoogte altijd de hoogte van de kast <i>boven de landingsplek</i>. Zo blijft de impuls gelijk en zie je alleen het effect van de mat. In de gymzaal is een dikke mat zelf 30 cm hoog: bij dezelfde kast val je daar dus ook nog minder diep.</p>`,
   `<p><span class="ctx">PO/VO</span>Leg bij afsprongen van de kast altijd minstens een turnmat. Bij een overslag, salto of hoge afsprong een dikke mat. Controleer of matten niet kunnen schuiven en geen naden hebben op de landingsplek.</p>`,
-  `<div class="calc">Remweg = lichaam + mat<br>Gymvloer ≈ 0 m · turnmat ≈ 0,04 m · dikke mat ≈ 0,2 m<br>Stijf op dikke mat: 0,2 + 0,2 = 0,4 m<br>→ even zacht als door de knieën op de vloer</div>`,
-  `<p class="think">Waarom zie je bij turnwedstrijden juist vrij dunne, stevige landingsmatten en geen heel dikke?</p>`]},
- {t:'Valhoogte',s:'v = √(2 · g · h)',at:()=>new THREE.Vector3(KX-.3,S.cfg.H+.15,.6),tabs:[
-  `<p>Hoe hoger de kast, hoe sneller je de grond raakt: v = √(2 · g · h). De snelheid groeit met de <b>wortel</b> van de hoogte: twee keer zo hoog geeft niet twee keer, maar 1,4 keer zoveel snelheid. De impuls stijgt dus mee, en daarmee bij dezelfde landing ook de piekkracht.</p><p>In het lab springt de leerling eerst een stukje omhoog van de kast. De echte valhoogte van het zwaartepunt is daardoor iets groter dan de kast.</p>`,
+  `<div class="calc">Remweg = lichaam + mat<br>Gymvloer ≈ 0 cm · turnmat ≈ 3,5 cm · dikke mat ≈ 20 cm<br>VO, 1,0 m:<br>Stijf op de vloer: d = ${f2(vs.d)} m → ${f1(vs.peak)}×<br>Stijf op de dikke mat: d = ${f2(RF.vsT.d)} m → ${f1(RF.vsT.peak)}×<br>Door de knieën op de vloer: d = ${f2(vk.d)} m → ${f1(vk.peak)}×</div><p>Stijf op een dikke mat is dus ongeveer even zacht als door de knieën op de vloer.</p>`,
+  `<p class="think">Waarom landen turners bij wedstrijden op stevige landingsmatten (ongeveer 20 cm dik) en niet op een heel zachte valmat?</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">Een zachte mat zakt ver en ongelijk weg. Je voeten kantelen, je enkels en knieën moeten bijsturen, en een landing "stilzetten" lukt bijna niet. Een stevige mat deukt maar een paar centimeter in. Dat verlengt de remweg een beetje, en je staat toch stabiel. De rest van de remweg komt uit de landing zelf: door de knieën.</p></details>`]},
+ {t:'Valhoogte',s:'v = √(2 · g · h)',at:()=>new THREE.Vector3(KX-.62,JJ().kastTop*.55,.62),tabs:[
+  `<p>Hoe hoger de kast, hoe sneller je de grond raakt: v = √(2 · g · h). De snelheid groeit met de <b>wortel</b> van de hoogte. Twee keer zo hoog geeft dus 1,4 keer zoveel snelheid en impuls.</p><p>De piekkracht groeit harder dan de snelheid. In dit lab hangt de remweg alleen af van je techniek, niet van de valhoogte. (In het echt buig je bij een hogere val vaak vanzelf dieper door, en dat dempt de stijging van de piek.) De remtijd hangt van allebei af: bij een hogere val leg je dezelfde remweg sneller af, dus wordt Δt = 2 · d / v korter. Voor de kracht <i>bovenop</i> je lichaamsgewicht geldt: F<sub>piek, netto</sub> = π · m · v² / (4 · d). Die groeit ongeveer even hard als de valhoogte van je zwaartepunt. In het lab: van ${f1(RF.h05.peak-1)}× naar ${f1(vk.peak-1)}× bij 0,5 → 1,0 m (het zwaartepunt valt ${f2(RF.h05.fallH)} → ${f2(vk.fallH)} m). De totale piek groeit minder hard (${f1(RF.h05.peak)}× → ${f1(vk.peak)}×), want je lichaamsgewicht (1×) blijft gelijk.</p><p>In het lab springt de leerling eerst een stukje omhoog (1,1 m/s). Het zwaartepunt valt daardoor ${f0((vk.fallH-1)*100)} cm verder dan de kast hoog is.</p>`,
   `<p><span class="ctx">PO</span>Bouw de hoogte op: eerst van de bank, dan van een lage kast. Leer eerst landen, daarna hoger.</p><p><span class="ctx">VO</span>Bij diepsprongen (plyometrie) bepaalt de valhoogte de belasting. Begin laag.</p>`,
-  `<div class="calc">h = 0,5 m → v = √(2 · 9,81 · 0,5) = 3,1 m/s<br>h = 1,0 m → v = 4,4 m/s<br>h = 2,0 m → v = 6,3 m/s</div>`,
-  `<p class="think">Hoeveel hoger moet een kast zijn om de landingssnelheid te verdubbelen?</p>`]},
- {t:'Afzet verlengen',s:'dezelfde wet, omgekeerd',at:()=>new THREE.Vector3(KX-.12,S.cfg.H+1.35,0),tabs:[
-  `<p>F · Δt = m · Δv werkt ook andersom. Bij een afzet wil je juist <b>veel</b> impuls opbouwen. Dat lukt door lang en hard te duwen: een grote kracht gedurende een lange tijd.</p><p>De armzwaai en een diepe, maar niet te diepe, aanzet verlengen de afzet en geven dus meer snelheid.</p>`,
+  `<div class="calc">Zonder sprongetje: v = √(2 · 9,81 · h)<br>h = 0,5 m → 3,1 m/s · 1,0 m → 4,4 m/s · 2,0 m → 6,3 m/s<br>In het lab, VO door de knieën:<br>0,5 m: v = ${f1(RF.h05.v)} m/s, Δt = ${f3(RF.h05.dt)} s, piek ${f1(RF.h05.peak)}×<br>1,0 m: v = ${f1(vk.v)} m/s, Δt = ${f3(vk.dt)} s, piek ${f1(vk.peak)}×<br>1,5 m: v = ${f1(RF.h15.v)} m/s, Δt = ${f3(RF.h15.dt)} s, piek ${f1(RF.h15.peak)}×</div>`,
+  `<p class="think">Kijk naar de remtijd onderin bij 0,5 m en bij 1,5 m, met dezelfde landing. Waarom verandert die? En hoeveel hoger moet een kast zijn om de landingssnelheid te verdubbelen?</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">Bij 1,5 m kom je sneller aan (${f1(RF.h15.v)} tegenover ${f1(RF.h05.v)} m/s). Dezelfde remweg leg je dan sneller af, dus Δt = 2 · d / v wordt korter: ${f3(RF.h15.dt)} s tegenover ${f3(RF.h05.dt)} s. Voor een twee keer zo grote snelheid heb je vier keer zoveel valhoogte nodig, want v groeit met √h.</p></details>`]},
+ {t:'Afzet verlengen',s:'dezelfde wet, omgekeerd',at:()=>new THREE.Vector3(TOEK-.25,JJ().kastTop+1.9*JJ().sc,0),tabs:[
+  `<p>F · Δt = m · Δv werkt ook andersom. Bij een afzet wil je juist impuls <b>opbouwen</b>. Dat lukt door hard en lang te duwen.</p><p>Kijk naar de gele pijl tijdens de afzet op de kast. Eerst zak je door je knieën (de tegenbeweging): de gele pijl wordt korter dan de grijze, dus je versnelt omlaag. Onderin moet je dat zakken afremmen: de gele pijl wordt dan al langer dan de grijze (tot ongeveer ${f1(1+vk.A)}×). Daarna duw je omhoog: de kracht van de kast blijft groter dan je lichaamsgewicht. Die extra kracht maal de duwtijd geeft je snelheid omhoog. Onderin zie je de impuls oplopen, tot ${f0(vk.pTO)} kg·m/s omhoog bij het loskomen. In de laatste ${f1(TH)} s duw je je ook naar voren af, tot ${f1(VX)} m/s.</p><p>De armzwaai en een diepe, maar niet te diepe, aanzet verlengen de afzet en geven dus meer snelheid.</p>`,
   `<p><span class="ctx">VO</span>Verspringen en hoogspringen: "zwaai je armen mee omhoog". Kogelstoten: "lange stootweg, van achter naar voren".</p><p><span class="ctx">PO</span>Springen van de plank: "armen naar achteren, dan zwaaien en duwen".</p>`,
-  `<div class="calc">Afzet 600 N extra gedurende 0,25 s:<br>Δv = F · Δt / m = 600 · 0,25 / 55 ≈ 2,7 m/s</div>`,
-  `<p class="think">Waarom spring je vanuit stand hoger als je eerst even door je knieën zakt (tegenbeweging)?</p>`]},
- {t:'Vangen en botsen',s:'impuls in spelsituaties',at:()=>new THREE.Vector3(-1.9,1.6,0),tabs:[
-  `<p>Elke keer dat iets afgeremd wordt, speelt impuls. Bij <b>vangen</b> verleng je de remtijd door mee te geven met je armen. Bij <b>botsen</b> (tikspellen, doelspelen) wisselen lichamen impuls uit: de totale impuls blijft behouden.</p>`,
+  `<div class="calc">Afzet in het lab (VO): ${f1(VZ)} m/s omhoog in ${f2(vk.TP)} s duwen<br>F = m · Δv / Δt = 55 · ${f1(VZ)} / ${f2(vk.TP)} ≈ ${f0(55*VZ/(Math.round(vk.TP*100)/100))} N (netto, gemiddeld)<br>piek ≈ π/2 · ${f0(55*VZ/(Math.round(vk.TP*100)/100))} + ${f0(vk.W)} ≈ ${f0(Math.PI/2*Math.round(55*VZ/(Math.round(vk.TP*100)/100))+Math.round(vk.W))} N ≈ ${f1(1+Math.PI*VZ/(2*g*vk.TP))}× lichaamsgewicht<br><br>Sprong uit stand: 600 N extra gedurende 0,25 s<br>Δv = F · Δt / m = 600 · 0,25 / 55 ≈ 2,7 m/s</div>`,
+  `<p class="think">Waarom spring je vanuit stand hoger als je eerst even door je knieën zakt (tegenbeweging)?</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">Onderin de tegenbeweging duw je al harder dan je gewicht, want je moet het zakken afremmen. De duwfase begint dan meteen met een grote kracht, in plaats van bij 1×. Daardoor is de oppervlakte boven je gewicht (de netto krachtstoot) in de duwfase groter, en kom je sneller los. Daarbij zijn je spieren en pezen voorgerekt: ze leveren dan meer kracht (rek-verkortingscyclus).</p><p style="font-size:13px;color:var(--muted)">Dit zie je in het lab niet helemaal: daar is de tegenbeweging vereenvoudigd, en begint de duwfase weer bij 1×.</p></details>`]},
+ {t:'Vangen en botsen',s:'impuls in spelsituaties',at:()=>new THREE.Vector3(JJ().xC+1.7,2.3,-2.2),tabs:[
+  `<p>Elke keer dat iets afgeremd wordt, speelt impuls. Bij <b>vangen</b> verleng je de remtijd door mee te geven met je armen. Bij <b>botsen</b> (tikspellen, doelspelen) wisselen lichamen impuls uit. De totale impuls blijft dan behouden, zolang andere krachten (zoals wrijving met de vloer) klein zijn tijdens de korte botsing.</p>`,
   `<p><span class="ctx">PO</span>Trefbal: gebruik zachte, lichte ballen. Weinig massa en een zachte bal (langere botstijd) geven een kleine kracht.</p><p><span class="ctx">VO</span>Basketbal vangen: "handen naar de bal toe, dan meegeven". Bij volleybal onderhands: het platform mag niet stijf zijn bij een harde bal.</p>`,
-  `<div class="calc">Bal 0,6 kg, 12 m/s → p = 7,2 kg·m/s<br>Vangen in 0,02 s → F = 360 N<br>Meegeven: 0,12 s → F = 60 N</div>`,
-  `<p class="think">Een leerling botst tijdens tikkertje tegen een klasgenoot die stilstaat. Wat gebeurt er met de snelheid van beiden, als ze even zwaar zijn?</p>`]}];
-const MKS=PTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.t}</span>`;b.onclick=()=>openPt(i);labWrap.appendChild(b);return b;});
+  `<div class="calc">Bal 0,6 kg, 12 m/s → p = 7,2 kg·m/s<br>Vangen in 0,02 s → F = 7,2 / 0,02 = 360 N<br>Meegeven: 0,12 s → F = 7,2 / 0,12 = 60 N</div>`,
+  `<p class="think">Een leerling botst tijdens tikkertje tegen een klasgenoot die stilstaat. Wat gebeurt er met de snelheid van beiden, als ze even zwaar zijn?</p><details style="margin-top:8px"><summary style="cursor:pointer;color:var(--gold);font-weight:600">Toon een antwoord</summary><p style="margin-top:8px">Dat hangt af van de botsing. Blijven ze aan elkaar haken, dan gaan ze samen verder met de halve snelheid: twee keer de massa, dezelfde totale impuls. Botsen ze verend (elastisch), dan wisselen ze van snelheid: wie aan kwam rennen staat stil, en de klasgenoot gaat verder met diezelfde snelheid. Echte botsingen tussen mensen zitten daartussen. Impulsbehoud geldt alleen zolang andere krachten, zoals wrijving met de vloer, klein zijn tijdens die korte botsing.</p></details>`]}];
+const MKS=PTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.t}</span>`;b.setAttribute('aria-label','Uitlegpunt '+(i+1)+': '+p.t);b.onclick=()=>openPt(i);labWrap.appendChild(b);return b;});
 let ptI=0,ptTab=0;
-function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((m,k)=>m.classList.toggle('sel',k===i));}
-function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(m=>m.classList.remove('sel'));}
-function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));$('#dBody').innerHTML=p.tabs[ptTab];}
+function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((m,k)=>m.classList.toggle('sel',k===i));relayout();}
+function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(m=>m.classList.remove('sel'));relayout();}
+function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));$('#dBody').innerHTML=p.tabs[ptTab];$('#dBody').scrollTop=0;}
 $$('#dTabs button').forEach(b=>b.onclick=()=>{ptTab=+b.dataset.t;renderPt();});$('#dClose').onclick=closePt;
 function ptStep(d){if(!$('#dossier').classList.contains('open')){openPt(0);return;}ptTab+=d;if(ptTab>3){if(ptI<PTS.length-1){ptI++;ptTab=0;}else ptTab=3;}if(ptTab<0){if(ptI>0){ptI--;ptTab=3;}else ptTab=0;}openPt(ptI,ptTab);}
 $('#dNext').onclick=()=>ptStep(1);$('#dPrev').onclick=()=>ptStep(-1);
 
 /* ================= grafiek & HUD ================= */
-const chart=$('#chart'),cx2=chart.getContext('2d');const TW=.5,TMIN=-.05,BWMAX=12;
-function curveBW(J,t){if(t<0)return 0;if(t<J.dt)return 1+J.Fp*Math.sin(Math.PI*t/J.dt)/J.W;return 1;}
+const chart=$('#chart'),cx2=chart.getContext('2d');
+function curveBW(J,t){if(t<0||t>=J.dt)return t<0?0:1;return 1+J.Fn*Math.sin(Math.PI*t/J.dt)/J.W;}
 function drawChart(){const r=chart.getBoundingClientRect();if(!r.width)return;const dpr=Math.min(devicePixelRatio,2);if(chart.width!==Math.round(r.width*dpr)||chart.height!==Math.round(r.height*dpr)){chart.width=Math.round(r.width*dpr);chart.height=Math.round(r.height*dpr);}
-  const x=cx2,w=r.width,h=r.height;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);const pl=26,pt=14,pb=14,pr=6;
-  const X=t=>pl+(w-pl-pr)*(t-TMIN)/TW,Y=b=>h-pb-(h-pb-pt)*clamp(b/BWMAX,0,1);
-  x.font='600 10px JetBrains Mono, monospace';x.fillStyle='#aab3b4';x.fillText('kracht (× lichaamsgewicht) tegen de tijd na het contact',pl,10);
-  [0,1,4,8,12].forEach(b=>{x.strokeStyle=b===1?'rgba(241,233,218,.35)':'rgba(241,233,218,.08)';x.setLineDash(b===1?[4,4]:[]);x.beginPath();x.moveTo(pl,Y(b));x.lineTo(w-pr,Y(b));x.stroke();x.setLineDash([]);x.fillStyle='#aab3b4';x.fillText(b+'×',2,Y(b)+3);});
-  [0,.1,.2,.3,.4].forEach(t=>{x.fillStyle='#6f7a7c';x.fillText(t.toFixed(1).replace('.',',')+'s',X(t)-8,h-2);});
-  const draw=(J,col,fill)=>{if(!J)return;x.beginPath();let first=true;for(let i=0;i<=200;i++){const t=TMIN+TW*i/200;const b=curveBW(J,t);const px=X(t),py=Y(b);first?x.moveTo(px,py):x.lineTo(px,py);first=false;}
-    if(fill){x.save();x.lineTo(X(TMIN+TW),Y(1));x.lineTo(X(0),Y(1));x.closePath();x.fillStyle=fill;x.fill();x.restore();x.beginPath();for(let i=0;i<=200;i++){const t=TMIN+TW*i/200;const px=X(t),py=Y(curveBW(J,t));i?x.lineTo(px,py):x.moveTo(px,py);}}
+  const x=cx2,w=r.width,h=r.height;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);
+  const ready=S.phase==='ready'||!S.J,J=ready?null:S.J,P=ready?S.J:(S.prevJ&&S.prevJ!==S.J?S.prevJ:null);
+  // smal: ruimte bovenin voor de regels met piek en netto stoot, zodat ze niet over de curve vallen
+  const nLines=(J&&P&&S.done1&&Math.abs(J.p-P.p)<.5)?1:(J&&S.done1?1:0)+(P?1:0);
+  // de legenda rechts past alleen in de hoge grafiek (bureaublad); de lage grafiek op tablet en mobiel gebruikt de regels bovenin
+  const wide=w>=430&&h>=96,legW=wide?150:0,pl=26,pr=6+legW,pt=wide?15:(nLines>1?27:nLines?15:14),pb=13;
+  const TMIN=-.04,dtM=Math.max(J?J.dt:.2,P?P.dt:0),TW=Math.max(.3,dtM*1.18+.05)-TMIN;
+  const pk=Math.max(J?J.peak:4,P?P.peak:0),YM=[4,6,8,10,12,16,20,25,30].find(v=>v>=pk*1.06)||40,ys=[1,2,4,5,10].find(q=>(h-pb-pt)*q/YM>=13)||10;
+  const X=t=>pl+(w-pl-pr)*(t-TMIN)/TW,Y=b=>h-pb-(h-pb-pt)*clamp(b/YM,0,1.02);
+  // net na de landing: kort laten oplichten dat beide oppervlakten even groot zijn
+  const same=!!(J&&P&&S.done1&&Math.abs(J.p-P.p)<.5),flash=same?clamp(1-(clock-S.doneAt-2.2)/1.2,0,1):0;
+  x.font='600 10px JetBrains Mono, monospace';x.fillStyle='#aab3b4';x.textBaseline='alphabetic';
+  if(flash>0&&wide){x.fillStyle=`rgba(246,226,184,${(.35+.65*flash).toFixed(2)})`;x.fillText(`zelfde oppervlakte: beide netto stoot ${f0(J.p)} N·s`,pl,10);}
+  else if(wide||w>=470||!(J&&S.done1)&&!P)x.fillText(wide?'kracht van de ondergrond (× lichaamsgewicht)':'× lichaamsgewicht',pl,10);
+  for(let b=ys;b<=YM;b+=ys){x.strokeStyle='rgba(241,233,218,.08)';x.beginPath();x.moveTo(pl,Y(b));x.lineTo(w-pr,Y(b));x.stroke();if(b!==1&&Math.abs(Y(1)-Y(b))>=11){x.fillStyle='#7d878a';x.fillText(b+'×',2,Y(b)+3);}}
+  x.strokeStyle='rgba(241,233,218,.45)';x.setLineDash([4,4]);x.beginPath();x.moveTo(pl,Y(1));x.lineTo(w-pr,Y(1));x.stroke();x.setLineDash([]);x.fillStyle='#c9c0ae';x.fillText('1×',2,Y(1)+3);
+  x.strokeStyle='rgba(241,233,218,.25)';x.beginPath();x.moveTo(X(0),pt-2);x.lineTo(X(0),h-pb);x.stroke();
+  const pxs=(w-pl-pr)/TW,tst=[.05,.1,.2,.5].find(q=>q*pxs>=38)||.5;x.fillStyle='#6f7a7c';for(let t=0;t<=TMIN+TW-.02+1e-6;t+=tst){const lab=(Math.round(t*100)/100).toString().replace('.',',')+(t===0?' s':'');x.fillText(lab,X(t)-(t===0?2:8),h-2);}
+  const curve=(Jc,t1,col,fill)=>{const t0=TMIN;if(t1<=t0)return;const n=160;
+    if(fill){const a=0,b=Math.min(t1,Jc.dt);if(b>a){x.beginPath();x.moveTo(X(a),Y(1));for(let i=0;i<=n;i++){const t=a+(b-a)*i/n;x.lineTo(X(t),Y(curveBW(Jc,t)));}x.lineTo(X(b),Y(1));x.closePath();x.fillStyle=fill;x.fill();}}
+    x.beginPath();x.moveTo(X(t0),Y(0));x.lineTo(X(0),Y(0));const tc=Math.min(t1,Jc.dt);for(let i=0;i<=n;i++){const t=tc*i/n;x.lineTo(X(t),Y(curveBW(Jc,t)));}if(t1>Jc.dt){x.lineTo(X(Jc.dt),Y(1));x.lineTo(X(Math.min(t1,TMIN+TW)),Y(1));}
     x.strokeStyle=col;x.lineWidth=2;x.stroke();};
-  draw(S.prevJ&&S.prevJ!==S.J?S.prevJ:null,'rgba(170,179,180,.55)');draw(S.J,'#e6b65e','rgba(230,182,94,.18)');
-  if(S.J){const tl=S.tau-S.J.tc;if(tl>TMIN&&tl<TMIN+TW){x.strokeStyle='#f1e9da';x.lineWidth=1.2;x.beginPath();x.moveTo(X(tl),pt);x.lineTo(X(tl),h-pb);x.stroke();}
-    x.fillStyle='#e6b65e';x.font='700 11px JetBrains Mono, monospace';x.fillText('piek '+f1(S.J.peak)+'×',X(S.J.dt/2)+6,Math.max(pt+10,Y(S.J.peak)+4));}}
-function updateHud(f){const J=S.J;const m=J?J.m:WHO[S.cfg.who].m;let v=f.v||0;
-  if(!J||S.phase==='ready'){$('#vP').textContent='0';$('#vP2').textContent='kg·m/s · stilstaand';$('#vF').textContent='–';$('#vF2').textContent='× lichaamsgewicht';$('#vT').textContent='–';return;}
-  const vv=f.ph==='air'?Math.abs(f.vUp):v;$('#vP').textContent=f0(m*vv);$('#vP2').textContent=`kg·m/s · v = ${f1(vv)} m/s`;
-  if(f.ph==='contact'||f.ph==='after'){$('#vF').textContent=f1(f.ph==='contact'?f.F/J.W:J.peak);$('#vF2').textContent=f.ph==='contact'?'× lg · nu':'× lg · piek';$('#vT').textContent=f0(J.dt*1000);}
-  else{$('#vF').textContent=f.ph==='air'?'0':'1,0';$('#vF2').textContent=f.ph==='air'?'in de lucht: geen contact':'× lichaamsgewicht';$('#vT').textContent='–';}
-  $('#oScrub').textContent=f.ph==='air'?'vlucht':f.ph==='contact'?f0((S.tau-J.tc)*1000)+' ms':f.ph==='pre'?'afzet':'na de landing';
-  if(document.activeElement!==$('#iScrub'))$('#iScrub').value=Math.round(clamp((S.tau+PRE)/(J.tc+J.dt+POST+PRE),0,1)*1000);}
+  // ook de vorige landing krijgt een (grijs) vlak: zo zie je dat de oppervlakte gelijk blijft
+  if(P)curve(P,TMIN+TW,'rgba(170,179,180,.75)',`rgba(170,179,180,${(.15+.2*flash).toFixed(2)})`);
+  let tl=null;
+  if(J){tl=S.tau-J.tc;const end=S.done1?TMIN+TW:clamp(tl,TMIN,TMIN+TW);curve(J,end,'#e6b65e',`rgba(230,182,94,${(.22+.2*flash).toFixed(2)})`);
+    if(tl>TMIN&&tl<TMIN+TW){x.strokeStyle='#f1e9da';x.lineWidth=1.2;x.beginPath();x.moveTo(X(tl),pt-2);x.lineTo(X(tl),h-pb);x.stroke();}
+    // smal: na de landing staat de piek al in de regel rechtsboven, dus geen tweede label op de curve
+    if((S.done1||tl>=J.dt/2)&&(wide||!S.done1)){x.fillStyle='#e6b65e';x.font='700 11px JetBrains Mono, monospace';const px=X(J.dt/2),py=Y(J.peak);x.fillText('piek '+f1(J.peak)+'×',Math.min(px+6,w-pr-70),Math.max(pt+9,py+4));}
+    if(S.done1&&Y(1)-Y(J.peak)>22){x.fillStyle='#f6e2b8';x.font='600 10px JetBrains Mono, monospace';const t='Δp';x.fillText(t,X(J.dt/2)-8,(Y(1)+Y(J.peak))/2+10);}}
+  if(wide){const lx=w-legW+10;x.font='600 10px JetBrains Mono, monospace';let yy=12;
+    const row=(lab,Jc,col,show)=>{x.fillStyle=col;x.fillText(lab,lx,yy);yy+=13;x.fillStyle=show?'#e9e2d4':'#6f7a7c';x.fillText(show?`piek ${f1(Jc.peak)}×`:'piek …',lx,yy);yy+=12;x.fillText(show?`Δt ${f3(Jc.dt)} s`:'Δt …',lx,yy);yy+=12;x.fillText(show?`netto stoot ${f0(Jc.p)} N·s`:'netto stoot …',lx,yy);yy+=17;};
+    if(J)row('● deze landing',J,'#e6b65e',S.done1);if(P)row('● vorige landing',P,'#aab3b4',true);
+    if(!J&&!P){x.fillStyle='#6f7a7c';x.fillText('nog geen landing',lx,24);}}
+  else{// smal (dossier open of mobiel): de stoot blijft zichtbaar, zodat je de gelijke oppervlakte kunt controleren
+    x.font=`600 ${w<400?9.5:10}px JetBrains Mono, monospace`;x.textAlign='right';let yy=10;
+    if(same){// zelfde netto stoot: alles op één regel, zodat de curve ruimte houdt
+      x.fillStyle='#aab3b4';const t2=` · vorige ${f1(P.peak)}× · beide ${f0(J.p)} N·s`;x.fillText(t2,w-4,yy);x.fillStyle='#e6b65e';x.fillText(`piek ${f1(J.peak)}×`,w-4-x.measureText(t2).width,yy);}
+    else{if(J&&S.done1){x.fillStyle='#e6b65e';x.fillText(`deze: piek ${f1(J.peak)}× · netto stoot ${f0(J.p)} N·s`,w-4,yy);yy+=12;}
+      if(P){x.fillStyle='#aab3b4';x.fillText(`vorige: piek ${f1(P.peak)}× · netto stoot ${f0(P.p)} N·s`,w-4,yy);}}x.textAlign='left';}}
+const bar=(id,v)=>{$(id).style.width=(clamp(v,0,1)*100).toFixed(1)+'%';};
+function setT(id,b,e){$(id).textContent=b;if(e!==undefined)$(id+'2').textContent=e;}
+const SURFW={floor:'de vloer',turn:'de turnmat',thick:'de dikke mat'};
+function updateHud(f){const J=f.J,m=J.m,nar=innerWidth<=820,kw=innerWidth<=960?'× gewicht':'× lichaamsgewicht';const sP=$('#sP');
+  if(f.ph==='ready'){sP.textContent='Impuls p = m · v';setT('#vP','0','kg·m/s · stilstand');setT('#vF','–','N, netto');setT('#vT','–','seconde');setT('#vK','–',kw);['#bP','#bF','#bT','#bK'].forEach(i=>bar(i,0));
+    $('#eqLine').textContent=nar?'Δp = remkracht · remtijd':`Δp = gemiddelde netto remkracht · remtijd  |  landingssnelheid ${f1(J.v)} m/s omlaag`;$('#oScrub').textContent='–';return;}
+  // de uitkomst van de landing alleen tonen bij het contact en daarna; bij terugkijken naar afzet of vlucht hoort de uitleg van die fase
+  const done=f.ph==='after'||S.done1&&f.ph==='contact';
+  if(f.ph==='pre'||f.ph==='air'){const vy=f.vy;sP.textContent='Impuls p = m · v';setT('#vP',f0(m*Math.abs(vy)),`kg·m/s · ${Math.abs(vy)<.005?'stil':vy>0?'omhoog':'omlaag'}`);bar('#bP',m*Math.abs(vy)/650);}
+  else{const rest=m*(f.v||0);sP.textContent='Δp = m · v';setT('#vP',f0(J.p),f.ph==='contact'?`nog remmen: ${f0(rest)}`:`kg·m/s · v = ${f1(J.v)} m/s`);bar('#bP',(f.ph==='contact'?rest:0)/650);}
+  // terugkijken na de landing: de vakken tonen de eindwaarden (zodat Δp = F · Δt klopt), de subregel de tijd van nu
+  if(f.ph==='contact'){if(done){setT('#vT',f3(J.dt),'nu: '+f3(f.tl)+' s');bar('#bT',J.dt/.5);}else{setT('#vT',f3(f.tl),'s · loopt nog');bar('#bT',f.tl/.5);}}else if(f.ph==='after'){setT('#vT',f3(J.dt),'seconde');bar('#bT',J.dt/.5);}else{setT('#vT','–','seconde');bar('#bT',0);}
+  if(done){setT('#vF',f0(J.Favg),'N, gem. netto');bar('#bF',J.Favg/4000);setT('#vK',f1(J.peak)+'×',innerWidth<=960?'gewicht':'lichaamsgewicht');bar('#bK',J.peak/16);
+    const F0=Math.round(J.Favg),W0=Math.round(J.W);
+    $('#eqLine').textContent=f.ph==='after'&&f.u>.3?(nar?'opstaan (niet in het model)':`${f0(J.p)} kg·m/s ≈ ${f0(J.Favg)} N · ${f3(J.dt)} s  |  daarna: opstaan (niet in het model)`):nar?`${f0(J.p)} kg·m/s ≈ ${f0(J.Favg)} N · ${f3(J.dt)} s`:`${f0(J.p)} kg·m/s ≈ ${f0(J.Favg)} N · ${f3(J.dt)} s  |  piek = π/2 · ${f0(F0)} + ${f0(W0)} ≈ ${f0(Math.PI/2*F0+W0)} N`;}
+  else{setT('#vF',f.ph==='contact'?'…':'–',f.ph==='contact'?'na het remmen':'N, netto');bar('#bF',0);setT('#vK',f.ph==='contact'?'…':'–',kw);bar('#bK',0);
+    const sw=SURFW[J.cfg.surf];
+    $('#eqLine').textContent=f.ph==='contact'?(nar?`${sw} duwt ${f1(f.F/J.W)}× · remweg ${f2(f.s)} m`:`${sw} duwt nu ${f1(f.F/J.W)}× je lichaamsgewicht · remweg tot nu ${f2(f.s)} m`):f.ph==='pre'?(f.sub==='cm'?`tegenbeweging: de kast duwt ${f1(f.F/J.W)}× je lichaamsgewicht`:`afzet: de kast duwt ${f1(f.F/J.W)}× je lichaamsgewicht`):'in de lucht: alleen de zwaartekracht werkt';}
+  $('#oScrub').textContent=f.ph==='air'?'vlucht':f.ph==='contact'?'contact +'+f0(f.tl*1000)+' ms':f.ph==='pre'?(f.sub==='cm'?'tegenbeweging':'afzet'):'na het contact';
+  if(document.activeElement!==$('#iScrub'))$('#iScrub').value=Math.round(tau2u(J,S.tau)*1000);}
+// tijdschuif: het contact krijgt de helft van de schuif
+function scrubKnots(J){return [[-J.pre,0],[J.tc-.06,.25],[J.tc+J.dt+.1,.75],[J.tc+J.dt+POST,1]];}
+function tau2u(J,t){const k=scrubKnots(J);for(let i=1;i<k.length;i++)if(t<=k[i][0]||i===k.length-1)return clamp(lerp(k[i-1][1],k[i][1],(t-k[i-1][0])/(k[i][0]-k[i-1][0])),0,1);return 1;}
+function u2tau(J,u){const k=scrubKnots(J);for(let i=1;i<k.length;i++)if(u<=k[i][1]||i===k.length-1)return lerp(k[i-1][0],k[i][0],clamp((u-k[i-1][1])/(k[i][1]-k[i-1][1]),0,1));return k[3][0];}
+
+/* ================= camera ================= */
+// _dirHi: bij het contact op een mat kijkt de camera iets van boven, zodat je de deuk ziet
+let camFollow=store.get('cam',true);const camT=new THREE.Vector3(),camP=new THREE.Vector3(),_dir=new THREE.Vector3(.05,.17,1).normalize(),_dirHi=new THREE.Vector3(.05,.33,1).normalize(),camDir=_dir.clone();let U={l:0,r:1,t:0,b:1};
+function wantDir(){const J=S.J;return camFollow&&wantClose()&&J&&J.cfg.surf!=='floor'?_dirHi:_dir;}
+const hudShown=()=>getComputedStyle($('#hud')).display!=='none';
+function usable(){const W=innerWidth,H=innerHeight,mob=W<=820;let l=8,r=W-8,t=0,b=H;
+  t=$('#top').getBoundingClientRect().bottom+6;b=hudShown()?$('#hud').getBoundingClientRect().top-6:H-8;
+  const lab=$('#lab');if(getComputedStyle(lab).display!=='none'){const lr=lab.getBoundingClientRect();if(mob)b=Math.min(b,lr.top-6);else l=lr.right+8;}
+  if($('#dossier').classList.contains('open')){const dr=$('#dossier').getBoundingClientRect();if(mob)b=Math.min(b,dr.top-6);else r=dr.left-8;}
+  if(b-t<120)b=t+120;return {l,r,t,b};}
+function relayout(){const ds=document.documentElement.style,hs=hudShown();
+  if(innerWidth<=820){if(hs)ds.setProperty('--hudH',(innerHeight-$('#hud').getBoundingClientRect().top+8)+'px');}
+  else{// paneel en uitleg beginnen onder de (soms twee rijen hoge) titelbalk en eindigen boven de HUD
+    const tb=Math.round(Math.max($('.title').getBoundingClientRect().bottom,$('.tools').getBoundingClientRect().bottom)+10);ds.setProperty('--topB',tb+'px');ds.setProperty('--bandH',Math.max(130,tb+26)+'px');
+    ds.setProperty('--labMax',Math.max(160,Math.round($('#hud').getBoundingClientRect().top-tb-12))+'px');}
+  U=usable();const W=innerWidth,H=innerHeight;camera.setViewOffset(W,H,W/2-(U.l+U.r)/2,H/2-(U.t+U.b)/2,W,H);camera.updateProjectionMatrix();if(!camFollow)snapCam();drawChart();}
+function boxFor(J,close){const sc=J.sc,nar=innerWidth<=820,y0=J.S.h-J.dS-.08;if(close)return nar?{x0:J.xC-1.15*sc,x1:J.xC+.95,y0,y1:J.S.h+J.hR+.8*sc}:{x0:J.xC-1.3*sc,x1:J.xC+.95,y0,y1:J.S.h+J.hR+.8*sc};
+  return {x0:KX-.75,x1:Math.max(J.xC+.9,KX+1.5),y0:-.05,y1:J.y0+VZ*VZ/(2*g)+.85*sc};}
+function fit(box,oT,oP){const H=innerHeight,th=Math.tan(camera.fov*D2R/2),uw=Math.max(80,U.r-U.l),uh=Math.max(80,U.b-U.t);
+  const D=Math.max((box.y1-box.y0)*H/(2*th*uh*.9),(box.x1-box.x0)*H/(2*th*uw*.9));oT.set((box.x0+box.x1)/2,(box.y0+box.y1)/2,0);oP.copy(oT).addScaledVector(camDir,D);}
+function wantClose(){const J=S.J;return !!(J&&S.phase!=='ready'&&S.tau>=J.tc-.1);}
+function snapCam(){const J=(S.phase==='ready'||!S.J)?S.pv:S.J;camDir.copy(wantDir());fit(boxFor(J,camFollow&&wantClose()),camT,camP);controls.target.copy(camT);camera.position.copy(camP);}
+function setCam(v){camFollow=v;store.set('cam',v);$('#bCam').textContent='Camera: '+(v?'volgen':'overzicht');$('#bCam').classList.toggle('on',v);snapCam();}
+$('#bCam').onclick=()=>setCam(!camFollow);
 
 /* ================= bediening ================= */
 function syncUI(){const c=S.cfg;$$('#sWho button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.who));$$('#sTech button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.tech));$$('#sSurf button').forEach(b=>b.classList.toggle('on',b.dataset.v===c.surf));
-  $('#iH').value=c.H;$('#oH').textContent=f2(c.H)+' m';const J=simulate(c);$('#oH2').textContent=`landingssnelheid ≈ ${f1(J.v)} m/s · impuls ${f0(J.p)} kg·m/s`;
-  $$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));buildKast(c.H);showSurf(c.surf);if(Math.abs((S.camH??-1)-c.H)>.001){S.camH=c.H;frameCam();}
-  for(const k of ['who','H','tech','surf'])store.set(k,c[k]);}
-function seg(id,key){$$(id+' button').forEach(b=>b.onclick=()=>{S.cfg[key]=b.dataset.v;syncUI();if(S.phase!=='run'){S.phase='ready';}});}
+  $('#iH').value=c.H;$('#oH').textContent=f2(c.H)+' m';S.pv=simulate(c);$('#oH2').textContent=`landingssnelheid omlaag ${f1(S.pv.v)} m/s · impuls ${f0(S.pv.p)} kg·m/s`;
+  $$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));
+  const shown=(S.phase==='ready'||!S.J)?S.pv:S.J;buildKast(shown.kastTop);showSurf(shown.cfg.surf);
+  for(const k of ['who','H','tech','surf'])store.set(k,c[k]);if(!camFollow)snapCam();}
+function changed(){S.phase='ready';S.done1=false;S.last=null;$('#iScrub').disabled=true;const had=document.body.classList.contains('hasJ');document.body.classList.remove('hasJ');readyRes();syncUI();if(had&&innerWidth<=820)relayout();drawChart();}
+function seg(id,key){$$(id+' button').forEach(b=>b.onclick=()=>{S.cfg[key]=b.dataset.v;changed();});}
 seg('#sWho','who');seg('#sTech','tech');seg('#sSurf','surf');
-$('#iH').oninput=e=>{S.cfg.H=+e.target.value;syncUI();S.phase='ready';};
+$('#iH').oninput=e=>{S.cfg.H=+e.target.value;changed();};
 $$('#sSpeed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;syncUI();});
 $('#bJump').onclick=()=>jump();$('#bReplay').onclick=()=>replay();
-$('#iScrub').oninput=e=>{if(!S.J)return;S.phase='scrub';const J=S.J;S.tau=-PRE+(+e.target.value/1000)*(J.tc+J.dt+POST+PRE);};
-function applyLayers(){}
+$('#iScrub').oninput=e=>{if(!S.J)return;S.phase='scrub';S.tau=u2tau(S.J,+e.target.value/1000);};
+function seek(t){if(!S.J||S.phase==='ready')return;S.phase='scrub';S.tau=clamp(t,-S.J.pre,S.J.tc+S.J.dt+POST);}
+// op mobiel: bij terugkijken het "Meer"-paneel sluiten, zodat de landing in beeld is
+const seekM=t=>{if(!S.J)return;if(innerWidth<=820&&document.body.classList.contains('more'))setMore(false);seek(t);};
+$('#bToC').onclick=()=>seekM(S.J&&S.J.tc+.0005);$('#bToP').onclick=()=>seekM(S.J&&S.J.tc+S.J.dt/2);$('#bMin').onclick=()=>seekM(S.tau-.01);$('#bPlus').onclick=()=>seekM(S.tau+.01);
+function setMore(v){document.body.classList.toggle('more',v);$('#bMore').textContent=v?'Minder ▴':'Meer ▾';$('#bMore').setAttribute('aria-expanded',v);requestAnimationFrame(relayout);relayout();}
+$('#bMore').onclick=()=>setMore(!document.body.classList.contains('more'));
 const LBL=['dots','names','off'],LBLN={dots:'stippen',names:'namen',off:'uit'};let lblI=0;
-$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.className=document.body.className.replace(/lbl-\w+/,'lbl-'+LBL[lblI]);$('#bLbl').textContent='Labels: '+LBLN[LBL[lblI]];};
-function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.classList.remove('lbl-dots','lbl-names','lbl-off');document.body.classList.add('lbl-'+LBL[lblI]);$('#bLbl').textContent='Labels: '+LBLN[LBL[lblI]];};
+function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});relayout();}
 $('#bPresent').onclick=()=>setPresent(!document.body.classList.contains('present'));
-const TOG={M:'tSlow',V:'tV',F:'tF',K:'tK'};
-addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;const k=e.key,K=k.toUpperCase();
-  if(k===' '){e.preventDefault();if(S.phase==='run')S.phase='pause';else if(S.phase==='pause')S.phase='run';else jump();return;}
-  if(k==='1'||k==='2'||k==='3'){S.cfg.tech=['stiff','knee','deep'][+k-1];syncUI();}
+const TOG={M:'tSlow',V:'tV',F:'tF',S:'tS',K:'tK'};
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;if($$('.modal.open').length&&e.key!=='Escape')return;const k=e.key,K=k.toUpperCase();
+  if(k===' '){e.preventDefault();if(S.phase==='run')S.phase='pause';else if(S.phase==='pause'||S.phase==='scrub'&&S.J&&S.tau<S.J.tc+S.J.dt+POST)S.phase='run';else jump();return;}
+  if(k==='1'||k==='2'||k==='3'){S.cfg.tech=['stiff','knee','deep'][+k-1];changed();}
   if(TOG[K]){const i=$('#'+TOG[K]);i.checked=!i.checked;}
-  if(K==='G')setSound(!SND.on);if(K==='L')$('#bLbl').click();if(K==='P')setPresent(!document.body.classList.contains('present'));
+  if(K==='C')setCam(!camFollow);if(K==='G')setSound(!SND.on);if(K==='L')$('#bLbl').click();if(K==='P')setPresent(!document.body.classList.contains('present'));
   if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();ptStep(1);}if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();ptStep(-1);}
-  if(k==='Escape'){if($$('.modal.open').length)$$('.modal.open').forEach(m=>m.classList.remove('open'));else if($('#dossier').classList.contains('open'))closePt();else if(document.body.classList.contains('present'))setPresent(false);}});
+  if(k==='Escape'){if($$('.modal.open').length){$$('.modal.open').forEach(m=>m.classList.remove('open'));closeQuiz();}else if($('#dossier').classList.contains('open'))closePt();else if(document.body.classList.contains('present'))setPresent(false);}});
 
 /* ================= uitleg & opdrachten ================= */
 $('#bHelp').onclick=()=>{$('#mHelp').classList.add('open');$('#helpBody').innerHTML=`<h2>Zo werkt het landingslab</h2>
-  <p>Een leerling springt van de kast. Jij kiest <b>wie</b> er springt, <b>hoe hoog</b> de kast is, <b>hoe</b> er geland wordt en <b>waarop</b>. Bij het contact gaat het beeld automatisch in slow motion: de echte landing duurt maar een paar honderdsten van een seconde.</p>
-  <ul><li>Onderin zie je <b>F · Δt = m · Δv</b>: de impuls (groen), de kracht (geel) en de remtijd (blauw).</li><li>De grafiek toont de kracht in "keer lichaamsgewicht". De gele oppervlakte is bij dezelfde sprong steeds even groot; alleen de vorm verandert. De grijze lijn is je vorige landing.</li><li>De knie kleurt mee met de belasting: groen, geel, oranje, rood.</li><li>De gele cijfers in beeld zijn uitlegpunten met vier tabjes.</li></ul>
-  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Springen · pauzeren</td></tr><tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Stijf · door de knieën · diep inveren</td></tr><tr><td><kbd>M</kbd> <kbd>V</kbd> <kbd>F</kbd> <kbd>K</kbd></td><td>Slow motion · snelheid · kracht · kniebelasting</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
-  <p style="font-size:13px;color:var(--muted)">Het model is vereenvoudigd: de remkracht heeft de vorm van een halve sinus, de remweg is lichaam plus ondergrond. Echte landingen hebben een scherpere eerste piek (hielcontact). De orde van grootte klopt: van ongeveer 3× lichaamsgewicht bij een zachte tot meer dan 8× bij een stijve landing.</p>
+  <p>Een leerling springt van de kast. Jij kiest <b>wie</b> er springt, de <b>valhoogte</b>, <b>hoe</b> er geland wordt en <b>waarop</b>. Bij het contact gaat het beeld in slow motion en zoomt de camera in: een echte landing duurt maar een paar tiende seconde.</p>
+  <ul><li>Onderin staat <b>Δp = F · Δt</b>: de impuls die bij het contact weg moet (groen, Δp = m · v) is gelijk aan de gemiddelde netto remkracht (geel) maal de remtijd (blauw). Die vermenigvuldiging F · Δt heet de <b>netto krachtstoot</b>: de stoot bovenop je gewicht. Reken de getallen maar na: op afronding na kloppen ze. Het oranje vak is de <b>piekkracht</b>: de grootste kracht van de ondergrond op je voeten, inclusief je lichaamsgewicht.</li>
+  <li>De grafiek toont de kracht van de vloer in "keer lichaamsgewicht" (×). De gele oppervlakte boven de stippellijn (1×) is de netto krachtstoot (Δp). Bij dezelfde leerling en valhoogte is die altijd even groot; alleen de vorm verandert. Het grijze vlak is je vorige landing. De vloer levert in totaal iets meer stoot, want hij draagt ook je gewicht: m · g · Δt.</li>
+  <li>In beeld: de groene pijl is de snelheid, de gele pijl de kracht van de vloer en de grijze pijl je gewicht. De gele pijl staat voor de duidelijkheid net vóór de voet; in het echt grijpt hij onder de voet aan. De maatlat naast de heup is de remweg: blauw is het lichaam, paars de mat. De witte stippen tonen het zwaartepunt elke 20 ms; de doorzichtige pop is je houding bij het eerste contact.</li>
+  <li>De ring onder de voeten kleurt mee met de kracht, net als het oordeel: groen onder 6× (zacht of goed), geel van 6 tot 9× (hard), rood vanaf 9× (te hard). Deze grenzen zijn een indicatie, geen harde blessuregrens.</li>
+  <li>Met de tijdschuif en de knoppen <b>Contact</b>, <b>Piek</b> en <b>±10 ms</b> bekijk je de landing stap voor stap.</li></ul>
+  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Springen · pauzeren</td></tr><tr><td><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></td><td>Stijf · door de knieën · diep inveren</td></tr><tr><td><kbd>M</kbd> <kbd>V</kbd> <kbd>F</kbd> <kbd>S</kbd> <kbd>K</kbd></td><td>Slow motion · snelheid · krachten · remweg en stroboscoop · kleurring</td></tr><tr><td><kbd>C</kbd></td><td>Camera: volgen of overzicht</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten (werkt met een clicker)</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
+  <p style="font-size:13px;color:var(--muted)">Het model is vereenvoudigd. De valhoogte is de hoogte van de kast boven de landingsplek. De remweg is hoe ver het zwaartepunt zakt (lichaam plus mat). De netto remkracht heeft de vorm van een halve sinus bovenop het lichaamsgewicht. In werkelijkheid begint de kracht bij nul en is er vaak al vroeg een scherpe piek, als de hielen neerkomen. We rekenen alleen met de verticale beweging; de vaart naar voren remt gelijkmatig af. In werkelijkheid helt de kracht van de vloer daardoor iets naar achteren. Het opstaan na de landing is niet gemodelleerd. De orde van grootte klopt: van ongeveer 2× tot meer dan 10× lichaamsgewicht.</p>
   <p><button class="btn accent" id="hClose">Aan de slag</button></p>`;$('#hClose').onclick=()=>$('#mHelp').classList.remove('open');};
+const q6=RF.q6,q5=RF.q5;
 const QUIZ=[
- {t:'R',type:'mc',q:'Wat verandert er als een leerling door de knieën landt in plaats van stijf?',opts:['De impuls bij het neerkomen wordt kleiner','De remtijd wordt langer, dus de piekkracht kleiner','De valhoogte wordt kleiner','De zwaartekracht wordt kleiner'],ok:1,ex:'De impuls ligt vast door massa en valhoogte. Door de knieën zakken verlengt de remtijd, waardoor dezelfde krachtstoot met een kleinere kracht wordt geleverd.'},
- {t:'R',type:'mc',q:'In de grafiek is de gele oppervlakte bij een stijve en een zachte landing (zelfde sprong) …',opts:['bij de stijve landing groter','bij de zachte landing groter','even groot: het is dezelfde impulsverandering','nul, want de leerling staat stil'],ok:2,ex:'De oppervlakte is de krachtstoot F · Δt. Die is gelijk aan m · Δv, en Δv is bij dezelfde sprong gelijk.'},
- {t:'T1',type:'num',q:'Een leerling van 40 kg komt neer met 4,0 m/s. Hoe groot is de impuls (kg·m/s)?',answer:160,tol:.5,ex:'p = m · v = 40 · 4,0 = 160 kg·m/s.'},
- {t:'T1',type:'num',q:'Die leerling remt in 0,20 s af. Hoe groot is de gemiddelde remkracht (N), zonder het lichaamsgewicht?',answer:800,tol:5,ex:'F = Δp / Δt = 160 / 0,20 = 800 N. Daar komt het lichaamsgewicht (≈ 392 N) nog bij.'},
- {t:'T2',type:'sim',q:'Laat een <b>VO-leerling</b> van een kast van <b>1,2 m</b> landen op de <b>gymvloer</b> met minder dan <b>4,5× lichaamsgewicht</b>.',check:l=>l&&l.who==='vo'&&Math.abs(l.H-1.2)<.03&&l.surf==='floor'&&l.peak<4.5,fail:l=>!l?'Spring eerst.':(l.who!=='vo'||Math.abs(l.H-1.2)>=.03||l.surf!=='floor')?'Controleer: VO-leerling, kast 1,2 m, gymvloer.':`Piek ${f1(l.peak)}×. Hoe kun je de remtijd nog verder verlengen?`,ok:'Diep inveren verlengt de remweg zo ver dat de piek onder de 4,5× blijft, zelfs op de vloer.'},
- {t:'T2',type:'sim',q:'Een <b>stijve</b> landing van <b>1,2 m</b> blijft onder <b>5× lichaamsgewicht</b>. Welke ondergrond heb je nodig?',check:l=>l&&l.tech==='stiff'&&Math.abs(l.H-1.2)<.03&&l.peak<5,fail:l=>!l?'Spring eerst.':(l.tech!=='stiff'||Math.abs(l.H-1.2)>=.03)?'Controleer: stijve landing, kast 1,2 m.':`Piek ${f1(l.peak)}×. Kies een ondergrond die meer meegeeft.`,ok:'De dikke mat neemt de remweg over die de stijve benen niet geven. Maar: instabiel voor de enkels.'},
- {t:'T2',type:'mc',q:'Een kast is twee keer zo hoog geworden. Hoeveel keer zo groot wordt de landingssnelheid ongeveer?',opts:['2×','4×','1,4×','Gelijk'],ok:2,ex:'v = √(2 · g · h): de snelheid groeit met de wortel van de hoogte. √2 ≈ 1,4.'},
- {t:'I',type:'open',q:'Je geeft les aan groep 5 en wilt afsprongen van de kast oefenen. Ontwerp de opbouw (hoogte, matten, aanwijzingen) en onderbouw elke keuze met de wet van impuls.',model:'<p><b>Opbouw:</b> begin van een bank of lage kast (≈ 0,5 m) en verhoog pas als de landing beheerst is. Een lagere valhoogte geeft een lagere landingssnelheid en dus minder impuls om af te remmen.</p><p><b>Matten:</b> een turnmat op de landingsplek, een dikke mat pas bij hogere of draaiende sprongen. Een mat verlengt de remweg, maar een dikke mat is instabiel.</p><p><b>Aanwijzingen:</b> "land als een veer op twee voeten, knieën boven je tenen, armen naar voren, blijf even staan". Door de knieën zakken verlengt de remtijd, zodat dezelfde krachtstoot met een lagere piekkracht wordt opgevangen (F · Δt = m · Δv). Laat leerlingen zo stil mogelijk landen: een stille landing is een lange remtijd.</p>'}];
+ {t:'R',type:'mc',q:'Wat verandert er als een leerling door de knieën landt in plaats van stijf?',opts:['De impuls bij het neerkomen wordt kleiner','De remweg en de remtijd worden langer, dus de piekkracht kleiner','De valhoogte wordt kleiner','De zwaartekracht wordt kleiner'],ok:1,
+  no:['De impuls ligt al vast als je de grond raakt: massa maal landingssnelheid. Die hangt niet af van hoe je landt.','Het is dezelfde kast, dus dezelfde valhoogte.','De zwaartekracht m · g hangt alleen van je massa af.'],ex:'De impuls ligt vast door massa en valhoogte. Door de knieën zakken verlengt de remweg en de remtijd, waardoor dezelfde krachtstoot met een kleinere kracht wordt geleverd.'},
+ {t:'R',type:'mc',q:'In de grafiek is de gele oppervlakte bij een stijve en een zachte landing (zelfde leerling, zelfde kast) …',opts:['bij de stijve landing groter','bij de zachte landing groter','even groot: het is dezelfde krachtstoot Δp','nul, want de leerling staat stil'],ok:2,
+  no:['De stijve piek is hoger, maar ook veel smaller. Vergelijk het getal "netto stoot" bij de grafiek.','De zachte landing duurt langer, maar de kracht is lager. Vergelijk het getal "netto stoot" bij de grafiek.','Aan het eind staat de leerling stil, maar de oppervlakte gaat over het hele remmen: van v naar 0.'],ex:'De oppervlakte is de krachtstoot F · Δt. Die is gelijk aan m · Δv, en Δv is bij dezelfde sprong gelijk.'},
+ {t:'T1',type:'num',q:'Een leerling van 40 kg komt neer met 4,0 m/s. Hoe groot is de impuls (kg·m/s)?',answer:160,tol:.5,
+  wrong:v=>Math.abs(v-10)<.2?'Je deelt. Impuls is massa <i>maal</i> snelheid.':Math.abs(v-320)<2?'Dat is 40 · 4,0 · 2. Je hebt alleen p = m · v nodig.':'Gebruik p = m · v.',ex:'p = m · v = 40 · 4,0 = 160 kg·m/s.'},
+ {t:'T1',type:'num',q:'Die leerling remt in 0,20 s af. Hoe groot is de gemiddelde remkracht (N), zonder het lichaamsgewicht?',answer:800,tol:5,
+  wrong:v=>Math.abs(v-1192)<15?'Je telt het lichaamsgewicht (40 · 9,81 ≈ 392 N) mee. De vraag is zonder: alleen de netto remkracht.':Math.abs(v-32)<1?'Je vermenigvuldigt. F = Δp / Δt: delen door de remtijd.':Math.abs(v-20)<1?'Je deelt de snelheid door de tijd. Gebruik de impuls: F = Δp / Δt = 160 / 0,20.':'Gebruik F = Δp / Δt, met Δp = 160 kg·m/s.',ex:'F = Δp / Δt = 160 / 0,20 = 800 N. Daar komt het lichaamsgewicht (≈ 392 N) nog bij.'},
+ {t:'T2',type:'sim',setup:{who:'vo',H:1.2,tech:'knee',surf:'floor'},q:`Laat een <b>VO-leerling</b> van een kast van <b>1,2 m</b> landen op de <b>gymvloer</b> met minder dan <b>5× lichaamsgewicht</b>.`,cfgOk:l=>l.who==='vo'&&Math.abs(l.H-1.2)<.03&&l.surf==='floor',check:l=>l&&l.who==='vo'&&Math.abs(l.H-1.2)<.03&&l.surf==='floor'&&l.peak<5,
+  fail:l=>!l?'Spring eerst.':(l.who!=='vo'||Math.abs(l.H-1.2)>=.03||l.surf!=='floor')?'Controleer: VO-leerling, kast 1,2 m, gymvloer.':`Piek ${f1(l.peak)}× bij een remweg van ${f2(l.d)} m. Hoe maak je de remweg nog langer zonder mat?`,ok:`Diep inveren maakt de remweg ${f2(q5.deep.d)} m. De piek blijft dan onder de 5× (${f1(q5.deep.peak)}×), zelfs op de vloer. Maar let op: zo diep belast je je knie zwaar (punt 4). In de gymles kies je liever een lagere kast of een turnmat, en land je gewoon door de knieën.`},
+ {t:'T2',type:'sim',setup:{who:'vo',H:1.2,tech:'stiff',surf:'floor'},q:`Een <b>VO-leerling</b> landt <b>stijf</b> van <b>1,2 m</b>. Welke ondergrond houdt de piek onder <b>${Q6LIM}× lichaamsgewicht</b>? Houd de stijve landing aan.`,cfgOk:l=>l.who==='vo'&&l.tech==='stiff'&&Math.abs(l.H-1.2)<.03,check:l=>l&&l.who==='vo'&&l.tech==='stiff'&&Math.abs(l.H-1.2)<.03&&l.peak<Q6LIM,
+  fail:l=>!l?'Spring eerst.':(l.who!=='vo'||l.tech!=='stiff'||Math.abs(l.H-1.2)>=.03)?'Controleer: VO-leerling, stijve landing, kast 1,2 m.':`Piek ${f1(l.peak)}×. Welke ondergrond deukt het verst in?`,ok:`De dikke mat geeft ${f2(SURF.thick.d)} m extra remweg: de piek daalt van ${f1(q6.floor.peak)}× naar ${f1(q6.thick.peak)}×. Maar: instabiel voor de enkels. Door de knieën landen blijft nodig.`},
+ {t:'T2',type:'mc',q:'Een kast is twee keer zo hoog geworden. Hoeveel keer zo groot wordt de landingssnelheid ongeveer?',opts:['2×','4×','1,4×','Gelijk'],ok:2,
+  no:['Dan zou v recht evenredig met h groeien. Kijk naar v = √(2 · g · h).','Andersom: voor 2× zoveel snelheid heb je 4× zoveel hoogte nodig.','Hoe hoger je valt, hoe langer de zwaartekracht je kan versnellen.'],ex:`v = √(2 · g · h): de snelheid groeit met de wortel van de hoogte. √2 ≈ 1,4. De piekkracht groeit harder, omdat ook de remtijd korter wordt: de kracht bovenop je lichaamsgewicht ongeveer 2×. In × lichaamsgewicht zie je in het lab ongeveer ${f1(RF.h16.peak/RF.h08.peak)} keer (${f1(RF.h08.peak)}× → ${f1(RF.h16.peak)}× bij 0,8 → 1,6 m), want je lichaamsgewicht (1×) telt mee en blijft gelijk.`},
+ {t:'I',type:'open',q:'Je geeft les aan groep 5 en wilt afsprongen van de kast oefenen. Ontwerp de opbouw (hoogte, matten, aanwijzingen) en onderbouw elke keuze met impuls en krachtstoot.',model:'<p><b>Opbouw:</b> begin van een bank of lage kast (≈ 0,5 m) en verhoog pas als de landing beheerst is. Een lagere valhoogte geeft een lagere landingssnelheid en dus minder impuls om af te remmen. Kinderen hebben korte benen en dus een korte remweg: per kilo krijgen ze sneller een hoge piek.</p><p><b>Matten:</b> een turnmat op de landingsplek, een dikke mat pas bij hogere of draaiende sprongen. Een mat verlengt de remweg, maar een dikke mat is instabiel.</p><p><b>Aanwijzingen:</b> "land als een veer op twee voeten, knieën in de lijn van je tenen, armen naar voren, blijf even staan". Door de knieën zakken verlengt de remweg en de remtijd, zodat dezelfde krachtstoot (F · Δt = m · Δv) met een lagere piekkracht wordt opgevangen. Laat leerlingen zo stil mogelijk landen: een stille landing is een lange remtijd.</p>'}];
 let qi=0,qres=[];
-function dots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
+function qdots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
 function renderQ(){if(!qres.length)qres=QUIZ.map(()=>null);const box=$('#quizBody');
-  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${dots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');return;}
-  const q=QUIZ[qi];let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${dots()}</div><p><span class="qtag">${q.t}</span>${q.q}</p>`;
+  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${qdots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];renderQ();};$('#qClose').onclick=closeQuiz;return;}
+  const q=QUIZ[qi];let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${qdots()}</div><p><span class="qtag">${q.t}</span>${q.q}</p>`;
   if(q.type==='mc')h+=`<div class="opts">${q.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>`;
-  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal"><button class="btn accent" id="qGo">Controleer</button></div>`;
-  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en spring. Open daarna de opdrachten weer en klik op Controleer.</p><p><button class="btn accent" id="qGo">Controleer mijn laatste sprong</button></p>`;
+  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal" aria-label="Antwoord"><button class="btn accent" id="qGo">Controleer</button></div>`;
+  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en spring. Open daarna de opdrachten weer en klik op Controleer.</p><p style="display:flex;gap:8px;flex-wrap:wrap">${q.setup?'<button class="btn" id="qSetup">Zet de beginsituatie klaar</button>':''}<button class="btn accent" id="qGo">Controleer mijn laatste sprong</button></p>`;
   if(q.type==='open')h+=`<textarea id="qTxt" placeholder="Schrijf je antwoord. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p>`;
-  h+=`<div id="qfb"></div><p style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="qClose">Sluiten</button><button class="btn accent" id="qNext" ${q.type==='open'?'':'disabled'}>Volgende →</button></p>`;
+  h+=`<div id="qfb"></div><p style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="qClose">Sluiten</button><button class="btn accent" id="qNext" ${q.type==='open'||qres[qi]===true?'':'disabled'}>Volgende →</button></p>`;
   box.innerHTML=h;let done=false;
-  const fb=(ok,txt)=>{if(qres[qi]===null)qres[qi]=ok;$('#qfb').innerHTML=`<div class="fb ${ok?'ok':'no'}">${txt}</div>`;if(ok){done=true;$('#qNext').disabled=false;SND.good();}};
-  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Denk aan F · Δt = m · Δv.');});
-  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));const ok=Math.abs(v-q.answer)<=q.tol;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Gebruik p = m · v en F = Δp / Δt.');};
-  if(q.type==='sim')$('#qGo').onclick=()=>{const ok=q.check(S.last);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(S.last));};
+  // skip: geen echte poging (leeg veld, nog niet gesprongen of geland, verkeerde beginsituatie), dus niet meetellen als fout
+  const fb=(ok,txt,skip)=>{if(!skip&&qres[qi]===null)qres[qi]=ok;$('#qfb').innerHTML=`<div class="fb ${ok?'ok':'no'}">${txt}</div>`;if(ok){done=true;$('#qNext').disabled=false;SND.good();}};
+  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> '+((q.no&&q.no[j>q.ok?j-1:j])||'Denk aan F · Δt = m · Δv.'));});
+  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));if(isNaN(v)){fb(false,'<b>Vul een getal in.</b>',true);return;}const ok=Math.abs(v-q.answer)<=q.tol;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> '+q.wrong(v));};
+  if(q.type==='sim'){$('#qGo').onclick=()=>{if(!S.last&&S.J&&S.phase!=='ready'&&!S.done1){fb(false,'<b>Wacht even.</b> Je sprong is nog niet geland. Sluit dit venster, kijk naar de landing en de piek in de grafiek, en klik daarna op Controleer.',true);return;}
+    const ok=q.check(S.last);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(S.last),!ok&&(!S.last||!q.cfgOk(S.last)));};if(q.setup)$('#qSetup').onclick=()=>{S.cfg={...q.setup};changed();S.quizPause=false;closeQuiz();toast('De beginsituatie staat klaar. Spring eerst eens zo, en los het dan op.');};}
   if(q.type==='open')$('#qShow').onclick=()=>{$('#qfb').innerHTML=`<div class="fb ok">${q.model}</div>`;};
-  $('#qNext').onclick=()=>{qi++;renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');}
-$('#bQuiz').onclick=()=>{$('#mQuiz').classList.add('open');renderQ();};
+  $('#qNext').onclick=()=>{qi++;renderQ();};$('#qClose').onclick=closeQuiz;}
+// een lopende sprong pauzeert achter het opdrachtvenster, zodat je de landing niet mist
+function closeQuiz(){$('#mQuiz').classList.remove('open');if(S.quizPause&&S.phase==='pause')S.phase='run';S.quizPause=false;}
+$('#bQuiz').onclick=()=>{if(S.phase==='run'){S.phase='pause';S.quizPause=true;}$('#mQuiz').classList.add('open');renderQ();};
 
 /* ================= geluid ================= */
 const SND=(function(){let C=null,master,on=false;
@@ -466,41 +712,71 @@ function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWav
 $('#bSound').onclick=()=>setSound(!SND.on);
 
 /* ================= render ================= */
-function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?52:34;camera.updateProjectionMatrix();drawChart();}
+function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?50:34;camera.updateProjectionMatrix();relayout();}
 addEventListener('resize',resize);
-const bwCol=b=>b<3?0x7fc8a0:b<5?0xe6d35e:b<8?0xf0914a:0xe8463a;
+// de HUD wordt na de landing hoger (oordeel en tip): dan opnieuw kadreren, zodat voeten en deuk in beeld blijven
+if(window.ResizeObserver){let lastH=0,lastT=0;const ro=new ResizeObserver(()=>{const h=Math.round($('#hud').offsetHeight),t=Math.round($('#top').offsetHeight);if(h!==lastH||t!==lastT){lastH=h;lastT=t;relayout();}});ro.observe($('#hud'));ro.observe($('#top'));}
+const bwCol=b=>b<6?0x7fc8a0:b<9?0xe6b65e:0xe8463a; // zelfde klassen als het oordeel
+const _v=new THREE.Vector3();
 let first=true,uiT=0,clock=0;
 function render(dt){clock+=dt;
-  if(S.phase==='run'){const J=S.J;const tl=S.tau-J.tc;const inSlow=$('#tSlow').checked&&tl>-.06&&tl<J.dt+.12;const rate=S.speed*(inSlow?.08:1);const prev=S.tau;S.tau+=dt*rate;
+  if(S.phase==='run'){const J=S.J;const tl=S.tau-J.tc;const inSlow=$('#tSlow').checked&&tl>-.06&&tl<J.dt+.1;const rate=S.speed*(inSlow?SLOW:1);const prev=S.tau;S.tau+=dt*rate;
     $('#slowmo').classList.toggle('on',inSlow);
-    if(prev<-.05&&S.tau>=-.05)SND.hop();
-    if(prev<J.tc&&S.tau>=J.tc&&!S.landed){S.landed=true;landedNow();}
+    if(prev<-J.TP&&S.tau>=-J.TP)SND.hop();
+    if(prev<J.tc&&S.tau>=J.tc&&!S.landed){S.landed=true;touchdown();}
     if(S.tau>=J.tc+J.dt+POST){S.tau=J.tc+J.dt+POST;S.phase='done';$('#slowmo').classList.remove('on');}}
   else $('#slowmo').classList.remove('on');
-  const f=stateAt(S.tau);cur=f;const W=poseRig(rig,f.pose,f.com);curW=W;
-  // ondergrond indrukken
-  if(S.J&&S.J.cfg.surf==='thick'){tm.scale.y=(SURF.thick.h-(f.sd||0))/SURF.thick.h;tm.position.y=(SURF.thick.h-(f.sd||0))/2;tmTop.position.y=SURF.thick.h-(f.sd||0)+.006;}else{tm.scale.y=1;tm.position.y=SURF.thick.h/2;tmTop.position.y=SURF.thick.h+.006;}
+  if(S.J&&S.phase!=='ready'&&!S.done1&&S.tau>=S.J.tc+S.J.dt)completeNow();
+  document.body.classList.toggle('running',S.phase==='run');
+  const f=stateAt(S.tau),J=f.J;cur=f;const W=poseRig(rig,f.pose,f.com);curW=W;
+  // ondergrond: plaatselijke deuk onder de voeten
+  const footX=(W.toe[0]+W.heel[0])/2;dent(thickM,footX,J.cfg.surf==='thick'?(f.sd||0):0);dent(turnM,footX,J.cfg.surf==='turn'?(f.sd||0):0);
   comSpr.position.set(f.com[0],f.com[1],.3);
-  // pijlen
-  const showV=$('#tV').checked&&(f.ph==='air'||f.ph==='contact');const vv=f.ph==='air'?(f.vUp||0):-(f.v||0);
-  vArrow.visible=showV&&Math.abs(vv)>.05;if(vArrow.visible){vArrow.position.set(f.com[0]+.32,f.com[1],.3);vArrow.setDirection(new THREE.Vector3(0,Math.sign(vv),0));const L=Math.abs(vv)*.22;vArrow.setLength(L,Math.min(.14,L*.4),.08);}
-  const bw=S.J&&f.F?f.F/S.J.W:0;fArrow.visible=$('#tF').checked&&(f.ph==='contact'||f.ph==='after'||f.ph==='pre')&&bw>0;
-  if(fArrow.visible){const fx=(W.ank[0]+W.toe[0])/2;const L=bw*.16;fArrow.position.set(fx,Math.min(W.ank[1],W.toe[1])-.02,.32);fArrow.setLength(L,Math.min(.18,L*.3),.1);}
-  tagV.textContent=vArrow.visible?`v = ${f1(Math.abs(vv))} m/s`:'';project(new THREE.Vector3(f.com[0]+.4,f.com[1]-.1,.3),tagV,0,0);
-  tagF.textContent=fArrow.visible?`F = ${f1(bw)}× lg`:'';project(new THREE.Vector3((W.ank[0]+W.toe[0])/2+.12,Math.min(W.ank[1],W.toe[1])+bw*.16,.32),tagF,0,0);
-  // knie
-  const kOn=$('#tK').checked&&S.J&&(f.ph==='contact'||f.ph==='after');kneeGlow.forEach(k=>{k.m.visible=!!kOn;if(kOn){const b=f.ph==='contact'?bw:Math.max(1,S.J.peak*Math.exp(-(S.tau-S.J.tc-S.J.dt)*3));k.m.material.color.setHex(bwCol(b));k.m.material.opacity=.55;k.m.position.set(W.knee[0],W.knee[1],k.z*SC);k.m.scale.setScalar((.09+.012*b)*SC*(1+.08*Math.sin(clock*18)));}});
-  if(impact.material.opacity>0){impact.material.opacity=Math.max(0,impact.material.opacity-dt*.8);impact.scale.multiplyScalar(1+dt*3);}
+  const live=f.ph!=='ready';const inC=f.ph==='contact',aft=f.ph==='after';
+  // snelheid
+  const vy=(f.ph==='air'||inC||f.ph==='pre')?f.vy:0;const showV=$('#tV').checked&&(f.ph==='air'||inC||f.ph==='pre')&&Math.abs(vy)>.05;vArrow.grp.visible=showV;
+  const vx=f.com[0]-.3*J.sc;if(showV)setArrow(vArrow,vx,f.com[1],.3,Math.sign(vy),Math.abs(vy)*.2);
+  tagV.textContent=showV?`v ${vy>0?'omhoog':'omlaag'} = ${f1(Math.abs(vy))} m/s`:'';if(inC)project(_v.set(vx,f.com[1]+.05,.3),tagV,0,0,'c');else project(_v.set(vx-.05,f.com[1]+(vy>0?Math.abs(vy)*.1:-Math.abs(vy)*.1),.3),tagV,0,0,'r');
+  // krachten: de grondreactiekracht alleen bij contact met kast of ondergrond, m · g altijd (ook in de lucht)
+  const standUp=aft&&f.u>.3&&f.u<1.2;
+  const fsc=Math.min(FSC,1.3/Math.max(J.peak,1)),bw=f.F/J.W,onF=$('#tF').checked&&live&&!standUp,showF=onF&&f.ph!=='air'&&bw>0;fArrow.grp.visible=showF;gArrow.grp.visible=onF;
+  const fx=W.toe[0]+.1*J.sc,gy=f.gy!==undefined?f.gy:0,gy0=f.com[1]-.055;
+  if(showF)setArrow(fArrow,fx,gy,.32,1,bw*fsc);if(onF)setArrow(gArrow,f.com[0],gy0,.34,-1,fsc);
+  tagF.textContent=showF?`F = ${f1(bw)}×${innerWidth<=820?'':' lichaamsgewicht'}`:'';project(_v.set(fx+.05,gy+bw*fsc,.32),tagF,0,0,'l');
+  tagG.textContent=onF&&!(inC&&innerWidth<=820)?'m · g':'';project(_v.set(f.com[0]+.05,gy0-fsc*.75,.34),tagG,0,0,'l');
+  // het kleine m · g-label wijkt als het over het label van de vloerkracht valt
+  if(tagF.textContent&&tagG.textContent&&tagG.style.display!=='none'){const a=tagF.getBoundingClientRect(),b=tagG.getBoundingClientRect();if(a.left<b.right&&b.left<a.right&&a.top<b.bottom&&b.top<a.bottom)tagG.style.display='none';}
+  // remweg en stroboscoop: tijdens het contact en kort daarna, zolang de pop nog in de eindhouding zit
+  const st=$('#tS').checked&&S.J&&(inC||aft&&f.u<.3);ruler.visible=!!st;ghost.grp.visible=!!st;
+  const ns=st?S.strobe.filter(p=>p.t<=f.tl+1e-9).length:0;dots.forEach((d,i)=>{d.visible=i<ns;if(i<ns)d.position.set(S.strobe[i].x,S.strobe[i].y,.33);});
+  const yb=st?(inC?f.com[1]:S.c0[1]-J.d):0,xr=st?S.c0[0]-.56*J.sc:0;
+  if(st){// blauw: zakken van het lichaam · paars: indeuken van de mat (samen de remweg)
+    const yt=S.c0[1],L=Math.max(yt-yb,.002),fr=J.d>0?J.dS/J.d:0,Lm=L*fr,Lb=Math.max(L-Lm,.001),ym=yt-Lb;
+    rBar.scale.y=Lb;rBar.position.set(xr,yt-Lb/2,.3);rBarM.visible=Lm>.003;rBarM.scale.y=Math.max(Lm,.001);rBarM.position.set(xr,ym-Lm/2,.3);
+    rBarO.scale.y=L+.02;rBarO.position.set(xr,(yt+yb)/2,.29);rT1.position.set(xr,yt,.3);rT2.position.set(xr,yb,.3);
+    rLine.visible=inC;if(inC)rLine.geometry.setFromPoints([new THREE.Vector3(f.com[0],yb,.3),new THREE.Vector3(xr,yb,.3)]);rLine.computeLineDistances();
+    const nar=innerWidth<=820;tagR.textContent=(nar?'':'remweg ')+f2(Math.max(0,f.s||0))+' m';tagS.textContent=nar?'':`● = zwaartepunt per 20 ms (${ns}×)`;
+    tagM.textContent=!nar&&J.cfg.surf!=='floor'&&Lm>.004?'waarvan mat '+f2(J.dS*clamp((f.s||0)/J.d,0,1))+' m':'';
+    tagGh.textContent=nar?'':'eerste contact';}
+  else{tagR.textContent='';tagS.textContent='';tagM.textContent='';tagGh.textContent='';}
+  if(st){project(_v.set(xr-.08,yb-.07,.3),tagR,0,0,'r');project(_v.set(xr-.08,S.c0[1]+.11,.3),tagS,0,0,'r');project(_v.set(xr-.08,yb-.07,.3),tagM,0,-((tagR.offsetHeight||18)+3),'r');
+    project(_v.set(S.ghW.sho[0]-.2*J.sc,S.ghW.sho[1],.3),tagGh,0,0,'r');}else{project(_v,tagR);project(_v,tagS);project(_v,tagM);project(_v,tagGh);}
+  // kleurring onder de voeten
+  const kOn=$('#tK').checked&&S.J&&(inC||aft);ring.visible=!!kOn;if(kOn){const b=inC?bw:J.peak;ring.material.color.setHex(bwCol(b));ring.material.opacity=inC?.9:.75;ring.position.set(footX,J.S.h-.45*(f.sd||0)+.012,0);ring.scale.setScalar((1+.06*b)*J.sc);}
+  // camera
+  if(camFollow){const Jc=(S.phase==='ready'||!S.J)?S.pv:S.J;const k=1-Math.exp(-dt*3.2);camDir.lerp(wantDir(),k).normalize();fit(boxFor(Jc,wantClose()),camT,camP);controls.target.lerp(camT,k);camera.position.lerp(camP,k);}
   controls.update();renderer.render(scene,camera);
-  MKS.forEach((m,i)=>project(PTS[i].at(),m,12,12));
-  uiT+=dt;if(uiT>.04){uiT=0;updateHud(f);if(S.J)drawChart();}
+  // uitlegstippen alleen in het vrije beeldvlak (niet achter titel, paneel of HUD)
+  MKS.forEach((m,i)=>{const p=PTS[i].at();project(p,m,12,12);_p.copy(p).project(camera);const sx=(_p.x*.5+.5)*innerWidth,sy=(-_p.y*.5+.5)*innerHeight;if(sx<U.l+6||sx>U.r-6||sy<U.t+6||sy>U.b-6)m.style.display='none';});
+  const sm=$('#slowmo');sm.style.transform=`translate(${((U.l+U.r)/2).toFixed(0)}px,${(U.t+4).toFixed(0)}px) translateX(-50%)`;
+  uiT+=dt;if(uiT>.04){uiT=0;updateHud(f);drawChart();}
   if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}}
 let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;render(dt);}
-resize();syncUI();frameCam();drawChart();
+syncUI();readyRes();resize();setCam(camFollow);
 requestAnimationFrame(loop);
-setTimeout(()=>toast('Druk op <b>spatie</b>. Vergelijk daarna een stijve landing met een landing door de knieën.'),1400);
-window.__ld={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,jump,simulate,syncUI,openPt};
+setTimeout(()=>toast(`${innerWidth<=820?'Tik op <b>Spring!</b>':'Druk op <b>spatie</b> of klik op <b>Spring!</b>'} Vergelijk daarna een stijve landing met een landing door de knieën.`),1400);
+window.__ld={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,jump,simulate,syncUI,openPt,closePt,replay,stateAt,setCam,seek,relayout,RF,POSES,setMore};
 })();
 </script>
 </body>

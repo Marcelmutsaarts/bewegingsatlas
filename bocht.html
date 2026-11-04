@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>De bocht · Bewegingsatlas</title>
-<meta name="description" content="Biomechanica-lab Krachten: een leerling rent om een pion. Zie zwaartekracht, normaalkracht, wrijving en de middelpuntzoekende kracht in 3D, en ontdek wanneer je uitglijdt.">
+<meta name="description" content="Biomechanica-lab Krachten: een leerling rent om een pion. Zie zwaartekracht, normaalkracht, wrijving en de middelpuntzoekende kracht in 3D, kijk het uitglijden vertraagd terug en ontdek wanneer de vloer niet genoeg grip geeft.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg0:#2c3a42;--bg1:#0d1316;--ink:#f1e9da;--muted:#aab3b4;--panel:rgba(15,20,23,.86);--panel2:rgba(22,29,33,.95);--line:rgba(241,233,218,.13);--line2:rgba(241,233,218,.3);
-  --accent:#d65a42;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#e6b65e;--teal:#6fb2b4;--FC:#e86a5a;--FW:#e6b65e;--PH:#6fb2b4}
+:root{--bg0:#2c3a42;--bg1:#0d1316;--ink:#f1e9da;--muted:#aab3b4;--panel:rgba(15,20,23,.88);--panel2:rgba(22,29,33,.96);--line:rgba(241,233,218,.13);--line2:rgba(241,233,218,.3);
+  --accent:#d65a42;--gold:#e6b65e;--ok:#7fc8a0;--bad:#e86a5a;--mid:#f0a24a;--teal:#6fb2b4;--FC:#ff5a4a;--FW:#ffc94d;--FZ:#6fa8dc;--FN:#7fc8a0;--PH:#6fb2b4}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg1);color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 button,input{font:inherit;color:inherit}
@@ -19,21 +19,26 @@ button,input{font:inherit;color:inherit}
 #labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
 #top{position:absolute;left:16px;right:16px;top:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;z-index:6;pointer-events:none}
 #top>*{pointer-events:auto}
-.title a{color:var(--muted);text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
+/* titel op een eigen donker paneel: leesbaar op de lichte vloer en de witte muur */
+.title{background:rgba(10,14,16,.78);border:1px solid var(--line);border-radius:12px;padding:6px 12px 7px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.title a{color:#cfd5d5;text-decoration:none;font:12px "JetBrains Mono",monospace;letter-spacing:.08em;text-transform:uppercase}
 .title a:hover{color:var(--ink)}
-.title h1{margin:2px 0 0;font:700 32px/1.05 Fraunces,serif;text-shadow:0 2px 18px rgba(0,0,0,.5)}
-.title p{margin:4px 0 0;color:var(--muted);font-size:13.5px}
+.title h1{margin:1px 0 0;font:700 30px/1.05 Fraunces,serif}
+.title p{margin:3px 0 0;color:#dcd6c9;font-size:13.5px}
+.title p i{font:12px "JetBrains Mono",monospace;font-style:normal;color:var(--gold)}
 .tools{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .btn{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600;font-size:13px;backdrop-filter:blur(8px);white-space:nowrap}
 .btn:hover{border-color:var(--line2)}.btn.on{background:var(--ink);color:#111}
 .btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn:disabled{opacity:.45;cursor:default}
 .btn svg{width:16px;height:16px}
 .seg{display:inline-flex;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
 .seg button{border:0;background:none;border-radius:7px;padding:6px 9px;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
 .seg button.on{background:var(--ink);color:#111}
-#lab{position:absolute;left:16px;top:104px;width:296px;max-height:calc(100% - 270px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:5;backdrop-filter:blur(10px);scrollbar-width:thin}
+#lab{position:absolute;left:16px;top:104px;width:296px;max-height:calc(100% - 262px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:5;backdrop-filter:blur(10px);scrollbar-width:thin}
+#dbar{display:none}
 #lab h4{margin:10px 0 6px;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-#lab h4:first-child{margin-top:0}
+#labBody>h4:first-child{margin-top:0}
 .sl{margin:5px 0 8px}
 .sl label{display:flex;justify-content:space-between;gap:8px;font-size:13px;font-weight:600}
 .sl label b{font:600 13px "JetBrains Mono",monospace;color:var(--gold)}
@@ -44,12 +49,15 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .tog{display:flex;align-items:center;gap:8px;font-size:13px;margin:5px 0;cursor:pointer}
 .tog input{accent-color:var(--accent)}.tog kbd{margin-left:auto}
 kbd{font:600 11px "JetBrains Mono",monospace;background:rgba(255,255,255,.08);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--muted)}
+.scrub{position:relative}
+.tick{position:absolute;top:-2px;width:2px;height:10px;background:var(--bad);border-radius:1px;display:none;pointer-events:none}
+.tickl{font-size:11px;color:var(--bad);display:none}
 .mk{position:absolute;left:0;top:0;pointer-events:auto;border:0;background:none;padding:0;cursor:pointer;will-change:transform;display:flex;gap:6px;align-items:center}
 .mk b{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--gold);color:#2a1d00;font:800 12px "Instrument Sans";box-shadow:0 0 0 3px rgba(230,182,94,.3),0 4px 12px rgba(0,0,0,.5)}
 .mk span{display:none;background:var(--panel);border:1px solid var(--line);padding:3px 8px;border-radius:6px;font-size:12px;font-weight:600;white-space:nowrap}
-body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
-.mk.sel b{background:var(--accent);color:#fff}
-.tag3d{position:absolute;left:0;top:0;pointer-events:none;font:600 12px "JetBrains Mono",monospace;white-space:nowrap;will-change:transform;text-shadow:0 1px 4px #000}
+body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none!important}body.running .mk{display:none!important}
+.mk.sel b{background:var(--accent);color:#fff}.mk.left{flex-direction:row-reverse}
+.tag3d{position:absolute;left:0;top:0;pointer-events:none;font:700 12.5px "JetBrains Mono",monospace;white-space:nowrap;will-change:transform;background:rgba(10,14,16,.78);padding:2px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.12)}
 .panel{position:absolute;right:16px;top:104px;bottom:16px;width:390px;display:none;flex-direction:column;background:var(--panel2);border:1px solid var(--line);border-radius:14px;z-index:7;backdrop-filter:blur(10px);box-shadow:0 20px 50px rgba(0,0,0,.5);overflow:hidden}
 .panel.open{display:flex;animation:slidein .3s cubic-bezier(.2,.8,.2,1)}
 @keyframes slidein{from{opacity:0;transform:translateX(16px)}}
@@ -67,19 +75,28 @@ body.lbl-names .mk span{display:block}body.lbl-off .mk{display:none}
 .ctx{display:inline-block;font:600 10.5px "JetBrains Mono",monospace;padding:2px 6px;border-radius:4px;background:rgba(111,178,180,.2);color:var(--teal);margin-right:6px}
 .pnav{display:flex;justify-content:space-between;gap:8px;padding:10px 16px;border-top:1px solid var(--line)}
 #hud{position:absolute;left:328px;right:16px;bottom:16px;display:flex;gap:12px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 12px;z-index:4;backdrop-filter:blur(10px)}
-body.dossier #hud{right:422px}
+body.dossier #hud{right:422px;flex-wrap:wrap;row-gap:6px}body.dossier #chartWrap{display:none}body.dossier .term{width:128px}body.dossier .term.H{width:140px}body.dossier #res{flex:1 1 100%;min-width:0;border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:6px}body.dossier #res .dt,body.dossier #res .k{display:none}
 .eq{display:flex;align-items:center;gap:6px;flex:none}
-.term{width:128px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
-.term small{display:block;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
-.term b{display:block;font:700 24px/1.05 Fraunces,serif;margin-top:2px}
-.term em{display:block;font-style:normal;font-size:11px;color:var(--muted);white-space:nowrap}
-.term i{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}.term i span{display:block;height:100%;width:0;border-radius:3px}
+.term{width:148px;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:6px 9px;min-width:0}
+.term small{display:block;font:600 9.5px "JetBrains Mono",monospace;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.term .fx{display:block;font:600 10.5px "JetBrains Mono",monospace;color:#c9c0ae;margin-top:1px;white-space:nowrap}
+.term b{display:block;font:700 23px/1.05 Fraunces,serif;margin-top:3px}
+.term em{display:block;font-style:normal;font-size:11px;color:var(--muted);line-height:1.3}
+.term i{display:block;height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:4px;overflow:hidden}.term i span{display:block;height:100%;width:0;border-radius:3px}
 .term.C b{color:var(--FC)}.term.C i span{background:var(--FC)}.term.W b{color:var(--FW)}.term.W i span{background:var(--FW)}.term.H b{color:var(--PH)}
-.op{font:700 20px Fraunces,serif;color:var(--muted)}
-#res{flex:1;min-width:180px;font-size:12.5px;line-height:1.4;border-left:1px solid var(--line);padding-left:12px}
+.term.H{width:150px}.term.H.bad b{color:var(--bad)}
+.hrow{display:flex;gap:6px;align-items:center}.hrow svg{width:56px;height:50px;flex:none}
+.op{font:700 26px Fraunces,serif;color:var(--muted);width:22px;text-align:center}.op.ok{color:var(--ok)}.op.bad{color:var(--bad)}
+#chartWrap{flex:none;width:220px;height:92px;position:relative}
+#chart{position:absolute;inset:0;width:100%;height:100%;display:block}
+#res{flex:1;min-width:170px;font-size:12.5px;line-height:1.4;border-left:1px solid var(--line);padding-left:12px}
 #res b.t{display:block;font:700 15px/1.2 Fraunces,serif;margin-bottom:3px}
-#res .k{display:block;font:600 10px "JetBrains Mono",monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+#res .k{display:block;font:600 10.5px "JetBrains Mono",monospace;letter-spacing:.03em;color:var(--gold);margin-bottom:3px}
+#res .mo{display:none}body.dossier .term small{letter-spacing:.02em;white-space:nowrap}
 #res.good b.t{color:var(--ok)}#res.mid b.t{color:var(--mid)}#res.bad b.t{color:var(--bad)}
+.guess{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.guess button{padding:6px 10px;font-size:12.5px}
+#beat{position:absolute;left:50%;top:120px;transform:translateX(-50%);z-index:8;background:var(--panel2);border:1px solid var(--line2);border-left:4px solid var(--bad);border-radius:10px;padding:10px 14px;font-size:14px;line-height:1.45;max-width:min(560px,calc(100% - 32px));display:none;box-shadow:0 12px 30px rgba(0,0,0,.45)}
+#beat.on{display:block}#beat b{color:var(--bad)}#beat .y{color:var(--FW)}
 .modal{position:absolute;inset:0;background:rgba(5,8,10,.66);display:none;place-items:center;z-index:20;padding:16px}
 .modal.open{display:grid}
 .mcard{background:var(--panel2);border:1px solid var(--line);border-radius:16px;max-width:620px;width:100%;max-height:92%;overflow:auto;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.55)}
@@ -92,19 +109,34 @@ body.dossier #hud{right:422px}
 .fb{margin-top:10px;padding:9px 12px;border-radius:9px;background:rgba(255,255,255,.05);font-size:14px;line-height:1.5}
 .fb.ok{border-left:3px solid var(--ok)}.fb.no{border-left:3px solid var(--bad)}
 .qtag{display:inline-block;font:600 11px "JetBrains Mono",monospace;padding:3px 7px;border-radius:5px;background:rgba(230,182,94,.16);color:var(--gold);margin-right:6px}
-.dots{display:flex;gap:5px;margin:2px 0 12px}.dots i{width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--gold)}
-.num-in{display:flex;gap:8px;align-items:center}.num-in input{width:110px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.dots{display:flex;gap:5px;margin:2px 0 12px;flex-wrap:wrap}.dots i{width:26px;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}.dots i.ok{background:var(--ok)}.dots i.no{background:var(--bad)}.dots i.cur{background:var(--gold)}
+.num-in{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.num-in input{width:110px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 textarea{width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:9px;padding:9px;font:14px "Instrument Sans";resize:vertical;color:var(--ink)}
 .keys{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}.keys td{padding:5px 6px;border-bottom:1px solid var(--line)}
-#toast{position:absolute;left:50%;top:92px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:520px;text-align:center}
+.lg{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+#toast{position:absolute;left:50%;top:110px;transform:translateX(-50%);z-index:12;background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:9px 14px;font-size:13.5px;opacity:0;transition:opacity .3s;pointer-events:none;max-width:min(520px,calc(100% - 32px));text-align:center}
 #toast.on{opacity:1}
 #loader{position:absolute;inset:0;display:grid;place-items:center;z-index:30;background:var(--bg1);transition:opacity .6s}
 #loader.gone{opacity:0;pointer-events:none}#loader div{text-align:center}#loader h3{font:700 26px Fraunces,serif;margin:14px 0 4px}#loader p{color:var(--muted);margin:0}
 .spin{width:44px;height:44px;border-radius:50%;border:3px solid rgba(255,255,255,.12);border-top-color:var(--accent);margin:auto;animation:sp 1s linear infinite}@keyframes sp{to{transform:rotate(1turn)}}
 #err{position:absolute;inset:0;display:none;place-items:center;z-index:40;background:var(--bg1);padding:24px;text-align:center}#err.open{display:grid}
 body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font-size:16.5px}body.present .title h1{font-size:40px}
-@media (max-width:960px){.term{width:104px}#res{display:none}}
-@media (max-width:820px){.title h1{font-size:24px}.title p{display:none}#top{flex-direction:column}.tools{justify-content:flex-start}.btn .t{display:none}#lab{top:auto;bottom:126px;left:16px;right:16px;width:auto;max-height:32%}#hud{left:16px;right:16px!important}.panel{left:16px;right:16px;width:auto;top:auto;height:62%}}
+@media (max-width:1240px){#chartWrap{width:170px}.term{width:124px}.term.H{width:140px}}
+@media (max-width:1100px){#chartWrap{display:none}}
+@media (max-width:960px){.term.H{display:none}}
+@media (max-width:820px){
+  .title h1{font-size:24px}.title p{display:none}#top{flex-direction:column;gap:8px}.tools{justify-content:flex-start;gap:6px}.btn{padding:7px 10px}.btn .t{display:none}
+  #lab{top:auto;bottom:12px;left:16px;right:16px;width:auto;max-height:46%;padding:10px 12px}
+  #dbar{display:flex;gap:8px;align-items:center}#dbar .jump{flex:1;margin:0;padding:10px;font-size:15px}#dbar #bDrawer{flex:none}
+  #labBody{margin-top:8px}body.drawer-closed #labBody{display:none}#labBody .jump{display:none}
+  #bLbl,#bPresent{display:none}
+  #hud{left:16px;right:16px!important;bottom:auto;top:96px;flex-wrap:wrap;padding:6px 8px;gap:6px}
+  .eq{flex:1;min-width:0;gap:4px}.term{flex:1;width:auto;padding:4px 7px}.term b{font-size:19px;margin-top:1px}.term .fx{font-size:9.5px}.term em{font-size:10.5px}.term i{display:none}#vW3{display:none}.op{font-size:20px;width:16px}
+  #res{flex:1 1 100%;border-left:0;padding-left:0;border-top:1px solid var(--line);padding-top:5px;font-size:12px;line-height:1.35}#res b.t{font-size:13.5px;margin-bottom:1px}#res .k{display:none}#res .nd{display:none}#res .mo{display:inline}.guess{margin-top:4px}
+  .panel{left:16px;right:16px;width:auto;top:auto;height:44%}.panel .ph{padding-top:10px}.panel .ph h2{font-size:18px}.panel .tabs{padding-top:6px}.panel .pb{font-size:14px;padding-top:9px}.panel .pnav{padding:7px 16px}
+  body.dossier #res,body.dossier #beat{display:none!important}body.dossier .term em,body.dossier .term .fx{display:none}
+  #beat{font-size:13px;width:calc(100% - 32px)}body.beaton .mk{display:none!important}
+}
 </style>
 </head>
 <body class="lbl-dots">
@@ -112,32 +144,40 @@ body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font
   <canvas id="c" aria-label="3D-gymzaal met een leerling die om een pion rent"></canvas>
   <div id="labels"></div>
   <div id="toast"></div>
+  <div id="beat"></div>
   <header id="top">
-    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>De bocht</h1><p>Week 5 · Krachten: wrijving en de middelpuntzoekende kracht <i style="font:12px 'JetBrains Mono',monospace;font-style:normal;color:#c9c0ae">· F = m · v² / r</i></p></div>
+    <div class="title"><a href="biomechanica.html">← Bewegingsatlas · biomechanica</a><h1>De bocht</h1><p>Week 5 · Krachten: wrijving en de middelpuntzoekende kracht, <i>Fmpz = m · v² / r</i></p></div>
     <div class="tools">
       <button class="btn" id="bQuiz">Opdrachten</button>
       <button class="btn" id="bHelp">Uitleg</button>
-      <button class="btn" id="bCam">Camera: overzicht</button>
-      <button class="btn" id="bLbl">Labels: stippen</button>
+      <button class="btn" id="bCam" title="Camera (V)">Camera: regie</button>
+      <button class="btn" id="bLbl" title="Labels (L)">Labels: stippen</button>
       <button class="btn" id="bSound"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="sndWave" d="M17 9l4 6M21 9l-4 6"/></svg><span class="t">Geluid</span></button>
       <button class="btn" id="bPresent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M12 16v4M8 20h8"/></svg><span class="t">Presenteren</span></button>
     </div>
   </header>
 
   <aside id="lab">
+    <div id="dbar"><button class="btn jump" id="bGoM">Rennen!</button><button class="btn" id="bDrawer">Instellingen ▾</button></div>
+    <div id="labBody">
     <h4>Wie rent er?</h4>
     <div class="seg" id="sWho"><button data-v="po">PO · 30 kg</button><button data-v="vo">VO · 55 kg</button><button data-v="st">Student · 70 kg</button></div>
     <h4>De bocht</h4>
-    <div class="sl"><label>Snelheid <b id="oV"></b></label><input type="range" id="iV" min="1.5" max="8" step=".1"><small id="oV2"></small></div>
-    <div class="sl"><label>Straal van de bocht <b id="oR"></b></label><input type="range" id="iR" min=".6" max="4" step=".1"><small>afstand van de pion tot de looplijn</small></div>
+    <div class="sl"><label>Snelheid <b id="oV"></b></label><input type="range" id="iV" min="2" max="8" step=".1"><small id="oV2"></small></div>
+    <div class="sl"><label>Straal van de bocht (r) <b id="oR"></b></label><input type="range" id="iR" min="1" max="4" step=".1"><small>afstand van de pion tot je zwaartepunt</small></div>
     <h4>Schoeisel en vloer</h4>
     <div class="seg" id="sMu"><button data-v="shoe">Zaalschoenen</button><button data-v="bare">Blote voeten</button><button data-v="dust">Schoenen, stoffige vloer</button><button data-v="sock">Sokken</button></div>
     <button class="btn jump" id="bGo">Rennen! <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd></button>
-    <div class="row2"><div class="seg" id="sSpeed"><button data-v=".5">×½</button><button data-v="1">×1</button></div><button class="btn" id="bReset" style="padding:6px 10px">↺ Opnieuw</button></div>
+    <h4>Terugkijken</h4>
+    <div class="sl scrub" style="margin-top:0"><label>Tijd <b id="oScrub">–</b></label><input type="range" id="iScrub" min="0" max="1000" value="0" disabled><i class="tick" id="tick"></i><small class="tickl" id="tickl">rode streep: hier vraagt de bocht meer dan de vloer kan geven</small></div>
+    <div class="row2"><span style="font-size:13px;font-weight:600">Tempo</span><div class="seg" id="sSpeed"><button data-v=".25">×¼</button><button data-v=".5">×½</button><button data-v="1">×1</button></div></div>
     <h4>Lagen</h4>
-    <label class="tog"><input type="checkbox" id="tF" checked> Krachten op de voet <kbd>F</kbd></label>
+    <label class="tog"><input type="checkbox" id="tF" checked> Krachten met waarden <kbd>F</kbd></label>
     <label class="tog"><input type="checkbox" id="tC" checked> Wrijvingscirkel <kbd>C</kbd></label>
-    <label class="tog"><input type="checkbox" id="tT" checked> Looplijn en spoor <kbd>T</kbd></label>
+    <label class="tog"><input type="checkbox" id="tO"> Ontbinden: Fn + Fw = Fgrond <kbd>O</kbd></label>
+    <label class="tog"><input type="checkbox" id="tT" checked> Looplijn, spoor en voetstappen <kbd>T</kbd></label>
+    <label class="tog"><input type="checkbox" id="tS" checked> Vertragen bij het uitglijden <kbd>S</kbd></label>
+    </div>
   </aside>
 
   <aside class="panel" id="dossier">
@@ -149,12 +189,13 @@ body.present #lab{display:none}body.present #hud{left:16px}body.present .pb{font
 
   <div id="hud">
     <div class="eq">
-      <div class="term C"><small>Nodig: m · v² / r</small><b id="vC">0</b><em id="vC2">N naar het midden</em><i><span id="bC"></span></i></div>
-      <div class="op">≤</div>
-      <div class="term W"><small>Wrijving max: μ · m · g</small><b id="vW">0</b><em id="vW2">N</em><i><span id="bW"></span></i></div>
-      <div class="term H"><small>Hellingshoek</small><b id="vH">0°</b><em id="vH2">v max ≈ 0 m/s</em></div>
+      <div class="term C"><small>Nodig in de bocht</small><span class="fx">Fmpz = m · v² / r</span><b id="vC">?</b><em id="vC2">N naar het midden</em><i><span id="bC"></span></i></div>
+      <div class="op" id="vOp">?</div>
+      <div class="term W"><small>Maximale wrijving</small><span class="fx">Fw,max = μ · m · g</span><b id="vW">0</b><em id="vW2"></em><em id="vW3"></em><i><span id="bW"></span></i></div>
+      <div class="term H" id="tH"><small>Hellen</small><span class="fx">tan φ = Fmpz / Fn</span><div class="hrow"><svg id="cone" viewBox="0 0 64 56" aria-hidden="true"></svg><div><b id="vH">?</b><em id="vH2"></em><em id="vH3" title="grens: tan φ = μ"></em></div></div></div>
     </div>
-    <div id="res"><span class="k">Klaar</span><b class="t">Kies snelheid, bocht en schoeisel</b>Is de wrijving groot genoeg om de bocht te maken?</div>
+    <div id="chartWrap"><canvas id="chart" aria-label="Grafiek: nodige kracht tegen snelheid"></canvas></div>
+    <div id="res"></div>
   </div>
 
   <div class="modal" id="mQuiz"><div class="mcard" id="quizBody"></div></div>
@@ -175,217 +216,520 @@ window.addEventListener('error',function(){if(!window.THREE)window.__err('De 3D-
 if(!window.THREE||!THREE.OrbitControls){window.__err('De 3D-bibliotheek kon niet geladen worden. Controleer de internetverbinding.');return;}
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
-const ease=t=>{t=clamp(t,0,1);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const sstep=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const D2R=Math.PI/180,TAU=Math.PI*2,g=9.81;
-const f1=n=>n.toFixed(1).replace('.',','),f2=n=>n.toFixed(2).replace('.',','),f0=n=>Math.round(n).toLocaleString('nl-NL');
+// afronden met een kleine marge: 0,225 wordt 0,23 (zoals in de uitleg), niet 0,22
+const rnd=(n,d)=>{const p=Math.pow(10,d);return Math.round(n*p+Math.sign(n)*1e-7*p)/p;};
+const f1=n=>rnd(n,1).toFixed(1).replace('.',','),f2=n=>rnd(n,2).toFixed(2).replace('.',','),f0=n=>Math.round(n).toLocaleString('nl-NL');
 const store={get(k,d){try{const v=localStorage.getItem('bocht.'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('bocht.'+k,JSON.stringify(v));}catch(e){}}};
 function toast(m){const t=$('#toast');t.innerHTML=m;t.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove('on'),3600);}
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
+const isMob=()=>innerWidth<=820;
 
 /* ================= model ================= */
-const WHO={po:{m:30,sc:.8,n:'PO-leerling'},vo:{m:55,sc:.95,n:'VO-leerling'},st:{m:70,sc:1.03,n:'Student'}};
-const MU={shoe:{mu:.8,n:'Zaalschoenen'},bare:{mu:.6,n:'Blote voeten'},dust:{mu:.45,n:'Schoenen op een stoffige vloer'},sock:{mu:.3,n:'Sokken'}};
-const L1=6,WALL=6.4,MUK=.75; // aanloop, afstand tot de muur, glijwrijving t.o.v. statische wrijving
-const S={who:store.get('who','vo'),v:store.get('v',3.4),r:store.get('r',2),mu:store.get('mu','shoe'),speed:1,phase:'ready',s:0,t:0,ph:0,lean:0,slip:null,trail:[],last:null};
-function need(){const m=WHO[S.who].m;return {Fc:m*S.v*S.v/S.r,Fw:MU[S.mu].mu*m*g,phi:Math.atan(S.v*S.v/(g*S.r)),vmax:Math.sqrt(MU[S.mu].mu*g*S.r),m};}
-function pathAt(s){const r=S.r,arc=Math.PI*r;if(s<L1)return {x:-L1+s,z:-r,a:0,arc:false};if(s<L1+arc){const th=-Math.PI/2+(s-L1)/r;return {x:r*Math.cos(th),z:r*Math.sin(th),a:th+Math.PI/2,arc:true};}const u=s-L1-arc;return {x:-u,z:r,a:Math.PI,arc:false};}
+const WHO={po:{m:30,sc:.8,n:'PO-leerling',vmax:6},vo:{m:55,sc:.95,n:'VO-leerling',vmax:7.5},st:{m:70,sc:1.03,n:'Student',vmax:8}}; // vmax: realistische sprintsnelheid per doelgroep
+const MU={shoe:{mu:.8,n:'Zaalschoenen'},bare:{mu:.6,n:'Blote voeten'},dust:{mu:.45,n:'Stoffige vloer'},sock:{mu:.3,n:'Sokken'}};
+const L1=5,L2=3,WALL=6.4,MUK=.75,STOP=.68,ABR=.6,LIE=Math.PI/2-.04,RISE=.45; // aanloop, terugweg, muur (x), glijwrijving = 0,75 · μ, marge lichaam-muur, remmen met 0,6 · μ · g, liggend
+const XA=new THREE.Vector3(1,0,0),YA=new THREE.Vector3(0,1,0),ZA=new THREE.Vector3(0,0,1);
+const S={who:store.get('who','vo'),v:clamp(store.get('v',3.4),2,8),r:clamp(store.get('r',2),1,4),mu:store.get('mu','shoe'),speed:1,phase:'ready',t:0,J:null,last:null,runId:0,guess:null,reveal:false,freeze:0,hist:[],histKey:''};
+if(!WHO[S.who])S.who='vo';if(!MU[S.mu])S.mu='shoe';S.v=Math.min(S.v,WHO[S.who].vmax);
+function need(){const m=WHO[S.who].m,mu=MU[S.mu].mu;const Fc=m*S.v*S.v/S.r,Fw=mu*m*g;
+  return {m,mu,Fc,Fw,Fz:m*g,phi:Math.atan(S.v*S.v/(g*S.r)),phiMax:Math.atan(mu),vmax:Math.sqrt(mu*g*S.r),muk:MUK*mu,ratio:Fc/Fw};}
+// gang: lengte van een pas en contact
+function gaitPar(v,sc){const fStep=2.4+.12*v,SL=2*v/fStep,sw=clamp(.3+.1*v,.45,.85)*sc;return {SL,sw,dS:Math.min(.48,sw/SL),hip:(.86-.01*v)*sc};}
+function comH(v,sc){return gaitPar(v,sc).hip+.08*sc;}
+const ddOf=(v,mu)=>Math.max(.8,v*v/(2*ABR*mu*g)); // remweg na de bocht: remmen kost ook wrijving
 
+/* ================= de baan: recht, overgangsboog, halve cirkel om de pion ================= */
+// De kromming κ groeit in een overgangsboog (Ls) van 0 naar 1/r. Overal geldt dan Fw = m · v² · κ en tan φ = v² · κ / g:
+// op een recht stuk is er geen wrijving opzij en geen helling.
+function integ(x0,z0,kap,sEnd,v,h){const ds=.005,n=Math.ceil(sEnd/ds)+2;const X=new Float64Array(n),Z=new Float64Array(n),TH=new Float64Array(n),SG=new Float64Array(n);
+  let x=x0,z=z0,th=0,sg=0;for(let i=0;i<n;i++){X[i]=x;Z[i]=z;TH[i]=th;SG[i]=sg;const k=kap((i+.5)*ds),tm=th+k*ds/2;x+=Math.cos(tm)*ds;z+=Math.sin(tm)*ds;th+=k*ds;
+    sg+=(1+h*Math.sin(Math.atan(v*v*k/g))*k)*ds;} // σ: afstand langs de baan van de voeten (die liggen verder naar buiten)
+  return {ds,n,X,Z,TH,SG};}
+function tabAt(T,s){const ds=T.ds,n=T.n;if(s<=0)return {x:T.X[0]+s,z:T.Z[0],a:0};const f=s/ds,i=Math.floor(f);
+  if(i>=n-1){const e=n-1,a=T.TH[e],d=s-e*ds;return {x:T.X[e]+Math.cos(a)*d,z:T.Z[e]+Math.sin(a)*d,a};}
+  const w=f-i;return {x:lerp(T.X[i],T.X[i+1],w),z:lerp(T.Z[i],T.Z[i+1],w),a:lerp(T.TH[i],T.TH[i+1],w)};}
+function sigAt(T,s){if(s<=0)return s;const f=s/T.ds,i=Math.floor(f);if(i>=T.n-1)return T.SG[T.n-1]+(s-(T.n-1)*T.ds);return lerp(T.SG[i],T.SG[i+1],f-i);}
+function sOfSig(T,sg){if(sg<=0)return sg;const A=T.SG;let lo=0,hi=T.n-1;if(sg>=A[hi])return hi*T.ds+(sg-A[hi]);while(hi-lo>1){const m=(lo+hi)>>1;if(A[m]<=sg)lo=m;else hi=m;}return (lo+(sg-A[lo])/Math.max(A[hi]-A[lo],1e-9))*T.ds;}
+const GEO={};
+function geomFor(r){const key=r.toFixed(2);if(GEO[key])return GEO[key];
+  const Ls=Math.min(1,.9*r),s0=L1-Ls/2,sA=s0+Ls,sB=sA+Math.PI*r-Ls,sC=sB+Ls,sR=sC+L2;
+  const G={r,Ls,s0,sA,sB,sC,sR};G.kap=s=>s<s0?0:s<sA?(s-s0)/(Ls*r):s<sB?1/r:s<sC?(sC-s)/(Ls*r):0;
+  const T=integ(0,0,G.kap,sR+4,0,0),p=tabAt(T,sA);const cx=p.x-r*Math.sin(p.a),cz=p.z+r*Math.cos(p.a); // middelpunt van de cirkel = de pion
+  for(let i=0;i<T.n;i++){T.X[i]-=cx;T.Z[i]-=cz;}G.T=T;G.x0=T.X[0];G.z0=T.Z[0];GEO[key]=G;return G;}
+/* ================= de run als functie van de tijd ================= */
+function plan(){const n=need(),v=S.v,r=S.r,mu=n.mu,sc=WHO[S.who].sc,G=geomFor(r);
+  const J={v,r,mu,m:n.m,sc,n,G,slip:n.Fc>n.Fw,who:S.who,muKey:S.mu,h:comH(v,sc),gp:gaitPar(v,sc)};
+  if(!J.slip){J.tab=integ(G.x0,G.z0,G.kap,G.sR+4,v,J.h);J.sR=G.sR;J.tB=J.sR/v;J.DD=ddOf(v,mu);J.ab=v*v/(2*J.DD);J.sEnd=J.sR+J.DD;
+    J.tEnd=J.tB+2*J.DD/v;J.T=J.tEnd+.7;J.tKey=G.s0/v;planEnd(J);}
+  else{const kmax=mu*g/(v*v);J.kmax=kmax;J.rp=1/kmax;J.sKey=G.s0+G.Ls*r*kmax;J.dG=Math.min(.5*J.rp,1.1);J.sSlip=J.sKey+J.dG;
+    J.over=Math.max(0,Math.min(n.phi,n.phiMax+12*D2R)-n.phiMax); // hij wil de pion toch halen en hangt schuiner dan tan φ = μ
+    J.tab=integ(G.x0,G.z0,s=>Math.min(G.kap(s),kmax),J.sSlip+.5,v,J.h);
+    J.tKey=J.sKey/v;J.tG=J.sSlip/v;const p=tabAt(J.tab,J.sSlip);J.P1={x:p.x,z:p.z};J.a1=p.a;J.sigSlip=sigAt(J.tab,J.sSlip);
+    const a=MUK*mu*g;J.dec=a;J.dist=v*v/(2*a);
+    const room=(WALL-STOP-J.P1.x)/Math.max(Math.cos(J.a1),1e-3);J.room=room;
+    J.hit=J.dist>room;J.dSl=J.hit?room:J.dist;J.vHit=J.hit?Math.sqrt(Math.max(0,v*v-2*a*room)):0;
+    J.tSl=(v-J.vHit)/a;J.tEnd=J.tG+J.tSl;J.T=J.tEnd+(J.hit?2.5:1.5); // tijd om het bijschrift bij de botsing te lezen
+    J.leanSlip=n.phiMax+J.over;}
+  J.steps=[];J.track=[];buildTrack(J);return J;}
+function tOfS(J,s){if(J.slip||s<=J.sR)return s/J.v;const q=J.v*J.v-2*J.ab*(s-J.sR);return J.tB+(J.v-Math.sqrt(Math.max(0,q)))/J.ab;}
+// Afremmen tot stilstand: de passen worden korter. De laatste voet landt (op tijdstip tP) waar het lichaam stilvalt
+// en blijft daar staan; de andere voet wordt ernaast gezet (op tF). Zo schuift er geen voet over de vloer.
+// gam = de 'pasafstand' die de beencyclus aanstuurt: normaal de afstand van de voeten langs de baan (σ),
+// in de laatste pas samengedrukt, en na tP in de tijd tot de tweede voet staat.
+function planEnd(J){const gp=J.gp,H=gp.SL/2,sc=J.sc,pm=Math.atan(J.ab/g);
+  J.sP=J.sEnd-.2*sc;let kS=Math.ceil(sigAt(J.tab,J.sP)/H-1e-9),sQ=sOfSig(J.tab,(kS-1)*H);
+  if(J.sP-sQ<.35*H){kS--;sQ=sOfSig(J.tab,(kS-1)*H);} // geen piepklein pasje: maak de vorige pas iets langer
+  J.kS=kS;J.sQ=sQ;J.gQ=(kS-1)*H;J.gP=kS*H;J.tP=tOfS(J,J.sP);J.tF=J.tEnd+.55*RISE;
+  const e=tabAt(J.tab,J.sEnd),d=V(Math.cos(e.a),0,Math.sin(e.a)),iw=V(-Math.sin(e.a),0,Math.cos(e.a));
+  const PE=V(e.x,0,e.z).addScaledVector(d,J.h*Math.sin(pm)); // hier staat het draaipunt als het lichaam stilstaat
+  J.FS={};[-1,1].forEach(side=>{const p=PE.clone().addScaledVector(d,-.05*sc).addScaledVector(iw,side*.1*sc);J.FS[side]={x:p.x,z:p.z,f:d};});}
+function gamOf(J,t,s){if(J.slip||!J.FS||s<=J.sQ)return sigAt(J.tab,s);if(t>J.tP)return J.gP+(J.gP-J.gQ)*clamp((t-J.tP)/(J.tF-J.tP),0,1);return lerp(J.gQ,J.gP,clamp((s-J.sQ)/(J.sP-J.sQ),0,1));}
+function tOfGam(J,gm){if(J.slip||!J.FS||gm<=J.gQ)return tOfS(J,sOfSig(J.tab,gm));if(gm<=J.gP)return tOfS(J,lerp(J.sQ,J.sP,(gm-J.gQ)/(J.gP-J.gQ)));return J.tP+(J.tF-J.tP)*clamp((gm-J.gP)/(J.gP-J.gQ),0,1);}
+// toestand op tijd t
+function stateAt(J,t){
+  if(!J||t<=0){const G=geomFor(J?J.r:S.r);return {x:G.x0,z:G.z0,a:0,vn:0,lean:0,fall:0,s:0,sig:0,gam:0,amp:0,ph:'klaar',Fw:0,Fb:0};}
+  const v=J.v,G=J.G;
+  if(!J.slip){let s,vn=v,amp=1,Fb=0,pitch=0;
+    // remmen: de leerling hangt achterover (tan θ = Frem / Fn), zodat de grondkracht door het zwaartepunt blijft gaan
+    // daarna komt het lichaam over de stilstaande voeten weer rechtop (RISE s)
+    if(t<=J.tB){s=v*t;}else if(t<=J.tEnd){const tau=t-J.tB;s=J.sR+v*tau-.5*J.ab*tau*tau;vn=v-J.ab*tau;amp=clamp(vn/v,0,1);const w=sstep(0,.1,tau);Fb=J.m*J.ab*w;pitch=Math.atan(J.ab*w/g);}
+    else{const pm=Math.atan(J.ab/g),u=sstep(0,1,(t-J.tEnd)/RISE);pitch=pm*(1-u);s=J.sEnd+J.h*(Math.sin(pm)-Math.sin(pitch));vn=0;amp=0;}
+    const p=tabAt(J.tab,s),k=G.kap(s);
+    const ph=s<G.s0?'aan':s<G.sC?'bocht':s<J.sR?'uit':t<J.tEnd?'rem':'stil';
+    return {x:p.x,z:p.z,a:p.a,vn,lean:Math.atan(v*v*k/g),fall:0,s,sig:sigAt(J.tab,s),gam:gamOf(J,t,s),amp,ph,Fw:J.m*v*v*k,Fb,pitch};}
+  if(t<=J.tG){const s=v*t,p=tabAt(J.tab,s),k=Math.min(G.kap(s),J.kmax);let lean=Math.atan(v*v*k/g);const kern=s>=J.sKey-1e-6;
+    if(kern)lean+=J.over*sstep(J.sKey+.35*J.dG,J.sSlip,s);
+    const sg=sigAt(J.tab,s);return {x:p.x,z:p.z,a:p.a,vn:v,lean,fall:0,s,sig:sg,gam:sg,amp:1,ph:s<G.s0?'aan':kern?'kern':'bocht',Fw:J.m*v*v*k,Fb:0};}
+  const tau=Math.min(t-J.tG,J.tSl);const d=Math.min(J.dSl,v*tau-.5*J.dec*tau*tau);const vn=t-J.tG>=J.tSl?0:v-J.dec*tau;
+  const fall=sstep(0,.55,t-J.tG);const lean=lerp(J.leanSlip,LIE,fall);
+  return {x:J.P1.x+d*Math.cos(J.a1),z:J.P1.z+d*Math.sin(J.a1),a:J.a1,vn,lean,fall,s:J.sSlip,sig:J.sigSlip,gam:J.sigSlip,amp:1,ph:t-J.tG<J.tSl?'glij':(J.hit?'muur':'stil'),Fw:0,Fb:0,d};}
+// stand van de pop: draaipunt op de grond (onder de steunvoet) en kanteling
+const _qb=new THREE.Quaternion();
+function frameOf(st,h,sc){const inw=V(-Math.sin(st.a),0,Math.cos(st.a)),pt=st.pitch||0;const p=V(st.x,0,st.z).addScaledVector(inw,-h*Math.sin(st.lean));p.y=st.fall*.17*sc;
+  if(pt)p.add(V(Math.cos(st.a),0,Math.sin(st.a)).multiplyScalar(h*Math.sin(pt))); // remmen: de voet staat vóór het zwaartepunt
+  const q=new THREE.Quaternion().setFromAxisAngle(YA,-st.a).multiply(_qb.setFromAxisAngle(XA,st.lean));if(pt)q.multiply(_qb.setFromAxisAngle(ZA,pt));return {p,q,qi:q.clone().invert(),lean:st.lean,pitch:pt};}
+function frameAt(J,t){return frameOf(stateAt(J,t),J.h,J.sc);}
+// waar staat de steunvoet op de vloer? Bepaald op het midden van het contact, daarna staat hij vast
+function anchorW(J,side,sgTd){const gp=J.gp;if(J.FS&&Math.round(sgTd/(gp.SL/2))>=J.kS)return J.FS[side]; // de laatste twee passen: de eindstand
+  const sgM=sgTd+gp.dS*gp.SL/2;let t=tOfGam(J,sgM);if(J.slip)t=Math.min(t,J.tG-1e-4);
+  const st=stateAt(J,Math.max(t,1e-4)),fr=frameOf(st,J.h,J.sc);const L=legTargets(gp.dS/2,side,gp,J.sc,J.v);const A=L.A.applyQuaternion(fr.q).add(fr.p);
+  return {x:A.x,z:A.z,f:V(Math.cos(st.a),0,Math.sin(st.a))};}
+function buildTrack(J){const gp=J.gp,SL=gp.SL;
+  for(let t=0;t<=J.tEnd+(J.slip?0:RISE)+1e-6;t+=.01){const st=stateAt(J,Math.max(t,1e-4));J.track.push({x:st.x,z:st.z,t});}
+  const sgEnd=J.slip?J.sigSlip:(J.kS+1)*SL/2+1e-6;
+  for(let k=0;k*SL/2<=sgEnd;k++){const sg=k*SL/2,side=k%2===0?-1:1;const t=tOfGam(J,sg);if(J.slip&&t>=J.tG)break;
+    const W=anchorW(J,side,sg);
+    J.steps.push({x:W.x+W.f.x*.06*J.sc,z:W.z+W.f.z*.06*J.sc,a:Math.atan2(W.f.z,W.f.x),t,side});}}
+
+/* ================= ledenpop: houdingen in het eigen assenstelsel ================= */
+// x vooruit, y omhoog, z naar het midden van de bocht; de grond onder het zwaartepunt is de oorsprong
+const _u=new THREE.Vector3(),_bv=new THREE.Vector3();
+function ik(H,A,l1,l2){_u.subVectors(A,H);let d=_u.length();const dmax=(l1+l2)*.999;if(d>dmax){A=H.clone().add(_u.multiplyScalar(dmax/d));_u.subVectors(A,H);d=dmax;}d=Math.max(d,.05);_u.normalize();
+  const ca=clamp((l1*l1+d*d-l2*l2)/(2*l1*d),-1,1),sa=Math.sqrt(1-ca*ca);_bv.set(1,0,0).addScaledVector(_u,-_u.x).normalize();
+  return {K:H.clone().addScaledVector(_u,l1*ca).addScaledVector(_bv,l1*sa),A};}
+function legTargets(u,side,gp,sc,v){const dS=gp.dS,sw=gp.sw;let fx,fy,q,fz;
+  if(u<dS){const w=u/dS;fx=.4*sw-w*sw;fy=.08*sc+sstep(.55,1,w)*.07*sc;q=Math.asin(clamp(fy/(.17*sc),0,1));fz=side*.03*sc;}
+  else{const w=(u-dS)/(1-dS);fx=lerp(-.6*sw,.4*sw,sstep(0,1,w))-.1*sc*Math.sin(Math.PI*w)*(1-w);fy=lerp(.15*sc,.08*sc,sstep(0,.35,w))+Math.sin(Math.PI*Math.pow(w,.8))*(.1+.035*v)*sc;q=lerp(1.05,.49,w);fz=side*lerp(.03,.08,Math.sin(Math.PI*w))*sc;}
+  const A=V(fx-.05*sc,fy,fz);return {A,T:A.clone().add(V(Math.cos(q)*.17*sc,-Math.sin(q)*.17*sc,0))};}
+function bodyPose(st,J,sc,v,fr){const gp=J?J.gp:gaitPar(v||1,sc);const amp=st.amp,fall=st.fall;const P={};
+  const u0=(((st.gam!==undefined?st.gam:st.sig)/gp.SL)%1+1)%1;
+  const endRun=!!(J&&J.FS); // gehaalde bocht: de voeten volgen tot het eind hun eigen vaste plek op de vloer
+  // na het wegglijden schuiven de voeten mee met het lichaam: houd de beenstand van dat moment vast
+  const frA=fr&&J&&J.slip&&fall>0?frameAt(J,J.tG-1e-4):fr;
+  const toL=w=>w.sub(frA.p).applyQuaternion(frA.qi);
+  // drie houdingen: lopen, staan, vallen
+  const run=side=>{const u=side<0?u0:(u0+.5)%1;const L=legTargets(u,side,gp,sc,(v||0)*(endRun?Math.max(.3,amp):1));if(!J||!frA||(amp<=0&&!endRun))return L;
+    const fy=L.A.y,dT=L.T.clone().sub(L.A);const gm=st.gam!==undefined?st.gam:st.sig,H2=gp.SL/2;
+    const plant=W=>{const A=V(W.x,.08*sc,W.z),T=A.clone().addScaledVector(W.f,.15*sc).add(V(0,-.08*sc,0));return {A:toL(A),T:toL(T)};}; // eindstand: voet plat op de vloer
+    const fin=sgTd=>endRun&&Math.round(sgTd/H2)>=J.kS;
+    const anch=sgTd=>{if(fin(sgTd))return plant(J.FS[side]);const W=anchorW(J,side,sgTd);const A=V(W.x,fy,W.z),T=A.clone().addScaledVector(W.f,dT.x).add(V(0,dT.y,0));return {A:toL(A),T:toL(T)};};
+    const sgT=gm-u*gp.SL;if(fin(sgT))return plant(J.FS[side]); // staat al in de eindstand: blijft daar
+    if(u<gp.dS){const q=anch(sgT);return q;} // steunvoet staat stil op de vloer
+    const lam=frA.lean;if(lam>0&&lam<1.2){const c=Math.cos(lam),s=Math.sin(lam);L.A.y=(L.A.y+L.A.z*s)/c;L.T.y=(L.T.y+L.T.z*s)/c;} // zwaaivoet niet door de vloer bij het hellen
+    const pit=frA.pitch||0;if(pit>0){const c=Math.cos(pit),s=Math.sin(pit);L.A.y=(L.A.y-L.A.x*s)/c;L.T.y=(L.T.y-L.T.x*s)/c;} // en niet bij het achterover hangen
+    const w=(u-gp.dS)/(1-gp.dS),b0=1-sstep(0,.3,w),b1=sstep(.7,1,w);
+    if(b0>0){const q=anch(sgT);L.A.lerp(q.A,b0);L.T.lerp(q.T,b0);}
+    if(fin(sgT+gp.SL)){const q=anch(sgT+gp.SL),bh=sstep(.3,.78,w),bv=sstep(.62,.94,w);const toW=l=>l.clone().applyQuaternion(frA.q).add(frA.p); // laatste pas: eerst boven de plek, dan recht omlaag
+      ['A','T'].forEach(k=>{const a=toW(L[k]),b=toW(q[k]);a.x=lerp(a.x,b.x,bh);a.z=lerp(a.z,b.z,bh);a.y=lerp(a.y,b.y,bv);L[k]=toL(a);});}
+    else if(b1>0){const q=anch(sgT+gp.SL);L.A.lerp(q.A,b1);L.T.lerp(q.T,b1);}
+    return L;};
+  const pit0=frA&&frA.pitch||0,cp=Math.cos(pit0),sp=Math.sin(pit0);
+  const stand=side=>{const A=V(-.05*sc,.08*sc,side*.1*sc),T=A.clone().add(V(.15*sc,-.08*sc,0));if(pit0>0){A.y=(A.y-A.x*sp)/cp;T.y=(T.y-T.x*sp)/cp;}return {A,T};}; // ook achterover: voeten op de vloer
+  const fallT=side=>{const A=V(-.02*sc,.08*sc,(.1+side*.03)*sc);return {A,T:A.clone().add(V(.06*sc,-.02*sc,0))};};
+  const hipRun=gp.hip-.025*sc*Math.cos(4*Math.PI*(u0-gp.dS/2));
+  const hipY=lerp(lerp(.92*sc,hipRun,amp),.9*sc,fall);
+  const tl=lerp(0,(6+.8*(v||0))*D2R,amp)*(1-fall);
+  const wS=endRun?0:1-amp; // niet naar een meebewegende stand mengen: dan zou de steunvoet schuiven
+  const legs={};[-1,1].forEach(side=>{const a=run(side),b=stand(side),c=fallT(side);const A=a.A.clone().lerp(b.A,wS).lerp(c.A,fall),T=a.T.clone().lerp(b.T,wS).lerp(c.T,fall);
+    const H=V(0,hipY,side*.09*sc);const r=ik(H,A,.44*sc,.43*sc);const k=side<0?'L':'R';P['hip'+k]=H;P['knee'+k]=r.K;P['ank'+k]=r.A;P['toe'+k]=T.add(r.A.clone().sub(A));});
+  const up=V(Math.sin(tl),Math.cos(tl),0);P.pelvis=V(0,hipY,0);P.sho=P.pelvis.clone().addScaledVector(up,.52*sc);P.head=P.sho.clone().addScaledVector(up,.17*sc).add(V(0,0,.06*sc*fall));
+  // liggend: de onderste schouder rolt naar voren, de armen steunen op de vloer
+  P.shoL=P.sho.clone().add(V(0,0,lerp(-.2,-.16,fall)*sc));P.shoR=P.sho.clone().add(V(0,0,lerp(.2,.1,fall)*sc));
+  [-1,1].forEach(side=>{const k=side<0?'L':'R',sh=P['sho'+k];const u=side<0?u0:(u0+.5)%1;const s=.6*amp*Math.cos(TAU*(u-gp.dS/2));
+    let e=sh.clone().add(V(Math.sin(s)*.3*sc,-Math.cos(s)*.3*sc,side*.03*sc)),h=e.clone().add(V(Math.sin(s+1.45)*.3*sc,-Math.cos(s+1.45)*.3*sc,0));
+    if(amp<1){const es=sh.clone().add(V(.02*sc,-.3*sc,side*.04*sc)),hs=es.clone().add(V(.08*sc,-.28*sc,0));e.lerp(es,1-amp);h.lerp(hs,1-amp);}
+    if(fall>0){const ef=V(sh.x+.27*sc,sh.y-.04*sc,lerp(sh.z,.14*sc,.5)),hf=V(sh.x+.56*sc,sh.y-.06*sc,.14*sc);e.lerp(ef,fall);h.lerp(hf,fall);}
+    P['elb'+k]=e;P['hand'+k]=h;});
+  P.tl=tl;P.fall=fall;P.com=V(0,hipY+.08*sc,0);return P;}
 /* ================= renderer & zaal ================= */
 const canvas=$('#c');let renderer;
 try{renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});}catch(e){window.__err('Je browser ondersteunt geen WebGL. Probeer Chrome of Edge.');return;}
 renderer.setClearColor(0,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,22,48);
-const camera=new THREE.PerspectiveCamera(36,1,.05,120);
-const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=3;controls.maxDistance=30;controls.maxPolarAngle=1.45;
-const HOME=innerWidth<820?{p:[-4,10,13],t:[0,0,0]}:{p:[-8.8,6.6,6.4],t:[-1.5,0,-.4]};camera.position.set(...HOME.p);controls.target.set(...HOME.t);
-scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.6));
-const key=new THREE.DirectionalLight(0xfff1dc,1.1);key.position.set(4,10,6);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-9,right:9,top:8,bottom:-8,near:1,far:30});key.shadow.bias=-.0004;scene.add(key);
+const scene=new THREE.Scene();scene.fog=new THREE.Fog(0x0d1316,30,70);
+const camera=new THREE.PerspectiveCamera(36,1,.05,150);const fitCam=camera.clone();
+const controls=new THREE.OrbitControls(camera,canvas);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=2;controls.maxDistance=40;controls.maxPolarAngle=1.45;
+scene.add(new THREE.HemisphereLight(0xdfe8f0,0x2a1d15,.62));
+const key=new THREE.DirectionalLight(0xfff1dc,1.05);key.position.set(3,11,7);key.castShadow=true;key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{left:-10,right:10,top:9,bottom:-9,near:1,far:32});key.shadow.bias=-.0004;scene.add(key);
 const std=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7},o||{}));
+// vlakke kleuren: hex is sRGB, dus eerst naar lineair, anders komen ze verwaterd in beeld
+const lin=c=>new THREE.Color(c).convertSRGBToLinear();
+const flat=(c,o)=>new THREE.MeshBasicMaterial(Object.assign({color:lin(c),toneMapped:false,transparent:true},o||{}));
 function mesh(geo,mat,pos,parent){const mm=new THREE.Mesh(geo,mat);if(pos)mm.position.set(...pos);mm.castShadow=true;mm.receiveShadow=true;(parent||scene).add(mm);return mm;}
 function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=8;return t;}
-const FW=17,FD=12;
-const floorTex=canvasTex(2048,1440,(x,w,h)=>{for(let i=0;i<48;i++){const y=i*h/48;x.fillStyle=`hsl(${30+Math.random()*6},${42+Math.random()*10}%,${46+Math.random()*9}%)`;x.fillRect(0,y,w,h/48);x.fillStyle='rgba(60,35,15,.35)';x.fillRect(0,y,w,2);for(let k=0;k<4;k++){const xx=Math.random()*w;x.fillRect(xx,y,2,h/48);}}
-  x.strokeStyle='rgba(255,255,255,.8)';x.lineWidth=6;x.strokeRect(40,40,w-80,h-80);});
-mesh(new THREE.BoxGeometry(FW,.25,FD),std(0x2a1d15),[-.6,-.125,0]);
-const floor=mesh(new THREE.PlaneGeometry(FW,FD),std(0xffffff,{map:floorTex,roughness:.5}),[-.6,.002,0]);floor.rotation.x=-Math.PI/2;floor.castShadow=false;
-// muur met wandrek aan de kant van de bocht
+const FW=16,FD=13,FX=WALL-FW/2;
+const floorTex=canvasTex(2048,1664,(x,w,h)=>{for(let i=0;i<52;i++){const y=i*h/52;x.fillStyle=`hsl(${27+Math.random()*6},${28+Math.random()*8}%,${33+Math.random()*7}%)`;x.fillRect(0,y,w,h/52);x.fillStyle='rgba(40,24,10,.4)';x.fillRect(0,y,w,2);for(let k=0;k<4;k++){const xx=Math.random()*w;x.fillRect(xx,y,2,h/52);}}
+  x.strokeStyle='rgba(255,255,255,.55)';x.lineWidth=6;x.strokeRect(40,40,w-80,h-80);});
+mesh(new THREE.BoxGeometry(FW,.25,FD),std(0x2a1d15),[FX,-.125,0]);
+const floor=mesh(new THREE.PlaneGeometry(FW,FD),std(0xffffff,{map:floorTex,roughness:.55}),[FX,.002,0]);floor.rotation.x=-Math.PI/2;floor.castShadow=false;
 const wall=mesh(new THREE.BoxGeometry(.14,3,FD),std(0xcfd6d8),[WALL+.07,1.5,0]);
-const woodM=std(0xc89a5e,{roughness:.6});for(let s=0;s<6;s++){const z0=-4.5+s*1.6;[z0,z0+.9].forEach(z=>mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[WALL-.1,1.3,z]));for(let r=0;r<14;r++){const rr=mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[WALL-.1,.18+r*.17,z0+.45]);rr.rotation.x=Math.PI/2;}}
-const wallFlash=new THREE.Mesh(new THREE.PlaneGeometry(FD,3),new THREE.MeshBasicMaterial({color:0xe86a5a,transparent:true,opacity:0,side:THREE.DoubleSide}));wallFlash.rotation.y=-Math.PI/2;wallFlash.position.set(WALL-.18,1.5,0);scene.add(wallFlash);
-// pion
-const cone=new THREE.Group();scene.add(cone);mesh(new THREE.ConeGeometry(.16,.42,24),std(0xff8a2a,{roughness:.5}),[0,.23,0],cone);mesh(new THREE.BoxGeometry(.34,.03,.34),std(0xff8a2a),[0,.015,0],cone);
+const woodM=std(0xc89a5e,{roughness:.6});for(let s=0;s<7;s++){const z0=-5.4+s*1.6;[z0,z0+.9].forEach(z=>mesh(new THREE.BoxGeometry(.07,2.6,.07),woodM,[WALL-.1,1.3,z]));for(let r=0;r<14;r++){const rr=mesh(new THREE.CylinderGeometry(.018,.018,.86,8),woodM,[WALL-.1,.18+r*.17,z0+.45]);rr.rotation.x=Math.PI/2;}}
+const wallFlash=new THREE.Mesh(new THREE.PlaneGeometry(FD,3),flat(0xe86a5a,{opacity:0,side:THREE.DoubleSide}));wallFlash.rotation.y=-Math.PI/2;wallFlash.position.set(WALL-.2,1.5,0);scene.add(wallFlash);
+const cone=new THREE.Group();scene.add(cone);mesh(new THREE.ConeGeometry(.16,.42,24),std(0xff4d00,{roughness:.5}),[0,.23,0],cone);mesh(new THREE.BoxGeometry(.34,.03,.34),std(0xff4d00),[0,.015,0],cone);
 mesh(new THREE.CylinderGeometry(.162,.13,.05,24),std(0xffffff),[0,.27,0],cone);
 
-/* ================= hardloper ================= */
+/* ================= ledenpop ================= */
 const runner=new THREE.Group();scene.add(runner);
-const UP=new THREE.Vector3(0,1,0),_d=new THREE.Vector3();
-const CYL=new THREE.CylinderGeometry(1,1,1,16),SPH=new THREE.SphereGeometry(1,18,12);
+const UP=V(0,1,0),_d=new THREE.Vector3(),_t=new THREE.Vector3();
+const CYL=new THREE.CylinderGeometry(1,1,1,16),SPH=new THREE.SphereGeometry(1,18,12),BOX=new THREE.BoxGeometry(1,1,1);
 const mats={jersey:std(0xd65a42,{roughness:.55}),skin:std(0xe8d6b6,{roughness:.55}),short:std(0x2b3a52,{roughness:.55}),shoe:std(0xf3efe6,{roughness:.55}),sock:std(0xffffff,{roughness:.9}),joint:std(0x8a7a66,{roughness:.55})};
-const SEGS=[['pelvis','sho',.125,'jersey'],['shoL','shoR',.065,'jersey'],['hipL','hipR',.075,'short'],['shoL','elbL',.045,'skin'],['shoR','elbR',.045,'skin'],['elbL','handL',.038,'skin'],['elbR','handR',.038,'skin'],['hipL','kneeL',.07,'short'],['hipR','kneeR',.07,'short'],['kneeL','ankL',.052,'skin'],['kneeR','ankR',.052,'skin'],['ankL','toeL',.042,'shoe'],['ankR','toeR',.042,'shoe']];
+const SEGS=[['pelvis','sho',.115,'jersey'],['shoL','elbL',.045,'skin'],['shoR','elbR',.045,'skin'],['elbL','handL',.038,'skin'],['elbR','handR',.038,'skin'],['hipL','kneeL',.07,'short'],['hipR','kneeR',.07,'short'],['kneeL','ankL',.052,'skin'],['kneeR','ankR',.052,'skin'],['ankL','toeL',.045,'shoe'],['ankR','toeR',.045,'shoe']];
 const JNT=[['elbL',.05],['elbR',.05],['handL',.045],['handR',.045],['kneeL',.075],['kneeR',.075],['ankL',.055],['ankR',.055],['shoL',.072],['shoR',.072],['hipL',.08],['hipR',.08]];
 const segM=SEGS.map(([a,b,r,mt])=>{const mm=new THREE.Mesh(CYL,mats[mt]);mm.castShadow=true;runner.add(mm);return {mm,a,b,r,mt};});
 const jM=JNT.map(([k,r])=>{const mm=new THREE.Mesh(SPH,mats.joint);mm.castShadow=true;runner.add(mm);return {mm,k,r};});
 const headM=new THREE.Mesh(SPH,mats.skin);headM.castShadow=true;runner.add(headM);const noseM=new THREE.Mesh(SPH,std(0x2b3a52));runner.add(noseM);
+const yoke=new THREE.Mesh(BOX,mats.jersey);yoke.castShadow=true;runner.add(yoke);const hipsB=new THREE.Mesh(BOX,mats.short);hipsB.castShadow=true;runner.add(hipsB);
 function placeSeg(mm,A,B,r){_d.subVectors(B,A);const L=_d.length();mm.position.addVectors(A,B).multiplyScalar(.5);mm.scale.set(r,Math.max(L,1e-4),r);if(L>1e-6)mm.quaternion.setFromUnitVectors(UP,_d.normalize());}
-// lokale punten: x vooruit, y omhoog, z naar rechts; de voeten staan rond de oorsprong
-function runPts(ph,amp,sc,fallen){const P={};const lean=10*D2R;const hp=(.92-.04*amp)*sc+.03*sc*Math.abs(Math.cos(ph));const pel=V(0,hp,0);
-  const leg=(phase,side)=>{const a=amp*.75*Math.sin(phase),b=.25+amp*1.1*(.5-.5*Math.cos(phase-.9));const hip=pel.clone().add(V(0,0,side*.1*sc));const knee=hip.clone().add(V(Math.sin(a)*.44*sc,-Math.cos(a)*.44*sc,0));const sa=a-b;const ank=knee.clone().add(V(Math.sin(sa)*.43*sc,-Math.cos(sa)*.43*sc,0));const toe=ank.clone().add(V(Math.cos(sa)*.17*sc,Math.sin(sa)*.17*sc,0));return {hip,knee,ank,toe};};
-  const L=leg(ph,-1),R=leg(ph+Math.PI,1);P.hipL=L.hip;P.kneeL=L.knee;P.ankL=L.ank;P.toeL=L.toe;P.hipR=R.hip;P.kneeR=R.knee;P.ankR=R.ank;P.toeR=R.toe;
-  const up=V(Math.sin(lean),Math.cos(lean),0);P.pelvis=pel;P.sho=pel.clone().add(up.clone().multiplyScalar(.52*sc));P.head=P.sho.clone().add(up.clone().multiplyScalar(.17*sc));
-  P.shoL=P.sho.clone().add(V(0,0,-.2*sc));P.shoR=P.sho.clone().add(V(0,0,.2*sc));
-  const arm=(sh,phase)=>{const s=-amp*.9*Math.sin(phase);const e=sh.clone().add(V(Math.sin(s)*.3*sc,-Math.cos(s)*.3*sc,0));const f=s+1.5;return [e,e.clone().add(V(Math.sin(f)*.34*sc,-Math.cos(f)*.34*sc,0))];};
-  [P.elbL,P.handL]=arm(P.shoL,ph);[P.elbR,P.handR]=arm(P.shoR,ph+Math.PI);
-  // laagste punt op de grond
-  const minY=Math.min(P.toeL.y,P.toeR.y,P.ankL.y,P.ankR.y)-.04*sc;for(const k in P)P[k].y-=minY;return P;}
 function drawRunner(P,sc){for(const q of segM)placeSeg(q.mm,P[q.a],P[q.b],q.r*sc);for(const j of jM){j.mm.position.copy(P[j.k]);j.mm.scale.setScalar(j.r*sc);}
-  headM.position.copy(P.head);headM.scale.setScalar(.11*sc);noseM.position.copy(P.head).add(V(.105*sc,0,0));noseM.scale.setScalar(.03*sc);
-  const sock=S.mu==='sock'||S.mu==='bare';segM.forEach(q=>{if(q.mt==='shoe')q.mm.material=S.mu==='bare'?mats.skin:sock?mats.sock:mats.shoe;});}
+  headM.position.copy(P.head);headM.scale.setScalar(.11*sc);noseM.position.copy(P.head).add(V(.105*sc*Math.cos(P.tl),-.105*sc*Math.sin(P.tl),0));noseM.scale.setScalar(.03*sc);
+  yoke.position.copy(P.sho).add(V(-.06*sc*Math.sin(P.tl),-.06*sc*Math.cos(P.tl),0));yoke.rotation.set(0,0,-P.tl);yoke.scale.set(.2*sc,.15*sc,lerp(.46,.3,P.fall||0)*sc);
+  hipsB.position.copy(P.pelvis).add(V(.03*sc*Math.sin(P.tl),.03*sc*Math.cos(P.tl),0));hipsB.rotation.set(0,0,-P.tl);hipsB.scale.set(.22*sc,.16*sc,.34*sc);
+  const sock=S.mu==='sock';segM.forEach(q=>{if(q.mt==='shoe')q.mm.material=S.mu==='bare'?mats.skin:sock?mats.sock:mats.shoe;});}
 
 /* ================= lagen ================= */
-const planned=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineDashedMaterial({color:0x1d3557,dashSize:.18,gapSize:.12,transparent:true,opacity:.9}));scene.add(planned);
-const dotGeo=new THREE.CircleGeometry(.045,12);dotGeo.rotateX(-Math.PI/2);const plannedDots=new THREE.InstancedMesh(dotGeo,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.85}),600);plannedDots.renderOrder=4;scene.add(plannedDots);
-const tanDots=new THREE.InstancedMesh(dotGeo,new THREE.MeshBasicMaterial({color:0xe86a5a,transparent:true,opacity:.85}),200);scene.add(tanDots);const _m=new THREE.Matrix4();
-function buildPlanned(){const pts=[];const tot=L1+Math.PI*S.r+L1;for(let s=0;s<=tot;s+=.1){const p=pathAt(s);pts.push(V(p.x,.012,p.z));}planned.geometry.dispose();planned.geometry=new THREE.BufferGeometry().setFromPoints(pts);planned.computeLineDistances();
-  let i=0;for(let s=0;s<=tot&&i<600;s+=.3){const p=pathAt(s);_m.makeTranslation(p.x,.013,p.z);plannedDots.setMatrixAt(i++,_m);}plannedDots.count=i;plannedDots.instanceMatrix.needsUpdate=true;
-  const e=pathAt(L1);i=0;for(let x=e.x+.3;x<WALL-.2&&i<200;x+=.3){_m.makeTranslation(x,.013,e.z);tanDots.setMatrixAt(i++,_m);}tanDots.count=i;tanDots.instanceMatrix.needsUpdate=true;}
-const trailGeo=new THREE.BufferGeometry();trailGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(2000*3),3));
-const trail=new THREE.Line(trailGeo,new THREE.LineBasicMaterial({color:0xe6b65e}));trail.frustumCulled=false;scene.add(trail);
-const tangent=new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0,.015,0),V(1,.015,0)]),new THREE.LineDashedMaterial({color:0xe86a5a,dashSize:.12,gapSize:.1,transparent:true,opacity:.8}));scene.add(tangent);
-const ring=new THREE.Mesh(new THREE.RingGeometry(.97,1,64),new THREE.MeshBasicMaterial({color:0xe6b65e,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.renderOrder=6;scene.add(ring);
-const disk=new THREE.Mesh(new THREE.CircleGeometry(1,64),new THREE.MeshBasicMaterial({color:0xe6b65e,transparent:true,opacity:.1,side:THREE.DoubleSide,depthWrite:false}));disk.rotation.x=-Math.PI/2;disk.renderOrder=5;scene.add(disk);
-const mkArrow=c=>{const a=new THREE.ArrowHelper(V(1,0,0),V(),1,c,.14,.09);a.line.material.depthTest=false;a.cone.material.depthTest=false;a.renderOrder=11;scene.add(a);return a;};
-const aFz=mkArrow(0x6fa8dc),aFn=mkArrow(0x7fc8a0),aFw=mkArrow(0xe6b65e),aRes=mkArrow(0xf1e9da);
+const dotGeo=new THREE.CircleGeometry(.045,12);dotGeo.rotateX(-Math.PI/2);
+const plannedDots=new THREE.InstancedMesh(dotGeo,flat(0xffffff,{opacity:.75,depthWrite:false}),400);plannedDots.renderOrder=3;scene.add(plannedDots);const _m=new THREE.Matrix4();
+function buildPlanned(){let i=0;const G=geomFor(S.r),tot=G.sR+ddOf(S.v,MU[S.mu].mu);for(let s=0;s<=tot&&i<400;s+=.3){const p=tabAt(G.T,s);_m.makeTranslation(p.x,.012,p.z);plannedDots.setMatrixAt(i++,_m);}plannedDots.count=i;plannedDots.instanceMatrix.needsUpdate=true;}
+// spoor van het zwaartepunt: donkerblauw lint
+const trailMat=flat(0x1f5a96,{opacity:.92,depthWrite:false,side:THREE.DoubleSide});const trail=new THREE.Mesh(new THREE.BufferGeometry(),trailMat);trail.renderOrder=4;trail.frustumCulled=false;scene.add(trail);
+function buildTrail(J){const T=J.track,n=T.length,pos=new Float32Array(Math.max(1,n-1)*18),w=.035;let k=0;
+  for(let i=0;i<n-1;i++){const A=T[i],B=T[i+1];let dx=B.x-A.x,dz=B.z-A.z;const L=Math.hypot(dx,dz)||1;const nx=-dz/L*w,nz=dx/L*w;
+    const q=[A.x+nx,A.z+nz,A.x-nx,A.z-nz,B.x+nx,B.z+nz,B.x-nx,B.z-nz];[0,1,2,1,3,2].forEach(j=>{pos[k++]=q[j*2];pos[k++]=.017;pos[k++]=q[j*2+1];});}
+  trail.geometry.dispose();trail.geometry=new THREE.BufferGeometry();trail.geometry.setAttribute('position',new THREE.BufferAttribute(pos,3));trail.geometry.setDrawRange(0,0);}
+const fpGeo=new THREE.CircleGeometry(1,16);fpGeo.rotateX(-Math.PI/2);const foot=new THREE.InstancedMesh(fpGeo,flat(0x1b120a,{opacity:.6,depthWrite:false}),120);foot.renderOrder=4;scene.add(foot);
+const _q=new THREE.Quaternion(),_s=new THREE.Vector3();
+function buildFoot(J){let i=0;for(const f of J.steps){if(i>=120)break;_q.setFromAxisAngle(UP,-f.a);_s.set(.13*J.sc,1,.055*J.sc);_m.compose(V(f.x,.014,f.z),_q,_s);foot.setMatrixAt(i++,_m);}foot.count=0;foot.instanceMatrix.needsUpdate=true;}
+// wrijvingscirkel
+const ringOut=new THREE.Mesh(new THREE.RingGeometry(.9,1,72),flat(0x0a0e10,{opacity:.55,depthWrite:false,side:THREE.DoubleSide}));
+const ring=new THREE.Mesh(new THREE.RingGeometry(.9,1,72),flat(0xffc94d,{opacity:.95,depthWrite:false,side:THREE.DoubleSide}));
+const disk=new THREE.Mesh(new THREE.CircleGeometry(1,72),flat(0xffc94d,{opacity:.13,depthWrite:false,side:THREE.DoubleSide}));
+[ringOut,ring,disk].forEach((o,i)=>{o.rotation.x=-Math.PI/2;o.renderOrder=[6,7,5][i];scene.add(o);});let ringR=-1;
+function setRing(R){if(Math.abs(R-ringR)<1e-3)return;ringR=R;ring.geometry.dispose();ring.geometry=new THREE.RingGeometry(Math.max(.01,R-.03),R,72);ringOut.geometry.dispose();ringOut.geometry=new THREE.RingGeometry(Math.max(.01,R-.045),R+.016,72);disk.scale.setScalar(R);}
+// dikke pijlen met donkere rand
+const CYA=new THREE.CylinderGeometry(1,1,1,12),CONA=new THREE.ConeGeometry(1,1,16),OUTM=flat(0x0a0e10,{opacity:.85,depthTest:false,depthWrite:false});
+function mkArrow(col,rad){rad=rad||.022;const grp=new THREE.Group();scene.add(grp);const m=flat(col,{depthTest:false,depthWrite:false}),om=OUTM.clone();
+  const so=new THREE.Mesh(CYA,om),ho=new THREE.Mesh(CONA,om),s=new THREE.Mesh(CYA,m),h=new THREE.Mesh(CONA,m);so.renderOrder=ho.renderOrder=20;s.renderOrder=h.renderOrder=21;grp.add(so,ho,s,h);
+  return {grp,m,len:0,set(from,vec){const L=vec.length();this.len=L;if(L<.03){grp.visible=false;return;}grp.visible=true;grp.position.copy(from);grp.quaternion.setFromUnitVectors(UP,_t.copy(vec).divideScalar(L));
+    const hl=Math.min(.15,L*.45),sl=L-hl;s.scale.set(rad,sl,rad);s.position.y=sl/2;so.scale.set(rad+.011,sl,rad+.011);so.position.y=sl/2;h.scale.set(rad*2.7,hl,rad*2.7);h.position.y=sl+hl/2;ho.scale.set(rad*2.7+.013,hl+.025,rad*2.7+.013);ho.position.y=sl+hl/2-.005;},
+    hide(){grp.visible=false;},col(c){m.color.setHex(c).convertSRGBToLinear();},op(o){m.opacity=o;om.opacity=.85*o;}};}
+const aFz=mkArrow(0x6fa8dc),aFn=mkArrow(0x7fc8a0),aFw=mkArrow(0xffc94d),aRes=mkArrow(0xf1e9da,.017),aNeed=mkArrow(0xff4a3a,.03),aGlij=mkArrow(0xff9a3c),aOut=mkArrow(0x9aa3a6,.024);
+// tekenvolgorde: Fz en Fn onderop, dan de rode 'nodig'-pijl, de gele wrijving erbovenop
+aNeed.grp.children.forEach(c=>c.renderOrder-=3);[aFz,aFn].forEach(a=>a.grp.children.forEach(c=>c.renderOrder-=6));
+// hoekboogje bij de voet (φ: naar binnen hellen, θ: achterover bij het remmen) en stippellijnen
+const _m4=new THREE.Matrix4();
+function mkArc(col,r0,r1,op){const mt=flat(col,{opacity:op||.95,depthTest:false,depthWrite:false,side:THREE.DoubleSide}),mm=new THREE.Mesh(new THREE.BufferGeometry(),mt);mm.renderOrder=24;scene.add(mm);let ang=-1;
+  return {mm,set(org,ax,a){if(a<.03){mm.visible=false;return;}mm.visible=true;if(Math.abs(a-ang)>.003){ang=a;mm.geometry.dispose();mm.geometry=new THREE.RingGeometry(r0,r1,Math.max(6,Math.round(a*48)),1,Math.PI/2-a,a);}
+    mm.position.copy(org);const z=new THREE.Vector3().crossVectors(ax,UP);_m4.makeBasis(ax,UP,z);mm.quaternion.setFromRotationMatrix(_m4);},hide(){mm.visible=false;}};}
+function mkDash(n,col,op){const mt=flat(col,{opacity:op,depthTest:false,depthWrite:false}),segs=[];for(let i=0;i<n;i++){const mm=new THREE.Mesh(CYA,mt);mm.renderOrder=19;mm.visible=false;scene.add(mm);segs.push(mm);}
+  return {set(A,B,r){const d=B.clone().sub(A);for(let i=0;i<n;i++){placeSeg(segs[i],A.clone().addScaledVector(d,i/n),A.clone().addScaledVector(d,(i+.55)/n),r);segs[i].visible=true;}},hide(){segs.forEach(s=>s.visible=false);}};}
+const arcPhi=mkArc(0x5fe0e4,.47,.515),arcNeed=mkArc(0xff4a3a,.62,.65,.9),plumb=mkDash(9,0xf1e9da,.85),extRes=mkDash(7,0xf1e9da,.8),armMiss=mkDash(4,0xff7a6a,.95);
+const decoM=flat(0xf1e9da,{opacity:.6,depthTest:false,depthWrite:false});const deco={a:new THREE.Mesh(CYA,decoM),b:new THREE.Mesh(CYA,decoM),set visible(v){this.a.visible=this.b.visible=v;}};deco.a.renderOrder=deco.b.renderOrder=22;scene.add(deco.a,deco.b);
+const tanLine=new THREE.Mesh(BOX,flat(0xff4a3a,{opacity:.9,depthWrite:false}));tanLine.renderOrder=6;scene.add(tanLine);
 const comTex=canvasTex(128,128,(x)=>{x.fillStyle='#fff';x.beginPath();x.arc(64,64,58,0,TAU);x.fill();x.fillStyle='#111';x.beginPath();x.moveTo(64,64);x.arc(64,64,58,-Math.PI/2,0);x.fill();x.beginPath();x.moveTo(64,64);x.arc(64,64,58,Math.PI/2,Math.PI);x.fill();x.lineWidth=6;x.strokeStyle='#111';x.beginPath();x.arc(64,64,58,0,TAU);x.stroke();});
-const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true}));comSpr.scale.set(.15,.15,1);comSpr.renderOrder=10;scene.add(comSpr);
-const labWrap=$('#labels');const TAGS={};['Fz','Fn','Fw','res'].forEach(k=>{const d=document.createElement('div');d.className='tag3d';d.style.color={Fz:'#6fa8dc',Fn:'#7fc8a0',Fw:'#e6b65e',res:'#f1e9da'}[k];labWrap.appendChild(d);TAGS[k]=d;});
+const comSpr=new THREE.Sprite(new THREE.SpriteMaterial({map:comTex,depthTest:false,transparent:true,toneMapped:false}));comSpr.scale.set(.13,.13,1);comSpr.renderOrder=23;scene.add(comSpr);
+const labWrap=$('#labels');const TAGS={};
+[['Fz','#8fc0ec'],['Fn','#8fdcb0'],['Fw','#ffc94d'],['res','#f1e9da'],['need','#ff7a6a'],['glij','#ffb06a'],['ring','#ffc94d'],['tan','#ff7a6a'],['out','#c3cacc'],['wall','#ff7a6a'],['phi','#8fd0d2'],['phiN','#ff7a6a'],['miss','#ff9a8a']].forEach(([k,c])=>{const d=document.createElement('div');d.className='tag3d';d.style.color=c;d.style.display='none';labWrap.appendChild(d);TAGS[k]=d;});
 const _p=new THREE.Vector3();
-function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1){el.style.display='none';return;}el.style.display='';el.style.transform=`translate(${((_p.x*.5+.5)*innerWidth-(ox||0)).toFixed(1)}px,${((-_p.y*.5+.5)*innerHeight-(oy||0)).toFixed(1)}px)`;}
+function project(v,el,ox,oy){_p.copy(v).project(camera);if(_p.z>1||_p.z<-1){el.style.display='none';return null;}const x=(_p.x*.5+.5)*innerWidth,y=(-_p.y*.5+.5)*innerHeight;el.style.display='';el.style.transform=`translate(${(x-(ox||0)).toFixed(1)}px,${(y-(oy||0)).toFixed(1)}px)`;return [x,y];}
+// left: label links van het punt (rechts als het daar niet past); altijd binnen het scherm
+function tag(k,txt,pos,ox,oy,left){const el=TAGS[k];if(!txt){el.style.display='none';return;}el.textContent=txt;ox=ox===undefined?-8:ox;oy=oy===undefined?10:oy;
+  const q=project(pos,el,ox,oy);if(!q)return;const w=el.offsetWidth;let x=left?q[0]-ox-w:q[0]-ox;if(left&&x<4)x=q[0]+ox;x=clamp(x,4,Math.max(4,Math.min(innerWidth,FR.x1+12)-w-4));
+  el._x=x;el._y=q[1]-oy;el.style.transform=`translate(${x.toFixed(1)}px,${el._y.toFixed(1)}px)`;}
+// labels die over elkaar vallen: schuif de latere eronder
+function declutter(keys){const placed=[];for(const k of keys){const el=TAGS[k];if(el.style.display==='none'||el._x===undefined)continue;const w=el.offsetWidth,h=el.offsetHeight;let y=el._y;
+  for(let n=0;n<7;n++){const hit=placed.find(p=>el._x<p.x+p.w+2&&el._x+w+2>p.x&&y<p.y+p.h+2&&y+h+2>p.y);if(!hit)break;y=hit.y+hit.h+3;}
+  if(y!==el._y){el._y=y;el.style.transform=`translate(${el._x.toFixed(1)}px,${y.toFixed(1)}px)`;}placed.push({x:el._x,y,w,h});}}
 
+/* ================= camera: kader rond de actie ================= */
+function absRect(e){let x=0,y=0,o=e;while(o&&o.id!=='app'){x+=o.offsetLeft;y+=o.offsetTop;o=o.offsetParent;}return {left:x,top:y,right:x+e.offsetWidth,bottom:y+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight};}
+function freeRect(){const W=innerWidth,H=innerHeight;const R=el=>{const e=$(el);if(!e||!e.offsetParent)return null;const r=absRect(e);return r.width&&r.height?r:null;};
+  const lab=R('#lab'),hud=R('#hud'),dos=$('#dossier').classList.contains('open')?R('#dossier'):null,ttl=R('#top .title'),tools=R('#top .tools');
+  if(!isMob()){const x0=lab?lab.right+14:16,x1=dos?dos.left-14:W-16,y0=Math.max(ttl?ttl.bottom:80,80)+8,y1=hud?hud.top-10:H-16;return {x0,x1,y0,y1};}
+  const y0=Math.max(hud?hud.bottom:0,tools?tools.bottom:0)+6;let y1=lab?lab.top-6:H-8;if(dos)y1=Math.min(y1,dos.top-6);return {x0:8,x1:W-8,y0,y1:Math.max(y1,y0+120)};}
+let FR={x0:0,x1:1,y0:0,y1:1};
+function applyOffset(){const W=innerWidth,H=innerHeight;const hud=$('#hud');if(isMob()){const tb=absRect($('#top')).bottom;hud.style.top=Math.round(tb+8)+'px';}else hud.style.top='';FR=freeRect();const cx=(FR.x0+FR.x1)/2,cy=(FR.y0+FR.y1)/2;camera.setViewOffset(W,H,-(cx-W/2),-(cy-H/2),W,H);camera.updateProjectionMatrix();const bt=$('#beat');if(isMob()){bt.style.left=cx+'px';bt.style.maxWidth='';bt.style.top='auto';bt.style.bottom=(H-FR.y1+6)+'px';}
+  else{const mw=document.body.classList.contains('lbl-names')?240:52;bt.style.maxWidth=Math.min(560,FR.x1-FR.x0-mw-14)+'px';bt.style.left=Math.max(cx,FR.x0+mw+bt.offsetWidth/2)+'px';bt.style.top=(FR.y0+6)+'px';bt.style.bottom='auto';} /* naast de kolom met stippen */
+  document.body.classList.toggle('beaton',!!beatHtml);$('#toast').style.top=isMob()?Math.round(FR.y0+8)+'px':'';}
+function fitView(pts,dir){const W=innerWidth,H=innerHeight;fitCam.copy(camera);fitCam.updateProjectionMatrix();
+  const c=V(0,0,0);pts.forEach(p=>c.add(p));c.divideScalar(pts.length);const T=c.clone();let D=10;
+  const nx0=FR.x0/W*2-1,nx1=FR.x1/W*2-1,ny0=1-FR.y1/H*2,ny1=1-FR.y0/H*2;const fw=(nx1-nx0)*.9,fh=(ny1-ny0)*.86,fcx=(nx0+nx1)/2,fcy=(ny0+ny1)/2;
+  const proj=(D)=>{fitCam.position.copy(T).addScaledVector(dir,D);fitCam.lookAt(T);fitCam.updateMatrixWorld();let a=1e9,b=-1e9,e=1e9,f=-1e9;for(const p of pts){_p.copy(p).project(fitCam);a=Math.min(a,_p.x);b=Math.max(b,_p.x);e=Math.min(e,_p.y);f=Math.max(f,_p.y);}return [a,b,e,f];};
+  for(let it=0;it<4;it++){let lo=.5,hi=90;for(let k=0;k<24;k++){const m=(lo+hi)/2,e=proj(m);if(e[1]-e[0]<=fw&&e[3]-e[2]<=fh)hi=m;else lo=m;}D=hi;
+    const e=proj(D),dx=(e[0]+e[1])/2-fcx,dy=(e[2]+e[3])/2-fcy;const right=V(1,0,0).applyQuaternion(fitCam.quaternion),upc=V(0,1,0).applyQuaternion(fitCam.quaternion),hh=D*Math.tan(fitCam.fov*D2R/2);
+    T.addScaledVector(right,dx*hh*fitCam.aspect).addScaledVector(upc,dy*hh);}
+  return {p:T.clone().addScaledVector(dir,D),t:T};}
+// staat er een bijschrift in beeld, kader dan ernaast, zodat het niets afdekt
+function fitFree(pts,dir){const fr0=FR,bt=$('#beat');if(beatHtml&&bt.offsetHeight){FR=Object.assign({},FR);if(isMob())FR.y1=Math.min(FR.y1,bt.offsetTop-6);else FR.y0=Math.max(FR.y0,bt.offsetTop+bt.offsetHeight+6);}
+  const res=fitView(pts,dir);FR=fr0;return res;}
+const CAMS=['regie','overzicht','volgen'];let camMode=store.get('cam','regie');if(!CAMS.includes(camMode))camMode='regie';let camAnim=1.5,camSnap=true;
+// begin: aanloop, pion en bocht groot in beeld; de muur komt pas in beeld als het nodig is
+function startPts(){const r=S.r,G=geomFor(r);return [V(G.x0-.4,0,G.z0),V(G.x0-.4,1.9,G.z0),V(r+.35,0,0),V(.5,0,-r-.4),V(.5,0,r+.4)];}
+function endPts(){const r=S.r,J=S.J,e=J&&!J.slip?tabAt(J.tab,J.sEnd):tabAt(geomFor(r).T,geomFor(r).sR+ddOf(S.v,MU[S.mu].mu));return startPts().concat([V(e.x-.3,0,e.z),V(e.x-.3,1.8,e.z)]);}
+function overviewPts(){const r=S.r,J=S.J;const p=endPts().concat([V(WALL,0,-r*.6),V(WALL,1.4,0),V(WALL,0,r*.6)]);
+  if(J&&J.slip){const e=stateAt(J,J.tEnd);p.push(V(e.x,0,e.z+.6),V(e.x,0,e.z-.6));}return p;}
+const ovDir=()=>isMob()&&(FR.x1-FR.x0)<1.4*(FR.y1-FR.y0)?V(-1,1.6,-.32).normalize():V(-.32,1.3,1).normalize(); // een lage, brede strook: van opzij kijken
+function camGoal(st){const ov=()=>fitView(endPts(),ovDir());
+  // met namen bij de stippen: kader de start rechts van die kolom, anders vallen de namen over de leerling
+  const ov0=()=>{if(isMob()||!document.body.classList.contains('lbl-names'))return fitView(startPts(),ovDir());const fr0=FR;FR=Object.assign({},FR,{x0:FR.x0+185});const res=fitView(startPts(),ovDir());FR=fr0;return res;};
+  const a=st.a,dir=V(Math.cos(a),0,Math.sin(a)),inw=V(-Math.sin(a),0,Math.cos(a));
+  // in de bocht: laag en recht van achteren (ongeveer 14°), zodat je het naar binnen hellen tegen de loodlijn ziet;
+  // de pion, de wrijvingscirkel en de rode pijl komen mee in beeld
+  const chase=()=>{const m=isMob(),sc=WHO[S.who].sc,n=need(),k=.6/(n.m*g),hh=S.J?S.J.h:1;const c=V(st.x,0,st.z),pv=c.clone().addScaledVector(inw,-hh*Math.sin(Math.min(st.lean,1.2)));
+    const R=n.Fw*k,reach=Math.max(R,S.reveal?Math.min(n.Fc*k,2.2):R)+.15;
+    const pts=[pv.clone().addScaledVector(inw,-.55),pv.clone().addScaledVector(inw,reach),c.clone().add(V(0,1.85*sc,0)),pv.clone().add(V(0,1.2*sc,0)),pv.clone().addScaledVector(dir,.7),pv.clone().addScaledVector(dir,-.5)];if(m)pts.push(V(0,.45,0)); // mobiel: pion mee in beeld (smal scherm)
+    const el=(m?22:14)*D2R;return fitFree(pts,dir.clone().multiplyScalar(-Math.cos(el)).add(V(0,Math.sin(el),0)).normalize());};
+  // na de bocht van opzij: dan zie je de remmende wrijving naar achteren en het achterover hangen
+  const side=()=>{const m=isMob(),sc=WHO[S.who].sc,c=V(st.x,0,st.z),pv=c.clone().addScaledVector(dir,.4*sc); // zwaartepunt, voet ervoor, cirkel en hoofd in beeld
+    const pts=[c.clone().addScaledVector(dir,-.4),pv.clone().addScaledVector(dir,.6),V(c.x,1.95*sc,c.z),pv.clone().addScaledVector(inw,.55),pv.clone().addScaledVector(inw,-.55)];
+    return fitFree(pts,inw.clone().multiplyScalar(-1).addScaledVector(dir,m?-.9:-.25).add(V(0,m?.8:.5,0)).normalize());};
+  if(camMode==='volgen')return S.phase==='ready'?ov0():chase();
+  if(camMode==='overzicht')return null;
+  // al ruim vóór de bocht laag achter de leerling (ongeveer 0,9 s), zodat de camera stilstaat als het hellen begint
+  const J=S.J,lead=J?Math.max(1.2,.9*J.v):1.2;if(!J||S.phase==='ready'||st.ph==='aan'&&st.s<J.G.s0-lead)return ov0();
+  if(!J.slip&&(st.ph==='uit'||st.ph==='rem'))return side();
+  if(st.ph==='glij'||st.ph==='stil'||st.ph==='muur'){if(!J.slip)return ov();if(st.ph==='glij'&&S.t-J.tG<.3)return chase();const e=stateAt(J,J.tEnd),d1=V(Math.cos(J.a1),0,Math.sin(J.a1)),i1=V(-Math.sin(J.a1),0,Math.cos(J.a1));
+    const o=V(J.P1.x,0,J.P1.z).normalize(),c1=tabAt(J.G.T,J.G.s0+1.3);
+    const pts=[V(J.P1.x,0,J.P1.z),V(J.P1.x,1.5,J.P1.z),V(e.x,0,e.z),V(e.x,1,e.z),V(e.x+Math.cos(J.a1)*1.2,0,e.z+Math.sin(J.a1)*1.2),V(J.P1.x-1.6,0,J.P1.z),V(c1.x,0,c1.z),V(0,0,0),V(J.P1.x+o.x*1.3,0,J.P1.z+o.z*1.3),V(J.P1.x+o.x*1.3,.45,J.P1.z+o.z*1.3)];if(J.hit)pts.push(V(WALL,1.6,e.z));
+    return fitFree(pts,i1.clone().multiplyScalar(isMob()?.5:1).addScaledVector(d1,isMob()?-1:-.3).add(V(0,isMob()?1.6:1.25,0)).normalize());} // schuin van boven (ongeveer 50°): raaklijn en val allebei te zien
+  if(st.s>J.G.s0-lead&&(J.slip||st.ph!=='stil'))return chase();return ov();}
+function setCam(m){camMode=m;store.set('cam',m);$('#bCam').textContent='Camera: '+m;$('#bCam').classList.toggle('on',m!=='regie');camAnim=1.5;}
+controls.addEventListener('start',()=>{if(camMode!=='overzicht'){setCam('overzicht');toast('Camera vrij. Druk op <b>V</b> voor regie of volgen.');}camAnim=0;});
 /* ================= rennen ================= */
-function reset(){S.phase='ready';S.s=2.2;S.t=0;S.ph=0;S.lean=0;S.slip=null;S.trail=[];buildPlanned();wallFlash.material.opacity=0;$('#bGo').textContent='Rennen!';const n=need();const r=$('#res');r.className='';r.innerHTML=`<span class="k">${WHO[S.who].n} · ${MU[S.mu].n.toLowerCase()}</span><b class="t">Lukt de bocht?</b>Voorspel eerst: maakt de leerling de bocht? Druk dan op spatie.`;}
-function go(){SND.init();if(S.phase==='run'){S.phase='pause';$('#bGo').textContent='▶ Verder';return;}if(S.phase==='pause'){S.phase='run';$('#bGo').textContent='⏸ Pauze';return;}if(S.phase==='done')reset();S.phase='run';$('#bGo').textContent='⏸ Pauze';}
-function startSlip(p){const n=need();const ratio=n.Fc/n.Fw;const dist=S.v*S.v/(2*MUK*MU[S.mu].mu*g);const hit=p.x+dist>WALL-.35;
-  S.slip={x0:p.x,z0:p.z,a:p.a,t:0,dist:Math.min(dist,WALL-.35-p.x),hit,v0:S.v,dec:MUK*MU[S.mu].mu*g};SND.skid();
-  S.last={who:S.who,v:S.v,r:S.r,mu:S.mu,slip:true,hit};
-  const r=$('#res');r.className='bad';r.innerHTML=`<span class="k">${f1(S.v)} m/s · straal ${f1(S.r)} m</span><b class="t">${hit?'Glijdt uit en botst tegen de muur':'Glijdt uit: rechtdoor'}</b>Nodig ${f0(n.Fc)} N, maar de wrijving levert maximaal ${f0(n.Fw)} N. De leerling gaat rechtdoor langs de raaklijn en glijdt ${f1(dist)} m${hit?' tot tegen de muur.':'.'}`;}
-function finishOk(){const n=need();const ratio=n.Fc/n.Fw;S.last={who:S.who,v:S.v,r:S.r,mu:S.mu,slip:false,hit:false};const r=$('#res');r.className=ratio>.85?'mid':'good';
-  r.innerHTML=`<span class="k">${f1(S.v)} m/s · straal ${f1(S.r)} m</span><b class="t">${ratio>.85?'Op het randje!':'Bocht gehaald'}</b>De bocht vroeg ${f0(n.Fc)} N, de wrijving kon ${f0(n.Fw)} N leveren (${Math.round(ratio*100)}%). Hellingshoek ${Math.round(n.phi/D2R)}°.`;if(ratio>.85)SND.near();else SND.good();}
-function step(dt){if(S.phase!=='run')return;const n=need();
-  if(S.slip){const sl=S.slip;sl.t+=dt;const tStop=sl.v0/sl.dec;const t=Math.min(sl.t,tStop);let d=sl.v0*t-.5*sl.dec*t*t;if(d>=sl.dist){d=sl.dist;if(sl.hit&&!sl.bang){sl.bang=true;SND.bang();wallFlash.material.opacity=.45;}}sl.d=d;
-    if(sl.t>tStop+1.2||(sl.bang&&sl.t>(sl.dist/sl.v0)+1.2)){S.phase='done';$('#bGo').textContent='↺ Opnieuw';}return;}
-  const before=pathAt(S.s);S.s+=S.v*dt;S.t+=dt;const p=pathAt(S.s);
-  if(p.arc&&!before.arc&&n.Fc>n.Fw){S.s=L1;startSlip(pathAt(L1));return;}
-  S.ph+=TAU*(1.3+.16*S.v)*dt;const target=p.arc?n.phi:0;S.lean+=(target-S.lean)*Math.min(1,dt*7);
-  if(S.s>L1+Math.PI*S.r+L1-.2){S.phase='done';$('#bGo').textContent='↺ Opnieuw';finishOk();}}
-TOOLS_COMMON();
-function TOOLS_COMMON(){}
+function setGo(t){$('#bGo').innerHTML=t+(t==='Rennen!'?' <kbd style="color:#fff;border-color:rgba(255,255,255,.4);background:rgba(255,255,255,.15)">spatie</kbd>':'');$('#bGoM').textContent=t;}
+function reset(){S.phase='ready';S.t=0;S.J=null;S.freeze=0;S.keyShown=false;S.slipShown=false;S.finished=false;S.guess=null;S.reveal=false;buildPlanned();wallFlash.material.opacity=0;trail.geometry.setDrawRange(0,0);foot.count=0;
+  setGo('Rennen!');const sc=$('#iScrub');sc.disabled=true;sc.value=0;$('#tick').style.display='none';$('#tickl').style.display='none';resReady();camAnim=1.5;updateHud();drawChart();}
+function start(){SND.init();$('#toast').classList.remove('on');S.J=plan();S.t=0;S.runId++;S.phase='run';S.freeze=0;S.keyShown=false;S.slipShown=false;S.finished=false;buildTrail(S.J);buildFoot(S.J);wallFlash.material.opacity=0;
+  $('#iScrub').disabled=false;const J=S.J,p=J.tKey/J.T;const tk=$('#tick');tk.style.display=J.slip?'block':'none';tk.style.left=`calc(${(p*100).toFixed(1)}% - 1px)`;$('#tickl').style.display=J.slip?'block':'none';
+  setGo('⏸ Pauze');resRunning();if(isMob())document.body.classList.add('drawer-closed');syncDrawer();camAnim=1.5;}
+function go(){SND.init();if(S.phase==='run'){S.phase='pause';setGo('▶ Verder');return;}
+  if((S.phase==='pause'||S.phase==='scrub')&&S.J&&S.t<S.J.T-.01){S.phase='run';setGo('⏸ Pauze');return;}start();}
+function step(dt){if(S.phase!=='run')return;const J=S.J;if(S.freeze>0){S.freeze-=dt;return;}
+  // vertraagd rond het uitglijden; daarna loopt het tempo geleidelijk terug
+  let w=S.speed;if(J.slip&&$('#tS').checked&&S.t>=J.tKey-.08)w=lerp(Math.min(w,.25),w,sstep(J.tG+.6,J.tG+1.4,S.t));
+  const prev=S.t;S.t=Math.min(J.T,S.t+dt*w);
+  // twee keer even stilstaan: als de bocht meer vraagt dan de vloer geeft, en vlak voor de voet wegglijdt
+  if(!S.keyShown&&prev<J.tKey&&S.t>=J.tKey){S.keyShown=true;S.reveal=true;drawChart();if(J.slip&&$('#tS').checked){S.freeze=3;S.fz='key';S.t=J.tKey;}}
+  else if(J.slip&&!S.slipShown&&prev<J.tG&&S.t>=J.tG){S.slipShown=true;if($('#tS').checked){S.freeze=3.2;S.fz='slip';S.t=J.tG;}}
+  for(const f of J.steps)if(f.t>prev&&f.t<=S.t)SND.step();
+  if(J.slip&&prev<=J.tG&&S.t>J.tG)SND.skid();
+  if(J.slip&&J.hit&&prev<J.tEnd&&S.t>=J.tEnd){SND.bang();wallFlash.material.opacity=.45;}
+  if(!S.finished&&S.t>=J.tEnd){S.finished=true;finish();}
+  if(S.t>=J.T){S.phase='done';setGo('↺ Nog een keer');}}
+const WHON=()=>WHO[S.who].n,MUN=()=>MU[S.mu].n.toLowerCase();
+function guessLine(J){if(!S.guess)return '';const ok=(S.guess==='slip')===J.slip;return `<span style="display:block"><b>Je voorspelde: ${S.guess==='ok'?'haalt de bocht':'glijdt uit'}.</b> ${ok?'Klopt!':'Klopt niet.<span class="nd"> Vergelijk nodig met maximaal.</span>'}</span>`;}
+function finish(){const J=S.J,n=J.n;S.reveal=true;S.last={who:J.who,v:J.v,r:J.r,mu:J.muKey,slip:J.slip,hit:!!J.hit,id:S.runId};
+  const key=J.who+'|'+J.r+'|'+J.muKey;if(S.histKey!==key){S.hist=[];S.histKey=key;}S.hist.push({v:J.v,slip:J.slip});if(S.hist.length>14)S.hist.shift();
+  const r=$('#res'),pct=Math.round(n.ratio*100);
+  const kl=`<span class="k">${f1(J.v)} m/s, r = ${f1(J.r)} m, ${MUN()}</span>`;
+  if(!J.slip){const edge=n.ratio>.85;r.className=edge?'mid':'good';r.innerHTML=`${kl}<b class="t">${edge?'Op het randje!':'Bocht gehaald'}</b><span class="dt">Nodig ${f0(n.Fc)} N, de vloer kon ${f0(n.Fw)} N geven: de bocht vroeg ${pct}% van de grip. Helling ${Math.round(n.phi/D2R)}°, maximaal ${Math.round(n.phiMax/D2R)}°.</span>${guessLine(J)}`;if(edge)SND.near();else SND.good();}
+  // tegen de muur: nodig en maximaal staan al in de vakjes ernaast, de uitslag noemt alleen de glijweg (houdt de balk laag)
+  else{r.className='bad';r.innerHTML=`${kl}<b class="t">${J.hit?'Uitgegleden en tegen de muur':'Uitgegleden: rechtdoor'}</b><span class="dt">${J.hit?'':`<span class="nd">Nodig ${f0(n.Fc)} N, de vloer geeft hoogstens ${f0(n.Fw)} N. </span>`}`+
+    // mobiel kort: de glijweg en de muur staan daar in het bijschrift
+    (J.hit?`<span class="nd">Glijweg ${f1(J.dist)} m, muur na ${f1(J.room)} m: botst</span><span class="mo">Botst</span> met ${f1(J.vHit)} m/s. <a href="#" id="resCalc" style="color:var(--gold)">Zo reken je het uit</a>`:`Helling nodig ${Math.round(n.phi/D2R)}°, maximaal ${Math.round(n.phiMax/D2R)}°. Glijweg ${f1(J.dist)} m.`)+'</span>'+guessLine(J);
+    const rc=$('#resCalc');if(rc)rc.onclick=e=>{e.preventDefault();openPt(7,2);};}
+  updateHud();drawChart();}
+function resReady(){const r=$('#res');r.className='';r.innerHTML=`<span class="k">${WHON()}, ${MUN()}</span><b class="t">Lukt de bocht?</b>Voorspel eerst, dan rent de leerling.<div class="guess"><button class="btn" data-g="ok">Haalt de bocht</button><button class="btn" data-g="slip">Glijdt uit</button></div>`;
+  $$('#res .guess button').forEach(b=>b.onclick=()=>{S.guess=b.dataset.g;start();});}
+function resRunning(){const r=$('#res');r.className='';r.innerHTML=`<span class="k">${f1(S.v)} m/s, r = ${f1(S.r)} m, ${MUN()}</span><b class="t">Kijk naar de gele pijl en de cirkel</b>Blijft de wrijving binnen de cirkel?${S.guess?`<br>Jouw voorspelling: <b>${S.guess==='ok'?'haalt de bocht':'glijdt uit'}</b>.`:''}`;}
+// bijschrift bij het kernmoment
+let beatHtml='';
+function beatFor(st){const J=S.J;if(!J||S.phase==='ready')return '';const n=J.n,pm=Math.round(n.phiMax/D2R),tg=S.t-J.tG;
+  const k1=st.ph==='kern'&&(S.freeze>0&&S.fz==='key'||st.s<J.sKey+.3*J.dG),k2=!k1&&(st.ph==='kern'||st.ph==='glij'&&tg<.35);
+  const straight=(st.ph==='glij'||st.ph==='stil')&&S.t<J.T-.02; // blijft staan tot het eind van de run, zodat je het kunt lezen
+  if(isMob()){if(J.slip){if(k1)return `<b>Hier gaat het mis.</b> Nodig ${f0(n.Fc)} N (rood), de vloer geeft hoogstens <span class="y">${f0(n.Fw)} N</span> (geel).`;
+      if(k2)return `<b>Te weinig grip.</b> Hij hangt schuiner dan ${pm}°: de grondkracht (wit) mist het zwaartepunt. De voet schiet naar buiten weg.`;
+      if(straight)return `<b>Rechtdoor</b> langs de raaklijn. De glijwrijving remt alleen af.`;
+      if(st.ph==='muur'&&S.t<J.T-.02)return `<b>Botst tegen de muur.</b> De glijweg zou ${f1(J.dist)} m zijn, maar na ${f1(J.room)} m staat de muur er al.`;return '';}
+    // de bocht begint met een overgangsboog: de wrijving groeit pas naar de volle waarde
+    const G=J.G,grow=st.s<Math.min(G.sA+.8*J.v,(G.sA+G.sB)/2);if(st.ph==='bocht'||st.ph==='uit')return st.ph==='uit'||st.s>G.sB?`Uit de bocht: de wrijving opzij wordt weer kleiner.`:grow?`De bocht wordt krommer: de wrijving groeit naar <span class="y">${f0(n.Fc)} N</span>.`:`De wrijving levert <span class="y">${f0(n.Fc)} N</span>: binnen de cirkel.`;
+    return st.ph==='rem'?`Afremmen kost ook wrijving: de <span class="y">gele pijl</span> wijst naar achteren.`:'';}
+  if(J.slip){if(k1)return `<b>Hier gaat het mis.</b> De bocht vraagt <b>Fmpz = ${f0(n.Fc)} N</b> naar het midden (rode pijl). De vloer geeft hoogstens <span class="y">Fw,max = ${f0(n.Fw)} N</span> (gele pijl, tot de rand van de cirkel).`;
+    if(k2)return `<b>Te weinig grip.</b> Met ${f0(n.Fw)} N lukt alleen een wijdere bocht (r' = ${f1(J.rp)} m). Toch hangt de leerling schuiner dan ${pm}°. De grondkracht (wit) mist dan het zwaartepunt: de voet schiet naar buiten weg.`;
+    if(straight)return `<b>Rechtdoor.</b> Er is geen kracht naar het midden meer: de leerling gaat <b>rechtdoor langs de raaklijn</b> (rode streep), niet naar buiten (grijze pijl). De glijwrijving <span class="y">Fw,glij</span> werkt tegen de glijrichting in: hij remt af, maar stuurt niet.`;
+    if(st.ph==='muur'&&S.t<J.T-.02)return `<b>Botst tegen de muur</b> met ongeveer ${f1(J.vHit)} m/s. De glijweg zou ${f1(J.dist)} m zijn, maar na ${f1(J.room)} m staat de muur er al.`;return '';}
+  const G=J.G; // de overgangstekst blijft ook even staan als de wrijving zijn volle waarde heeft: lang genoeg om te lezen
+  if(st.ph==='bocht'||st.ph==='uit')return st.s<Math.min(G.sA+.8*J.v,(G.sA+G.sB)/2)?`De bocht wordt krommer: de wrijving groeit van 0 naar <span class="y">${f0(n.Fc)} N</span>. De leerling gaat steeds schuiner hangen.`:st.ph==='uit'||st.s>G.sB?`Uit de bocht: de baan wordt rechter, de wrijving opzij wordt weer kleiner en de leerling komt rechtop.`:`In de bocht levert de wrijving <span class="y">${f0(n.Fc)} N</span> naar het midden. Dat past binnen de cirkel van ${f0(n.Fw)} N. Hellen: φ = ${Math.round(n.phi/D2R)}°.`;
+  if(st.ph==='rem')return `Afremmen kost ook wrijving: de <span class="y">gele pijl</span> wijst nu naar achteren en blijft binnen de cirkel. De leerling hangt achterover (θ), zodat de grondkracht door het zwaartepunt gaat.`;return '';}
+function beat(h){if(h===beatHtml)return;beatHtml=h;const b=$('#beat');b.innerHTML=h;b.classList.toggle('on',!!h);b.style.borderLeftColor=/^(In de bocht|De wrijving|De bocht wordt|Uit de bocht|Afremmen)/.test(h)?'var(--ok)':'var(--bad)';}
 
+/* ================= HUD ================= */
+function coneSvg(st){const n=need(),pm=n.phiMax;const L=40,ox=32,oy=52;const lean=st?st.lean:0;const fall=st?st.fall:0;
+  const fw=(st&&st.Fw)?st.Fw/n.Fz:0;const ex=ox+L*fw,ey=oy-L;
+  const cl=(a)=>`${(ox+Math.sin(a)*46).toFixed(1)} ${(oy-Math.cos(a)*46).toFixed(1)}`;
+  let h=`<path d="M${ox} ${oy} L${cl(-pm)} L${cl(pm)} Z" fill="rgba(255,201,77,.13)" stroke="none"/><path d="M${cl(-pm)} L${ox} ${oy} L${cl(pm)}" fill="none" stroke="#ffc94d" stroke-width="1.4" stroke-dasharray="3 2"/>`;
+  if(S.reveal&&n.phi>pm&&st&&(st.ph==='kern'||st.ph==='glij'||st.ph==='aan'))h+=`<line x1="${ox}" y1="${oy}" x2="${(ox+Math.sin(Math.min(n.phi,1.35))*46).toFixed(1)}" y2="${(oy-Math.cos(Math.min(n.phi,1.35))*46).toFixed(1)}" stroke="#ff4a3a" stroke-width="2" stroke-dasharray="3 2"/>`;
+  if(fall<.5){h+=`<line x1="${ox}" y1="${oy}" x2="${ox}" y2="${ey}" stroke="#7fc8a0" stroke-width="2.4"/>`;if(fw>.02)h+=`<line x1="${ox}" y1="${oy}" x2="${ex.toFixed(1)}" y2="${oy}" stroke="#ffc94d" stroke-width="2.4"/><line x1="${ox}" y1="${oy}" x2="${ex.toFixed(1)}" y2="${ey}" stroke="#f1e9da" stroke-width="2"/>`;}
+  h+=`<circle cx="${ox}" cy="${oy}" r="2.2" fill="#f1e9da"/>`;$('#cone').innerHTML=h;}
+function updateHud(st){const n=need();const mx=Math.max(n.Fc,n.Fw,1);const rv=S.reveal;
+  $('#vC').textContent=rv?f0(n.Fc):'?';$('#vC2').textContent=rv?'N naar het midden':'eerst voorspellen';$('#bC').style.width=rv?clamp(n.Fc/mx*100,0,100)+'%':'0%';
+  $('#vW').textContent=f0(n.Fw);$('#vW2').textContent=`N, μ = ${f2(n.mu)}`;$('#vW3').textContent=rv?`v,max ${f1(n.vmax)} m/s`:'v,max ?';$('#bW').style.width=clamp(n.Fw/mx*100,0,100)+'%';
+  const op=$('#vOp'),bad=n.Fc>n.Fw;op.textContent=rv?(bad?'>':'≤'):'?';op.className='op'+(rv?(bad?' bad':' ok'):'');
+  const pm=Math.round(n.phiMax/D2R);$('#vH').textContent=rv?Math.round(n.phi/D2R)+'°':'?';$('#vH2').textContent='nodig';$('#vH3').textContent=`max ${pm}°`;$('#tH').classList.toggle('bad',rv&&bad);
+  coneSvg(st||null);}
+const chart=$('#chart'),cx2=chart.getContext('2d');
+function drawChart(){const R=chart.getBoundingClientRect();if(!R.width)return;const dpr=Math.min(devicePixelRatio,2);if(chart.width!==Math.round(R.width*dpr)){chart.width=Math.round(R.width*dpr);chart.height=Math.round(R.height*dpr);}
+  const x=cx2,w=R.width,h=R.height;x.setTransform(dpr,0,0,dpr,0,0);x.clearRect(0,0,w,h);const n=need(),m=n.m;const pl=4,pr=6,pt=14,pb=14,VX=9.5,FY=n.Fw*2.3;
+  const X=v=>pl+(w-pl-pr)*v/VX,Y=F=>h-pb-(h-pb-pt)*clamp(F/FY,0,1.04);
+  x.font='600 10px JetBrains Mono, monospace';x.fillStyle='#aab3b4';x.fillText(`F (N) tegen v, bij r = ${f1(S.r)} m`,pl,10);
+  x.strokeStyle='rgba(241,233,218,.18)';x.lineWidth=1;x.beginPath();x.moveTo(pl,h-pb);x.lineTo(w-pr,h-pb);x.stroke();
+  for(let v=2;v<=8;v+=2){x.fillStyle='#6f7a7c';x.fillText(v===8?'8 m/s':String(v),X(v)-3,h-3);}
+  x.strokeStyle='#ffc94d';x.lineWidth=2;x.beginPath();x.moveTo(pl,Y(n.Fw));x.lineTo(w-pr,Y(n.Fw));x.stroke();x.fillStyle='#ffc94d';x.fillText('Fw,max',w-pr-44,Y(n.Fw)-4);
+  // de parabool en v,max pas na de voorspelling, anders lees je het antwoord af
+  if(S.reveal){x.strokeStyle='#ff5a4a';x.lineWidth=2;x.beginPath();for(let i=0;i<=60;i++){const v=VX*i/60,F=m*v*v/S.r;const y=Y(F);i?x.lineTo(X(v),y):x.moveTo(X(v),y);if(F>FY*1.04)break;}x.stroke();
+    x.setLineDash([2,3]);x.strokeStyle='rgba(241,233,218,.6)';x.lineWidth=1;x.beginPath();x.moveTo(X(n.vmax),Y(n.Fw));x.lineTo(X(n.vmax),h-pb);x.stroke();x.setLineDash([]);
+    x.fillStyle='#f1e9da';x.fillText('v,max '+f1(n.vmax),clamp(X(n.vmax)+3,pl,w-pr-70),h-pb-4);}
+  else{x.fillStyle='#aab3b4';x.fillText('nodig: eerst voorspellen',pl,Y(n.Fw)+14);}
+  if(S.histKey===S.who+'|'+S.r+'|'+S.mu)S.hist.forEach(q=>{x.beginPath();x.arc(X(q.v),Y(m*q.v*q.v/S.r),3,0,TAU);x.strokeStyle=q.slip?'#ff5a4a':'#7fc8a0';x.lineWidth=1.5;x.stroke();});
+  if(S.reveal){const F=m*S.v*S.v/S.r;x.beginPath();x.arc(X(S.v),Y(F),4.5,0,TAU);x.fillStyle=F>n.Fw?'#ff5a4a':'#7fc8a0';x.fill();x.strokeStyle='#0a0e10';x.lineWidth=1.5;x.stroke();}
+  else{x.strokeStyle='rgba(241,233,218,.5)';x.setLineDash([2,2]);x.beginPath();x.moveTo(X(S.v),pt);x.lineTo(X(S.v),h-pb);x.stroke();x.setLineDash([]);}}
 /* ================= uitlegpunten ================= */
-let curPos=V(0,0,0),curCom=V(0,1,0),curFoot=V(0,0,0);
+// label 'rechtdoor' halverwege de glijweg: niet op de liggende leerling
+const tanL=J=>Math.max(.8,.5*Math.min(J.hit?J.room:J.dist,6));
+// stip 6 voorbij het label 'rechtdoor', maar vóór de liggende leerling: botst niet met de labels
+const tanAt=()=>{const J=S.J;if(J&&J.slip){const tl=tanL(J),d=Math.max(.5*tl,Math.min(1.45*tl,J.dSl-.9));return V(J.P1.x+Math.cos(J.a1)*d,.05,J.P1.z+Math.sin(J.a1)*d);}return V(Math.min(S.r+.3,2.6),.3,-S.r);};
 const PTS=[
- {t:'Zwaartekracht',s:'Fz = m · g',at:()=>curCom.clone().add(V(0,.35,0)),tabs:[
-  `<p>De <b>zwaartekracht</b> trekt de leerling recht naar beneden, aangrijpend in het zwaartepunt: Fz = m · g. De blauwe pijl.</p><p>In de bocht verandert de zwaartekracht niet. Hij speelt wel een rol bij het hellen: de leerling moet zo schuin hangen dat de lijn van de totale grondkracht door het zwaartepunt gaat, anders val je om.</p>`,
-  `<p><span class="ctx">PO/VO</span>Zwaartekracht is "gratis": ook bij landen, zwaaien en springen. Het is de kracht waar je steeds tegen of mee werkt.</p>`,
-  `<div class="calc">m = 55 kg<br>Fz = m · g = 55 · 9,81 ≈ 540 N</div>`,
-  `<p class="think">Waarom is "zwaartekracht" geen goed antwoord op de vraag waarom je de bocht om kunt?</p>`]},
- {t:'Normaalkracht',s:'de vloer duwt terug',at:()=>curFoot.clone().add(V(.25,.3,-.25)),tabs:[
-  `<p>De vloer duwt de voet omhoog met de <b>normaalkracht</b> (groen). Bij gewoon rennen is die gemiddeld gelijk aan het gewicht. Hoe groter de normaalkracht, hoe meer wrijving er mogelijk is: Fw,max = μ · Fn.</p>`,
-  `<p><span class="ctx">VO</span>Daarom zakken sporters iets door de knieën als ze snel willen wenden: ze drukken harder op de vloer op het moment van de wending.</p>`,
-  `<div class="calc">Fn ≈ m · g = 540 N (gemiddeld)<br>Fw,max = μ · Fn = 0,8 · 540 ≈ 430 N</div>`,
-  `<p class="think">Waarom is wenden op een helling naar beneden lastiger dan op een vlakke vloer?</p>`]},
- {t:'Wrijvingskracht',s:'Fw ≤ μ · m · g',at:()=>curFoot.clone().add(V(-.3,.08,.3)),tabs:[
-  `<p>Alleen de <b>wrijving</b> tussen voet en vloer kan de leerling de bocht om duwen. Hij werkt horizontaal, naar het midden van de bocht (de gele pijl). De wrijving kan niet onbeperkt groot worden: hoogstens μ · Fn. De gele cirkel op de grond is dat maximum, de wrijvingscirkel.</p><p>Steekt de gele pijl buiten de cirkel, dan is er meer nodig dan de vloer kan geven: de voet glijdt weg.</p>`,
-  `<p><span class="ctx">PO/VO</span>Daarom: zaalschoenen aan, geen sokken. Een stoffige of natte vloer verlaagt μ. Veeg stof en zand weg voordat je tikspelen doet.</p>`,
-  `<div class="calc">Zaalschoenen μ ≈ 0,8 · blote voeten ≈ 0,6<br>stoffige vloer ≈ 0,45 · sokken ≈ 0,3<br>(richtwaarden voor een zaalvloer)</div>`,
-  `<p class="think">Waarom glijd je op sokken wél goed weg op de vloer, maar is het juist gevaarlijk bij tikkertje?</p>`]},
- {t:'Middelpuntzoekende kracht',s:'F = m · v² / r',at:()=>V(0,.75,0),tabs:[
-  `<p>Wie een bocht maakt, verandert voortdurend van richting. Daarvoor is een kracht naar het midden van de bocht nodig: de <b>middelpuntzoekende kracht</b> F = m · v² / r. Het is geen aparte kracht: bij rennen wordt hij geleverd door de wrijving.</p><p>Let op het kwadraat: twee keer zo hard rennen vraagt vier keer zoveel kracht. Een twee keer zo krappe bocht vraagt twee keer zoveel.</p>`,
+ {t:'Zwaartekracht',s:'Fz = m · g',stack:true,tabs:[
+  `<p>De <b>zwaartekracht</b> trekt de leerling recht naar beneden. Hij grijpt aan in het <b>zwaartepunt</b>, het zwart-witte rondje: Fz = m · g. Dat is de blauwe pijl.</p><p>In de bocht verandert de zwaartekracht niet. Hij bepaalt wel hoe schuin je moet hangen: de schuine grondkracht moet door je zwaartepunt gaan, anders val je om (punt 5).</p>`,
+  `<p><span class="ctx">PO/VO</span>De zwaartekracht werkt altijd: bij landen, zwaaien, springen en rennen. In de bocht duwt hij je niet de bocht om. Hij werkt verticaal, en de bocht vraagt een horizontale kracht.</p>`,
+  `<div class="calc">m = 55 kg<br>Fz = m · g = 55 · 9,81 ≈ 540 N<br>PO, 30 kg: ≈ 294 N · student, 70 kg: ≈ 687 N</div>`,
+  `<p class="think">Waarom is "de zwaartekracht" geen goed antwoord op de vraag welke kracht je de bocht om duwt?</p>`]},
+ {t:'Normaalkracht',s:'Fn: de vloer duwt terug',stack:true,tabs:[
+  `<p>De vloer duwt de voet omhoog met de <b>normaalkracht</b> (groen). Op een vlakke vloer is die gemiddeld even groot als het gewicht: Fn ≈ m · g. Hoe groter Fn, hoe meer wrijving mogelijk is: Fw,max = μ · Fn.</p><p><b>Vereenvoudigd:</b> de pijlen zijn gemiddeld over een hele pas. Tijdens het voetcontact zijn Fn en Fw allebei 2 à 3 keer zo groot. Hun verhouding blijft gelijk, en dus ook wie wel of niet uitglijdt.</p>`,
+  `<p><span class="ctx">VO</span>Sporters zakken door de knieën bij het wenden. Dat verandert de nodige hellingshoek niet: tan φ = v² / (g · r), daar staat geen hoogte in. Het helpt wel om snel bij te sturen en om je bij het wenden krachtig af te zetten.</p><p>De normaalkracht wordt daar gemiddeld niet groter van. Alleen wie zich op het moment van wenden krachtig afzet, drukt even harder op de vloer en heeft dan even meer grip.</p>`,
+  `<div class="calc">Fn ≈ m · g = 540 N (gemiddeld)<br>Fw,max = μ · Fn = 0,8 · 540 ≈ 432 N</div>`,
+  `<p class="think">Waarom is wenden op een helling naar beneden lastiger dan op een vlakke vloer? Denk aan de wrijvingscirkel: welke kracht moet de wrijving behalve Fmpz nog meer leveren? En wat gebeurt er met Fn?</p>`]},
+ {t:'Wrijvingskracht',s:'Fw ≤ μ · Fn',stack:true,tabs:[
+  `<p>Alleen de <b>wrijving</b> tussen voet en vloer kan de leerling de bocht om duwen. Hij werkt horizontaal, naar het midden van de bocht: de gele pijl.</p><p>De wrijving past zich aan: hij is zo groot als nodig, maar nooit groter dan μ · Fn. Dat maximum is de <b>gele cirkel</b> op de grond, de wrijvingscirkel. Vraagt de bocht meer, dan steekt de rode pijl buiten de cirkel en glijdt de voet weg.</p><p>Remmen of versnellen kost ook wrijving. Alles samen moet binnen de cirkel blijven: √(Frem² + Fmpz²) ≤ μ · m · g. Daarom: eerst remmen op het rechte stuk, dan de bocht in.</p><p>Kijk aan het eind van een run: bij het afremmen wijst de gele pijl naar achteren. Ook dat is wrijving, en ook die blijft binnen de cirkel. Let op de houding: de leerling hangt dan achterover, zodat de grondkracht door het zwaartepunt blijft gaan (punt 5).</p>`,
+  `<p><span class="ctx">PO/VO</span>Zaalschoenen aan, geen sokken. Een stoffige of natte vloer verlaagt μ. Veeg stof en zand weg voordat je tikspelen doet.</p>`,
+  `<div class="calc">Zaalschoenen μ ≈ 0,8 · blote voeten ≈ 0,6<br>stoffige vloer ≈ 0,45 · sokken ≈ 0,3<br>(richtwaarden voor een zaalvloer)</div><p>Glijd je al, dan is de wrijving kleiner: de <b>glijwrijving</b> μk. In dit lab is μk = 0,75 · μ.</p>`,
+  `<p class="think">Op sokken glijd je lekker over de vloer. Waarom is dat juist gevaarlijk bij tikkertje?</p>`]},
+ {t:'Middelpuntzoekende kracht',s:'Fmpz = m · v² / r',at:()=>V(0,.85,0),tabs:[
+  `<p>Wie een bocht maakt, verandert steeds van richting. Daarvoor is een kracht naar het midden van de bocht nodig: de <b>middelpuntzoekende kracht</b> Fmpz = m · v² / r. Het is geen aparte kracht. Bij rennen levert de wrijving hem.</p><p>r is de straal van de baan van je <b>zwaartepunt</b> (de witte stippen), niet van je voeten.</p><p>Let op het kwadraat: twee keer zo snel vraagt vier keer zoveel kracht. Een twee keer zo krappe bocht vraagt twee keer zoveel. Op een breed scherm zie je dat in de grafiek onderin: zodra de leerling de bocht in gaat, verschijnt de rode lijn, een parabool. Voorspel dus eerst.</p><p>De bocht begint met een korte <b>overgangsboog</b>: de baan wordt geleidelijk krommer. Daarom groeit de wrijving opzij pas als de bocht begint. Op een recht stuk is er geen kracht opzij nodig.</p>`,
   `<p><span class="ctx">PO</span>Om de pion heen rennen: "Rem af vóór de bocht, niet erin."</p><p><span class="ctx">VO</span>Bochtlopen op de atletiekbaan: de bochten zijn ruim (grote r), zodat je hard kunt blijven lopen.</p>`,
-  `<div class="calc">m = 55 kg, v = 5 m/s, r = 2 m<br>F = 55 · 25 / 2 = 687,5 N<br>Wrijving max (μ = 0,8): ≈ 430 N → uitglijden</div>`,
-  `<p class="think">Een PO-leerling en een volwassene rennen even hard om dezelfde pion. Wie glijdt eerder uit? (Tip: kijk wat er met m gebeurt in v_max = √(μ · g · r).)</p>`]},
- {t:'Hellen in de bocht',s:'tan φ = v² / (g · r)',at:()=>curCom.clone().add(V(-.3,.45,0)),tabs:[
-  `<p>De grondkracht (normaalkracht plus wrijving, de witte pijl) wijst schuin naar binnen. Om niet om te vallen, moet de leerling zo hellen dat die schuine kracht door het zwaartepunt gaat. De hellingshoek is tan φ = v² / (g · r).</p><p>Zie hoe de pop naar binnen helt: sneller of krapper betekent schuiner.</p>`,
-  `<p><span class="ctx">PO/VO</span>"Hang de bocht in" is een goede aanwijzing bij bochtlopen en bij het wenden in doelspelen. Wie rechtop blijft, wordt naar buiten gedraaid.</p><p>Fietsers en schaatsers doen precies hetzelfde.</p>`,
-  `<div class="calc">v = 4 m/s, r = 2 m<br>tan φ = 16 / 19,6 ≈ 0,82 → φ ≈ 39°</div>`,
-  `<p class="think">Waarom kun je op schaatsen veel schuiner hangen dan op gymschoenen in de zaal?</p>`]},
- {t:'Uitglijden: rechtdoor',s:'eerste wet van Newton',at:()=>V(Math.min(2.5,WALL-1.5),.5,-S.r),tabs:[
-  `<p>Wie uitglijdt, vliegt <b>niet</b> naar buiten weg, maar gaat <b>rechtdoor</b> langs de raaklijn (de rode stippellijn). Zonder kracht naar het midden verandert de bewegingsrichting niet: dat is traagheid, de eerste wet van Newton.</p>`,
+  `<div class="calc">m = 55 kg, v = 5 m/s, r = 2 m<br>Fmpz = 55 · 5² / 2 = 687,5 N<br>Fw,max (μ = 0,8) ≈ 432 N → uitglijden</div>`,
+  `<p class="think">Een PO-leerling en een volwassene rennen even hard om dezelfde pion, op dezelfde schoenen. Wie glijdt eerder uit? Tip: kijk wat er met m gebeurt in v,max = √(μ · g · r).</p>`]},
+ {t:'Hellen en ontbinden',s:'tan φ = Fmpz / Fn ≤ μ',stack:true,tabs:[
+  `<p>De vloer geeft één schuine <b>grondkracht</b> (wit). Die kun je <b>ontbinden</b> in twee stukken: Fn recht omhoog en Fw horizontaal naar het midden. Zet de laag <b>Ontbinden</b> aan om het parallellogram te zien.</p><p>Om niet om te vallen, moet de witte pijl door je zwaartepunt gaan. Daarom hel je naar binnen onder een hoek φ met de loodlijn: tan φ = Fw / Fn. In de bocht moet de wrijving precies Fmpz leveren, dus tan φ = Fmpz / Fn = v² / (g · r).</p><p>In beeld zie je φ als turquoise <b>boogje bij de voet</b>, tussen de gestippelde loodlijn en het lichaam.</p><p>Maar Fw kan niet groter worden dan μ · Fn. Je kunt dus niet schuiner hangen dan <b>tan φ = μ</b>: op zaalschoenen ongeveer 39°, op sokken ongeveer 17°. Vraagt de bocht meer, dan zie je op het kernmoment een tweede, rode boog: de helling die nodig zou zijn. Op een breed scherm laat ook het driehoekje bij Hellen (onderin) het zien: de witte lijn moet binnen de gele kegel blijven.</p>`,
+  `<p><span class="ctx">PO/VO</span>"Hang de bocht in" is een goede aanwijzing bij bochtlopen en bij het wenden in doelspelen. Wie rechtop blijft, kantelt naar buiten: de wrijving aan de voet werkt onder het zwaartepunt.</p><p>Fietsers en schaatsers doen precies hetzelfde.</p>`,
+  `<div class="calc">v = 3,5 m/s, r = 2 m<br>tan φ = 12,25 / (9,81 · 2) ≈ 0,62 → φ ≈ 32°<br>Grens zaalschoenen: tan φ ≤ 0,8 → φ ≤ 39°<br>Grens sokken: tan φ ≤ 0,3 → φ ≤ 17°</div>`,
+  `<p class="think">Waarom kan een schaatser veel schuiner hangen dan jij op gymschoenen in de zaal?</p>`]},
+ {t:'Uitglijden: rechtdoor',s:'eerste wet van Newton',at:tanAt,tabs:[
+  `<p>Wie uitglijdt, gaat <b>niet</b> recht naar buiten (de grijze pijl, weg van de pion), maar <b>rechtdoor</b> langs de raaklijn (rode streep). Je komt wel steeds verder van de pion, maar alleen omdat de bocht onder je wegloopt. Zonder kracht naar het midden verandert de bewegingsrichting niet. Dat is traagheid: de eerste wet van Newton.</p><p>Kijk naar het blauwe spoor. Zolang de voet nog grip heeft, maakt de leerling eerst een wijdere bocht: r' = v² / (μ · g). Die zou hij kunnen volhouden. Maar de leerling wil de pion toch halen en hangt schuiner dan de grenshoek (tan φ = μ). Dan gaat de grondkracht niet meer door het zwaartepunt: in beeld wijst de gestippelde verlenging van de witte pijl langs het zwaartepunt. De voet schiet naar buiten weg en het lichaam valt naar binnen. Vanaf dat moment wordt het spoor een rechte lijn. Wie op tijd wijder loopt of afremt, glijdt niet uit.</p><p>Tijdens het glijden werkt de <b>glijwrijving</b> Fw,glij = μk · Fn (oranje). Glijwrijving werkt tegen de glijrichting in. Glijdt het lichaam rechtdoor, dan wijst hij naar achteren: hij remt af, maar stuurt niet meer.</p><p><b>Vereenvoudigd:</b> zolang de voet nog naar buiten schiet, duwt de wrijving heel even nog een beetje naar binnen. In het model glijdt de leerling daarna verder met de glijwrijving van het schoeisel. Wie valt, glijdt op kleding en huid. De echte glijweg kan korter zijn, de richting blijft gelijk.</p>`,
   `<p><span class="ctx">PO/VO</span>Leg pionnen en keerpunten zo dat het verlengde van de looplijn vrij is: geen muur, bank of wandrek direct "rechtdoor" uit de bocht. Dat is de uitloopruimte.</p>`,
-  `<div class="calc">Glijweg ≈ v² / (2 · μk · g)<br>sokken (μk ≈ 0,23), 6 m/s: ≈ 8 m<br>zaalschoenen (μk ≈ 0,6), 6 m/s: ≈ 3 m</div>`,
-  `<p class="think">Een leerling glijdt uit bij een keerpunt vlak voor de muur. Waar komt die leerling terecht, en hoe voorkom je dat met de organisatie?</p>`]},
- {t:'Schoeisel en vloer',s:'μ bepaalt alles',at:()=>curFoot.clone().add(V(.35,.05,.35)),tabs:[
-  `<p>De hoogste snelheid in een bocht is v_max = √(μ · g · r). Massa komt er niet in voor! Het schoeisel en de vloer bepalen samen μ, en daarmee hoe hard je de bocht om kunt.</p>`,
+  `<div class="calc">Glijweg ≈ v0² / (2 · μk · g), met μk = 0,75 · μ<br>sokken (μk ≈ 0,23), 6 m/s: ≈ 8 m<br>zaalschoenen (μk = 0,6), 6 m/s: ≈ 3 m</div>`,
+  `<p class="think">Een leerling glijdt uit bij een keerpunt vlak voor de muur. Waar komt die leerling terecht? Hoe voorkom je dat met de organisatie?</p>`]},
+ {t:'Schoeisel en vloer',s:'μ bepaalt de grens',stack:true,tabs:[
+  `<p>De hoogste snelheid in een bocht is v,max = √(μ · g · r). De massa staat er niet in! Het schoeisel en de vloer bepalen samen μ, en daarmee hoe hard je de bocht om kunt.</p><p>De pijlen in dit lab staan op schaal van het eigen gewicht. Daarom ziet een PO-leerling hetzelfde plaatje als een student: alle krachten groeien mee met m.</p>`,
   `<p><span class="ctx">PO/VO</span>Huisregels: zaalschoenen met lichte zool of blote voeten, geen sokken bij spelen met wenden. Natte plekken (gemorst water, zweet) direct droogmaken. Bij een stoffige zaal: eerst vegen.</p>`,
   `<div class="calc">r = 2 m:<br>zaalschoenen √(0,8 · 9,81 · 2) ≈ 4,0 m/s<br>sokken √(0,3 · 9,81 · 2) ≈ 2,4 m/s</div>`,
   `<p class="think">Waarom maakt het voor uitglijden niet uit of de leerling zwaar of licht is?</p>`]},
- {t:'Uitloopruimte en tikspelen',s:'organiseer veilig',at:()=>V(WALL-.25,2.4,S.r+.5),tabs:[
-  `<p>De muur staat {W} m achter de bocht. Glijdt een leerling uit, dan schuift die rechtdoor naar de muur. Hoe hoger de snelheid en hoe lager de wrijving, hoe verder.</p>`,
+ {t:'Uitloopruimte en tikspelen',s:'organiseer veilig',edge:true,at:()=>{const J=S.J;return V(WALL-.15,1.2,J&&J.slip&&S.phase!=='ready'?stateAt(J,J.tEnd).z:geomFor(S.r).z0);},tabs:[
+  `<p>De muur staat {W} m voorbij de pion. Glijdt een leerling uit, dan schuift die rechtdoor naar de muur. Hoe hoger de snelheid en hoe lager de wrijving, hoe verder.</p><p>De glijweg begint waar de voet wegglijdt: vlak bij de pion, aan het begin van de bocht. Meet de uitloop dus vanaf het keerpunt, langs de raaklijn. Het lichaam raakt de muur al een stukje eerder (het ligt dwars). In het lab is de uitloop daardoor vaak ongeveer 5 m, niet {W} m.</p><p>Komt de leerling bij de muur, dan is de snelheid nog niet nul. Hoe minder uitloopruimte, hoe harder de botsing.</p>`,
   `<p><span class="ctx">PO</span>Tikspelen: maak het speelveld kleiner dan de zaal, zodat er rondom minstens 2 à 3 meter uitloop is. Gebruik pionnen in plaats van de muur als keerpunt.</p><p><span class="ctx">VO</span>Bij shuttle runs en estafettes: keerlijn ruim voor de muur, en leer "afremmen vóór de lijn, dan wenden".</p>`,
-  `<div class="calc">Uitloop nodig ≈ v² / (2 · μk · g) + marge<br>5 m/s, zaalschoenen: ≈ 2,1 m + 1 m</div>`,
+  `<div class="calc">Uitloop nodig ≈ v0² / (2 · μk · g) + marge<br>5 m/s, zaalschoenen (μk = 0,6): ≈ 2,1 m + 1 m<br><br>Botssnelheid: v² = v0² − 2 · a · d, met a = μk · g<br>6 m/s op sokken, r = 2 m (probeer het in het lab):<br>a = 0,23 · 9,81 ≈ 2,2 m/s²<br>glijweg = 36 / (2 · 2,2) ≈ 8,2 m, muur na 5,0 m<br>v² = 36 − 2 · 2,2 · 5,0 ≈ 14 → v ≈ 3,7 m/s</div><p>v0 is de snelheid op het wegglijpunt, d de afstand tot de muur, v de snelheid bij de muur.</p>`,
   `<p class="think">Waarom is een wedstrijdje "tik de muur aan en terug" biomechanisch geen goed idee?</p>`]}];
 const MKS=PTS.map((p,i)=>{const b=document.createElement('button');b.className='mk';b.innerHTML=`<b>${i+1}</b><span>${p.t}</span>`;b.onclick=()=>openPt(i);labWrap.appendChild(b);return b;});
 let ptI=0,ptTab=0;
-function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((mm,k)=>mm.classList.toggle('sel',k===i));}
-function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(mm=>mm.classList.remove('sel'));}
-function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));$('#dBody').innerHTML=p.tabs[ptTab].replace('{W}',f1(WALL));}
+function openPt(i,tab){ptI=i;ptTab=tab||0;document.body.classList.add('dossier');$('#dossier').classList.add('open');renderPt();MKS.forEach((mm,k)=>mm.classList.toggle('sel',k===i));camAnim=1.2;}
+function closePt(){document.body.classList.remove('dossier');$('#dossier').classList.remove('open');MKS.forEach(mm=>mm.classList.remove('sel'));camAnim=1.2;}
+function renderPt(){const p=PTS[ptI];$('#dN').textContent=ptI+1;$('#dT').textContent=p.t;$('#dS').textContent=p.s;$$('#dTabs button').forEach(b=>b.classList.toggle('on',+b.dataset.t===ptTab));$('#dBody').innerHTML=p.tabs[ptTab].replace(/\{W\}/g,f1(WALL));}
 $$('#dTabs button').forEach(b=>b.onclick=()=>{ptTab=+b.dataset.t;renderPt();});$('#dClose').onclick=closePt;
 function ptStep(d){if(!$('#dossier').classList.contains('open')){openPt(0);return;}ptTab+=d;if(ptTab>3){if(ptI<PTS.length-1){ptI++;ptTab=0;}else ptTab=3;}if(ptTab<0){if(ptI>0){ptI--;ptTab=3;}else ptTab=0;}openPt(ptI,ptTab);}
 $('#dNext').onclick=()=>ptStep(1);$('#dPrev').onclick=()=>ptStep(-1);
-
-/* ================= HUD & bediening ================= */
-function updateHud(){const n=need();const mx=Math.max(n.Fc,n.Fw,1);$('#vC').textContent=f0(n.Fc);$('#bC').style.width=clamp(n.Fc/mx*100,0,100)+'%';$('#vW').textContent=f0(n.Fw);$('#vW2').textContent=`N · μ = ${f2(MU[S.mu].mu)}`;$('#bW').style.width=clamp(n.Fw/mx*100,0,100)+'%';
-  $('#vH').textContent=Math.round(n.phi/D2R)+'°';$('#vH2').textContent=`v max ≈ ${f1(n.vmax)} m/s`;$('#vC2').textContent=n.Fc>n.Fw?'N · te veel!':'N naar het midden';}
-function syncUI(){$$('#sWho button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.who));$$('#sMu button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.mu));$$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));
-  $('#iV').value=S.v;$('#oV').textContent=f1(S.v)+' m/s';$('#oV2').textContent=S.v<2.2?'wandelen':S.v<3.6?'rustig joggen':S.v<5.5?'hardlopen':'sprinten';$('#iR').value=S.r;$('#oR').textContent=f1(S.r)+' m';
-  store.set('who',S.who);store.set('v',S.v);store.set('r',S.r);store.set('mu',S.mu);updateHud();}
-$$('#sWho button').forEach(b=>b.onclick=()=>{S.who=b.dataset.v;syncUI();reset();});
-$$('#sMu button').forEach(b=>b.onclick=()=>{S.mu=b.dataset.v;syncUI();reset();});
-$$('#sSpeed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;syncUI();});
-$('#iV').oninput=e=>{S.v=+e.target.value;syncUI();reset();};$('#iR').oninput=e=>{S.r=+e.target.value;syncUI();reset();};
-$('#bGo').onclick=go;$('#bReset').onclick=reset;
-let follow=false;$('#bCam').onclick=()=>{follow=!follow;$('#bCam').textContent='Camera: '+(follow?'volgen':'overzicht');$('#bCam').classList.toggle('on',follow);if(!follow){camera.position.set(...HOME.p);controls.target.set(...HOME.t);}};
-const LBL=['dots','names','off'],LBLN={dots:'stippen',names:'namen',off:'uit'};let lblI=0;
-$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.className=document.body.className.replace(/lbl-\w+/,'lbl-'+LBL[lblI]);$('#bLbl').textContent='Labels: '+LBLN[LBL[lblI]];};
-function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
-$('#bPresent').onclick=()=>setPresent(!document.body.classList.contains('present'));
-addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;const k=e.key,K=k.toUpperCase();
-  if(k===' '){e.preventDefault();go();return;}if(K==='F'){$('#tF').checked=!$('#tF').checked;}if(K==='C'){$('#tC').checked=!$('#tC').checked;}if(K==='T'){$('#tT').checked=!$('#tT').checked;}
-  if(K==='V')$('#bCam').click();if(K==='G')setSound(!SND.on);if(K==='L')$('#bLbl').click();if(K==='P')setPresent(!document.body.classList.contains('present'));
-  if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();ptStep(1);}if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();ptStep(-1);}
-  if(k==='Escape'){if($$('.modal.open').length)$$('.modal.open').forEach(mm=>mm.classList.remove('open'));else if($('#dossier').classList.contains('open'))closePt();else if(document.body.classList.contains('present'))setPresent(false);}});
-
+function scr(v){_p.copy(v).project(camera);if(_p.z>1||_p.z<-1)return null;return [(_p.x*.5+.5)*innerWidth,(-_p.y*.5+.5)*innerHeight];}
+function placeMk(el,xy){if(!xy){el.style.display='none';return;}el.style.display='';el.style.transform=`translate(${(xy[0]-12).toFixed(1)}px,${(xy[1]-12).toFixed(1)}px)`;}
+// valt een stip op een 3D-label, schuif hem eronder
+function dodgeTags(q){for(let n=0;n<4;n++){let hit=null;for(const k in TAGS){const el=TAGS[k];if(el.style.display==='none'||el._x===undefined)continue;const w=el.offsetWidth,h=el.offsetHeight;
+    if(q[0]+13>el._x&&q[0]-13<el._x+w&&q[1]+13>el._y&&q[1]-13<el._y+h){hit={y:el._y,h};break;}}if(!hit)break;q[1]=hit.y+hit.h+15;}return q;}
+function placeMarkers(){const stack=PTS.map((p,i)=>p.stack?i:-1).filter(i=>i>=0);
+  const used=[];
+  if(isMob()){stack.forEach((i,k)=>{MKS[i].classList.remove('left');const q=[FR.x1-20-(stack.length-1-k)*32,FR.y0+20];used.push(q);placeMk(MKS[i],q);});}
+  else stack.forEach((i,k)=>{const el=MKS[i];el.classList.remove('left');const q=[FR.x0+26,FR.y0+26+k*32];used.push(q);placeMk(el,q);}); // vaste kolom linksboven in het vrije beeld, los van pop en labels
+  const later=[];
+  PTS.forEach((p,i)=>{if(p.stack)return;let q=scr(p.at());const inF=q&&q[0]>FR.x0-10&&q[0]<FR.x1+10&&q[1]>FR.y0-10&&q[1]<FR.y1+10;
+    if(inF){q=dodgeTags(q);used.push(q);placeMk(MKS[i],q);}else if(q&&p.edge)later.push([i,[clamp(q[0],FR.x0+(isMob()?30:document.body.classList.contains('lbl-names')?260:90),FR.x1-(document.body.classList.contains('lbl-names')?200:30)),clamp(q[1],FR.y0+(isMob()?60:beatHtml?$('#beat').offsetHeight+30:30),FR.y1-30)]]);else placeMk(MKS[i],null);});
+  // een stip aan de rand van het beeld (de muur) schuift opzij als hij op een andere stip valt
+  // met namen erbij: een regel lager, want de naam staat rechts van de stip
+  const nm=document.body.classList.contains('lbl-names');
+  later.forEach(([i,q])=>{for(let n=0;n<6&&used.some(u=>nm?Math.abs(u[1]-q[1])<28&&Math.abs(u[0]-q[0])<220:Math.hypot(u[0]-q[0],u[1]-q[1])<30);n++){if(nm)q[1]+=30;else q[0]+=q[0]>(FR.x0+FR.x1)/2?-32:32;}q=dodgeTags(q);used.push(q);placeMk(MKS[i],q);});}
 /* ================= uitleg & opdrachten ================= */
 $('#bHelp').onclick=()=>{$('#mHelp').classList.add('open');$('#helpBody').innerHTML=`<h2>Zo werkt het bochtlab</h2>
-  <p>Een leerling rent naar een pion, maakt een bocht van 180° eromheen en rent terug. Jij kiest <b>wie</b>, de <b>snelheid</b>, hoe <b>krap</b> de bocht is en het <b>schoeisel</b>. Voorspel eerst: lukt de bocht?</p>
-  <ul><li>Onderin: de <b>nodige</b> middelpuntzoekende kracht m · v² / r tegen de <b>maximale wrijving</b> μ · m · g. Is het eerste groter, dan glijdt de leerling uit.</li><li>Op de voet: zwaartekracht (blauw), normaalkracht (groen), wrijving (geel) en de totale grondkracht (wit). De gele cirkel op de grond is de wrijvingscirkel: de gele pijl moet erbinnen blijven.</li><li>Wie uitglijdt, gaat rechtdoor langs de rode stippellijn. Haalt de leerling de muur?</li></ul>
-  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Rennen · pauze</td></tr><tr><td><kbd>F</kbd> <kbd>C</kbd> <kbd>T</kbd></td><td>Krachten · wrijvingscirkel · looplijn</td></tr><tr><td><kbd>V</kbd></td><td>Camera volgen</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
-  <p style="font-size:13px;color:var(--muted)">Vereenvoudigd: constante snelheid, een cirkelvormige bocht en vaste wrijvingscoëfficiënten (richtwaarden). Echte lopers remmen af voor de bocht en zetten de voet schuin.</p>
+  <p>Een leerling rent naar een pion, maakt een halve cirkel eromheen en rent terug. Jij kiest <b>wie</b>, de <b>snelheid</b>, hoe <b>krap</b> de bocht is en het <b>schoeisel</b>. Voorspel eerst: haalt de leerling de bocht of glijdt die uit?</p>
+  <ul><li>In het venster met getallen staat de <b>nodige</b> kracht naar het midden, Fmpz = m · v² / r, tegenover de <b>maximale wrijving</b> Fw,max = μ · m · g. Is de eerste groter, dan haalt de leerling deze bocht niet: wijder lopen, of uitglijden. Fw,max en μ zie je meteen. Fmpz, de nodige helling en de rode lijn in de grafiek verschijnen pas als de leerling de bocht in gaat. Voorspel dus eerst.</li>
+  <li>In beeld: <span class="lg" style="background:#6fa8dc"></span>zwaartekracht Fz in het zwaartepunt, en op de voet <span class="lg" style="background:#7fc8a0"></span>normaalkracht Fn, <span class="lg" style="background:#ffc94d"></span>wrijving Fw en <span class="lg" style="background:#f1e9da"></span>de totale grondkracht. De gele cirkel is de <b>wrijvingscirkel</b>: meer dan dat kan de vloer niet geven. Het <span class="lg" style="background:#6fb2b4"></span>boogje bij de voet is de hellingshoek φ tegen de gestippelde loodlijn (bij het remmen θ, achterover).</li>
+  <li>Glijdt de leerling uit, dan stopt het beeld twee keer even: op het <b>kernmoment</b> en vlak voordat de voet wegglijdt. De <span class="lg" style="background:#ff4a3a"></span>rode pijl is wat de bocht vraagt: hij steekt buiten de cirkel. Daarna gaat het vertraagd verder. Met <kbd>spatie</kbd> zet je het beeld zelf stil.</li>
+  <li>Met de <b>tijdschuif</b> kijk je terug, op ×¼ zie je elke pas. Het blauwe spoor is de baan van het zwaartepunt, de donkere vlekjes zijn de voetstappen.</li>
+  <li>De grafiek (op een breed scherm) toont na je voorspelling de nodige kracht tegen de snelheid: een parabool. Waar hij de gele lijn snijdt, ligt v,max.</li></ul>
+  <table class="keys"><tr><td><kbd>spatie</kbd></td><td>Rennen · pauze</td></tr><tr><td><kbd>F</kbd> <kbd>C</kbd> <kbd>O</kbd> <kbd>T</kbd> <kbd>S</kbd></td><td>Krachten · wrijvingscirkel · ontbinden · spoor · vertragen</td></tr><tr><td><kbd>V</kbd></td><td>Camera: regie, overzicht of volgen</td></tr><tr><td><kbd>→</kbd> <kbd>←</kbd></td><td>Door de uitlegpunten</td></tr><tr><td><kbd>G</kbd> <kbd>L</kbd> <kbd>P</kbd></td><td>Geluid · labels · presenteren</td></tr></table>
+  <p style="font-size:13px;color:var(--muted)">Vereenvoudigd: constante snelheid tot het afremmen, een halve cirkel met een korte overgangsboog (de baan wordt in ongeveer 1 m geleidelijk krommer), vaste wrijvingscoëfficiënten (richtwaarden) en krachten gemiddeld over een pas. Na de bocht remt de leerling af met 0,6 · μ · g. Echte lopers remmen vaak al vóór de bocht af. Wie uitglijdt, glijdt in het model met de glijwrijving μk = 0,75 · μ rechtdoor. De val is nagespeeld, niet berekend.</p>
   <p><button class="btn accent" id="hClose">Aan de slag</button></p>`;$('#hClose').onclick=()=>$('#mHelp').classList.remove('open');};
+const QT={R:'Kennen',T1:'Rekenen',T2:'Toepassen',I:'Inzicht'};
 const QUIZ=[
- {t:'R',type:'mc',q:'Een leerling glijdt uit in de bocht. In welke richting gaat de leerling?',opts:['Recht naar buiten, weg van het midden','Rechtdoor, langs de raaklijn van de bocht','Naar het midden van de bocht','Achteruit'],ok:1,ex:'Zonder kracht naar het midden verandert de richting niet meer: de leerling gaat rechtdoor (Newton 1).'},
- {t:'R',type:'mc',q:'Glijdt een zware leerling bij dezelfde snelheid en bocht eerder uit dan een lichte?',opts:['Ja, want de middelpuntzoekende kracht is groter','Nee, want ook de wrijving groeit evenredig met de massa','Ja, want zware leerlingen hebben minder grip','Nee, want zware leerlingen rennen langzamer'],ok:1,ex:'Nodig m · v² / r en beschikbaar μ · m · g groeien allebei met m. De massa valt weg: v_max = √(μ · g · r).'},
- {t:'T1',type:'num',q:'Een leerling van 55 kg rent 5 m/s door een bocht met een straal van 2 m. Hoe groot is de middelpuntzoekende kracht (N)?',answer:687.5,tol:2,ex:'F = m · v² / r = 55 · 25 / 2 = 687,5 N.'},
- {t:'T1',type:'num',q:'Met zaalschoenen is μ = 0,8. Wat is de hoogste snelheid (m/s) in een bocht met r = 2 m? (g = 9,81)',answer:3.96,tol:.06,ex:'v_max = √(μ · g · r) = √(0,8 · 9,81 · 2) ≈ 3,96 m/s.'},
- {t:'T2',type:'sim',q:'Op <b>sokken</b>, bocht van <b>2 m</b>: haal de bocht zo snel mogelijk, met minstens <b>2,2 m/s</b>.',check:l=>l&&l.mu==='sock'&&Math.abs(l.r-2)<.05&&l.v>=2.2&&!l.slip,fail:l=>!l?'Ren eerst.':(l.mu!=='sock'||Math.abs(l.r-2)>=.05)?'Kies sokken en een straal van 2,0 m.':l.slip?'Uitgegleden. Iets langzamer.':'Nog sneller kan: minstens 2,2 m/s.',ok:'Op sokken ligt de grens rond 2,4 m/s: wandeltempo bij een krappe bocht.'},
- {t:'T2',type:'sim',q:'Met <b>zaalschoenen</b> rond een pion op <b>1 m</b>: haal de bocht met minstens <b>2,6 m/s</b>.',check:l=>l&&l.mu==='shoe'&&Math.abs(l.r-1)<.05&&l.v>=2.6&&!l.slip,fail:l=>!l?'Ren eerst.':(l.mu!=='shoe'||Math.abs(l.r-1)>=.05)?'Kies zaalschoenen en een straal van 1,0 m.':l.slip?'Uitgegleden. Een krappe bocht vraagt veel kracht.':'Iets sneller: minstens 2,6 m/s.',ok:'Krappe bochten (keerpunten) kunnen alleen langzaam: daarom "afremmen vóór de pion".'},
- {t:'T2',type:'sim',q:'Laat een leerling <b>uitglijden</b>, maar zorg dat die <b>niet tegen de muur</b> komt.',check:l=>l&&l.slip&&!l.hit,fail:l=>!l?'Ren eerst.':!l.slip?'De leerling gleed niet uit. Ga harder of kies een krappere bocht.':'Tegen de muur. Meer wrijving of minder snelheid geeft een kortere glijweg.',ok:'De glijweg v² / (2 · μk · g) bepaalt hoeveel uitloopruimte je nodig hebt.'},
- {t:'I',type:'open',q:'Ontwerp een tikspel voor groep 5 in een kleine gymzaal. Onderbouw veldgrootte, keerpunten, schoeisel en aanwijzingen met wrijving en de middelpuntzoekende kracht.',model:'<p><b>Veld:</b> kleiner dan de zaal, met rondom 2 à 3 m uitloop. Wie uitglijdt, gaat rechtdoor (Newton 1) en moet niet tegen muur of wandrek schuiven.</p><p><b>Keerpunten:</b> pionnen in plaats van de muur, en niet te krap: een grotere straal vraagt minder kracht (m · v² / r).</p><p><b>Schoeisel en vloer:</b> zaalschoenen of blote voeten, geen sokken; vloer droog en stofvrij. Dat houdt μ hoog, en daarmee v_max = √(μ · g · r).</p><p><b>Aanwijzingen:</b> "rem af vóór de bocht" (v² telt dubbel), "hang de bocht in" (hellen zodat de grondkracht door je zwaartepunt gaat), "kleine pasjes bij het wenden".</p>'}];
-let qi=0,qres=[];
+ {t:'R',type:'mc',q:'Een leerling glijdt uit in de bocht. In welke richting gaat de leerling?',opts:['Recht naar buiten, weg van het midden','Rechtdoor, langs de raaklijn van de bocht','Naar het midden van de bocht','Achteruit'],ok:1,
+  fb:['Er is geen kracht die je naar buiten duwt. Zonder kracht naar het midden houd je de richting die je had.','','De kracht naar het midden valt juist weg als je uitglijdt.','Niets duwt je achteruit. Je houdt je snelheid en richting, alleen de wrijving remt je af.'],ex:'Zonder kracht naar het midden verandert de richting niet meer: de leerling gaat rechtdoor (Newton 1).'},
+ {t:'R',type:'mc',q:'Glijdt een zware leerling bij dezelfde snelheid en bocht eerder uit dan een lichte?',opts:['Ja, want de middelpuntzoekende kracht is groter','Nee, want ook de wrijving groeit evenredig met de massa','Ja, want zware leerlingen hebben minder grip','Nee, want zware leerlingen rennen langzamer'],ok:1,
+  fb:['Klopt half: Fmpz is groter. Maar wat gebeurt er met Fw,max = μ · m · g?','','Grip hangt af van μ en Fn. Fn groeit juist mee met de massa.','Het gaat om dezelfde snelheid. Kijk naar m in beide formules.'],ex:'De nodige kracht m · v² / r en de maximale wrijving μ · m · g groeien allebei mee met m. De massa valt weg: v,max = √(μ · g · r).'},
+ {t:'T1',type:'num',q:'Een PO-leerling van 30 kg rent 4 m/s om een pion. De straal van de bocht is 1,5 m. Hoe groot is de middelpuntzoekende kracht Fmpz (N)?',answer:320,tol:2,miss:[[80,'Je bent het kwadraat vergeten: v² = 4² = 16.'],[160,'Je deelde door 3 m. De straal is 1,5 m, niet de doorsnede.'],[480,'Vergeet niet te delen door r = 1,5 m.'],[40,'Je vergat het kwadraat en deelde door de doorsnede (3 m). Gebruik v² = 16 en r = 1,5 m.'],[180,'Gebruik v² / r, niet v · r: 30 · 16 / 1,5.']],hint:'Gebruik Fmpz = m · v² / r.',ex:'Fmpz = m · v² / r = 30 · 16 / 1,5 = 320 N.'},
+ {t:'T1',type:'num',q:'Op een stoffige vloer is μ = 0,45. Wat is de hoogste snelheid (m/s) in een bocht met r = 3 m? (g = 9,81)',answer:3.64,tol:.06,miss:[[13.24,'Je bent de wortel vergeten: v,max = √(μ · g · r).'],[5.42,'Je bent μ vergeten: √(0,45 · 9,81 · 3).'],[1.21,'Je deelde door r. Vermenigvuldig met r = 3 m.']],hint:'Gebruik v,max = √(μ · g · r).',ex:'v,max = √(μ · g · r) = √(0,45 · 9,81 · 3) ≈ 3,64 m/s.'},
+ {t:'T1',type:'num',q:'Hoe schuin kun je op <b>blote voeten</b> (μ = 0,6) maximaal in de bocht hangen? Geef de hoek φ met de verticaal in graden.',answer:30.96,tol:.5,miss:[[59.04,'Dat is de hoek met de vloer. Gevraagd is de hoek met de verticaal: tan φ = μ.'],[36.87,'Je gebruikte sin. Gebruik tan φ = Fw / Fn = μ.'],[0.54,'Dat is in radialen. Reken om naar graden.']],hint:'De grondkracht mag niet schuiner staan dan tan φ = μ.',ex:'tan φ = μ = 0,6 → φ ≈ 31°. Op sokken: tan φ = 0,3 → φ ≈ 17°.'},
+ {t:'T2',type:'sim',setup:{mu:'sock',r:2},q:'Op <b>sokken</b>, bocht van <b>2 m</b>: haal de bocht zo snel mogelijk, met minstens <b>2,2 m/s</b>.',check:l=>l.mu==='sock'&&Math.abs(l.r-2)<.05&&l.v>=2.2&&!l.slip,fail:l=>(l.mu!=='sock'||Math.abs(l.r-2)>=.05)?'Kies sokken en een straal van 2,0 m.':l.slip?'Uitgegleden. Iets langzamer.':'Nog sneller kan: minstens 2,2 m/s.',ok:'Op sokken ligt de grens bij deze bocht rond 2,4 m/s. Dat is rustig joggen.'},
+ {t:'T2',type:'sim',setup:{mu:'shoe',r:1},q:'Met <b>zaalschoenen</b> rond een pion op <b>1 m</b>: haal de bocht met minstens <b>2,6 m/s</b>.',check:l=>l.mu==='shoe'&&Math.abs(l.r-1)<.05&&l.v>=2.6&&!l.slip,fail:l=>(l.mu!=='shoe'||Math.abs(l.r-1)>=.05)?'Kies zaalschoenen en een straal van 1,0 m.':l.slip?'Uitgegleden. Een krappe bocht vraagt veel kracht.':'Iets sneller: minstens 2,6 m/s.',ok:'Krappe bochten (keerpunten) kunnen alleen langzaam: daarom "afremmen vóór de pion".'},
+ {t:'T2',type:'sim',q:'Laat een leerling <b>uitglijden</b>, maar zorg dat die <b>niet tegen de muur</b> komt.',check:l=>l.slip&&!l.hit,fail:l=>!l.slip?'De leerling gleed niet uit. Ga harder of kies een krappere bocht.':'Tegen de muur. Meer wrijving of minder snelheid geeft een kortere glijweg.',ok:'De glijweg v0² / (2 · μk · g) bepaalt hoeveel uitloopruimte je nodig hebt.'},
+ {t:'I',type:'open',q:'Ontwerp een tikspel voor groep 5 in een kleine gymzaal. Onderbouw veldgrootte, keerpunten, schoeisel en aanwijzingen met wrijving en de middelpuntzoekende kracht.',model:'<p><b>Veld:</b> kleiner dan de zaal, met rondom 2 à 3 m uitloop. Wie uitglijdt, gaat rechtdoor (Newton 1) en moet niet tegen muur of wandrek schuiven.</p><p><b>Keerpunten:</b> pionnen in plaats van de muur, en niet te krap: een grotere straal vraagt minder kracht (Fmpz = m · v² / r).</p><p><b>Schoeisel en vloer:</b> zaalschoenen of blote voeten, geen sokken; vloer droog en stofvrij. Dat houdt μ hoog, en daarmee v,max = √(μ · g · r).</p><p><b>Aanwijzingen:</b> "rem af vóór de bocht" (twee keer zo snel = vier keer zoveel kracht), "hang de bocht in" (hellen zodat de grondkracht door je zwaartepunt gaat), "kleine pasjes bij het wenden" (je voet blijft dichter onder je zwaartepunt, zodat je sneller kunt bijsturen en niet te schuin hoeft te hangen).</p>'}];
+let qi=0,qres=[];const qBase={};
 function dots(){return QUIZ.map((q,j)=>`<i class="${j===qi?'cur':qres[j]===true?'ok':qres[j]===false?'no':''}"></i>`).join('');}
 function renderQ(){if(!qres.length)qres=QUIZ.map(()=>null);const box=$('#quizBody');
-  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${dots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');return;}
-  const q=QUIZ[qi];let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${dots()}</div><p><span class="qtag">${q.t}</span>${q.q}</p>`;
+  if(qi>=QUIZ.length){box.innerHTML=`<h2>Klaar!</h2><div class="dots">${dots()}</div><p>${qres.filter(x=>x===true).length} van de ${QUIZ.length-1} opdrachten in één keer goed.</p><p><button class="btn" id="qAgain">Opnieuw</button> <button class="btn accent" id="qClose">Sluiten</button></p>`;$('#qAgain').onclick=()=>{qi=0;qres=[];for(const k in qBase)delete qBase[k];renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');return;}
+  const q=QUIZ[qi];if(q.type==='sim'&&qBase[qi]===undefined)qBase[qi]=S.runId;
+  let h=`<h2>Opdracht ${qi+1} van ${QUIZ.length}</h2><div class="dots">${dots()}</div><p><span class="qtag">${QT[q.t]}</span>${q.q}</p>`;
   if(q.type==='mc')h+=`<div class="opts">${q.opts.map((o,j)=>`<button class="opt" data-j="${j}">${o}</button>`).join('')}</div>`;
-  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal"><button class="btn accent" id="qGo">Controleer</button></div>`;
-  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en ren. Open daarna de opdrachten weer en klik op Controleer.</p><p><button class="btn accent" id="qGo">Controleer mijn laatste poging</button></p>`;
+  if(q.type==='num')h+=`<div class="num-in"><input id="qNum" inputmode="decimal" aria-label="Jouw antwoord"><button class="btn accent" id="qGo">Controleer</button></div>`;
+  if(q.type==='sim')h+=`<p style="color:var(--muted);font-size:13.5px">Sluit dit venster, stel het lab in en ren. Open daarna de opdrachten weer en klik op Controleer. Alleen runs na het openen van deze opdracht tellen.</p><p style="display:flex;gap:8px;flex-wrap:wrap">${q.setup?'<button class="btn" id="qSetup">Zet de bocht en het schoeisel klaar</button>':''}<button class="btn accent" id="qGo">Controleer mijn laatste poging</button></p>`;
   if(q.type==='open')h+=`<textarea id="qTxt" placeholder="Schrijf je antwoord. Het wordt nergens opgeslagen."></textarea><p><button class="btn" id="qShow">Toon een modelantwoord</button></p>`;
   h+=`<div id="qfb"></div><p style="display:flex;gap:8px;margin-top:12px"><button class="btn" id="qClose">Sluiten</button><button class="btn accent" id="qNext" ${q.type==='open'?'':'disabled'}>Volgende →</button></p>`;
   box.innerHTML=h;let done=false;
   const fb=(ok,txt)=>{if(qres[qi]===null)qres[qi]=ok;$('#qfb').innerHTML=`<div class="fb ${ok?'ok':'no'}">${txt}</div>`;if(ok){done=true;$('#qNext').disabled=false;SND.good();}};
-  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Kijk naar m · v² / r en μ · m · g.');});
-  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));const ok=Math.abs(v-q.answer)<=q.tol;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> Gebruik F = m · v² / r en v_max = √(μ · g · r).');};
-  if(q.type==='sim')$('#qGo').onclick=()=>{const ok=q.check(S.last);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(S.last));};
+  if(q.type==='mc')$$('#quizBody .opt').forEach(b=>b.onclick=()=>{if(done)return;const j=+b.dataset.j;b.classList.add(j===q.ok?'right':'wrong');fb(j===q.ok,j===q.ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> '+q.fb[j]);});
+  // een leeg vak of nog geen run telt niet als poging
+  const note=txt=>{$('#qfb').innerHTML=`<div class="fb no">${txt}</div>`;};
+  if(q.type==='num')$('#qGo').onclick=()=>{const v=parseFloat(($('#qNum').value||'').replace(',','.'));if(isNaN(v)){note('<b>Vul een getal in.</b> Gebruik een komma of een punt.');return;}const ok=Math.abs(v-q.answer)<=q.tol;
+    let hint=q.hint;for(const [a,t] of q.miss)if(Math.abs(v-a)<=Math.max(.02*Math.abs(a),.02))hint=t;fb(ok,ok?'<b>Goed.</b> '+q.ex:'<b>Nog niet.</b> '+hint);};
+  if(q.type==='sim'){$('#qGo').onclick=()=>{const l=S.last&&S.last.id>qBase[qi]?S.last:null;if(!l){note('<b>Nog niet.</b> Ren eerst, nadat je deze opdracht hebt geopend.');return;}
+      if(q.setup&&(l.mu!==q.setup.mu||Math.abs(l.r-q.setup.r)>=.05)){note('<b>Andere instelling.</b> '+q.fail(l)+' Deze run telt nog niet als poging.');return;} // verkeerde bocht of schoeisel: geen poging
+      const ok=q.check(l);fb(ok,ok?'<b>Gelukt!</b> '+q.ok:'<b>Nog niet.</b> '+q.fail(l));};
+    if(q.setup)$('#qSetup').onclick=()=>{S.mu=q.setup.mu;S.r=q.setup.r;syncUI();reset();$('#mQuiz').classList.remove('open');toast('Bocht en schoeisel staan klaar. Kies nu de snelheid.');};}
   if(q.type==='open')$('#qShow').onclick=()=>{$('#qfb').innerHTML=`<div class="fb ok">${q.model}</div>`;};
   $('#qNext').onclick=()=>{qi++;renderQ();};$('#qClose').onclick=()=>$('#mQuiz').classList.remove('open');}
 $('#bQuiz').onclick=()=>{$('#mQuiz').classList.add('open');renderQ();};
@@ -399,53 +743,109 @@ const SND=(function(){let C=null,master,on=false;
     step(){tone(180,120,.05,.05,'sine');},skid(){noise(.9,.35,2600);tone(1800,1200,.6,.04,'sawtooth');},bang(){tone(100,40,.5,.6,'sine');noise(.3,.4,400);},good(){[660,880,1320].forEach((f,i)=>tone(f,f,.25,.1,'triangle',i*.08));},near(){[660,620].forEach((f,i)=>tone(f,f,.25,.1,'triangle',i*.12));}};})();
 function setSound(v){SND.set(v);$('#bSound').classList.toggle('on',v);$('#sndWave').setAttribute('d',v?'M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12':'M17 9l4 6M21 9l-4 6');}
 $('#bSound').onclick=()=>setSound(!SND.on);
+/* ================= bediening ================= */
+function syncUI(){$$('#sWho button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.who));$$('#sMu button').forEach(b=>b.classList.toggle('on',b.dataset.v===S.mu));$$('#sSpeed button').forEach(b=>b.classList.toggle('on',+b.dataset.v===S.speed));
+  const vm=WHO[S.who].vmax;$('#iV').max=vm;S.v=Math.min(S.v,vm);
+  $('#iV').value=S.v;$('#oV').textContent=f1(S.v)+' m/s';$('#oV2').textContent=(S.v<3?'rustig joggen':S.v<5?'hardlopen':'sprinten')+(S.v>=vm-.05?`, de top voor deze groep (${f1(vm)} m/s)`:'');$('#iR').value=S.r;$('#oR').textContent=f1(S.r)+' m';
+  store.set('who',S.who);store.set('v',S.v);store.set('r',S.r);store.set('mu',S.mu);updateHud();drawChart();}
+$$('#sWho button').forEach(b=>b.onclick=()=>{S.who=b.dataset.v;syncUI();reset();});
+$$('#sMu button').forEach(b=>b.onclick=()=>{S.mu=b.dataset.v;syncUI();reset();});
+$$('#sSpeed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.v;syncUI();});
+$('#iV').oninput=e=>{S.v=+e.target.value;syncUI();reset();};$('#iR').oninput=e=>{S.r=+e.target.value;syncUI();reset();};
+$('#bGo').onclick=go;$('#bGoM').onclick=go;
+function seek(t){const J=S.J;if(!J)return;S.phase='scrub';S.freeze=0;S.t=clamp(t,0,J.T);setGo('▶ Verder');if(S.t>=J.tKey&&!S.reveal){S.reveal=true;S.keyShown=true;drawChart();}if(!S.finished&&S.t>=J.tEnd){S.finished=true;finish();}updateHud();}
+$('#iScrub').oninput=e=>{if(S.J)seek(+e.target.value/1000*S.J.T);};
+function syncDrawer(){$('#bDrawer').textContent=document.body.classList.contains('drawer-closed')?'Instellingen ▴':'Instellingen ▾';}
+$('#bDrawer').onclick=()=>{document.body.classList.toggle('drawer-closed');syncDrawer();camAnim=1.2;};
+$('#bCam').onclick=()=>setCam(CAMS[(CAMS.indexOf(camMode)+1)%3]);
+$$('#lab .tog input').forEach(i=>i.onchange=()=>i.blur());
+const LBL=['dots','names','off'],LBLN={dots:'stippen',names:'namen',off:'uit'};let lblI=0;
+$('#bLbl').onclick=()=>{lblI=(lblI+1)%3;document.body.className=document.body.className.replace(/lbl-\w+/,'lbl-'+LBL[lblI]);$('#bLbl').textContent='Labels: '+LBLN[LBL[lblI]];};
+function setPresent(on){document.body.classList.toggle('present',on);$('#bPresent').classList.toggle('on',on);camAnim=1.2;if(on){if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen().catch(()=>{});setSound(true);}else if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+$('#bPresent').onclick=()=>setPresent(!document.body.classList.contains('present'));
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA/.test(e.target.tagName)&&e.target.type!=='range'&&e.target.type!=='checkbox')return;if($$('.modal.open').length&&e.key!=='Escape')return;const k=e.key,K=k.toUpperCase();
+  if(k===' '){e.preventDefault();go();return;}const tg={F:'tF',C:'tC',O:'tO',T:'tT',S:'tS'}[K];if(tg){$('#'+tg).checked=!$('#'+tg).checked;}
+  if(K==='V')$('#bCam').click();if(K==='G')setSound(!SND.on);if(K==='L')$('#bLbl').click();if(K==='P')setPresent(!document.body.classList.contains('present'));
+  if(k==='ArrowRight'||k==='PageDown'){e.preventDefault();ptStep(1);}if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();ptStep(-1);}
+  if(k==='Escape'){if($$('.modal.open').length)$$('.modal.open').forEach(mm=>mm.classList.remove('open'));else if($('#dossier').classList.contains('open'))closePt();else if(document.body.classList.contains('present'))setPresent(false);}});
 
 /* ================= render ================= */
-function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?56:36;camera.updateProjectionMatrix();}
+function resize(){renderer.setSize(innerWidth,innerHeight,false);renderer.setPixelRatio(Math.min(devicePixelRatio,2));camera.aspect=innerWidth/innerHeight;camera.fov=camera.aspect<1?50:36;camera.updateProjectionMatrix();applyOffset();camAnim=1.5;drawChart();}
 addEventListener('resize',resize);
-let first=true,uiT=0,lastStepPh=0;const Q1=new THREE.Quaternion(),Q2=new THREE.Quaternion(),XA=V(1,0,0),YA=V(0,1,0);
-function render(dt){const sdt=dt*S.speed;step(sdt);const sc=WHO[S.who].sc,n=need();
-  let pos,a,lean=S.lean,amp=S.phase==='ready'?.05:clamp(.35+S.v*.08,.4,1);let ph=S.ph;let fallen=0;
-  if(S.slip){const sl=S.slip;const d=sl.d||0;pos=V(sl.x0+d*Math.cos(sl.a),0,sl.z0+d*Math.sin(sl.a));a=sl.a;fallen=ease(clamp(sl.t/.45,0,1));lean=lerp(n.phi*.3,1.35,fallen);amp=lerp(amp,.1,fallen);}
-  else{const p=pathAt(S.s);pos=V(p.x,0,p.z);a=p.a;}
-  const P=runPts(ph,amp,sc);drawRunner(P,sc);
-  // oriëntatie: draaien om y (rijrichting), dan hellen om de eigen x-as (naar rechts = naar het midden)
-  Q1.setFromAxisAngle(YA,-a);Q2.setFromAxisAngle(XA,lean);runner.quaternion.copy(Q1).multiply(Q2);runner.position.copy(pos);if(fallen)runner.position.y=0;
-  // looprichting in de wereld en richting naar het midden
-  const dir=V(Math.cos(a),0,Math.sin(a)),inward=V(-Math.sin(a),0,Math.cos(a));
-  curPos=pos;curFoot=pos.clone();curCom=V(0,.95*sc,0).applyQuaternion(runner.quaternion).add(pos);
-  comSpr.position.copy(curCom);
-  if(S.phase==='run'&&!S.slip&&Math.floor(ph/Math.PI)!==Math.floor(lastStepPh/Math.PI))SND.step();lastStepPh=ph;
-  // spoor
-  if((S.phase==='run'||S.phase==='done')&&S.phase!=='ready'){const lt=S.trail[S.trail.length-1];if(!lt||Math.hypot(lt[0]-pos.x,lt[1]-pos.z)>.06){if(S.trail.length<2000)S.trail.push([pos.x,pos.z]);}}
-  const pa=trailGeo.attributes.position.array;S.trail.forEach((q,i)=>{pa[i*3]=q[0];pa[i*3+1]=.016;pa[i*3+2]=q[1];});trailGeo.setDrawRange(0,S.trail.length);trailGeo.attributes.position.needsUpdate=true;
-  const showT=$('#tT').checked;planned.visible=false;plannedDots.visible=showT;tanDots.visible=showT;trail.visible=showT;
-  // raaklijn bij het begin van de bocht
-  const ep=pathAt(L1);tangent.visible=false;tangent.position.set(ep.x,0,ep.z);tangent.scale.set(WALL-ep.x,1,1);tangent.computeLineDistances();
+let first=true,uiT=0;
+function render(dt){step(dt);const J=S.J,sc=WHO[S.who].sc,n=need();
+  const live=J&&S.phase!=='ready',st=live?stateAt(J,S.t):stateAt(null,0);
+  const fr=frameOf(st,live?J.h:comH(S.v,sc),sc);
+  const P=bodyPose(st,live?J:null,sc,live?J.v:S.v,fr);drawRunner(P,sc);
+  const a=st.a,dir=V(Math.cos(a),0,Math.sin(a)),inw=V(-Math.sin(a),0,Math.cos(a));
+  runner.quaternion.copy(fr.q);runner.position.copy(fr.p);runner.updateMatrixWorld();const piv=V(fr.p.x,0,fr.p.z);
+  const com=runner.localToWorld(P.com.clone());comSpr.position.copy(com);
+  const down=st.fall>.5,cpt=down?V(st.x,0,st.z):piv;
+  document.body.classList.toggle('running',S.phase==='run');
+  // spoor, voetstappen, looplijn
+  const showT=$('#tT').checked;plannedDots.visible=showT;trail.visible=showT&&!!J;foot.visible=showT&&!!J;
+  if(J&&S.phase!=='ready'){const i=Math.min(J.track.length-1,Math.floor(S.t/.01));trail.geometry.setDrawRange(0,Math.max(0,i)*6);let c=0;for(const f of J.steps)if(f.t<=S.t)c++;foot.count=Math.min(c,120);}
+  // raaklijn en 'niet naar buiten'
+  const slipNow=J&&J.slip&&S.phase!=='ready'&&S.t>J.tG+1e-3; // pas na het stilstaan vlak vóór het wegglijden
+  if(slipNow){const L=Math.min(J.hit?J.room+STOP:J.dist+1,9);tanLine.visible=true;tanLine.position.set(J.P1.x+Math.cos(J.a1)*L/2,.016,J.P1.z+Math.sin(J.a1)*L/2);tanLine.rotation.set(0,-J.a1,0);tanLine.scale.set(L,.004,.05);}else tanLine.visible=false;
   // krachten
-  const onArc=!S.slip&&S.phase!=='ready'&&pathAt(S.s).arc;const showF=$('#tF').checked&&!fallen;const k=.75/(n.m*g);// meter per newton
-  const Fz=n.m*g,Fw=onArc?n.Fc:0;
-  aFz.visible=showF;aFz.position.copy(curCom);aFz.setDirection(V(0,-1,0));aFz.setLength(Fz*k,.14,.09);
-  aFn.visible=showF;aFn.position.copy(curFoot).add(V(0,.02,0));aFn.setDirection(V(0,1,0));aFn.setLength(Fz*k,.14,.09);
-  aFw.visible=showF&&Fw>1;if(aFw.visible){aFw.position.copy(curFoot).add(V(0,.03,0));aFw.setDirection(inward);aFw.setLength(Math.max(.05,Fw*k),.14,.09);aFw.setColor(new THREE.Color(Fw>n.Fw?0xe86a5a:0xe6b65e));}
-  aRes.visible=showF&&Fw>1;if(aRes.visible){const rv=V(0,Fz,0).add(inward.clone().multiplyScalar(Fw));const L=rv.length()*k;aRes.position.copy(curFoot).add(V(0,.02,0));aRes.setDirection(rv.normalize());aRes.setLength(L,.14,.09);}
-  const showC=$('#tC').checked&&!fallen;ring.visible=showC;disk.visible=showC;const rr=n.Fw*k;ring.position.set(pos.x,.02,pos.z);ring.scale.setScalar(rr);disk.position.set(pos.x,.018,pos.z);disk.scale.setScalar(rr);
-  ring.material.color.setHex(n.Fc>n.Fw?0xe86a5a:0xe6b65e);
-  TAGS.Fz.textContent=aFz.visible?'Fz':'';project(curCom.clone().add(V(0,-Fz*k*.6,0)),TAGS.Fz,-8,0);
-  TAGS.Fn.textContent=aFn.visible?'Fn':'';project(curFoot.clone().add(V(0,Fz*k*.8,0)),TAGS.Fn,-8,0);
-  TAGS.Fw.textContent=aFw.visible?`Fw ${f0(Fw)} N`:'';project(curFoot.clone().add(inward.clone().multiplyScalar(Fw*k)),TAGS.Fw,-6,10);
-  TAGS.res.textContent='';
+  const showF=$('#tF').checked,k=.6/(n.m*g),Fz=n.m*g;const P0=V(cpt.x,.03,cpt.z);
+  const sliding=st.ph==='glij',kern=st.ph==='kern',braking=st.ph==='rem'&&st.Fb>1;
+  const dim=kern?.3:1;aFz.op(dim);aFn.op(dim); // op het kernmoment gaat het om geel tegen rood: Fz en Fn even op de achtergrond
+  let missOn=false,arcOn=false;const pm=Math.round(n.phiMax/D2R),hh=live?J.h:comH(S.v,sc);
+  if(showF){
+    const deco_on=$('#tO').checked;const nOff=deco_on?V(0,0,0):dir.clone().multiplyScalar(.12);const pn=P0.clone().add(nOff);
+    if(!down){aFz.set(com,V(0,-Fz*k,0));tag('Fz',kern?'':`Fz ${f0(Fz)} N`,com.clone().add(V(0,-Fz*k*.8,0)),-12,8); // bij de punt, rechts: los van het label Fgrond
+      aFn.set(pn,V(0,Fz*k,0));tag('Fn',kern?'':`Fn ${f0(Fz)} N`,pn.clone().add(V(0,Fz*k*.5,0)),12,8,true);} // links van de groene pijl
+    else{ // liggend: Fz stopt bij de vloer, Fn op halve lengte; zo blijft Fw,glij = μk · Fn te volgen
+      const pn2=P0.clone().addScaledVector(dir,.2);aFz.set(com,V(0,-Math.max(.06,com.y-.035),0));tag('Fz',`Fz ${f0(Fz)} N`,com.clone().add(V(0,.1,0)),-12,8);
+      aFn.set(pn2,V(0,Fz*k*.5,0));tag('Fn',`Fn ${f0(Fz)} N`,pn2.clone().add(V(0,Fz*k*.45,0)),-12,8);}
+    const Fw=sliding||down?0:braking?st.Fb:st.Fw,fv=braking?dir.clone().multiplyScalar(-Fw*k):inw.clone().multiplyScalar(Fw*k);
+    if(Fw>1){aFw.set(P0,fv);tag('Fw',braking?`Fw ${f0(Fw)} N (remt)`:`Fw ${f0(Fw)} N`,P0.clone().add(fv),kern?20:-8,kern?30:-4);const rv=V(0,Fz*k,0).add(fv);aRes.set(P0,rv);tag('res',kern?'':'Fgrond',P0.clone().add(rv),-8,14);
+      if(deco_on){const tn=P0.clone().add(V(0,Fz*k,0)),tw=P0.clone().add(fv),tr=P0.clone().add(rv);placeSeg(deco.a,tn,tr,.007);placeSeg(deco.b,tw,tr,.007);deco.visible=true;}else deco.visible=false;
+      // vlak voor het wegglijden hangt de leerling schuiner dan de grondkracht: verleng de witte pijl, dan zie je dat hij het zwaartepunt mist
+      if(kern&&!braking&&st.lean-Math.atan2(Fw,Fz)>.035){const rn=rv.clone().normalize(),tip=P0.clone().add(rv),c0=com.clone().sub(P0).dot(rn);
+        extRes.set(tip,P0.clone().addScaledVector(rn,Math.max(rv.length()+.25,c0+.3)),.008);const Q=P0.clone().addScaledVector(rn,c0);armMiss.set(com,Q,.01);
+        tag('miss',isMob()?'':'mist het zwaartepunt',Q.clone().lerp(com,.5),-14,-6);missOn=true;}}
+    else{aFw.hide();aRes.hide();deco.visible=false;tag('Fw','');tag('res','');}
+    // hellingshoek in beeld: boogje bij de voet tussen de loodlijn en het lichaam
+    // labels naast de loodlijn, aan de kant waar het lichaam níet hangt
+    const org=V(piv.x,.035,piv.z),sideTag=(key,txt,ax,y)=>{const p=org.clone().add(V(0,y,0)),a=scr(p),b2=scr(p.clone().addScaledVector(ax,.3));const right=a&&b2&&b2[0]>a[0];tag(key,txt,p,right?10:-10,8,right);};
+    if(!down&&!sliding&&st.lean>.05&&!braking){arcOn=true;arcPhi.set(org,inw,st.lean);plumb.set(V(piv.x,.03,piv.z),V(piv.x,hh*1.12,piv.z),.008);
+      sideTag('phi',`φ ${Math.round(st.lean/D2R)}° (max ${pm}°)`,inw,.55*hh);
+      if(kern&&S.reveal&&n.phi>n.phiMax){const an=Math.min(n.phi,1.35);arcNeed.set(org,inw,an);sideTag('phiN',`nodig ${Math.round(n.phi/D2R)}°`,inw,.36*hh);}else{arcNeed.hide();tag('phiN','');}}
+    else if(!down&&(st.pitch||0)>.05&&J&&!J.slip){arcOn=true;const bk=dir.clone().negate();arcPhi.set(org,bk,st.pitch);plumb.set(V(piv.x,.03,piv.z),V(piv.x,hh*1.12,piv.z),.008);
+      sideTag('phi',`θ ${Math.round(st.pitch/D2R)}° achterover`,bk,.55*hh);arcNeed.hide();tag('phiN','');}
+    // rood 'nodig' iets naar voren, zodat geel en rood naast elkaar te zien zijn
+    if(kern&&!down){const o=V(cpt.x,.026,cpt.z).addScaledVector(dir,.09);aNeed.set(o,inw.clone().multiplyScalar(n.Fc*k));tag('need',`nodig ${f0(n.Fc)} N`,o.clone().addScaledVector(inw,n.Fc*k),-8,-4);}else{aNeed.hide();tag('need','');}
+    if(sliding&&st.vn>.05){aGlij.set(P0,dir.clone().multiplyScalar(-n.muk*Fz*k));tag('glij',`Fw,glij ${f0(n.muk*Fz)} N`,P0.clone().addScaledVector(dir,-n.muk*Fz*k),-8,-4);}else{aGlij.hide();tag('glij','');}
+    if(slipNow&&S.t>J.tG+.3){const o=V(J.P1.x,0,J.P1.z).normalize(),/* pas als de camera naar het overzicht gaat */b0=V(J.P1.x,.05,J.P1.z),tip=b0.clone().addScaledVector(o,1.15);aOut.set(V(J.P1.x,.05,J.P1.z),o.clone().multiplyScalar(1.1));
+      const sb=scr(b0),st2=scr(tip),toL=sb&&st2&&st2[0]<sb[0],up=sb&&st2&&st2[1]<sb[1];tag('out','niet: naar buiten',tip,toL?6:-6,up?30:-6,toL); // label voorbij de punt van de pijl, weg van de rode streep
+      const tl=tanL(J);tag('tan','rechtdoor: raaklijn',V(J.P1.x+Math.cos(J.a1)*tl,.05,J.P1.z+Math.sin(J.a1)*tl),-8,-22);}else{aOut.hide();tag('out','');tag('tan','');}}
+  else{[aFz,aFn,aFw,aRes,aNeed,aGlij,aOut].forEach(q=>q.hide());deco.visible=false;['Fz','Fn','Fw','res','need','glij','out','tan'].forEach(q=>tag(q,''));}
+  if(!missOn){extRes.hide();armMiss.hide();tag('miss','');}
+  if(!arcOn){arcPhi.hide();arcNeed.hide();plumb.hide();tag('phi','');tag('phiN','');}
+  const showC=$('#tC').checked&&st.ph!=='stil'&&st.ph!=='muur';const R=n.Fw*k;setRing(R);[ring,ringOut,disk].forEach(o=>{o.visible=showC;o.position.set(cpt.x,[.021,.02,.018][[ring,ringOut,disk].indexOf(o)],cpt.z);});
+  const rc=kern||sliding?0xff4a3a:(st.ph==='bocht'&&n.ratio>.85?0xf0a24a:0xffc94d);ring.material.color.setHex(rc).convertSRGBToLinear();disk.material.color.setHex(rc).convertSRGBToLinear();disk.material.opacity=sliding?.08:.13;
+  tag('ring',showC&&!sliding?`Fw,max ${f0(n.Fw)} N`:'',V(cpt.x,.02,cpt.z).addScaledVector(dir,braking?R+.05:-R-.05),-8,6); // bij remmen vóór de cirkel, los van de gele pijl
+  tag('wall',J&&J.hit&&S.t>=J.tEnd?`botst met ${f1(J.vHit)} m/s`:'',V(WALL-.2,.95,st.z-1.1),-8,0); // naast de liggende leerling, los van stip 8
+  if(isMob())for(const kk in TAGS){const el=TAGS[kk];if(el.style.display!=='none'&&el._y!==undefined&&el._y<FR.y0+36){el._y=FR.y0+36;el.style.transform=`translate(${el._x.toFixed(1)}px,${el._y.toFixed(1)}px)`;}} // mobiel: niet onder de rij stippen
+  declutter(['need','Fw','res','Fz','Fn','ring','phi','phiN','miss','wall','out','tan','glij']);
   if(wallFlash.material.opacity>0)wallFlash.material.opacity=Math.max(0,wallFlash.material.opacity-dt*.5);
-  if(follow){const tgt=curCom.clone();controls.target.lerp(tgt,1-Math.exp(-dt*3));const cp=tgt.clone().add(V(-3.2,2.6,3.6));camera.position.lerp(cp,1-Math.exp(-dt*2));}
-  controls.update();renderer.render(scene,camera);
-  MKS.forEach((mm,i)=>project(PTS[i].at(),mm,12,12));
-  uiT+=dt;if(uiT>.1){uiT=0;updateHud();}
+  // camera
+  applyOffset();let goal=camGoal(st);if(!goal&&camAnim>0)goal=fitView(overviewPts(),ovDir());
+  if(goal){if(camSnap){camera.position.copy(goal.p);controls.target.copy(goal.t);camSnap=false;}else{const kk=1-Math.exp(-dt*(camMode==='volgen'?4:2.6));camera.position.lerp(goal.p,kk);controls.target.lerp(goal.t,kk);}}
+  camAnim=Math.max(0,camAnim-dt);controls.update();renderer.render(scene,camera);
+  placeMarkers();
+  beat(beatFor(st));
+  uiT+=dt;if(uiT>.08){uiT=0;updateHud(st);if(S.J&&document.activeElement!==$('#iScrub'))$('#iScrub').value=Math.round(S.t/S.J.T*1000);$('#oScrub').textContent=S.J?f2(S.t)+' s':'–';}
   if(first){first=false;setTimeout(()=>$('#loader').classList.add('gone'),250);}}
 let last=performance.now();
 function loop(now){requestAnimationFrame(loop);const dt=Math.min(.05,(now-last)/1000);last=now;render(dt);}
+if(isMob())document.body.classList.add('drawer-closed');syncDrawer();setCam(camMode);
 resize();syncUI();reset();requestAnimationFrame(loop);
-setTimeout(()=>toast('Voorspel eerst: maakt de leerling de bocht? Druk dan op <b>spatie</b>.'),1400);
-window.__bc={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,go,reset,need,syncUI,openPt};
+setTimeout(()=>S.phase==='ready'&&toast('Voorspel eerst: haalt de leerling de bocht? Kies <b>Haalt de bocht</b> of <b>Glijdt uit</b>.'),1400);
+window.__bc={step:(n,d)=>{for(let i=0;i<n;i++)render(d||1/60);},S,go,reset,need,syncUI,openPt,start,seek,setCam,plan,stateAt:t=>stateAt(S.J,t),guess:g=>{S.guess=g;start();},dbg:()=>({FR,ov:overviewPts().map(p=>scr(p)).map(q=>q&&q.map(Math.round)),goal:camGoal(stateAt(S.J,S.t)),cam:camera.position.clone(),tgt:controls.target.clone(),mode:camMode}),joints:()=>{const o={};jM.forEach(j=>o[j.k]=j.mm.getWorldPosition(new THREE.Vector3()));segM.forEach(q=>{if(q.mt==='shoe'){const e=V(0,.5,0);o['toe'+q.b.slice(-1)]=q.mm.localToWorld(e);}});o.head=headM.getWorldPosition(new THREE.Vector3());return o;},look:(p,t)=>{setCam('overzicht');camAnim=0;camera.position.set(...p);controls.target.set(...t);}};
 })();
 </script>
 </body>
